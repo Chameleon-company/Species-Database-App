@@ -1,9 +1,151 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang = "en">
 <head>
-    <meta charset="UTF-8">
-    <title>Species Database App</title>  <!--Placeholder title for testing-->
+    <meta charset = "UTF-8">
+    <title>SBA Placeholder Title</title>  <!--Placeholder title for testing-->
+
+    <meta name = "viewport" content = "width = device-width, initial-scale = 1.0">
+
+    <!-- This code is for PWA -->
+    <link rel = "manifest" href = "manifest.json">
+    <meta name = "theme-color" content = "#ffffff">
+
+    <style>
+        /* Placeholder styles for testing */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #8DC63F;
+            color: #020000;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 0;
+
+        }
+
+    /* The app shell here is the design of the size of the body that we will create our phone from.
+    It is currently a placeholder while we figure out responsive mobile app design. */
+    .app-shell {
+        background: #f9fbfc;
+
+        width: 100%;
+        max-width: 480px;
+        min-height: 600px;
+
+        margin: 0 auto;
+        margin-top: 1rem;
+
+        border-radius: 0;
+        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.45);
+
+        padding: 2rem 1.5rem 2.5rem;
+        box-sizing: border-box;
+    }
+
+    .app-title {
+        text-align: center;
+        margin: 0 0 2.5rem 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #0f172a;
+    }
+
+    .app-subtitle{
+        text-align: center;
+        margin: -1.5rem 0 2.5rem 0;
+        font-size: 1rem;
+        color: #475569;
+    }
+
+    .lang-toggle{
+        display: flex;
+        border-radius: 999px;
+        overflow: hidden;
+        border: 1px solid #0f172a;
+        background: #f9fbfc;
+    }
+
+    .lang-option{
+        flex: 1;
+        padding: 0.85rem 1;
+        border: none;
+        background: transparent;
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .lang-option:first-child {
+        border-right: 1px solid rgba(15, 23, 42, 0.1);
+    }
+
+    /* Hover state for the button, black when hovered, white when not */
+    .lang-option:hover {
+        background: #0f172a;
+        color: #f9fbfc;
+    }
+
+    .lang-help {
+        margin-top: 1rem;
+        font-size: 0.85rem;
+        text-align: center;
+        color: #94a3b8;
+    }
+
+    @media (max-width: 480px) {
+        .app-shell {
+            min-height: 100vh;
+            padding-bottom: 4rem;
+        }
+    }
+    </style>
+    
 </head>
 <body>
+    <main class = "app-shell">
+        <h1 class = "app-title">Species Database App</h1>
+        <p class ="app-subtitle">Placeholder Landing page - choose a language</p>
+
+        <div class = "lang-toggle">
+            <button class = "lang-option" data-lang = "en">
+                English
+            </button>
+            <button class = "lang-option" data-lang = "tet">
+                Tetum
+            </button>
+        </div>
+        <p class = "lang-help">
+            Select your preferred language (Tetum support coming soon)
+        </p>
+    </main>
+    <!-- The Script controls our buttons and service workers -->
+    <script>
+        const buttons = document.querySelectorAll('.lang-option');
+        buttons.forEach(button => {
+            button.addEventListener('click', () => {
+                const chosenLang = button.dataset.lang;
+
+                try {
+                    localStorage.setItem('appLanguage', chosenLang);
+                } catch (e) {
+                    console.error('Could not save language preference:', e);
+                }
+
+                window.location.href = 'home.html';
+            });
+        });
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker
+                .register('service-worker.js')
+                .catch((err) => console.log('Service Worker registration failed: ', err));
+            });
+
+        }
+    </script>
 </body>
 </html>

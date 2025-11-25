@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang = "en">
+<head>
+    <meta charset = "UTF-8">
+    <title>SBA Home</title>  <!--Title for home page-->
+    <meta name = "viewport" content = "width = device-width, initial-scale = 1.0">
+
+    <!-- This code is for PWA -->
+    <link rel = "manifest" href = "manifest.json">
+    <meta name = "theme-color" content = "#fff3ff">
+
+    <style>
+        /* Styles for home page */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #8DC63F;
+            color: #000000;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 0;
+
+        }
+
+    /* The app shell here is the design of the size of the body that we will create our phone from.
+    It is currently a placeholder while we figure out responsive mobile app design. */
+    .app-shell {
+        background: #f9fbfc;
+
+        width: 100%;
+        max-width: 480px;
+        min-height: 600px;
+
+        margin: 0 auto;
+        margin-top: 1rem;
+
+        border-radius: 0;
+        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.45);
+
+        padding: 2rem 1.5rem 2.5rem;
+        box-sizing: border-box;
+    }
+
+    .app-title {
+        text-align: center;
+        margin: 0 0 2.5rem 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #0f172a;
+    }
+
+    .app-subtitle{
+        text-align: center;
+        margin: -1.5rem 0 2.5rem 0;
+        font-size: 1rem;
+        color: #475569;
+    }
+
+    .lang-toggle{
+        display: flex;
+        border-radius: 999px;
+        overflow: hidden;
+        border: 1px solid #0f172a;
+        background: #f9fbfc;
+    }
+    </style>
+</head>
+<body>
+    <main class = "app-shell">
+        <h1>Placeholder Home</h1>
+        <p class = "lang-label" id = "langLabel">
+            Placeholder result of loading language
+        </p>
+
+        <p>
+            This is the home page that will contain our main content.
+            for now it is just a placeholder.
+        </p>
+
+        <a class "back-link" href = "index.html"> 
+            Change Language
+        </a>
+
+        <div class = "debug" id = "debugInfo">
+            <!-- Debug information will be displayed here -->
+        </div>
+    </main>
+
+    <!-- The Script controls language and local storage of languages -->
+    <script>
+        let lang = "en"; //Default language
+
+        try {
+            const stored = localStorage.getItem("appLanguage");
+            if (stored === "en" || stored === "tet") {
+                lang = stored;
+            }
+        } catch (e) {
+            console.warn("Could not access localStorage:", e);
+        }
+
+        const langLabel = document.getElementById("langLabel");
+        const debugInfo = document.getElementById("debugInfo");
+
+        if (lang === "en") {
+            langLabel.textContent = "Current Language: English";
+        } else if (lang === "tet") {
+            langLabel.textContent = "Current Language: Tetum";
+        } else {
+            langLabel.textContent = "Current Language: Unknown";
+        }
+
+        debugInfo.textContent = `Debug Info: App Language = "${lang}"`;
+    </script>
+</body>
+</html>
