@@ -1,4 +1,4 @@
-# Rai Matak Tree Species Guide (English-Tetum)
+# Rai Matak Species Guide (English-Tetum)
 
 An essential, offline field guide for the Rai Matak reforestation program in Timor-Leste.
 
@@ -6,7 +6,7 @@ An essential, offline field guide for the Rai Matak reforestation program in Tim
 
 ## Project Overview
 
-The **Rai Matak Tree Species Guide** is a dedicated mobile application developed to support the field staff, botanists, and community partners involved in the Rai Matak reforestation efforts.
+The **Rai Matak Species Guide** is a dedicated mobile application developed to support the field staff, botanists, and community partners involved in the Rai Matak reforestation efforts.
 
 Designed specifically for the challenging remote environments of Timor-Leste, the app's core value is its complete **offline functionality**. It ensures that critical species identification, ecological data, and learning resources are accessible exactly when and where they are needed, regardless of internet connectivity.
 
@@ -41,3 +41,27 @@ This application is built to be robust, intuitive, and highly functional in the 
 
 - **Intuitive Search and Filtering:**  
   Quickly locate species by name, characteristic, or habitat type.
+
+  ## Command Line Interface (CLI)
+
+The project includes a Python CLI for exploring the species database.
+
+### Setup
+
+```bash
+python -m venv venv
+venv\Scripts\activate        # on Windows
+pip install -r requirements.txt
+
+# General help
+python -m species_cli.cli --help
+
+# List species
+python -m species_cli.cli list-all --limit 20
+
+# Search
+python -m species_cli.cli search --habitat "coastal"
+python -m species_cli.cli search --common-name "oak"
+
+# Show details for one species
+python -m species_cli.cli show "Acacia mangium"
