@@ -49,9 +49,16 @@ Data validation is performed in three layers:
 3. **Duplicate Checking**: Detects duplicate scientific names to maintain dataset integrity.  
 
 # Setup
+
+```bash
 python -m venv venv
 venv\Scripts\activate        # on Windows
+# For macOS/Linux use:
+# source venv/bin/activate
+
 pip install -r requirements.txt
 
-# Run
+#Run
 python cli.py new_species_data.xlsx species_schema.json --audit
+
+
