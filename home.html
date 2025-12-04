@@ -32,7 +32,7 @@
             margin: 0 auto;
             border-radius: 16px;
             box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
-            padding: 0; /* HEADER already has padding */
+            padding: 0;
             box-sizing: border-box;
         }
 
@@ -48,7 +48,6 @@
             box-sizing: border-box;
         }
 
-        /* HEADER TOP (title + EN button) */
         .header-top {
             display: flex;
             align-items: center;
@@ -75,7 +74,6 @@
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
         }
 
-        /* SEARCH BAR (missing earlier — now added!) */
         .search-bar {
             background: #FFFFFF;
             border-radius: 999px;
@@ -98,7 +96,7 @@
             font-size: 1rem;
         }
 
-        /* --- Your existing CSS remains unchanged below --- */
+        /* ---- Everything below stays the same ----- */
 
         .app-title {
             text-align: center;
@@ -260,6 +258,58 @@
             font-size: 0.8rem;
             text-align: center;
         }
+
+        /* -------------------------
+           LANGUAGE OVERLAY (NEW)
+        -------------------------*/
+        .lang-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .lang-modal {
+            background: #ffffff;
+            padding: 2rem;
+            border-radius: 16px;
+            width: 80%;
+            max-width: 320px;
+            text-align: center;
+            position: relative;
+        }
+
+        .lang-choice {
+            padding: 1rem 2rem;
+            width: 100%;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+            font-weight: bold;
+            background: #0B5C37;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+        }
+
+        .close-overlay {
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            background: #ff4d4d;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            padding: 0.4rem 0.6rem;
+            border-radius: 6px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -283,21 +333,26 @@
     <script src="scripts/specieslist.js"></script>
     <script src="scripts/filterCarousel.js"></script>
 
-    <!-- <img src="Assets/Images/Camouflage18/logo-placeholder.png" alt="Species Database App Logo" class="app-logo" />
-
-    <h1 class="app-title">Species Database App</h1>
-    <p class="lang-label" id="langLabel">Placeholder result of loading language</p>
-
-    <p>This is the home page that will contain our main content. For now it is just a placeholder.</p> -->
-
     <a class="back-link" href="index.html">Change Language</a>
 
     <div class="debug" id="debugInfo"></div>
 
+    <!-- ---------------------------------
+         LANGUAGE OVERLAY (NEW)
+    ----------------------------------->
+    <div class="lang-overlay" id="langOverlay">
+        <div class="lang-modal">
+            <button class="close-overlay" id="closeOverlay">✖</button>
+            <button class="lang-choice" id="chooseEn">English</button>
+            <button class="lang-choice" id="chooseTet">Tetum</button>
+        </div>
+    </div>
+
 </main>
 
 <script>
-    let lang = "en";
+
+let lang = "en";
 
     try {
         const stored = localStorage.getItem("appLanguage");
@@ -308,15 +363,34 @@
         console.warn("Could not access localStorage:", e);
     }
 
-    const langLabel = document.getElementById("langLabel");
-    const debugInfo = document.getElementById("debugInfo");
+    // Update button on load
+    const langBtn = document.querySelector(".lang-btn");
+    langBtn.textContent = lang === "en" ? "EN" : "TET";
 
-    langLabel.textContent =
-        lang === "en" ? "Current Language: English" :
-        lang === "tet" ? "Current Language: Tetum" :
-        "Current Language: Unknown";
+    const overlay = document.getElementById("langOverlay");
+    const closeBtn = document.getElementById("closeOverlay");
+    const chooseEn = document.getElementById("chooseEn");
+    const chooseTet = document.getElementById("chooseTet");
 
-    debugInfo.textContent = `Debug Info: App Language = "${lang}"`;
+    langBtn.addEventListener("click", () => {
+        overlay.style.display = "flex";
+    });
+
+    closeBtn.addEventListener("click", () => {
+        overlay.style.display = "none";
+    });
+
+    chooseEn.addEventListener("click", () => {
+        localStorage.setItem("appLanguage", "en");
+        langBtn.textContent = "EN";
+        overlay.style.display = "none";
+    });
+
+    chooseTet.addEventListener("click", () => {
+        localStorage.setItem("appLanguage", "tet");
+        langBtn.textContent = "TET";
+        overlay.style.display = "none";
+    });
 </script>
 
 </body>
