@@ -1,0 +1,54 @@
+{
+  "species_images": [
+    {
+      "species": "toona-ciliata",
+      "images": [
+        { "type": "leaf", "file_name": "toona_ciliata_leaf_01.png", "status": "available" },
+        { "type": "flower", "file_name": "toona_ciliata_flower_01.png", "status": "available" },
+        { "type": "seed", "file_name": "toona_ciliata_seed_01.png", "status": "available" },
+        { "type": "habitat", "file_name": "toona_ciliata_habitat_01.jpg", "status": "available" },
+        { "type": "bark", "file_name": null, "status": "missing" }
+      ]
+    },
+    {
+      "species": "tectona-grandis",
+      "images": [
+        { "type": "leaf", "file_name": "tectona_grandis_leaf_01.jpg", "status": "available" },
+        { "type": "seed", "file_name": "tectona_grandis_seed_01.png", "status": "available" },
+        { "type": "flower", "file_name": null, "status": "missing" },
+        { "type": "bark", "file_name": null, "status": "missing" },
+        { "type": "habitat", "file_name": null, "status": "missing" }
+      ]
+    },
+    {
+      "species": "azadirachta-indica",
+      "images": [
+        { "type": "habitat", "file_name": "azadirachta_indica_habitat_01.jpg", "status": "available" },
+        { "type": "leaf", "file_name": null, "status": "not provided" },
+        { "type": "flower", "file_name": null, "status": "not provided" },
+        { "type": "seed", "file_name": null, "status": "not provided" },
+        { "type": "bark", "file_name": null, "status": "not provided" }
+      ]
+    },
+    {
+      "species": "sterculia-foetida",
+      "images": [
+        { "type": "flower", "file_name": "sterculia_foetida_flower_01.png", "status": "available" },
+        { "type": "habitat", "file_name": "sterculia_foetida_habitat_01.jpg", "status": "available" },
+        { "type": "seed", "file_name": "sterculia_foetida_seed_01.png", "status": "available" },
+        { "type": "leaf", "file_name": null, "status": "not provided" },
+        { "type": "bark", "file_name": null, "status": "not provided" }
+      ]
+    },
+    {
+      "species": "aleurites-moluccana",
+      "images": [
+        { "type": "leaf", "file_name": "aleurites_moluccana_leaf_01.jpg", "status": "available" },
+        { "type": "flower", "file_name": "aleurites_moluccana_flower_01.jpg", "status": "available" },
+        { "type": "seed", "file_name": "aleurites_moluccana_seed_01.png", "status": "available" },
+        { "type": "habitat", "file_name": null, "status": "not provided" },
+        { "type": "bark", "file_name": null, "status": "not provided" }
+      ]
+    }
+  ]
+}
