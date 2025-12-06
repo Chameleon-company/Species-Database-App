@@ -1,0 +1,67 @@
+[
+  {
+    "species": "toona-ciliata",
+    "images": [
+      {"type": "Leaf", "file": "toona_ciliata_leaf_01.png", "status": "Available"},
+      {"type": "Flower", "file": "toona_ciliata_flower_01.png", "status": "Available"},
+      {"type": "Seed", "file": "toona_ciliata_seed_01.png", "status": "Available"},
+      {"type": "Habitat", "file": "toona_ciliata_habitat_01.jpg", "status": "Available"},
+      {"type": "Bark", "file": "-", "status": "Missing"}
+    ]
+  },
+
+  {
+    "species": "tectona-grandis",
+    "images": [
+      {"type": "Leaf", "file": "tectona_grandis_leaf_01.jpg", "status": "Available"},
+      {"type": "Flower", "file": "-", "status": "Missing"},
+      {"type": "Seed", "file": "tectona_grandis_seed_01.png", "status": "Available"},
+      {"type": "Habitat", "file": "-", "status": "Missing"},
+      {"type": "Bark", "file": "-", "status": "Missing"}
+    ]
+  },
+
+  {
+    "species": "azadirachta-indica",
+    "images": [
+      {"type": "Leaf", "file": "-", "status": "Missing"},
+      {"type": "Flower", "file": "-", "status": "Missing"},
+      {"type": "Seed", "file": "-", "status": "Missing"},
+      {"type": "Habitat", "file": "azadirachta_indica_habitat_01.jpg", "status": "Available"},
+      {"type": "Bark", "file": "-", "status": "Missing"}
+    ]
+  },
+
+  {
+    "species": "sterculia-foetida",
+    "images": [
+      {"type": "Leaf", "file": "sterculia_foetida_leaf_01.png", "status": "Available"},
+      {"type": "Flower", "file": "sterculia_foetida_flower_01.png", "status": "Available"},
+      {"type": "Seed", "file": "sterculia_foetida_seed_01.png", "status": "Available"},
+      {"type": "Habitat", "file": "sterculia_foetida_habitat_01.jpg", "status": "Available"},
+      {"type": "Bark", "file": "-", "status": "Missing"}
+    ]
+  },
+
+  {
+    "species": "aleurites-moluccana",
+    "images": [
+      {"type": "Leaf", "file": "aleurites_moluccana_leaf_01.jpg", "status": "Available"},
+      {"type": "Flower", "file": "aleurites_moluccana_flower_01.png", "status": "Available"},
+      {"type": "Seed", "file": "aleurites_moluccana_seed_01.png", "status": "Available"},
+      {"type": "Habitat", "file": "-", "status": "Missing"},
+      {"type": "Bark", "file": "-", "status": "Missing"}
+    ]
+  },
+
+  {
+    "species": "albizia-lebbeck",
+    "images": [
+      {"type": "Leaf", "file": "albizia_lebbeck_leaf_01.png", "status": "Available"},
+      {"type": "Flower", "file": "albizia_lebbeck_flower_01.png", "status": "Available"},
+      {"type": "Seed", "file": "albizia_lebbeck_seed_01.png", "status": "Available"},
+      {"type": "Habitat", "file": "-", "status": "Missing"},
+      {"type": "Bark", "file": "-", "status": "Missing"}
+    ]
+  }
+]
