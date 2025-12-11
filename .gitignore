@@ -1,0 +1,52 @@
+# Build outputs
+app/
+build/
+.gradle/
+android/
+*.apk
+*.aab
+release/*.apk
+
+# Sensitive files - DO NOT COMMIT!
+android.keystore
+*.keystore
+*.jks
+
+# Node.js
+node_modules/
+package-lock.json
+
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+hs_err_pid*.log
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+

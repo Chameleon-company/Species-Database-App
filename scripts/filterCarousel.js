@@ -58,12 +58,19 @@ document.addEventListener('DOMContentLoaded', function() {
         filterCarousel.scrollLeft = scrollLeft - walk;
     });
 
-    // Touch events (Mobile) - Touch and drag scrolling
+    // Touch events (Mobile) - Single finger drag scrolling
+    // Two-finger drag is handled by native browser scrolling
     filterCarousel.addEventListener('touchstart', function(e) {
-        isDragging = true;
-        hasDragged = false;
-        startX = e.touches[0].pageX - filterCarousel.offsetLeft;
-        scrollLeft = filterCarousel.scrollLeft;
+        // Only handle single-finger drag; let two-finger gestures use native scrolling
+        if (e.touches.length === 1) {
+            isDragging = true;
+            hasDragged = false;
+            startX = e.touches[0].pageX - filterCarousel.offsetLeft;
+            scrollLeft = filterCarousel.scrollLeft;
+        } else {
+            // Two or more fingers - let browser handle native scrolling
+            isDragging = false;
+        }
     }, { passive: true });
 
     filterCarousel.addEventListener('touchend', function() {
@@ -75,12 +82,14 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     filterCarousel.addEventListener('touchmove', function(e) {
-        if (!isDragging) return;
+        // Only handle single-finger drag
+        if (!isDragging || e.touches.length !== 1) return;
         hasDragged = true;
         const x = e.touches[0].pageX - filterCarousel.offsetLeft;
         const walk = (x - startX) * 2; // Scroll speed multiplier
         filterCarousel.scrollLeft = scrollLeft - walk;
-    }, { passive: true });
+        e.preventDefault(); // Prevent default scrolling for single-finger drag
+    }, { passive: false }); // Changed to false to allow preventDefault for single-finger drag
 
     // Handle button clicks (only if not dragging)
     filterButtons.forEach(button => {
