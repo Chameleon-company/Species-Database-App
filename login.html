@@ -1,6 +1,7 @@
 <!--log in page-->
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>Species Database - Splash</title>
@@ -12,6 +13,7 @@
       padding: 0;
       box-sizing: border-box;
     }
+
     :root {
       --bg-outer: #02040a;
       --bg-inner: #ffffff;
@@ -22,6 +24,7 @@
       --button-bg: #101520;
       --button-bg-hover: #182134;
     }
+
     body {
       min-height: 100vh;
       background: radial-gradient(circle at top, #0f1a2c, var(--bg-outer));
@@ -33,14 +36,16 @@
       color: var(--text-main);
       overflow: hidden;
     }
+
     .app-shell {
       width: 100vw;
-      max-width: 480px;         
+      max-width: 480px;
       padding: 16px;
       display: flex;
       justify-content: center;
       align-items: center;
     }
+
     .app-container {
       width: 100%;
       aspect-ratio: 1080 / 2408;
@@ -55,11 +60,13 @@
       position: relative;
       overflow: hidden;
     }
+
     @media (min-height: 800px) {
       .app-container {
         padding-top: 72px;
       }
     }
+
     .logo-img {
       width: 52%;
       max-width: 260px;
@@ -67,6 +74,7 @@
       opacity: 0;
       transform: translateY(30px) scale(0.96);
     }
+
     .title {
       font-size: clamp(24px, 5vw, 30px);
       font-weight: 700;
@@ -77,6 +85,7 @@
       opacity: 0;
       transform: translateY(20px);
     }
+
     .subtitle {
       font-size: clamp(14px, 3.8vw, 18px);
       text-align: center;
@@ -87,6 +96,7 @@
       opacity: 0;
       transform: translateY(20px);
     }
+
     .btn {
       width: 100%;
       padding: 18px 24px;
@@ -107,12 +117,15 @@
       transform: translateY(40px);
       opacity: 0;
     }
+
     .btn:hover {
       background: var(--button-bg-hover);
     }
+
     .btn:active {
       transform: translateY(42px) scale(0.98);
     }
+
     .footer {
       margin-top: auto;
       font-size: 14px;
@@ -121,63 +134,148 @@
       opacity: 0;
       transform: translateY(20px);
     }
+
     .footer a {
       text-decoration: none;
       font-weight: 700;
       color: var(--accent);
       margin-left: 4px;
     }
+
     .footer a:active {
       opacity: 0.7;
     }
+
+    /* OR divider */
+    .divider {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 18px 0 22px;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .divider::before,
+    .divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: #d0d3db;
+    }
+
+    .divider span {
+      font-size: 13px;
+      font-weight: 600;
+      color: #8a8a8a;
+    }
+
+    /* Email section */
+    .email-group {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .email-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #2b2b2b;
+      margin-left: 8px;
+    }
+
+    .email-input {
+      width: 100%;
+      padding: 18px 20px;
+      border-radius: 18px;
+      border: 1.5px solid #d8dbe2;
+      font-size: 15px;
+      outline: none;
+    }
+
+    .email-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(39, 200, 97, 0.18);
+    }
+
+    .btn.email-btn {
+      background: #0f1625;
+    }
+
+
     @keyframes fadeInUpSoft {
       from {
         opacity: 0;
         transform: translateY(30px);
       }
+
       to {
         opacity: 1;
         transform: translateY(0);
       }
     }
+
     @keyframes fadeInScale {
       from {
         opacity: 0;
         transform: translateY(30px) scale(0.9);
       }
+
       to {
         opacity: 1;
         transform: translateY(0) scale(1);
       }
     }
+
     body.loaded .logo-img {
       animation: fadeInScale 0.8s ease-out forwards;
       animation-delay: 0.1s;
     }
+
     body.loaded .title {
       animation: fadeInUpSoft 0.7s ease-out forwards;
       animation-delay: 0.35s;
     }
+
     body.loaded .subtitle {
       animation: fadeInUpSoft 0.7s ease-out forwards;
       animation-delay: 0.55s;
     }
+
     body.loaded .btn:nth-of-type(1) {
       animation: fadeInUpSoft 0.7s ease-out forwards;
       animation-delay: 0.8s;
     }
+
     body.loaded .btn:nth-of-type(2) {
       animation: fadeInUpSoft 0.7s ease-out forwards;
       animation-delay: 1s;
     }
+
+    body.loaded .divider {
+      animation: fadeInUpSoft 0.7s ease-out forwards;
+      animation-delay: 1.12s;
+    }
+
+    body.loaded .email-group {
+      animation: fadeInUpSoft 0.7s ease-out forwards;
+      animation-delay: 1.18s;
+    }
+
     body.loaded .footer {
       animation: fadeInUpSoft 0.7s ease-out forwards;
       animation-delay: 1.25s;
     }
+
     @media (max-width: 360px) {
       .subtitle {
         margin-bottom: 40px;
       }
+
       .btn {
         padding: 14px 18px;
         font-size: 15px;
@@ -185,6 +283,7 @@
     }
   </style>
 </head>
+
 <body>
   <div class="app-shell">
     <div class="app-container">
@@ -200,6 +299,20 @@
       <button class="btn" id="facebookBtn">
         Sign Up With Facebook
       </button>
+
+      <div class="divider">
+        <span>OR</span>
+      </div>
+
+      <div class="email-group">
+        <label class="email-label">Email</label>
+        <input type="email" class="email-input" placeholder="" required />
+        <button class="btn email-btn" id="emailContinueBtn">
+          Continue with Email
+        </button>
+      </div>
+
+
       <div class="footer">
         Already have an account?
         <a href="#" id="signInLink">Sign In</a>
@@ -210,16 +323,42 @@
     document.addEventListener("DOMContentLoaded", () => {
       document.body.classList.add("loaded");
     });
+
     document.getElementById("googleBtn").addEventListener("click", () => {
       console.log("Google sign-up clicked");
     });
+
     document.getElementById("facebookBtn").addEventListener("click", () => {
       console.log("Facebook sign-up clicked");
     });
+
+    const emailInput = document.querySelector(".email-input");
+
+    document.getElementById("emailContinueBtn").addEventListener("click", () => {
+      const email = emailInput.value.trim();
+
+      if (!email) {
+        alert("Please enter your email.");
+        emailInput.focus();
+        return;
+      }
+
+      if (!emailInput.checkValidity()) {
+        alert("Please enter a valid email address.");
+        emailInput.focus();
+        return;
+      }
+
+      console.log("Continue with Email:", email);
+      // window.location.href = "signup-email.html"; // example redirect
+    });
+
     document.getElementById("signInLink").addEventListener("click", (e) => {
       e.preventDefault();
       console.log("Go to Sign In screen");
     });
   </script>
+
 </body>
+
 </html>

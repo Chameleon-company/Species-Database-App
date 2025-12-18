@@ -123,7 +123,10 @@
         const params = new URLSearchParams(window.location.search);
         const plantID = params.get("id");
 
-        const species = dummyData.find(s => s.id === plantID);
+        //const species = dummyData.find(s => s.id === plantID);
+        //Get the detail data from Local Storage for selected species
+        const species = JSON.parse(localStorage.getItem("selected_species"));
+        console.log(species);
 
         if (!species) {
             document.querySelector(".container").innerHTML = "<h1>Species Not Found</h1>";

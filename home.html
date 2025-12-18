@@ -330,6 +330,22 @@
             border-radius: 10px;
             cursor: pointer;
         }
+
+        .species-list-card:hover {
+            background-color: #8AC642;
+            color: #0B5C37;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .common-name-species {
+            color:grey;
+            margin: 0;
+        }
+
+        .species-list-card:hover .common-name-species {
+            color:white;
+        }
+
     </style>
 </head>
 <body>
@@ -344,7 +360,7 @@
         
         <div class="search-bar">
             <span class="search-icon">🔍</span>
-            <input type="text" placeholder="Search species">
+            <input type="text" placeholder="Search species" id="searchInput">
         </div>
     </header>
 
@@ -361,6 +377,8 @@
     </div>
 
     <div class="container" id="species-list"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <script src="scripts/specieslist.js"></script>
     <script src="scripts/filterCarousel.js"></script>
