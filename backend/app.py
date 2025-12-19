@@ -11,6 +11,8 @@ import tempfile
 import asyncio
 from uploader import process_file
 
+import bcrypt
+
 app = Flask(__name__)
 
 @app.route('/')
@@ -24,7 +26,7 @@ def get_bundle():
     will include en_species, tet_species, media,latest version nnumber
     """
     #client sends version in use... default to 0
-    client_version = request.args.get("version", type=int, default=0)
+    ###client_version = request.args.get("version", type=int, default=0)
 
     #get latest version from changelog
     version_resp = (
@@ -141,6 +143,97 @@ def upload_species_file():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.post("/api/auth/login")
+def login():
+    """
+    online login endpoint for pwa first tiem bootstrap (before switching to local PIN)
+    and admin dashboard login (online only)
+    Note: no token returns.... deliberate as the app is offline first
+    """
+
+    data = request.json
+    if not data:
+        return jsonify({"error": "request body missing"}), 400
+    name = data.get("name")
+    password = data.get("password")
+
+    if not name or not password:
+        return jsonify({"error": "name and password required"}), 400
+    
+    #fecthing user from Supabase
+    resp = (
+        supabase.table("users")
+        .select("user_id, password_hash, role, is_active, account_version")
+        .eq("name", name)
+        .limit(1)
+        .execute()
+    )
+
+    #for user not found
+    if not resp.data:
+        return jsonify({"error": "invalid credentials"}), 401
+    
+    user = resp.data[0]
+
+    #admin can disable users... applies when device is online
+    if not user["is_active"]:
+        return jsonify({"error": "account disabled"}), 403
+
+    #comparing inputted password with stored hash
+    if not bcrypt.checkpw(
+        password.encode("utf-8"),
+        user["password_hash"].encode("utf-8")
+    ):
+        return jsonify({"error": "credentials invalid"}), 401
+    
+    #succcessful login... client uses this for provisioning lcoal auth
+    return jsonify({
+        "user_id": user["user_id"],
+        "role": user["role"],
+        "account_version": user["account_version"]
+    }), 200
+
+@app.get("/api/auth/user-state")
+def user_state():
+    """
+    used by the app whenever device is online. allows app to check:
+        - was the user disabled?
+        - was the role changed?
+        - did the account version changed??
+    avoids forcing periodic syncs but still allows backend to be synced whenever possible
+    """
+
+    user_id = request.args.get("user_id", type=int)
+    ##client_version = request.args.get("account_version", type=int)
+
+    if not user_id:
+        return jsonify({"error": "user_id needed"})
+    
+    resp = (
+        supabase.table("users")
+        .select("role, is_active")
+        .eq("user_id", user_id)
+        .limit(1)
+        .execute()
+    )
+
+    if not resp.data:
+        return jsonify({"error": "user not found"}), 404
+
+    user = resp.data[0]
+
+    #if changed is true, app shouldd refresh local role/status (once online)
+    #changed = (user["account_version"] != client_version)
+
+    return jsonify({
+        "role": user["role"],
+        "is_active": user["is_active"],
+        #"account_version": user["account_version"],
+        #client can decide if updating local state necessary
+        #"changed": changed
+    }), 200
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
