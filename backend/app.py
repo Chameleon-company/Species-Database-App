@@ -13,7 +13,65 @@ from uploader import process_file
 
 import bcrypt
 
+from flask_cors import CORS
+
+def require_role(allowed_roles: list[str]):
+    """
+    authz helper
+
+    used to checck:
+     - who is makin gthe request
+     - whether their role allows the action
+
+    assuming user has already logged in earlier
+    """
+
+    #user id from request header sent from frontend
+    user_id = request.headers.get("auth-user-id", type=int)
+
+    if not user_id:
+        return jsonify({"error": "missing user id"}), 401
+    
+
+    data = request.json
+    if not data:
+        return jsonify({"error": " missing request body"}), 400
+
+    name = data.get("name")
+    password = data.get("password")
+
+    if not name or not password:
+        return jsonify({"error": "name and password required"}), 400
+    
+    #getting user from supabase
+    resp =(
+        supabase.table("users")
+        .select("user_id", "password_hash", "role", "is_active")
+        .eq("name",name)
+        .limit(1)
+        .execute()
+    )
+
+    #if user non existent
+    if not resp.data:
+        return jsonify({"error": "invalid credentials"}), 401
+    
+    user = resp.data[0]
+
+    #admins able to disable accounts
+    # check applies when device is online
+    if not user["is_active"]:
+        return jsonify({"error": "account disabled"}), 403
+    
+    if user["role"] not in allowed_roles:
+        return False, "no permissions"
+    
+    return True, None
+
+
 app = Flask(__name__)
+
+CORS(app)
 
 @app.route('/')
 def index():
@@ -119,6 +177,17 @@ Or you can also run > curl -X POST http://127.0.0.1:5000/upload-species -F "file
 """
 @app.route("/upload-species", methods=["POST"])
 def upload_species_file():
+    """
+    this is an admin only endpoint
+    for uploading species data
+    """
+    #checking peermissions
+    ok, err = require_role(["admin"])
+    if not ok:
+        return jsonify({"error": "err"}), 403
+
+    #at this point we've confirmed theyre admin
+
     if "file" not in request.files:
         return jsonify({"error": "No file part"}), 400
     
@@ -164,7 +233,7 @@ def login():
     #fecthing user from Supabase
     resp = (
         supabase.table("users")
-        .select("user_id, password_hash, role, is_active, account_version")
+        .select("user_id, password_hash, role, is_active")
         .eq("name", name)
         .limit(1)
         .execute()
@@ -191,7 +260,6 @@ def login():
     return jsonify({
         "user_id": user["user_id"],
         "role": user["role"],
-        "account_version": user["account_version"]
     }), 200
 
 @app.get("/api/auth/user-state")
