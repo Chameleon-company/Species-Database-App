@@ -101,7 +101,12 @@ if (document.getElementById("species-list")) {
     loadExcelData(excelFileUrl)
         .then((data) => {
             loadedSpeciesData = data;
-            renderSpecies(data);
+            // Use applyFilters if available, otherwise just render all
+            if (typeof applyFilters === 'function') {
+                applyFilters();
+            } else {
+                renderSpecies(data);
+            }
         })
         .catch(err => {
             console.error("Error loading Excel:", err);
@@ -115,25 +120,31 @@ const searchInput = document.getElementById("searchInput");
 
 if (searchInput) {
     searchInput.addEventListener("input", (e) => {
-        const query = e.target.value.toLowerCase().trim();
-
-        if (!loadedSpeciesData.length) return;
-
-        if (query === "") {
-            renderSpecies(loadedSpeciesData);
-            return;
-        }
-
-        const filteredData = loadedSpeciesData.filter(species =>
-            species.scientific_name &&
-            species.scientific_name.toLowerCase().includes(query)
-        );
-
-        // ✅ NEW CONDITION
-        if (filteredData.length === 0) {
-            renderNoResults();
+        // Use the unified applyFilters function if it exists (defined in home.html)
+        // This ensures search works together with leaf type and fruit type filters
+        if (typeof applyFilters === 'function') {
+            applyFilters();
         } else {
-            renderSpecies(filteredData);
+            // Fallback if applyFilters is not yet available
+            const query = e.target.value.toLowerCase().trim();
+
+            if (!loadedSpeciesData.length) return;
+
+            if (query === "") {
+                renderSpecies(loadedSpeciesData);
+                return;
+            }
+
+            const filteredData = loadedSpeciesData.filter(species =>
+                species.scientific_name &&
+                species.scientific_name.toLowerCase().includes(query)
+            );
+
+            if (filteredData.length === 0) {
+                renderNoResults();
+            } else {
+                renderSpecies(filteredData);
+            }
         }
     });
 }
