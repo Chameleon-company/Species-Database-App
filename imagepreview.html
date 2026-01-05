@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Preview</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #8DC63F;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 520px;
+            background: #fff;
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        img {
+            width: 100%;
+            height: auto;
+            touch-action: pinch-zoom;
+        }
+
+        .back-btn {
+            margin-top: 25px;
+            display: block;
+            text-align: center;
+            padding: 12px;
+            background: #8DC63F;
+            color: black;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+    </style>
+    </head>
+    <body>
+        <div class="container">
+        <img id="full-img">
+        <a class="back-btn" href="javascript:history.back()">Back</a>
+        </div>
+    </body>
+    <script>
+        const params = new URLSearchParams(location.search);
+        document.getElementById("full-img").src = params.get("src");
+    </script>
+    </html>

@@ -195,6 +195,7 @@
 
     </main>
     <!-- The Script controls our buttons and service workers -->
+    <script src="scripts/preloadImages.js"></script>
     <script>
         const buttons = document.querySelectorAll('.lang-option');
         buttons.forEach(button => {
@@ -212,12 +213,23 @@
         });
 
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker
-                .register('service-worker.js')
-                .catch((err) => console.log('Service Worker registration failed: ', err));
-            });
+            window.addEventListener('load', async () => {
+                    try {
+                    const reg = await navigator.serviceWorker.register('/service-worker.js');
 
+                    if (!navigator.serviceWorker.controller) {
+                        console.log("Service Worker installed, reloading...");
+                        location.reload();
+                        return;
+                    }
+
+                    console.log("Service Worker active, preloading images...");
+                    preloadAllImages();
+
+                } catch (err) {
+                    console.error('Service Worker registration failed:', err);
+                }
+            });
         }
     </script>
 </body>

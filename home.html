@@ -369,10 +369,8 @@
         <div class="filter-carousel" id="filter-carousel">
             <button class="filter-button" data-filter="all">All</button>
             <button class="filter-button" data-filter="a-z">A-Z</button>
-            <button class="filter-button" data-filter="scientific-name">Scientific Name</button>
             <button class="filter-button" data-filter="leaf-type">Leaf Type</button>
             <button class="filter-button" data-filter="fruit-type">Fruit Type</button>
-            <button class="filter-button" data-filter="common-name">Common Name</button>
         </div>
     </div>
 
@@ -400,11 +398,9 @@
     <div class="filter-overlay" id="filterOverlay">
         <div class="filter-modal">
             <button class="close-filter-overlay" id="closeFilterOverlay">✖</button>
-            <h2 id="filterTitle">Filter Options</h2>
-            <p>(Placeholder options)</p>
-            <button class="placeholder-option">Option 1</button>
-            <button class="placeholder-option">Option 2</button>
-            <button class="placeholder-option">Option 3</button>
+            <h2 id="filterTitle"></h2>
+            <p id="filterDescription"></p>
+            <div id="filterOptions"></div>
         </div>
     </div>
 
@@ -458,18 +454,120 @@ chooseTet.addEventListener("click", () => {
 const filterOverlay = document.getElementById("filterOverlay");
 const closeFilterOverlay = document.getElementById("closeFilterOverlay");
 const filterTitle = document.getElementById("filterTitle");
+const filterOptions = document.getElementById("filterOptions");
+const filterDescription = document.getElementById("filterDescription");
+
+const filterConfigs = {
+    "a-z": {
+        title: "Sort Alphabetically",
+        description: "Sort species in ascending or descending order.",
+        options: [
+            { label: "A → Z", action: () => sortSpecies("az") },
+            { label: "Z → A", action: () => sortSpecies("za") }
+        ]
+    },
+    "leaf-type": {
+        title: "Leaf Type",
+        description: "Filter species by their leaf types.",
+        options: [
+            { label: "Option A", action: () => console.log("Leaf A") },
+            { label: "Option B", action: () => console.log("Leaf B") }
+        ]
+    },
+    "fruit-type": {
+        title: "Fruit Type",
+        description: "Filter species by their fruit types.",
+        options: [
+            { label: "Option A", action: () => console.log("Fruit A") },
+            { label: "Option B", action: () => console.log("Fruit B") }
+        ]
+    }
+}
+
 
 document.querySelectorAll(".filter-button").forEach(btn => {
+    btn.addEventListener("click", () => {
+        const key = btn.dataset.filter;
+        
+
+        document.querySelectorAll(".filter-button").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        if (key === "all") {
+            renderSpecies(loadedSpeciesData);
+            filterOverlay.style.display = "none";
+            return;
+        }   
+        const config = filterConfigs[key];
+
+        if(!config) return;
+
+        filterTitle.textContent = config.title;
+        filterDescription.textContent = config.description;
+        filterOptions.innerHTML = "";
+
+        config.options.forEach(option => {
+            const optionBtn = document.createElement("button");
+            optionBtn.className = "placeholder-option";
+            optionBtn.textContent = option.label;
+
+            optionBtn.onclick = () => {
+                if (option.action) {
+                    option.action();
+                }
+                filterOverlay.style.display = "none";
+            };
+
+            filterOptions.appendChild(optionBtn);
+});
+
+        filterOverlay.style.display = "flex";
+    });
+});
+
+/*document.querySelectorAll(".filter-button").forEach(btn => {
     btn.addEventListener("click", () => {
         const label = btn.textContent.trim();
         filterTitle.textContent = label + " Options";
         filterOverlay.style.display = "flex";
     });
-});
+}); */
 
 closeFilterOverlay.addEventListener("click", () => {
     filterOverlay.style.display = "none";
 });
+
+let originalOrder = null;
+
+document.addEventListener("DOMContentLoaded", () => {
+    originalOrder = Array.from(document.querySelectorAll(".species-item"));
+});
+
+function resetSpeciesList() {
+    const list = document.getElementById("species-list");
+    if (!originalOrder) return;
+    originalOrder.forEach(item => list.appendChild(item));
+}
+
+function sortSpecies(direction) {
+    if (!loadedSpeciesData || loadedSpeciesData.length === 0) {
+        console.warn("No species data to sort.");
+        return;
+    }
+
+    const sorted = [...loadedSpeciesData].sort((a, b) => {
+        const nameA = a.scientific_name.toLowerCase();
+        const nameB = b.scientific_name.toLowerCase();
+
+        return direction === "az"
+            ? nameA.localeCompare(nameB)
+            : nameB.localeCompare(nameA);
+    });
+
+    renderSpecies(sorted);
+}
+
+
 </script>
 
 </body>

@@ -69,12 +69,34 @@
             border-radius: 10px;
             font-weight: bold;
         }
-    </style>
+
+        #image-gallery {
+            display: flex;
+            flex-direction: row;
+            gap: 5px;
+            overflow-x: auto; 
+            padding: 10px 0;
+        }
+
+        #image-gallery img {
+            height: 100px;
+            width: 100px;
+            border-radius: 8px;
+            flex-shrink: 0;   
+            cursor: pointer;
+            border: 1px solid #0B5C37;
+            border-radius: 6px;
+        }
+
+
+ </style>
 </head>
 
 <body>
     <div class="container">
         <img id="plant-image" class="plant-img" src="" alt="Image">
+
+        <div id="image-gallery"></div>
 
         <h1 id="plant-common"></h1>
         <div id="plant-scientific" class="classification"></div>
@@ -118,6 +140,7 @@
     </div>
 
     <script src="scripts/specieslist.js"></script>
+    <script src="scripts/imageCache.js"></script>
     <script>
 
         const params = new URLSearchParams(window.location.search);
@@ -142,6 +165,16 @@
             document.getElementById("plant-fruit").textContent = species.fruit_type;
             document.getElementById("plant-seed").textContent = species.seed_germination;
         }
+
+        const gallery = document.getElementById("image-gallery");
+
+        gallery.addEventListener("click", (e) => {
+            if (e.target.tagName === "IMG") {
+                const src = e.target.src;
+                console.log("SRC "+src);
+                window.location.href = "imagepreview.html?src=" + encodeURIComponent(src);
+            }
+        });
     </script>
 </body>
 </html>
