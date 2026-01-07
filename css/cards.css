@@ -1,0 +1,49 @@
+.species-item {
+    display: flex;
+    flex-direction: column;
+    background: #FFFFFF;
+    border-radius: 8px;
+    box-shadow: var(--card-shadow);
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 1px solid #eee;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.species-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.species-item img {
+    width: 100%;
+    height: 180px;
+    object-fit: contain;
+    padding: 1rem;
+    background-color: #fff;
+    border-bottom: 1px solid #f8f8f8;
+}
+
+.species-text {
+    display: flex;
+    flex-direction: column;
+    padding: 1.2rem;
+    gap: 0.3rem;
+}
+
+.species-name {
+    font-family: var(--font-main);
+    font-weight: 700; /* Roboto Bold */
+    font-size: 1.3rem;
+    margin: 0;
+    color: var(--primary-lime); /* Uses Variable */
+}
+
+.species-subname {
+    font-family: var(--font-main);
+    font-weight: 400; /* Roboto Regular */
+    font-size: 0.95rem;
+    color: var(--text-muted); /* Uses Variable */
+    margin: 0;
+    line-height: 1.4;
+}
