@@ -1,0 +1,93 @@
+.app-header {
+    width: 100%;
+    background-color: #FFFFFF;
+    padding: 1.5rem 1.5rem 1rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    box-sizing: border-box;
+}
+
+.header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.header-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--primary-lime);
+    margin: 0;
+}
+
+/* Actions group for AI button and Settings */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Identify by Photo (AI) Button */
+.ai-btn {
+    background-color: #eff5f1;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-family: var(--font-main);
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #000000;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+/* Settings Icon Button */
+.settings-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.settings-btn img {
+    width: 28px;
+    height: 28px;
+}
+
+/* Search Bar Container */
+.search-container {
+    width: 100%;
+}
+
+.search-bar {
+    background: #eff5f1; /* Light greenish-grey from image */
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* Search SVG Icon */
+.search-icon-svg {
+    width: 20px;
+    height: 20px;
+    opacity: 0.6;
+}
+
+.search-bar input {
+    border: none;
+    background: transparent;
+    outline: none;
+    width: 100%;
+    font-size: 1.1rem;
+    font-family: var(--font-main);
+    color: #6a8572; /* Muted green text */
+}
+
+.search-bar input::placeholder {
+    color: #6a8572;
+}

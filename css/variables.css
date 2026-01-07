@@ -1,0 +1,136 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+:root {
+    --font-main: 'Roboto', sans-serif;
+    
+    /* Colors */
+    --primary-lime: #8cb54d;
+    --accent-blue: #3498db;
+    --text-main: #333333;
+    --text-muted: #6a8572;
+    --bg-body: #f5f7f5;
+    --card-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    --bg-input: #eff5f1; /* Light greenish-grey background */
+    --primary-lime: #8cb54d;
+    --text-dark: #2d3a31;
+    --border-pill: #8cb54d;
+}
+
+
+
+
+
+/* Header Layout */
+.app-header {
+    padding: 20px 20px 10px;
+    background: #fff;
+}
+
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.header-title {
+    color: var(--primary-lime);
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* AI Button styling */
+.ai-btn {
+    background: var(--bg-input);
+    border: none;
+    border-radius: 12px;
+    padding: 12px 18px;
+    font-family: var(--font-main);
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text-dark);
+    cursor: pointer;
+}
+
+/* Settings Icon styling */
+.settings-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+}
+
+.settings-btn img {
+    width: 28px;
+    height: 28px;
+}
+
+/* Search Bar styling */
+.search-container {
+    margin-bottom: 20px;
+}
+
+.search-bar {
+    background: var(--bg-input);
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+}
+
+.search-bar input {
+    background: transparent;
+    border: none;
+    flex: 1;
+    font-size: 1.1rem;
+    font-family: var(--font-main);
+    color: var(--text-muted);
+    outline: none;
+    margin-left: 10px;
+}
+
+/* Filter Pills styling */
+.filter-section {
+    padding: 0 20px;
+    overflow-x: auto;
+}
+
+.filter-chips {
+    display: flex;
+    gap: 10px;
+}
+
+.filter-pill {
+    background: #fff;
+    border: 1.5px solid var(--border-pill);
+    border-radius: 12px;
+    padding: 10px 15px;
+    font-family: var(--font-main);
+    font-weight: 600;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+/* Custom CSS Chevron for the pills */
+.chevron::after {
+    content: "";
+    border: solid var(--primary-lime);
+    border-width: 0 2px 2px 0;
+    display: inline-block;
+    padding: 3px;
+    transform: rotate(45deg);
+    margin-bottom: 2px;
+}

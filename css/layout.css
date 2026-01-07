@@ -1,0 +1,30 @@
+body {
+    font-family: var(--font-main);
+    margin: 0;
+    background: var(--bg-body);
+    color: var(--text-main);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    /* Smooth font rendering */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.app-shell {
+    width: 100%;
+    max-width: 480px;
+    background: #ffffff;
+    min-height: 100vh;
+    margin: 0 auto;
+    box-sizing: border-box;
+    box-shadow: 0 0 20px rgba(0,0,0,0.05); 
+}
+
+.container#species-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    padding: 1rem 1.5rem;
+}

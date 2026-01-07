@@ -1,0 +1,62 @@
+.lang-overlay,
+.filter-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5); /* Dimmed background */
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.lang-modal,
+.filter-modal {
+    background: #ffffff;
+    padding: 2rem;
+    border-radius: 16px;
+    width: 85%;
+    max-width: 320px;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.close-overlay,
+.close-filter-overlay {
+    position: absolute;
+    top: 10px; right: 10px;
+    background: #ff4d4d;
+    border: none;
+    color: white;
+    font-size: 1rem;
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex; justify-content: center; align-items: center;
+}
+
+.lang-choice,
+.placeholder-option {
+    display: block;
+    width: 100%;
+    padding: 1rem;
+    margin-bottom: 0.8rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    background: var(--primary-lime);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.placeholder-option {
+    margin-top: 0.6rem;
+    margin-bottom: 0;
+}
+
+.lang-choice:hover,
+.placeholder-option:hover {
+    opacity: 0.9;
+}
