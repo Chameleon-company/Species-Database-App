@@ -305,6 +305,10 @@
             position: relative;
         }
 
+        #filterDescription:empty {
+            display: none;
+        }
+
         .close-filter-overlay {
             position: absolute;
             top: 8px;
@@ -457,6 +461,29 @@ const filterTitle = document.getElementById("filterTitle");
 const filterOptions = document.getElementById("filterOptions");
 const filterDescription = document.getElementById("filterDescription");
 
+// Global state for active filters
+let activeFilters = {
+    leafType: null,
+    fruitType: null
+};
+
+// Leaf Type options
+const leafTypeOptions = [
+    "Simple",
+    "Pinnately compound (single)",
+    "Pinnately compound (double)",
+    "Pinnately compound (triple)",
+    "Palmately compound"
+];
+
+// Fruit Type options
+const fruitTypeOptions = [
+    "Drupe",
+    "Capsule",
+    "Follicle",
+    "Pod"
+];
+
 const filterConfigs = {
     "a-z": {
         title: "Sort Alphabetically",
@@ -468,38 +495,173 @@ const filterConfigs = {
     },
     "leaf-type": {
         title: "Leaf Type",
-        description: "Filter species by their leaf types.",
-        options: [
-            { label: "Option A", action: () => console.log("Leaf A") },
-            { label: "Option B", action: () => console.log("Leaf B") }
-        ]
+        description: "",
+        options: leafTypeOptions.map(option => ({
+            label: option,
+            value: option,
+            type: "leaf-type"
+        }))
     },
     "fruit-type": {
         title: "Fruit Type",
-        description: "Filter species by their fruit types.",
-        options: [
-            { label: "Option A", action: () => console.log("Fruit A") },
-            { label: "Option B", action: () => console.log("Fruit B") }
-        ]
+        description: "",
+        options: fruitTypeOptions.map(option => ({
+            label: option,
+            value: option,
+            type: "fruit-type"
+        }))
     }
 }
 
+// Function to apply all active filters and search
+function applyFilters() {
+    if (!loadedSpeciesData || loadedSpeciesData.length === 0) return;
+    
+    let filtered = [...loadedSpeciesData];
+    
+    // Apply leaf type filter
+    if (activeFilters.leafType) {
+        filtered = filtered.filter(species => 
+            species.leaf_type && species.leaf_type === activeFilters.leafType
+        );
+    }
+    
+    // Apply fruit type filter
+    if (activeFilters.fruitType) {
+        filtered = filtered.filter(species => 
+            species.fruit_type && species.fruit_type === activeFilters.fruitType
+        );
+    }
+    
+    // Apply search filter
+    const searchInput = document.getElementById("searchInput");
+    if (searchInput && searchInput.value.trim() !== "") {
+        const query = searchInput.value.toLowerCase().trim();
+        filtered = filtered.filter(species =>
+            species.scientific_name &&
+            species.scientific_name.toLowerCase().includes(query)
+        );
+    }
+    
+    renderSpecies(filtered);
+}
+
+// Make applyFilters available globally
+window.applyFilters = applyFilters;
+
+// Function to update filter button active states
+function updateFilterButtonStates() {
+    const leafTypeBtn = document.querySelector('[data-filter="leaf-type"]');
+    const fruitTypeBtn = document.querySelector('[data-filter="fruit-type"]');
+    
+    if (leafTypeBtn) {
+        if (activeFilters.leafType) {
+            leafTypeBtn.classList.add("active");
+        } else {
+            leafTypeBtn.classList.remove("active");
+        }
+    }
+    
+    if (fruitTypeBtn) {
+        if (activeFilters.fruitType) {
+            fruitTypeBtn.classList.add("active");
+        } else {
+            fruitTypeBtn.classList.remove("active");
+        }
+    }
+}
+
+// Function to create option buttons with active state
+function createOptionButton(option, filterType) {
+    const optionBtn = document.createElement("button");
+    optionBtn.className = "placeholder-option";
+    const optionValue = option.value || option;
+    optionBtn.textContent = option.label || option;
+    
+    // Check if this option is currently active
+    const isActive = (filterType === "leaf-type" && activeFilters.leafType === optionValue) ||
+                     (filterType === "fruit-type" && activeFilters.fruitType === optionValue);
+    
+    if (isActive) {
+        optionBtn.style.background = "#0f172a";
+        optionBtn.style.color = "#ffffff";
+    }
+    
+    optionBtn.onclick = () => {
+        if (filterType === "leaf-type") {
+            // Toggle leaf type filter
+            if (activeFilters.leafType === optionValue) {
+                activeFilters.leafType = null; // Deselect if already selected
+            } else {
+                activeFilters.leafType = optionValue; // Select new option
+            }
+        } else if (filterType === "fruit-type") {
+            // Toggle fruit type filter
+            if (activeFilters.fruitType === optionValue) {
+                activeFilters.fruitType = null; // Deselect if already selected
+            } else {
+                activeFilters.fruitType = optionValue; // Select new option
+            }
+        }
+        
+        // Update filter button states
+        updateFilterButtonStates();
+        
+        // Apply filters
+        applyFilters();
+        
+        // Close overlay
+        filterOverlay.style.display = "none";
+    };
+    
+    return optionBtn;
+}
 
 document.querySelectorAll(".filter-button").forEach(btn => {
     btn.addEventListener("click", () => {
         const key = btn.dataset.filter;
         
-
-        document.querySelectorAll(".filter-button").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-
         if (key === "all") {
+            // Clear all filters
+            activeFilters.leafType = null;
+            activeFilters.fruitType = null;
+            
+            // Remove active state from all filter buttons except "all"
+            document.querySelectorAll(".filter-button").forEach(b => {
+                if (b.dataset.filter !== "all") {
+                    b.classList.remove("active");
+                }
+            });
+            btn.classList.add("active");
+            
+            // Reset search input
+            const searchInput = document.getElementById("searchInput");
+            if (searchInput) {
+                searchInput.value = "";
+            }
+            
+            // Render all species
             renderSpecies(loadedSpeciesData);
             filterOverlay.style.display = "none";
             return;
-        }   
+        }
+        
+        // Don't remove active state for leaf-type and fruit-type buttons
+        // They can be active simultaneously
+        // A-Z is a sort, not a filter, so it can work alongside filters
+        if (key === "a-z") {
+            // A-Z can be active alongside leaf-type and fruit-type
+            btn.classList.add("active");
+        } else if (key !== "leaf-type" && key !== "fruit-type") {
+            document.querySelectorAll(".filter-button").forEach(b => {
+                if (b.dataset.filter !== "leaf-type" && b.dataset.filter !== "fruit-type" && b.dataset.filter !== "a-z") {
+                    b.classList.remove("active");
+                }
+            });
+            btn.classList.add("active");
+        }
+        
         const config = filterConfigs[key];
-
         if(!config) return;
 
         filterTitle.textContent = config.title;
@@ -507,34 +669,41 @@ document.querySelectorAll(".filter-button").forEach(btn => {
         filterOptions.innerHTML = "";
 
         config.options.forEach(option => {
-            const optionBtn = document.createElement("button");
-            optionBtn.className = "placeholder-option";
-            optionBtn.textContent = option.label;
-
-            optionBtn.onclick = () => {
-                if (option.action) {
-                    option.action();
-                }
-                filterOverlay.style.display = "none";
-            };
-
+            let optionBtn;
+            
+            if (option.action) {
+                // For A-Z filter with actions
+                optionBtn = document.createElement("button");
+                optionBtn.className = "placeholder-option";
+                optionBtn.textContent = option.label;
+                optionBtn.onclick = () => {
+                    if (option.action) {
+                        option.action();
+                    }
+                    filterOverlay.style.display = "none";
+                };
+            } else {
+                // For leaf-type and fruit-type filters
+                optionBtn = createOptionButton(option, key);
+            }
+            
             filterOptions.appendChild(optionBtn);
-});
+        });
 
         filterOverlay.style.display = "flex";
     });
 });
-
-/*document.querySelectorAll(".filter-button").forEach(btn => {
-    btn.addEventListener("click", () => {
-        const label = btn.textContent.trim();
-        filterTitle.textContent = label + " Options";
-        filterOverlay.style.display = "flex";
-    });
-}); */
 
 closeFilterOverlay.addEventListener("click", () => {
     filterOverlay.style.display = "none";
+});
+
+// Initialize: Set "All" button as active by default when page loads
+document.addEventListener("DOMContentLoaded", () => {
+    const allButton = document.querySelector('[data-filter="all"]');
+    if (allButton) {
+        allButton.classList.add("active");
+    }
 });
 
 let originalOrder = null;
