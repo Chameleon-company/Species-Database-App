@@ -1,6 +1,0 @@
-pandas>=2.1.0
-openpyxl>=3.1.0        # required for reading/writing Excel files
-numpy>=1.25.0
-pydantic>=2.6.0
-jsonschema>=4.21.0
-argparse                # standard in Python, but safe to include for older versions
