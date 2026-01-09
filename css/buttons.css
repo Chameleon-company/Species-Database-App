@@ -1,0 +1,61 @@
+/* Language Button (Top Right) */
+.lang-btn {
+    background: transparent;
+    color: var(--primary-lime);
+    border: none;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* Filter Scroll Area */
+.filter-carousel-container {
+    padding: 0 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.filter-carousel {
+    display: flex;
+    overflow-x: auto;
+    gap: 0.75rem;
+    padding-bottom: 0.5rem;
+    scrollbar-width: none; /* Hide scrollbar Firefox */
+}
+.filter-carousel::-webkit-scrollbar { display: none; } /* Hide scrollbar Chrome */
+
+/* The Filter Buttons -> Styled like the Dropdowns in the screenshot */
+.filter-button {
+    flex: 0 0 auto;
+    padding: 0.6rem 1rem;
+    border-radius: 8px; /* Slightly rounded corners */
+    border: 1px solid var(--border-green); /* Green border */
+    background: #FFFFFF;
+    color: var(--text-main);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Adds the small chevron arrow */
+.filter-button::after {
+    content: "▼";
+    font-size: 0.6em;
+    color: var(--primary-lime);
+}
+
+.filter-button:hover {
+    background-color: #f9f9f9;
+}
+
+.filter-button.active {
+    background-color: var(--primary-lime);
+    color: white;
+    border-color: var(--primary-lime);
+}
+.filter-button.active::after {
+    color: white;
+}
