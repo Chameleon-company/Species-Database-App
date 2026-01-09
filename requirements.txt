@@ -4,3 +4,10 @@ numpy>=1.25.0
 pydantic>=2.6.0
 jsonschema>=4.21.0
 argparse                # standard in Python, but safe to include for older versions
+#video processing libraries
+moviepy==2.0.1
+imageio==2.27.0
+imageio-ffmpeg==0.4.10
+opencv-python
+Pillow
+tqdm
