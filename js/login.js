@@ -6,9 +6,8 @@
       console.log("Google sign-up clicked");
     });
 
-    document.getElementById("guestBtn").addEventListener("click", () => {
-      console.log("Guest sign-up clicked");
-      window.location.href = "home.html"; //  redirect to home page
+    document.getElementById("facebookBtn").addEventListener("click", () => {
+      console.log("Facebook sign-up clicked");
     });
 
     const emailInput = document.querySelector(".email-input");
