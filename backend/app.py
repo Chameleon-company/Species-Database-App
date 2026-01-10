@@ -253,7 +253,7 @@ def upload_species_file():
     #checking peermissions
     ok, err = require_role(["admin"])
     if not ok:
-        return jsonify({"error": "err"}), 403
+        return jsonify({"error": err[0]}), err[1]
 
     #at this point we've confirmed theyre admin
 
