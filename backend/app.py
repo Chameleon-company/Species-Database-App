@@ -53,8 +53,19 @@ def upload_species_file():
             uploaded_file.save(tmp.name)
             temp_path = tmp.name
 
-        asyncio.run(process_file(temp_path, translate=False))  # English
-        asyncio.run(process_file(temp_path, translate=True))   # Tetum
+        en_result = asyncio.run(process_file(temp_path, translate=False))  # English
+        tet_result = asyncio.run(process_file(temp_path, translate=True))   # Tetum
+
+        rows_inserted = min(
+            en_result["rows_inserted"],
+            tet_result["rows_inserted"]
+        )
+        
+        log_change(
+            "species",
+            None,
+            f"BULK_INSERT ({rows_inserted} rows)"
+        )
 
         return jsonify({
             "status": "success",
@@ -218,8 +229,105 @@ def translate():
     print(f"Translated Text = '{array}")
     
     return jsonify(array)
-    
 
+# Analytics Endpoints
+@app.route("/analytics/overview", methods=["GET"])
+def analytics_overview():
+    try:
+        users_res = supabase.table("users").select(
+            "user_id, is_active", count="exact"
+        ).execute()
+
+        analytics_res = supabase.table("analytics").select(
+            "duration", count="exact"
+        ).execute()
+
+        species_res = supabase.table("species_en").select(
+            "species_id", count="exact"
+        ).execute()
+
+        media_res = supabase.table("media").select(
+            "species_id"
+        ).execute()
+
+        total_users = users_res.count or 0
+        active_users = sum(1 for u in users_res.data if u["is_active"])
+
+        total_logins = analytics_res.count or 0
+
+        durations = [a["duration"] for a in analytics_res.data]
+        avg_duration = round(
+            sum(durations) / len(durations), 2
+        ) if durations else 0
+
+        total_species = species_res.count or 0
+        species_with_media = len(set(m["species_id"] for m in media_res.data))
+
+        return jsonify({
+            "total_users": total_users,
+            "active_users": active_users,
+            "total_logins": total_logins,
+            "average_session_duration": avg_duration,
+            "total_species": total_species,
+            "species_with_media": species_with_media
+        }), 200
+
+    except Exception as e:
+        app.logger.exception("Analytics overview failed")
+        return jsonify({"error": str(e)}), 500
+    
+@app.route("/analytics/users", methods=["GET"])
+def analytics_users():
+    try:
+        users_res = supabase.table("users").select(
+            "user_id, name, role, is_active"
+        ).execute()
+
+        analytics_res = supabase.table("analytics").select(
+            "user_id, duration, login_time"
+        ).execute()
+
+        analytics_by_user = {}
+
+        for record in analytics_res.data:
+            uid = record["user_id"]
+            analytics_by_user.setdefault(uid, []).append(record)
+
+        result = []
+
+        for user in users_res.data:
+            uid = user["user_id"]
+            records = analytics_by_user.get(uid, [])
+
+            login_count = len(records)
+            total_duration = sum(r["duration"] for r in records)
+            average_duration = (
+                round(total_duration / login_count, 2)
+                if login_count > 0 else 0
+            )
+            last_login = (
+                max(r["login_time"] for r in records)
+                if records else None
+            )
+
+            result.append({
+                "user_id": uid,
+                "name": user["name"],
+                "role": user["role"],
+                "is_active": user["is_active"],
+                "login_count": login_count,
+                "total_duration": total_duration,
+                "average_duration": average_duration,
+                "last_login": last_login
+            })
+
+        return jsonify(result), 200
+
+    except Exception as e:
+        app.logger.exception("User analytics failed")
+        return jsonify({"error": str(e)}), 500
+
+# User Management Endpoints
 @app.route("/api/users", methods=["POST"])
 def create_user():
     # Validate JSON body
