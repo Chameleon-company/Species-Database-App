@@ -78,7 +78,9 @@ def get_admin_user(supabase):
     if session["revoked"]:
         return None, ("token revoked", 401)
     
-    if datetime.now(timezone.utc) > session["expires_at"]:
+    expires_at = datetime.fromisoformat(session["expires_at"])
+
+    if datetime.now(timezone.utc) > expires_at:
         return None, ("token expired", 401)
     
     #check that admin still exists
@@ -110,7 +112,8 @@ def generate_token():
     return secrets.token_urlsafe(32)
 
 def access_expiry():
-    return datetime.now(timezone.utc) + timedelta(minutes=40)
+    return (datetime.now(timezone.utc) + timedelta(minutes=40)).isoformat()
+
 
 #### REGISTERING AUTH ROUTES ####
 def register_auth_routes(app, supabase):
