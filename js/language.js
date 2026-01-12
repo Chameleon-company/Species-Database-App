@@ -48,7 +48,7 @@
 
     document.getElementById("continueBtn").addEventListener("click", () => {
       console.log("Selected language:", selected);
-      window.location.href = "home.html"; // move to home page?
+      window.location.href = "login.html"; // move to home page?
     });
 
     renderList();

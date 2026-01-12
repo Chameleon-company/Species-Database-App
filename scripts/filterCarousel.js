@@ -83,6 +83,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }, { passive: true });
 
     // Handle button clicks (only if not dragging)
+    // Note: Active state management is now handled in home.html
+    // This code only prevents clicks during drag operations
     filterButtons.forEach(button => {
         button.addEventListener('click', function(e) {
             // If user was dragging, prevent the click
@@ -93,21 +95,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // Remove active state from previously active button
-            if (activeButton && activeButton !== this) {
-                activeButton.classList.remove('active');
-            }
-
-            // Add active state to clicked button
-            this.classList.add('active');
-            activeButton = this;
-
-            // Get the filter type
-            const filterType = this.getAttribute('data-filter');
-            console.log('Filter selected:', filterType);
-
-            // TODO: Next week - implement actual filtering logic here
-            // For now, this is just the UI placeholder
+            // Active state management is handled in home.html
+            // to support multiple active filters (leaf-type + fruit-type)
         });
 
         // Reset drag flag on button mouseup/touchend
