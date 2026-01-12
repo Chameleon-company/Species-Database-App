@@ -35,30 +35,8 @@
           <input id="searchInput" type="search" placeholder="Search" autocomplete="off" />
         </div>
 
-    </main>
-    <!-- The Script controls our buttons and service workers -->
-    <script src="scripts/preloadImages.js"></script>
-    <script>
-        const buttons = document.querySelectorAll('.lang-option');
-        buttons.forEach(button => {
-            button.addEventListener('click', () => {
-                const chosenLang = button.dataset.lang;
-
-                try {
-                    localStorage.setItem('appLanguage', chosenLang);
-                } catch (e) {
-                    console.error('Could not save language preference:', e);
-                }
-
-                if(chosenLang === 'en') {
-                    window.location.href = 'home.html';
-                } else if (chosenLang === 'tet') {
-                     window.location.href = 'tetum.html';
-                }
-
-               
-            });
-        });
+        <div class="list" id="langList" role="listbox" aria-label="Languages"></div>
+      </section>
 
       <div class="footer">
         <button class="btn" id="continueBtn">Continue</button>
