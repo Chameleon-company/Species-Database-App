@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="UTF-8" />
     <title>SBA Home</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,866 +8,988 @@
     <!-- PWA -->
     <link rel="manifest" href="manifest.json" />
     <meta name="theme-color" content="#fff3ff" />
-    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/responsive.css" />
 
     <style>
-        /* Body background and font */
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            background: #9ACD6B;
-            color: #000000;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
-            padding: 1rem 0;
-        }
+      /* Body background and font */
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        background: #9acd6b;
+        color: #000000;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        min-height: 100vh;
+        padding: 1rem 0;
+      }
 
-        /* Container for the app */
-        .app-shell {
-            background: #ffffff;
-            width: 100%;
-            max-width: 480px;
-            min-height: 600px;
-            margin: 0 auto;
-            border-radius: 16px;
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
-            padding: 0;
-            box-sizing: border-box;
-        }
+      /* Container for the app */
+      .app-shell {
+        background: #ffffff;
+        width: 100%;
+        max-width: 480px;
+        min-height: 600px;
+        margin: 0 auto;
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-        /* NEW HEADER — matches screenshot */
-        .app-header {
-            width: 100%;
-            background-color: #0B5C37;
-            padding: 1.5rem;
-            border-radius: 16px 16px 0 0;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            box-sizing: border-box;
-        }
+      /* NEW HEADER — matches screenshot */
+      .app-header {
+        width: 100%;
+        background-color: #0b5c37;
+        padding: 1.5rem;
+        border-radius: 16px 16px 0 0;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        box-sizing: border-box;
+      }
 
-        .header-top {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
+      .header-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
 
-        .header-title {
-            font-size: 1.6rem;
-            font-weight: 700;
-            color: #FFFFFF;
-            margin: 0;
-        }
+      .header-title {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin: 0;
+      }
 
-        .lang-btn {
-            background: white;
-            color: #0B5C37;
-            border: none;
-            padding: 0.5rem 1rem;
-            font-size: 1.1rem;
-            font-weight: 600;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: 0.25s;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-        }
+      .lang-btn {
+        background: white;
+        color: #0b5c37;
+        border: none;
+        padding: 0.5rem 1rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: 0.25s;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      }
 
-        .search-bar {
-            background: #FFFFFF;
-            border-radius: 999px;
-            padding: 0.75rem 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-        }
+      .search-bar {
+        background: #ffffff;
+        border-radius: 999px;
+        padding: 0.75rem 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+      }
 
-        .search-icon {
-            font-size: 1.2rem;
-            color: #475569;
-        }
+      .search-icon {
+        font-size: 1.2rem;
+        color: #475569;
+      }
 
-        .search-bar input {
-            border: none;
-            outline: none;
-            width: 100%;
-            font-size: 1rem;
-        }
+      .search-bar input {
+        border: none;
+        outline: none;
+        width: 100%;
+        font-size: 1rem;
+      }
 
-        .app-title {
-            text-align: center;
-            margin: 0 0 2.5rem 0;
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #0f172a;
-        }
+      .app-title {
+        text-align: center;
+        margin: 0 0 2.5rem 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #0f172a;
+      }
 
-        .app-subtitle{
-            text-align: center;
-            margin: -1.5rem 0 2.5rem 0;
-            font-size: 1rem;
-            color: #475569;
-        }
+      .app-subtitle {
+        text-align: center;
+        margin: -1.5rem 0 2.5rem 0;
+        font-size: 1rem;
+        color: #475569;
+      }
 
-        .app-logo {
-            width: 140px;
-            display: block;
-            margin: 0 auto 1.25rem auto;
-        }
+      .app-logo {
+        width: 140px;
+        display: block;
+        margin: 0 auto 1.25rem auto;
+      }
 
-        .filter-carousel-container {
-            padding: 0 1.5rem;
-            margin-bottom: 1.5rem;
-            position: relative;
-        }
+      .filter-carousel-container {
+        padding: 0 1.5rem;
+        margin-bottom: 1.5rem;
+        position: relative;
+      }
 
-        .filter-carousel {
-            display: flex;
-            overflow-x: auto;
-            overflow-y: hidden;
-            scroll-behavior: smooth;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none;
-            gap: 0.75rem;
-            padding: 0.5rem 0;
-            cursor: grab;
-        }
+      .filter-carousel {
+        display: flex;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        gap: 0.75rem;
+        padding: 0.5rem 0;
+        cursor: grab;
+      }
 
-        .filter-carousel:active {
-            cursor: grabbing;
-        }
+      .filter-carousel:active {
+        cursor: grabbing;
+      }
 
-        .filter-carousel::-webkit-scrollbar {
-            display: none;
-        }
+      .filter-carousel::-webkit-scrollbar {
+        display: none;
+      }
 
-        .filter-button {
-            flex: 0 0 auto;
-            padding: 0.625rem 1.25rem;
-            border-radius: 999px;
-            border: 1.5px solid #cbd5e1;
-            background: #ffffff;
-            color: #475569;
-            font-size: 0.875rem;
-            font-weight: 500;
-            cursor: pointer;
-            white-space: nowrap;
-            transition: all 0.2s ease;
-            user-select: none;
-        }
+      .filter-button {
+        flex: 0 0 auto;
+        padding: 0.625rem 1.25rem;
+        border-radius: 999px;
+        border: 1.5px solid #cbd5e1;
+        background: #ffffff;
+        color: #475569;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.2s ease;
+        user-select: none;
+      }
 
-        .filter-button:hover {
-            background: #f1f5f9;
-            border-color: #94a3b8;
-        }
+      .filter-button:hover {
+        background: #f1f5f9;
+        border-color: #94a3b8;
+      }
 
-        .filter-button.active {
-            background: #0f172a;
-            color: #ffffff;
-            border-color: #0f172a;
-            box-shadow: 0 2px 4px rgba(15, 23, 42, 0.2);
-            transform: scale(1.05);
-        }
+      .filter-button.active {
+        background: #0f172a;
+        color: #ffffff;
+        border-color: #0f172a;
+        box-shadow: 0 2px 4px rgba(15, 23, 42, 0.2);
+        transform: scale(1.05);
+      }
 
-        /* Species list */
-        .container#species-list {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            padding: 1.5rem;
-        }
+      /* Species list */
+      .container#species-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1.5rem;
+      }
 
-        .species-item {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            background: #F5F7FA;
-            padding: 1rem;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.1);
-        }
+      .species-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        background: #f5f7fa;
+        padding: 1rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.1);
+      }
 
-        .species-item img {
-            width: 64px;
-            height: 64px;
-            border-radius: 10px;
-            object-fit: cover;
-        }
+      .species-item img {
+        width: 64px;
+        height: 64px;
+        border-radius: 10px;
+        object-fit: cover;
+      }
 
-        .species-text {
-            display: flex;
-            flex-direction: column;
-        }
+      .species-text {
+        display: flex;
+        flex-direction: column;
+      }
 
-        .species-name {
-            font-weight: 700;
-            font-size: 1.1rem;
-            margin: 0 0 0.25rem 0;
-        }
+      .species-name {
+        font-weight: 700;
+        font-size: 1.1rem;
+        margin: 0 0 0.25rem 0;
+      }
 
-        .species-subname {
-            font-size: 0.9rem;
-            color: #6B7280;
-            margin: 0;
-        }
+      .species-subname {
+        font-size: 0.9rem;
+        color: #6b7280;
+        margin: 0;
+      }
 
-        .back-link {
-            display: block;
-            text-align: center;
-            color: #0B5C37;
-            font-weight: 600;
-            text-decoration: none;
-            margin-bottom: 2rem;
-        }
+      .back-link {
+        display: block;
+        text-align: center;
+        color: #0b5c37;
+        font-weight: 600;
+        text-decoration: none;
+        margin-bottom: 2rem;
+      }
 
-        .debug {
-            font-size: 0.8rem;
-            text-align: center;
-        }
+      .debug {
+        font-size: 0.8rem;
+        text-align: center;
+      }
 
-        /* -------------------------
+      /* -------------------------
            LANGUAGE OVERLAY
         -------------------------*/
 
-        .lang-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.6);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            padding: 16px;
-        }
+      .lang-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        padding: 16px;
+      }
 
-        .lang-modal {
-            background: #ffffff;
-            width: 100%;
-            max-width: 460px;
-            border-radius: 22px;
-            box-shadow: 0 18px 50px rgba(0, 0, 0, .35);
-            padding: 18px 18px 16px;
-            position: relative;
-        }
+      .lang-modal {
+        background: #ffffff;
+        width: 100%;
+        max-width: 460px;
+        border-radius: 22px;
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+        padding: 18px 18px 16px;
+        position: relative;
+      }
 
-        .lang-title {
-            font-size: 2rem;
-            font-weight: 800;
-            color: #0f1625;
-            margin: 10px 0 14px;
-        }
+      .lang-title {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #0f1625;
+        margin: 10px 0 14px;
+      }
 
-        .selected-pill {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 14px 16px;
-            border-radius: 999px;
-            border: 2px solid #d8dbe2;
-            background: #ffffff;
-            box-shadow: 0 10px 22px rgba(0, 0, 0, .12);
-        }
+      .selected-pill {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 16px;
+        border-radius: 999px;
+        border: 2px solid #d8dbe2;
+        background: #ffffff;
+        box-shadow: 0 10px 22px rgba(0, 0, 0, 0.12);
+      }
 
-        .flag {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: grid;
-            place-items: center;
-            background: rgba(0, 0, 0, .06);
-            box-shadow: 0 6px 14px rgba(0, 0, 0, .10);
-            flex: 0 0 auto;
-            font-size: 20px;
-        }
+      .flag {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: rgba(0, 0, 0, 0.06);
+        box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
+        flex: 0 0 auto;
+        font-size: 20px;
+      }
 
-        .selected-name {
-            flex: 1;
-            font-weight: 900;
-            letter-spacing: .06em;
-            font-size: 15px;
-            color: #0f1625;
-            text-transform: uppercase;
-        }
+      .selected-name {
+        flex: 1;
+        font-weight: 900;
+        letter-spacing: 0.06em;
+        font-size: 15px;
+        color: #0f1625;
+        text-transform: uppercase;
+      }
 
-        .check-dot {
-            width: 42px;
-            height: 42px;
-            border-radius: 50%;
-            background: #27c861;
-            display: grid;
-            place-items: center;
-            box-shadow: 0 10px 18px rgba(39, 200, 97, .25);
-            flex: 0 0 auto;
-        }
+      .check-dot {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: #27c861;
+        display: grid;
+        place-items: center;
+        box-shadow: 0 10px 18px rgba(39, 200, 97, 0.25);
+        flex: 0 0 auto;
+      }
 
-        .check-dot svg {
-            width: 18px;
-            height: 18px;
-            fill: #fff;
-        }
+      .check-dot svg {
+        width: 18px;
+        height: 18px;
+        fill: #fff;
+      }
 
-        .card {
-            margin-top: 10px;
-            border-radius: 22px;
-            overflow: hidden;
-            border: 2px solid #d8dbe2;
-            background: #ffffff;
-            box-shadow: 0 10px 22px rgba(0, 0, 0, .10);
-        }
+      .card {
+        margin-top: 10px;
+        border-radius: 22px;
+        overflow: hidden;
+        border: 2px solid #d8dbe2;
+        background: #ffffff;
+        box-shadow: 0 10px 22px rgba(0, 0, 0, 0.1);
+      }
 
-        .list {
-            background: #ffffff;
-        }
+      .list {
+        background: #ffffff;
+      }
 
-        .row {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            padding: 18px 14px;
-            font-size: 18px;
-            font-weight: 800;
-            border-bottom: 1px solid #eef1f6;
-            cursor: pointer;
-            user-select: none;
-            color: #0f1625;
-            transition: background .15s ease, transform .05s ease;
-        }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 18px 14px;
+        font-size: 18px;
+        font-weight: 800;
+        border-bottom: 1px solid #eef1f6;
+        cursor: pointer;
+        user-select: none;
+        color: #0f1625;
+        transition: background 0.15s ease, transform 0.05s ease;
+      }
 
-        .row:active {
-            transform: scale(0.995);
-        }
+      .row:active {
+        transform: scale(0.995);
+      }
 
-        .row:last-child {
-            border-bottom: none;
-        }
+      .row:last-child {
+        border-bottom: none;
+      }
 
-        .row .name {
-            flex: 1;
-        }
+      .row .name {
+        flex: 1;
+      }
 
-        .radio {
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            border: 3px solid #cfd5e2;
-            display: grid;
-            place-items: center;
-            flex: 0 0 auto;
-        }
+      .radio {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        border: 3px solid #cfd5e2;
+        display: grid;
+        place-items: center;
+        flex: 0 0 auto;
+      }
 
-        .radio svg {
-            width: 16px;
-            height: 16px;
-            fill: #fff;
-            display: none;
-        }
+      .radio svg {
+        width: 16px;
+        height: 16px;
+        fill: #fff;
+        display: none;
+      }
 
-        .row.selected {
-            background: rgba(39, 200, 97, .10);
-        }
+      .row.selected {
+        background: rgba(39, 200, 97, 0.1);
+      }
 
-        .row.selected .radio {
-            border-color: transparent;
-            background: #27c861;
-            box-shadow: 0 10px 18px rgba(39, 200, 97, .22);
-        }
+      .row.selected .radio {
+        border-color: transparent;
+        background: #27c861;
+        box-shadow: 0 10px 18px rgba(39, 200, 97, 0.22);
+      }
 
-        .row.selected .radio svg {
-            display: block;
-        }
+      .row.selected .radio svg {
+        display: block;
+      }
 
-        /* -------------------------
+      /* -------------------------
            FILTER OVERLAY (NEW)
         -------------------------*/
-        .filter-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.55);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 9998;
-        }
+      .filter-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.55);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9998;
+      }
 
-        .filter-modal {
-            background: #ffffff;
-            padding: 2rem;
-            border-radius: 16px;
-            width: 80%;
-            max-width: 320px;
-            text-align: center;
-            position: relative;
-        }
+      .filter-modal {
+        background: #ffffff;
+        padding: 2rem;
+        border-radius: 16px;
+        width: 80%;
+        max-width: 320px;
+        text-align: center;
+        position: relative;
+      }
 
-        #filterDescription:empty {
-            display: none;
-        }
+      #filterDescription:empty {
+        display: none;
+      }
 
-        .close-filter-overlay {
-            position: absolute;
-            top: 8px;
-            right: 12px;
-            background: #ff4d4d;
-            border: none;
-            color: white;
-            font-size: 1.2rem;
-            padding: 0.4rem 0.6rem;
-            border-radius: 6px;
-            cursor: pointer;
-        }
+      .close-filter-overlay {
+        position: absolute;
+        top: 8px;
+        right: 12px;
+        background: #ff4d4d;
+        border: none;
+        color: white;
+        font-size: 1.2rem;
+        padding: 0.4rem 0.6rem;
+        border-radius: 6px;
+        cursor: pointer;
+      }
 
-        .placeholder-option {
-            display: block;
-            width: 100%;
-            padding: 0.8rem;
-            margin-top: 0.6rem;
-            font-size: 1.1rem;
-            background: #0B5C37;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-        }
+      .placeholder-option {
+        display: block;
+        width: 100%;
+        padding: 0.8rem;
+        margin-top: 0.6rem;
+        font-size: 1.1rem;
+        background: #0b5c37;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+      }
 
-        .species-list-card:hover {
-            background-color: #8AC642;
-            color: #0B5C37;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-        }
+      .species-list-card:hover {
+        background-color: #8ac642;
+        color: #0b5c37;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+      }
 
-        .common-name-species {
-            color:grey;
-            margin: 0;
-        }
+      .common-name-species {
+        color: grey;
+        margin: 0;
+      }
 
-        .species-list-card:hover .common-name-species {
-            color:white;
-        }
+      .species-list-card:hover .common-name-species {
+        color: white;
+      }
+       /* -------------------------
+           LANGUAGE OVERLAY
+        -------------------------*/
+      .lang-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.6);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+      }
+
+      .lang-modal {
+        background: #ffffff;
+        padding: 2rem;
+        border-radius: 16px;
+        width: 80%;
+        max-width: 320px;
+        text-align: center;
+        position: relative;
+      }
+
+      .lang-choice {
+        padding: 1rem 2rem;
+        width: 100%;
+        margin-bottom: 1rem;
+        font-size: 1.3rem;
+        font-weight: bold;
+        background: #0b5c37;
+        color: white;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+      }
+
+      .close-overlay {
+        position: absolute;
+        top: 8px;
+        right: 12px;
+        background: #ff4d4d;
+        border: none;
+        color: white;
+        font-size: 1.2rem;
+        padding: 0.4rem 0.6rem;
+        border-radius: 6px;
+        cursor: pointer;
+      }
 
     </style>
-</head>
-<body>
-
-<main class="app-shell">
-
-    <header class="app-header">
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="app-header">
         <div class="header-top">
-            <h1 class="header-title">Species Database</h1>
-            <button class="lang-btn">EN</button>
+          <h1 class="header-title">Species Database</h1>
+          <button class="lang-btn">EN</button>
         </div>
-        
+
         <div class="search-bar">
-            <span class="search-icon">🔍</span>
-            <input type="text" placeholder="Search species" id="searchInput">
+          <span class="search-icon">🔍</span>
+          <input type="text" placeholder="Search species" id="searchInput" />
         </div>
-    </header>
+      </header>
 
-    <!-- Filter Carousel -->
-    <div class="filter-carousel-container">
+      <!-- Filter Carousel -->
+      <div class="filter-carousel-container">
         <div class="filter-carousel" id="filter-carousel">
-            <button class="filter-button" data-filter="all">All</button>
-            <button class="filter-button" data-filter="a-z">A-Z</button>
-            <button class="filter-button" data-filter="leaf-type">Leaf Type</button>
-            <button class="filter-button" data-filter="fruit-type">Fruit Type</button>
+          <button class="filter-button" data-filter="all">All</button>
+          <button class="filter-button" data-filter="a-z">A-Z</button>
+          <button class="filter-button" data-filter="leaf-type">
+            Leaf Type
+          </button>
+          <button class="filter-button" data-filter="fruit-type">
+            Fruit Type
+          </button>
         </div>
-    </div>
+      </div>
 
-    <div class="container" id="species-list"></div>
+      <div class="container" id="species-list"></div>
 
+      <a class="back-link" href="index.html"></a>
+
+      <div class="debug" id="debugInfo"></div>
+      <!-- LANGUAGE OVERLAY -->
+      <div class="lang-overlay" id="langOverlay">
+        <div class="lang-modal">
+          <button class="close-overlay" id="closeOverlay">✖</button>
+          <button class="lang-choice" id="chooseEn">English</button>
+          <button class="lang-choice" id="chooseTet">Tetum</button>
+        </div>
+      </div>
+      <!-- LANGUAGE OVERLAY -->
+
+      <!-- <div class="lang-overlay" id="langOverlay">
+        <div
+          class="lang-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Choose language"
+        >
+          <button class="close-overlay" id="closeOverlay" aria-label="Close">
+            ✖
+          </button>
+
+          <div class="lang-title">You Selected</div>
+
+          <div class="selected-pill" id="selectedPill">
+            <div class="flag" id="selectedFlag" aria-hidden="true">🇦🇺</div>
+            <div class="selected-name" id="selectedName">ENGLISH AU</div>
+            <div class="check-dot" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="M9.2 16.6 4.9 12.3l1.4-1.4 2.9 2.9 8-8 1.4 1.4-9.4 9.4z"
+                />
+              </svg>
+            </div>
+          </div>
+
+          <div class="lang-title" style="margin-top: 18px">All Languages</div>
+
+          <section class="card" aria-label="Language list">
+            <div
+              class="list"
+              id="langList"
+              role="listbox"
+              aria-label="Languages"
+            >
+              <div
+                class="row selected"
+                role="option"
+                aria-selected="true"
+                data-code="EN"
+                data-name="ENGLISH AU"
+                data-flag="🇦🇺"
+              >
+                <div class="flag" aria-hidden="true">🇦🇺</div>
+                <div class="name">ENGLISH AU</div>
+                <div class="radio" aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <path
+                      d="M9.2 16.6 4.9 12.3l1.4-1.4 2.9 2.9 8-8 1.4 1.4-9.4 9.4z"
+                    />
+                  </svg>
+                </div>
+              </div>
+
+              <div
+                class="row"
+                role="option"
+                aria-selected="false"
+                data-code="TET"
+                data-name="Tetum"
+                data-flag="🇹🇱"
+              >
+                <div class="flag" aria-hidden="true">🇹🇱</div>
+                <div class="name">Tetum</div>
+                <div class="radio" aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <path
+                      d="M9.2 16.6 4.9 12.3l1.4-1.4 2.9 2.9 8-8 1.4 1.4-9.4 9.4z"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div> -->
+
+      <!-- FILTER OVERLAY (NEW) -->
+      <div class="filter-overlay" id="filterOverlay">
+        <div class="filter-modal">
+          <button class="close-filter-overlay" id="closeFilterOverlay">
+            ✖
+          </button>
+          <h2 id="filterTitle"></h2>
+          <p id="filterDescription"></p>
+          <div id="filterOptions"></div>
+        </div>
+      </div>
+    </main>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    
+
     <script src="scripts/specieslist.js"></script>
     <script src="scripts/filterCarousel.js"></script>
 
-    <a class="back-link" href="index.html"></a>
+    <script>
+      // LANGUAGE HANDLER
+      let lang = "en";
 
-    <div class="debug" id="debugInfo"></div>
+      try {
+        const stored = localStorage.getItem("appLanguage");
+        if (stored === "en" || stored === "tet") {
+          lang = stored;
+        }
+      } catch (e) {
+        console.warn("Could not access localStorage:", e);
+      }
 
-    <!-- LANGUAGE OVERLAY -->
-        <!-- LANGUAGE OVERLAY -->
+      const langBtn = document.querySelector(".lang-btn");
+      // langBtn.textContent = lang === "en" ? "EN" : "TET";
 
-        <div class="lang-overlay" id="langOverlay">
-            <div class="lang-modal" role="dialog" aria-modal="true" aria-label="Choose language">
-                <button class="close-overlay" id="closeOverlay" aria-label="Close">✖</button>
+      const overlay = document.getElementById("langOverlay");
+      const closeBtn = document.getElementById("closeOverlay");
+      const chooseEn = document.getElementById("chooseEn");
+      const chooseTet = document.getElementById("chooseTet");
 
-                <div class="lang-title">You Selected</div>
+      langBtn.addEventListener("click", () => {
+        overlay.style.display = "flex";
+        console.log("Language overlay opened");
+      });
 
-                <div class="selected-pill" id="selectedPill">
-                    <div class="flag" id="selectedFlag" aria-hidden="true">🇦🇺</div>
-                    <div class="selected-name" id="selectedName">ENGLISH AU</div>
-                    <div class="check-dot" aria-hidden="true">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M9.2 16.6 4.9 12.3l1.4-1.4 2.9 2.9 8-8 1.4 1.4-9.4 9.4z" />
-                        </svg>
-                    </div>
-                </div>
+      closeBtn.addEventListener("click", () => {
+        overlay.style.display = "none";
+      });
 
-                <div class="lang-title" style="margin-top:18px;">All Languages</div>
+      chooseEn.addEventListener("click", () => {
+        localStorage.setItem("appLanguage", "en");
+        langBtn.textContent = "EN";
+        overlay.style.display = "none";
+        window.location.href = "home.html";
+      });
 
-                <section class="card" aria-label="Language list">
-                    <div class="list" id="langList" role="listbox" aria-label="Languages">
-                        <div class="row selected" role="option" aria-selected="true" data-code="EN"
-                            data-name="ENGLISH AU" data-flag="🇦🇺">
-                            <div class="flag" aria-hidden="true">🇦🇺</div>
-                            <div class="name">ENGLISH AU</div>
-                            <div class="radio" aria-hidden="true">
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M9.2 16.6 4.9 12.3l1.4-1.4 2.9 2.9 8-8 1.4 1.4-9.4 9.4z" />
-                                </svg>
-                            </div>
-                        </div>
+      chooseTet.addEventListener("click", () => {
+        localStorage.setItem("appLanguage", "tet");
+        langBtn.textContent = "TET";
+        overlay.style.display = "none";
+        window.location.href = "tetum.html";
+      });
 
-                        <div class="row" role="option" aria-selected="false" data-code="TET" data-name="Tetum"
-                            data-flag="🇹🇱">
-                            <div class="flag" aria-hidden="true">🇹🇱</div>
-                            <div class="name">Tetum</div>
-                            <div class="radio" aria-hidden="true">
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M9.2 16.6 4.9 12.3l1.4-1.4 2.9 2.9 8-8 1.4 1.4-9.4 9.4z" />
-                                </svg>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-            </div>
-        </div>
+      // document.querySelectorAll("#langList .row").forEach((row) => {
+      //   row.addEventListener("click", () => {
+      //     document.querySelectorAll("#langList .row").forEach((r) => {
+      //       r.classList.remove("selected");
+      //       r.setAttribute("aria-selected", "false");
+      //     });
+      //     row.classList.add("selected");
+      //     row.setAttribute("aria-selected", "true");
+      //     selectedNameEl.textContent = row.dataset.name;
+      //     selectedFlagEl.textContent = row.dataset.flag;
+      //     langBtn.textContent = row.dataset.code;
+      //     overlay.style.display = "none";
+      //   });
+      // });
+      const selectedNameEl = document.getElementById("selectedName");
+      const selectedFlagEl = document.getElementById("selectedFlag");
+      // ------------------------------
+      // FILTER OVERLAY JS (NEW)
+      // ------------------------------
+      const filterOverlay = document.getElementById("filterOverlay");
+      const closeFilterOverlay = document.getElementById("closeFilterOverlay");
+      const filterTitle = document.getElementById("filterTitle");
+      const filterOptions = document.getElementById("filterOptions");
+      const filterDescription = document.getElementById("filterDescription");
 
-    <!-- FILTER OVERLAY (NEW) -->
-    <div class="filter-overlay" id="filterOverlay">
-        <div class="filter-modal">
-            <button class="close-filter-overlay" id="closeFilterOverlay">✖</button>
-            <h2 id="filterTitle"></h2>
-            <p id="filterDescription"></p>
-            <div id="filterOptions"></div>
-        </div>
-    </div>
+      // Global state for active filters
+      let activeFilters = {
+        leafType: null,
+        fruitType: null,
+      };
 
-</main>
+      // Leaf Type options
+      const leafTypeOptions = [
+        "Simple",
+        "Pinnately compound (single)",
+        "Pinnately compound (double)",
+        "Pinnately compound (triple)",
+        "Palmately compound",
+      ];
 
-<script>
-// LANGUAGE HANDLER
-        const langBtn = document.querySelector(".lang-btn");
-        const overlay = document.getElementById("langOverlay");
-        const closeBtn = document.getElementById("closeOverlay");
-        const selectedNameEl = document.getElementById("selectedName");
-        const selectedFlagEl = document.getElementById("selectedFlag");
-        langBtn.addEventListener("click", () => {
-            overlay.style.display = "flex";
-        });
-        closeBtn.addEventListener("click", () => {
-            overlay.style.display = "none";
-        });
-        overlay.addEventListener("click", (e) => {
-            if (e.target === overlay) overlay.style.display = "none";
-        });
-        document.querySelectorAll("#langList .row").forEach((row) => {
-            row.addEventListener("click", () => {
-                document.querySelectorAll("#langList .row").forEach(r => {
-                    r.classList.remove("selected");
-                    r.setAttribute("aria-selected", "false");
-                });
-                row.classList.add("selected");
-                row.setAttribute("aria-selected", "true");
-                selectedNameEl.textContent = row.dataset.name;
-                selectedFlagEl.textContent = row.dataset.flag;
-                langBtn.textContent = row.dataset.code;
-                overlay.style.display = "none";
-            });
-        });
+      // Fruit Type options
+      const fruitTypeOptions = ["Drupe", "Capsule", "Follicle", "Pod"];
 
-
-// ------------------------------
-// FILTER OVERLAY JS (NEW)
-// ------------------------------
-const filterOverlay = document.getElementById("filterOverlay");
-const closeFilterOverlay = document.getElementById("closeFilterOverlay");
-const filterTitle = document.getElementById("filterTitle");
-const filterOptions = document.getElementById("filterOptions");
-const filterDescription = document.getElementById("filterDescription");
-
-// Global state for active filters
-let activeFilters = {
-    leafType: null,
-    fruitType: null
-};
-
-// Leaf Type options
-const leafTypeOptions = [
-    "Simple",
-    "Pinnately compound (single)",
-    "Pinnately compound (double)",
-    "Pinnately compound (triple)",
-    "Palmately compound"
-];
-
-// Fruit Type options
-const fruitTypeOptions = [
-    "Drupe",
-    "Capsule",
-    "Follicle",
-    "Pod"
-];
-
-const filterConfigs = {
-    "a-z": {
-        title: "Sort Alphabetically",
-        description: "Sort species in ascending or descending order.",
-        options: [
+      const filterConfigs = {
+        "a-z": {
+          title: "Sort Alphabetically",
+          description: "Sort species in ascending or descending order.",
+          options: [
             { label: "A → Z", action: () => sortSpecies("az") },
-            { label: "Z → A", action: () => sortSpecies("za") }
-        ]
-    },
-    "leaf-type": {
-        title: "Leaf Type",
-        description: "",
-        options: leafTypeOptions.map(option => ({
+            { label: "Z → A", action: () => sortSpecies("za") },
+          ],
+        },
+        "leaf-type": {
+          title: "Leaf Type",
+          description: "",
+          options: leafTypeOptions.map((option) => ({
             label: option,
             value: option,
-            type: "leaf-type"
-        }))
-    },
-    "fruit-type": {
-        title: "Fruit Type",
-        description: "",
-        options: fruitTypeOptions.map(option => ({
+            type: "leaf-type",
+          })),
+        },
+        "fruit-type": {
+          title: "Fruit Type",
+          description: "",
+          options: fruitTypeOptions.map((option) => ({
             label: option,
             value: option,
-            type: "fruit-type"
-        }))
-    }
-}
+            type: "fruit-type",
+          })),
+        },
+      };
 
-// Function to apply all active filters and search
-function applyFilters() {
-    if (!loadedSpeciesData || loadedSpeciesData.length === 0) return;
-    
-    let filtered = [...loadedSpeciesData];
-    
-    // Apply leaf type filter
-    if (activeFilters.leafType) {
-        filtered = filtered.filter(species => 
-            species.leaf_type && species.leaf_type === activeFilters.leafType
-        );
-    }
-    
-    // Apply fruit type filter
-    if (activeFilters.fruitType) {
-        filtered = filtered.filter(species => 
-            species.fruit_type && species.fruit_type === activeFilters.fruitType
-        );
-    }
-    
-    // Apply search filter
-    const searchInput = document.getElementById("searchInput");
-    if (searchInput && searchInput.value.trim() !== "") {
-        const query = searchInput.value.toLowerCase().trim();
-        filtered = filtered.filter(species =>
-            species.scientific_name &&
-            species.scientific_name.toLowerCase().includes(query)
-        );
-    }
-    
-    renderSpecies(filtered);
-}
+      // Function to apply all active filters and search
+      function applyFilters() {
+        if (!loadedSpeciesData || loadedSpeciesData.length === 0) return;
 
-// Make applyFilters available globally
-window.applyFilters = applyFilters;
+        let filtered = [...loadedSpeciesData];
 
-// Function to update filter button active states
-function updateFilterButtonStates() {
-    const leafTypeBtn = document.querySelector('[data-filter="leaf-type"]');
-    const fruitTypeBtn = document.querySelector('[data-filter="fruit-type"]');
-    
-    if (leafTypeBtn) {
+        // Apply leaf type filter
         if (activeFilters.leafType) {
-            leafTypeBtn.classList.add("active");
-        } else {
-            leafTypeBtn.classList.remove("active");
+          filtered = filtered.filter(
+            (species) =>
+              species.leaf_type && species.leaf_type === activeFilters.leafType
+          );
         }
-    }
-    
-    if (fruitTypeBtn) {
-        if (activeFilters.fruitType) {
-            fruitTypeBtn.classList.add("active");
-        } else {
-            fruitTypeBtn.classList.remove("active");
-        }
-    }
-}
 
-// Function to create option buttons with active state
-function createOptionButton(option, filterType) {
-    const optionBtn = document.createElement("button");
-    optionBtn.className = "placeholder-option";
-    const optionValue = option.value || option;
-    optionBtn.textContent = option.label || option;
-    
-    // Check if this option is currently active
-    const isActive = (filterType === "leaf-type" && activeFilters.leafType === optionValue) ||
-                     (filterType === "fruit-type" && activeFilters.fruitType === optionValue);
-    
-    if (isActive) {
-        optionBtn.style.background = "#0f172a";
-        optionBtn.style.color = "#ffffff";
-    }
-    
-    optionBtn.onclick = () => {
-        if (filterType === "leaf-type") {
+        // Apply fruit type filter
+        if (activeFilters.fruitType) {
+          filtered = filtered.filter(
+            (species) =>
+              species.fruit_type &&
+              species.fruit_type === activeFilters.fruitType
+          );
+        }
+
+        // Apply search filter
+        const searchInput = document.getElementById("searchInput");
+        if (searchInput && searchInput.value.trim() !== "") {
+          const query = searchInput.value.toLowerCase().trim();
+          filtered = filtered.filter(
+            (species) =>
+              species.scientific_name &&
+              species.scientific_name.toLowerCase().includes(query)
+          );
+        }
+
+        renderSpecies(filtered);
+      }
+
+      // Make applyFilters available globally
+      window.applyFilters = applyFilters;
+
+      // Function to update filter button active states
+      function updateFilterButtonStates() {
+        const leafTypeBtn = document.querySelector('[data-filter="leaf-type"]');
+        const fruitTypeBtn = document.querySelector(
+          '[data-filter="fruit-type"]'
+        );
+
+        if (leafTypeBtn) {
+          if (activeFilters.leafType) {
+            leafTypeBtn.classList.add("active");
+          } else {
+            leafTypeBtn.classList.remove("active");
+          }
+        }
+
+        if (fruitTypeBtn) {
+          if (activeFilters.fruitType) {
+            fruitTypeBtn.classList.add("active");
+          } else {
+            fruitTypeBtn.classList.remove("active");
+          }
+        }
+      }
+
+      // Function to create option buttons with active state
+      function createOptionButton(option, filterType) {
+        const optionBtn = document.createElement("button");
+        optionBtn.className = "placeholder-option";
+        const optionValue = option.value || option;
+        optionBtn.textContent = option.label || option;
+
+        // Check if this option is currently active
+        const isActive =
+          (filterType === "leaf-type" &&
+            activeFilters.leafType === optionValue) ||
+          (filterType === "fruit-type" &&
+            activeFilters.fruitType === optionValue);
+
+        if (isActive) {
+          optionBtn.style.background = "#0f172a";
+          optionBtn.style.color = "#ffffff";
+        }
+
+        optionBtn.onclick = () => {
+          if (filterType === "leaf-type") {
             // Toggle leaf type filter
             if (activeFilters.leafType === optionValue) {
-                activeFilters.leafType = null; // Deselect if already selected
+              activeFilters.leafType = null; // Deselect if already selected
             } else {
-                activeFilters.leafType = optionValue; // Select new option
+              activeFilters.leafType = optionValue; // Select new option
             }
-        } else if (filterType === "fruit-type") {
+          } else if (filterType === "fruit-type") {
             // Toggle fruit type filter
             if (activeFilters.fruitType === optionValue) {
-                activeFilters.fruitType = null; // Deselect if already selected
+              activeFilters.fruitType = null; // Deselect if already selected
             } else {
-                activeFilters.fruitType = optionValue; // Select new option
+              activeFilters.fruitType = optionValue; // Select new option
             }
-        }
-        
-        // Update filter button states
-        updateFilterButtonStates();
-        
-        // Apply filters
-        applyFilters();
-        
-        // Close overlay
-        filterOverlay.style.display = "none";
-    };
-    
-    return optionBtn;
-}
+          }
 
-document.querySelectorAll(".filter-button").forEach(btn => {
-    btn.addEventListener("click", () => {
-        const key = btn.dataset.filter;
-        
-        if (key === "all") {
+          // Update filter button states
+          updateFilterButtonStates();
+
+          // Apply filters
+          applyFilters();
+
+          // Close overlay
+          filterOverlay.style.display = "none";
+        };
+
+        return optionBtn;
+      }
+
+      document.querySelectorAll(".filter-button").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const key = btn.dataset.filter;
+
+          if (key === "all") {
             // Clear all filters
             activeFilters.leafType = null;
             activeFilters.fruitType = null;
-            
+
             // Remove active state from all filter buttons except "all"
-            document.querySelectorAll(".filter-button").forEach(b => {
-                if (b.dataset.filter !== "all") {
-                    b.classList.remove("active");
-                }
+            document.querySelectorAll(".filter-button").forEach((b) => {
+              if (b.dataset.filter !== "all") {
+                b.classList.remove("active");
+              }
             });
             btn.classList.add("active");
-            
+
             // Reset search input
             const searchInput = document.getElementById("searchInput");
             if (searchInput) {
-                searchInput.value = "";
+              searchInput.value = "";
             }
-            
+
             // Render all species
             renderSpecies(loadedSpeciesData);
             filterOverlay.style.display = "none";
             return;
-        }
-        
-        // Don't remove active state for leaf-type and fruit-type buttons
-        // They can be active simultaneously
-        // A-Z is a sort, not a filter, so it can work alongside filters
-        if (key === "a-z") {
+          }
+
+          // Don't remove active state for leaf-type and fruit-type buttons
+          // They can be active simultaneously
+          // A-Z is a sort, not a filter, so it can work alongside filters
+          if (key === "a-z") {
             // A-Z can be active alongside leaf-type and fruit-type
             btn.classList.add("active");
-        } else if (key !== "leaf-type" && key !== "fruit-type") {
-            document.querySelectorAll(".filter-button").forEach(b => {
-                if (b.dataset.filter !== "leaf-type" && b.dataset.filter !== "fruit-type" && b.dataset.filter !== "a-z") {
-                    b.classList.remove("active");
-                }
+          } else if (key !== "leaf-type" && key !== "fruit-type") {
+            document.querySelectorAll(".filter-button").forEach((b) => {
+              if (
+                b.dataset.filter !== "leaf-type" &&
+                b.dataset.filter !== "fruit-type" &&
+                b.dataset.filter !== "a-z"
+              ) {
+                b.classList.remove("active");
+              }
             });
             btn.classList.add("active");
-        }
-        
-        const config = filterConfigs[key];
-        if(!config) return;
+          }
 
-        filterTitle.textContent = config.title;
-        filterDescription.textContent = config.description;
-        filterOptions.innerHTML = "";
+          const config = filterConfigs[key];
+          if (!config) return;
 
-        config.options.forEach(option => {
+          filterTitle.textContent = config.title;
+          filterDescription.textContent = config.description;
+          filterOptions.innerHTML = "";
+
+          config.options.forEach((option) => {
             let optionBtn;
-            
+
             if (option.action) {
-                // For A-Z filter with actions
-                optionBtn = document.createElement("button");
-                optionBtn.className = "placeholder-option";
-                optionBtn.textContent = option.label;
-                optionBtn.onclick = () => {
-                    if (option.action) {
-                        option.action();
-                    }
-                    filterOverlay.style.display = "none";
-                };
+              // For A-Z filter with actions
+              optionBtn = document.createElement("button");
+              optionBtn.className = "placeholder-option";
+              optionBtn.textContent = option.label;
+              optionBtn.onclick = () => {
+                if (option.action) {
+                  option.action();
+                }
+                filterOverlay.style.display = "none";
+              };
             } else {
-                // For leaf-type and fruit-type filters
-                optionBtn = createOptionButton(option, key);
+              // For leaf-type and fruit-type filters
+              optionBtn = createOptionButton(option, key);
             }
-            
+
             filterOptions.appendChild(optionBtn);
+          });
+
+          filterOverlay.style.display = "flex";
         });
+      });
 
-        filterOverlay.style.display = "flex";
-    });
-});
+      closeFilterOverlay.addEventListener("click", () => {
+        filterOverlay.style.display = "none";
+      });
 
-closeFilterOverlay.addEventListener("click", () => {
-    filterOverlay.style.display = "none";
-});
+      // Initialize: Set "All" button as active by default when page loads
+      document.addEventListener("DOMContentLoaded", () => {
+        const allButton = document.querySelector('[data-filter="all"]');
+        if (allButton) {
+          allButton.classList.add("active");
+        }
+      });
 
-// Initialize: Set "All" button as active by default when page loads
-document.addEventListener("DOMContentLoaded", () => {
-    const allButton = document.querySelector('[data-filter="all"]');
-    if (allButton) {
-        allButton.classList.add("active");
-    }
-});
+      let originalOrder = null;
 
-let originalOrder = null;
+      document.addEventListener("DOMContentLoaded", () => {
+        originalOrder = Array.from(document.querySelectorAll(".species-item"));
+      });
 
-document.addEventListener("DOMContentLoaded", () => {
-    originalOrder = Array.from(document.querySelectorAll(".species-item"));
-});
+      function resetSpeciesList() {
+        const list = document.getElementById("species-list");
+        if (!originalOrder) return;
+        originalOrder.forEach((item) => list.appendChild(item));
+      }
 
-function resetSpeciesList() {
-    const list = document.getElementById("species-list");
-    if (!originalOrder) return;
-    originalOrder.forEach(item => list.appendChild(item));
-}
+      function sortSpecies(direction) {
+        if (!loadedSpeciesData || loadedSpeciesData.length === 0) {
+          console.warn("No species data to sort.");
+          return;
+        }
 
-function sortSpecies(direction) {
-    if (!loadedSpeciesData || loadedSpeciesData.length === 0) {
-        console.warn("No species data to sort.");
-        return;
-    }
+        const sorted = [...loadedSpeciesData].sort((a, b) => {
+          const nameA = a.scientific_name.toLowerCase();
+          const nameB = b.scientific_name.toLowerCase();
 
-    const sorted = [...loadedSpeciesData].sort((a, b) => {
-        const nameA = a.scientific_name.toLowerCase();
-        const nameB = b.scientific_name.toLowerCase();
-
-        return direction === "az"
+          return direction === "az"
             ? nameA.localeCompare(nameB)
             : nameB.localeCompare(nameA);
-    });
+        });
 
-    renderSpecies(sorted);
-}
-
-
-</script>
-
-</body>
+        renderSpecies(sorted);
+      }
+    </script>
+  </body>
 </html>

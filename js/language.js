@@ -1,5 +1,5 @@
     const languages = [
-      { code: "en-AU", name: "ENGLISH AU", flag: "🇦🇺" },
+      { code: "en", name: "ENGLISH AU", flag: "🇦🇺" },
       { code: "tet",   name: "Tetum",      flag: "🇹🇱" },
       //testchange
     ];
@@ -48,6 +48,7 @@
 
     document.getElementById("continueBtn").addEventListener("click", () => {
       console.log("Selected language:", selected);
+      localStorage.setItem("appLanguage", selected.code);
       window.location.href = "login.html"; // move to home page?
     });
 
