@@ -1,17 +1,21 @@
 from flask import Flask, request, jsonify
-
+import tempfile
+import asyncio
 import os
 from supabase import create_client, Client
+from dotenv import load_dotenv
+from flask_cors import CORS
+from uploader import process_file
+from audit import read_file_to_df, audit_dataframe
 
+load_dotenv()
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-import tempfile
-import asyncio
-from uploader import process_file
 
 app = Flask(__name__)
+CORS(app)
 
 @app.route('/')
 def index():
@@ -141,6 +145,37 @@ def upload_species_file():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.post("/audit-species")
+def audit_species_file():
+    """
+    Upload a file and return a data quality report (NO upload to Supabase).
+    """
+    if "file" not in request.files:
+        return jsonify({"error": "No file part"}), 400
+
+    uploaded_file = request.files["file"]
+    if uploaded_file.filename == "":
+        return jsonify({"error": "No selected file"}), 400
+
+    try:
+        suffix = ".xlsx" if uploaded_file.filename.endswith(".xlsx") else ".csv"
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+            uploaded_file.save(tmp.name)
+            temp_path = tmp.name
+
+        df = read_file_to_df(temp_path)
+        report = audit_dataframe(df)
+
+        return jsonify({
+            "status": "success",
+            "report": report
+        }), 200
+
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
