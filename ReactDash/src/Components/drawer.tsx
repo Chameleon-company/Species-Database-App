@@ -58,6 +58,16 @@ export default function TheDrawer() {
             <ListItemText primary="Upload from Excel" />
           </ListItemButton>
         </ListItem>
+        
+        <ListItem disablePadding>
+          <ListItemButton
+            component={Link}
+            to="/Audit"
+            onClick={() => setOpen(false)}
+          >
+            <ListItemText primary="Audit Feature" />
+          </ListItemButton>
+        </ListItem>
 
         <ListItem disablePadding>
           <ListItemButton
