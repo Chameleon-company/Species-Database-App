@@ -29,7 +29,7 @@ async def translate_to_tetum(text):
     if not text or text.strip() == "":
         return ""
     try:
-        result = await translator.translate(text, dest='tet')
+        result = translator.translate(text, dest='id')
         return result.text
     except Exception:
         return text
