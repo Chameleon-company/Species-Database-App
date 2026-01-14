@@ -1,0 +1,80 @@
+[
+  {
+    "species_id": 1,
+    "scientific_name": "Aleurites moluccana",
+    "common_name": "Ai-Kami",
+    "etymology": "Aleurites is from Greek aleuron meaning “flour/meal,” referring to a mealy coating, and moluccana denotes “from the Moluccas (Maluku Islands, Indonesia)",
+    "habitat": "Common from coast to mid-hills in Timor-Leste, growing in secondary forest, along streams  and on open hilly roadsides.",
+    "identification_character": "A medium–large tree; leaves alternate, large, simple and often 3-lobed (especially on young shoots), underside pale/silvery; leaf stalk very long; sap milky; flowers white in branching clusters; fruit a hard-shelled drupe ~4–6 cm, green when young, turning brown-black when ripe, with 1–2 oily “candlenuts.”",
+    "leaf_type": "Simple",
+    "fruit_type": "Drupe",
+    "phenology": "Throughout the Year",
+    "seed_germination": "Collect brown mature fruits from the tree or dry endocarp. Extract seed by softening fresh fruits a few days, peeling the rind, washing, and drying; discard floaters in water and store dried seed for months at ~10–12% moisture. Because the endocarp is very hard, sun-dry the shells 2–3 days and then plunge warm shells into water (thermal shock) to crack them; protect seeds from rodents. Use a germination medium of roughly 2:1 topsoil to river sand, and sow cracked nuts 2–3 cm deep in deep polybags or a loose, deep bed (large taproot). With cracking, germination typically occurs in ~3–8 weeks (some in 3–4 weeks) and rates can exceed 80%, whereas untreated seeds may take 3–4 months and often rot.",
+    "pest": "For candlenut, the most immediate nursery threat is rodents drawn to the oily kernels - protect germination beds and trays with wire mesh or fine netting and keep floors clean. In the field, fungal diseases cause defoliation and premature fruit drop, while longhorn stem borers and subterranean termites damage stems, collars, and roots. Fruits are frequently attacked by fruit flies and seed/pod borers; regular collection and destruction of fallen or infested fruits is essential."
+  },
+  {
+    "species_id": 2,
+    "scientific_name": "Tectona grandis",
+    "common_name": "Ai-Teka",
+    "etymology": "Tectona comes from Greek téktōn “carpenter/builder,” hinting at use as timber, and grandis is Latin for large/great.",
+    "habitat": "Mostly planted and sometimes naturalised on dry hills and limestone ridges",
+    "identification_character": "A large, deciduous tree; leaves very large, opposite and simple; sheds leaves for 3–4 months in the late dry season; flowers small (≈8 mm), mauve to white, in large branched heads; fruit a round, hard, woody drupe with four chambers, enclosed in an inflated, papery “bladder,” pale green then brown at maturity.",
+    "leaf_type": "Simple",
+    "fruit_type": "Drupe",
+    "phenology": "Flowering: June to September; Fruiting: November to January",
+    "seed_germination": "Collect mature, dry fruits; remove the outer sepals/calyx, then lightly scarify the hard shell with sandpaper or a rough stone. Fill polybags with a well-draining mix of soil and compost in a 3:1 ratio. Sow 3–5 seeds per bag at 1–2 cm depth or sow in germination bed first.",
+    "pest": "Termites are the main stem problem in teak; they eat into the heartwood, leaving hollow stems and mud galleries- once badly attacked, felling and burning is the only practical option. Leaf-eating caterpillars can strip foliage fast; do frequent inspections, keep crowns open with light pruning, and remove heavily infested leaves/branches. Wood borers make small round holes and push out sawdust-like powder; avoid wounding trees and remove/destroy infested wood. In nurseries and young plantings, sudden wilt often follows poor drainage or rough root handling - use well-drained beds, water evenly, and prune out any cankered/dying shoots below the last symptom."
+  },
+  {
+    "species_id": 3,
+    "scientific_name": "Toona ciliata",
+    "common_name": "Ai-Saria",
+    "etymology": "Toona is from the Indian vernacular name “toon/tun” for the tree, and ciliata is Latin for “fringed/hairy,” referring to fine hairs on parts like leaf edges",
+    "habitat": "it grows along moist streams and ravines on well-drained fertile soils from near sea level up to about 1,500 m",
+    "identification_character": "A tall, deciduous tree;  trunk often buttressed, outer bark dark brown, rough and scaly;  leaves alternate and single pinnate with 4–8 opposite to subopposite pairs of lanceolate leaflets, new foliage bright pink; flowers small, white and fragrant, in long drooping terminal sprays; fruit a dry 5-valved capsule that splits from the top to release many small, winged seeds.",
+    "leaf_type": "Pinnately compound (single)",
+    "fruit_type": "Capsule",
+    "phenology": "Flowering: March - May; Fruiting: July - August",
+    "seed_germination": "Collect ripe, fully mature fruits from the tree when the fruit start splitting. Fill nursery beds with a well-drained mix of topsoil plus compost or sand. Surface-sow or cover very lightly in rows 10 cm apart;",
+    "pest": "Young toon (Toona ciliata) often suffers from shoot borers that kill the top shoot and cause forks and crooked crowns; check tips often, keep one straight leader, and cut-and-burn infested shoots. Termites and powderpost beetles attack the wood, leaving small round holes and flour-like dust - avoid wounding, keep timber off the ground, and remove badly infested pieces. Parasitic mistletoe appears as green clumps on branches; lop the branch back to healthy wood and destroy the clumps. Root and butt rots weaken trees (yellowing leaves, leaning stems, shelf-like mushrooms at the base); keep the stem base dry and uninjured, and remove badly rotted trees. Protect seedlings and saplings from cattle  with simple guards or fencing until they are well established."
+  },
+  {
+    "species_id": 4,
+    "scientific_name": "Sterculia foetida",
+    "common_name": "Ai-nitas",
+    "etymology": "Sterculia derives from Latin Sterculius, the Roman manure god (stercus = dung), and foetida is Latin for “bad-smelling/fetid.",
+    "habitat": "A lowland tree of hot, dry coastal plains and rocky slopes, often near villages and along roads.",
+    "identification_character": "A large, straight, deciduous tree; bark smooth and grey; leaves crowded at twig tips, palmately digitate with 7–9 leaflets, petiole long (to ~20 cm) and foliage with an unpleasant smell; flowers in many branch stalk, green to dull purple, with male and female on separate trees; fruit a cluster of thick red follicles that become woody, each bearing several slate-coloured, oblong seeds (~1.5–1.8 cm) with a small yellow aril.",
+    "leaf_type": "Palmately compound",
+    "fruit_type": "Follicle",
+    "phenology": "Flowering: February to March, Fruiting: January to February. Fruits ripen nearly 11 months after the first appearance of the flowers.",
+    "seed_germination": "Collect mature red fruit and split the fruit to extract black seeds, remove the seeds and wash off all pulp to avoid fungus. Soak seeds for 24 hours, then peel the thin black coat or lightly scarify instead. Plant in a germination bed with well-drained mix of black soil and compost in a 3:1 ratio. Lay the seed on its side or plant it so the scarified/nicked end is level with or slightly above the surface.",
+    "pest": "In nurseries of Sterculia foetida, the main problem is a leaf-rolling caterpillar that can hit 70–80% of seedlings and cause very high death rates. The larvae stitch the leaf with fine silk, roll it up, and feed inside, leaving thin “windowed” patches between the veins before moving to fresh leaves. Check beds daily and remove or destroy rolled leaves with the caterpillar inside. Protect germination beds with fine insect mesh, keep spacing and airflow good, and avoid over-lush, shaded growth. At first signs, a biological spray like a neem (azadirachtin) spray can help keep damage down."
+  },
+  {
+    "species_id": 5,
+    "scientific_name": "Albizia lebbeck",
+    "common_name": "Ai-Samatuku",
+    "etymology": "Albizia honors Filippo degli Albizzi, who introduced an Albizia to Europe, and lebbeck comes from the local Arabic/Indic name “lebbek/labakh",
+    "habitat": "The species grows along hilly roadsides at low to mid elevations.",
+    "identification_character": "A medium–large, deciduous tree; bark grey, fissured and corky, leaves double pinnate with 2–4 pairs of pinnae, each bearing many small obliquely oblong leaflets (~1.5–6.5 × 0.5–3.5 cm); flowers in large, fragrant, fluffy, yellow-green spherical heads on long stalks; fruit is long, flat, papery-leathery pods , pale straw to light brown, swollen over the seeds and not constricted.",
+    "leaf_type": "Pinnately compound (double)",
+    "fruit_type": "Pod",
+    "phenology": "Flowering: September–November; Fruiting: May–July",
+    "seed_germination": "Collect pods when they’re dry, light brown, and before they split; sun-dry a few days so they open, then clean and store seeds dry. Pre-treat by pouring just-boiled water over the seeds and soak 12–24 hours to soften the hard coat. Fill germination bed  with Soil : Sand : Compost in a 1:1:1 mix. Sow ~1 cm deep; in beds space seeds ~5 cm apart in rows, germination usually starts in about 1–2 weeks with fresh, pre-treated seed.",
+    "pest": "In nurseries, Albizia seedlings often die from damping-off and other root rots; use clean, well-drained media, avoid over-watering, and discard sick plants early. In the field, a serious wilt disease can block water flow, leading to yellowing leaves, sudden dieback, and death of branches or whole trees; remove badly affected trees and avoid wounding roots and stems."
+  },
+  {
+    "species_id": 6,
+    "scientific_name": "Azadirachta indica",
+    "common_name": "Sumaer Malae",
+    "etymology": "Azadirachta is from Persian azad-darakht meaning “free tree” (noble or not subject to pruning), and indica denotes “from India",
+    "habitat": "The species grows on barren lands and is commonly planted along roadsides.",
+    "identification_character": "Azadirachta indica is a medium to large evergreen tree, with a dense rounded crown and dark grey, fissured bark. Leaves are tri pinnately compound, 20–40 cm long,  Flowers are small, white to pale yellow, fragrant, and borne in branches. The fruit is a 1-seeded ellipsoidal drupe, greenish-yellow to purple when ripe. The tree begins fruiting after 5 years and can live up to 200 years.",
+    "leaf_type": "Pinnately compound (triple)",
+    "fruit_type": "Drupe",
+    "phenology": "Flowering: January–March; Fruiting: May–August",
+    "seed_germination": "Neem fruits are collected when they turn yellow and slightly soft, preferably harvested directly from the tree. After depulping and cleaning, the seeds should be sown fresh, as they lose viability quickly and do not require scarification. A soil:sand:compost mix of 2:1:2 provides the best medium, with seeds sown 1–2 cm deep in polybags or raised beds. Germination usually begins within 4–10 days and is mostly complete in 3–5 weeks. Fresh seeds have the highest success rate, while older seeds show reduced germination.",
+    "pest": "Neem trees are usually resistant, but some pests and diseases do affect them. In nurseries, seedlings often suffer from damping off (caused by fungi) and leaf spots from different fungi and bacteria. Root rot and pink disease can damage older trees, causing branch dieback."
+  }
+]
