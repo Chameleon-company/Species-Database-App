@@ -25,3 +25,14 @@ dist-ssr
 
 # Database variables:
 .env.local
+
+
+# .gitignore
+venv/
+env/
+.venv/
+*.pyc
+__pycache__/
+.env
+*.log
+backend/.env.local

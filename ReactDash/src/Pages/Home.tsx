@@ -1,5 +1,6 @@
 import TheDrawer from '../Components/drawer'
 import MainTableSelect from '../mainTableSelect'
+import MainTableSelectTetum from '../mainTableSelectTetum'
 import { useState } from 'react'
 import type { Species } from '../mainTableSelect'
 import Box from '@mui/material/Box'
@@ -9,12 +10,18 @@ import { TextField } from '@mui/material'
 
 export function Home() {
 
+
+
     const [selectedSpecies, setSelectedSpecies] = useState<Species | null>(null)
+    const [selectedSpeciesTetum, setSelectedSpeciesTetum] = useState<Species | null>(null)
 
     const handleRowSelect = (rowData: Species | null) => {
         setSelectedSpecies(rowData)
     }
 
+    const handleRowSelectTetum = (rowData: Species | null) => {
+        setSelectedSpeciesTetum(rowData)
+    }
 
     const formatSpeciesData = (species: Species | null) => {
         if (!species) return ''
@@ -38,7 +45,8 @@ export function Home() {
         <>
             <div><TheDrawer></TheDrawer></div>
             <h1>Species Database Dashboard</h1>
-            <div><MainTableSelect onRowSelect={handleRowSelect}></MainTableSelect></div>
+            <h2 style={{ marginTop: '20px',  fontSize: '20px' }}>English Database:</h2>
+            <div style={{ marginTop: '20px' }}><MainTableSelect onRowSelect={handleRowSelect}></MainTableSelect></div>
 
             {selectedSpecies && (
                 <Box sx={{ marginTop: 3, maxWidth: '70%', marginX: 'auto' }}>
@@ -48,9 +56,6 @@ export function Home() {
                         multiline
                         rows={12}
                         value={formatSpeciesData(selectedSpecies)}
-                        InputProps={{
-                            readOnly: true,
-                        }}
                         sx={{
                             '& .MuiInputBase-input': { color: 'white' },
                             '& .MuiInputLabel-root': { color: 'white' },
@@ -59,7 +64,24 @@ export function Home() {
                 </Box>
             )}
 
+            <h2 style={{ marginTop: '20px',  fontSize: '20px'}}>Tetum Database:</h2>
+            <div style={{ marginTop: '20px' }}><MainTableSelectTetum onRowSelect={handleRowSelectTetum}></MainTableSelectTetum></div>
 
+            {selectedSpeciesTetum && (
+                <Box sx={{ marginTop: 3, maxWidth: '70%', marginX: 'auto' }}>
+                    <TextField
+                        fullWidth
+                        label="Species Details"
+                        multiline
+                        rows={12}
+                        value={formatSpeciesData(selectedSpeciesTetum)}
+                        sx={{
+                            '& .MuiInputBase-input': { color: 'white' },
+                            '& .MuiInputLabel-root': { color: 'white' },
+                        }}
+                    />
+                </Box>
+            )}
 
 
 

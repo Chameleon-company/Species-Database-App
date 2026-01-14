@@ -47,7 +47,7 @@ const paginationModel = { page: 0, pageSize: 10 }
 
 
 
-export default function MainTableSelect({ onRowSelect }: MainTableProps) {
+export default function MainTableSelectTetum({ onRowSelect }: MainTableProps) {
       if (!supabase || !supabaseTetum) {
         return (
           <Box sx={{ marginTop: 10}}>
@@ -65,7 +65,7 @@ export default function MainTableSelect({ onRowSelect }: MainTableProps) {
 
     async function getSpecies() {
       if (!supabase) { throw new Error('Failed to get rows to display'); }
-      const { data } = await supabase.from("species_en").select()
+      const { data } = await supabase.from("species_tet").select()
       setSpecies(data ?? [])
     }
 

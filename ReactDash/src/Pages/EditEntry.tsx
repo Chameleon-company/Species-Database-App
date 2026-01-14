@@ -6,16 +6,16 @@ import React, { useState } from 'react'
 import { TextField } from '@mui/material'
 import Alert from '@mui/material/Alert'
 import type { Species } from '../mainTableSelect'
-import { createClient } from '@supabase/supabase-js'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogContentText from '@mui/material/DialogContentText'
 import DialogTitle from '@mui/material/DialogTitle'
+import {supabase, supabaseTetum} from '../supabaseClient'
 
 
 
-const supabase = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY)
+
 
 
 
@@ -85,6 +85,9 @@ const errorContainerSx = {
 
 
 export function EditEntry() {
+    if (!supabase || !supabaseTetum) {
+        return <div>ERROR! Database connection failed!</div>
+    }
 
     const [error, setError] = useState('')
     
@@ -133,7 +136,7 @@ export function EditEntry() {
         setError('')
 
         try {
-            const { error } = await supabase
+            const { error } = await supabase!
                 .from('species_en')
                 .delete()
                 .eq('species_id', ID)
@@ -218,7 +221,7 @@ export function EditEntry() {
         setError('')
 
         try {
-            const { error } = await supabase
+            const { error } = await supabase!
                 .from('species_en')
                 .update([
                     { 

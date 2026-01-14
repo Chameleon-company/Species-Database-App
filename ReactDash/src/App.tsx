@@ -6,6 +6,7 @@ import { EditEntry } from "./Pages/EditEntry";
 import { AddExcel } from "./Pages/AddExcel";
 import { HashRouter as Router, Routes, Route } from "react-router-dom";
 import UsersPage from "./Pages/Users";
+import Analytics from "./Pages/Analytics";
 import Audit from "./Pages/Audit";
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
         <Route path="/AddExcel" element={<AddExcel />} />
         <Route path="/EditEntry" element={<EditEntry />} />
         <Route path="/Users" element={<UsersPage />} />
+        <Route path="/Analytics" element={<Analytics />} />
         <Route path="/Audit" element={<Audit />} />
       </Routes>
     </Router>

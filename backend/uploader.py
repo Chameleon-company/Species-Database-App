@@ -79,7 +79,7 @@ async def process_file(file_path: str, translate: bool = True):
             f"❌ Missing required columns in uploaded file: {missing_cols}. "
             f"Please check the column names and try again."
         )
-
+    inserted_count = 0;
     for idx in range(len(df)):
         row_raw = {}
 
@@ -101,5 +101,7 @@ async def process_file(file_path: str, translate: bool = True):
         response = requests.post(endpoint, headers=headers, data=json.dumps(row_data))
         if response.status_code >= 300:
             raise Exception(f"Upload error at row {idx+1}: {response.text}")
-
-    return "Upload complete"
+        inserted_count += 1
+    return {
+    "rows_inserted": inserted_count
+    }
