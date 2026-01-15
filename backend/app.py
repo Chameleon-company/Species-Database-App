@@ -5,6 +5,7 @@ import tempfile
 import asyncio
 from uploader import process_file, translate_to_tetum
 from supabase import create_client, Client
+from flask_cors import CORS
 import os
 from flask_cors import CORS
 from pathlib import Path
