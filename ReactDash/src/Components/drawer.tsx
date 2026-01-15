@@ -70,15 +70,13 @@ export default function TheDrawer() {
         </ListItem>
 
         <ListItem disablePadding>
-          <ListItemButton
-            component={Link}
-            to="/Analytics"
-            onClick={() => setOpen(false)}
-          >
+          <ListItemButton component={Link} to="/Analytics" onClick={() => setOpen(false)}>
             <ListItemText primary="Analytics" />
-            to="/Audit"
-            onClick={() => setOpen(false)}
-          >
+          </ListItemButton>
+        </ListItem>
+
+        <ListItem disablePadding>
+          <ListItemButton component={Link} to="/Audit" onClick={() => setOpen(false)}>
             <ListItemText primary="Audit Feature" />
           </ListItemButton>
         </ListItem>

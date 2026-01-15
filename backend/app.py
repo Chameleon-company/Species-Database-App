@@ -4,10 +4,9 @@ from datetime import datetime
 import tempfile
 import asyncio
 from uploader import process_file, translate_to_tetum
-import bcrypt
-from supabase import create_client, Clientimport os
-from flask_cors import CORS
+from supabase import create_client, Client
 import os
+from flask_cors import CORS
 from pathlib import Path
 from dotenv import load_dotenv
 from audit import read_file_to_df, audit_dataframe
@@ -45,8 +44,8 @@ SUPABASE_SERVICE_KEY_TETUM = os.getenv("VITE_SUPABASE_PUBLISHABLE_KEY_TETUM")
 
 print("Supabase URL:", SUPABASE_URL)
 
-supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
-supabase_tetum = create_client(SUPABASE_URL_TETUM, SUPABASE_SERVICE_KEY_TETUM)
+#supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+#supabase_tetum = create_client(SUPABASE_URL_TETUM, SUPABASE_SERVICE_KEY_TETUM)
 
 @app.get("/api/bundle")
 def get_bundle():
@@ -391,7 +390,7 @@ def upload():
         
         # Insert into Tetum database
         print("Starting Tetum Upload")
-        data2 = supabase_tetum.table('species_tet').insert({
+        data2 = supabase.table('species_tet').insert({
             'scientific_name': scientific_name_tetum,
             'common_name': common_name_tetum,
             'etymology': etymology_tetum,
