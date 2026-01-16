@@ -10,6 +10,7 @@ import Analytics from "./Pages/Analytics";
 import Audit from "./Pages/Audit";
 import AdminLoginForm from "./Pages/AdminLoginForm";
 import AdminLayout from "./Components/AdminLayout";
+import MediaManager from "./Pages/MediaManager";
 
 function App() {
   return (
@@ -64,6 +65,14 @@ function App() {
         <AdminLayout>
           <Audit />
         </AdminLayout>} />
+
+        <Route 
+        path="/Media" 
+        element={
+        <AdminLayout>
+          <MediaManager />
+        </AdminLayout>} />
+
       </Routes>
     </Router>
   );
