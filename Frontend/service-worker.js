@@ -12,7 +12,7 @@ const FILES_TO_CACHE = [
     "/scripts/imageCache.js",
     "/scripts/preloadImages.js",
     "/scripts/filterCarousel.js",
-    "/data/images.json"
+    "../data/images.json"
 ];
 
 self.addEventListener('install', (event) => {

@@ -64,7 +64,7 @@ function renderNoResults() {
 let loadedSpeciesData = [];
 
 //Species xlsx path source
-const excelFileUrl = './data/species.xlsx';
+const excelFileUrl = '../../data/species.xlsx';
 
 //Load excel data
 async function loadExcelData(url) {

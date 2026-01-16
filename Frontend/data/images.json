@@ -1,0 +1,34 @@
+{
+    "albizia-lebbeck": [
+        "Assets/Images/albizia-lebbeck/albizia_lebbeck_flower_01.png",
+        "Assets/Images/albizia-lebbeck/albizia_lebbeck_leaf_01.png",
+        "Assets/Images/albizia-lebbeck/albizia_lebbeck_seed_01.png"
+    ],
+    "aleurites-moluccana": [
+        "Assets/Images/aleurites-moluccana/aleurites_moluccana_flower_01.JPG",
+        "Assets/Images/aleurites-moluccana/aleurites_moluccana_habitat_01.JPG",
+        "Assets/Images/aleurites-moluccana/aleurites_moluccana_leaf_01.JPG",
+        "Assets/Images/aleurites-moluccana/aleurites_moluccana_seed_01.png"
+    ],
+    "azadirachta-indica": [
+        "Assets/Images/azadirachta-indica/azadirachta_indica_seed_01.png"
+    ],
+    "Camouflage18": [
+        "Assets/Images/Camouflage18/logo-placeholder.png"
+    ],
+    "sterculia-foetida": [
+        "Assets/Images/sterculia-foetida/sterculia_foetida_flower_01.png",
+        "Assets/Images/sterculia-foetida/sterculia_foetida_habitat_01.JPG",
+        "Assets/Images/sterculia-foetida/sterculia_foetida_seed_01.png"
+    ],
+    "tectona-grandis": [
+        "Assets/Images/tectona-grandis/tectona_grandis_leaf_01.JPG",
+        "Assets/Images/tectona-grandis/tectona_grandis_seed_01.png"
+    ],
+    "toona-ciliata": [
+        "Assets/Images/toona-ciliata/toona_ciliata_flower_01.png",
+        "Assets/Images/toona-ciliata/toona_ciliata_habitat_01.JPG",
+        "Assets/Images/toona-ciliata/toona_ciliata_leaf_01.png",
+        "Assets/Images/toona-ciliata/toona_ciliata_seed_01.png"
+    ]
+}
