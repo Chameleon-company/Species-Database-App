@@ -536,17 +536,10 @@
       <a class="back-link" href="index.html"></a>
 
       <div class="debug" id="debugInfo"></div>
-      <!-- LANGUAGE OVERLAY -->
-      <div class="lang-overlay" id="langOverlay">
-        <div class="lang-modal">
-          <button class="close-overlay" id="closeOverlay">✖</button>
-          <button class="lang-choice" id="chooseEn">English</button>
-          <button class="lang-choice" id="chooseTet">Tetum</button>
-        </div>
-      </div>
+
       <!-- LANGUAGE OVERLAY -->
 
-      <!-- <div class="lang-overlay" id="langOverlay">
+      <div class="lang-overlay" id="langOverlay">
         <div
           class="lang-modal"
           role="dialog"
@@ -608,7 +601,7 @@
                 data-flag="🇹🇱"
               >
                 <div class="flag" aria-hidden="true">🇹🇱</div>
-                <div class="name">Tetum</div>
+                <div class="name">TETUM</div>
                 <div class="radio" aria-hidden="true">
                   <svg viewBox="0 0 24 24">
                     <path
@@ -620,7 +613,7 @@
             </div>
           </section>
         </div>
-      </div> -->
+      </div> 
 
       <!-- FILTER OVERLAY (NEW) -->
       <div class="filter-overlay" id="filterOverlay">
@@ -641,64 +634,35 @@
 
     <script>
       // LANGUAGE HANDLER
-      let lang = "en";
+        const langBtn = document.querySelector(".lang-btn");
+        const overlay = document.getElementById("langOverlay");
+        const closeBtn = document.getElementById("closeOverlay");
+        const selectedNameEl = document.getElementById("selectedName");
+        const selectedFlagEl = document.getElementById("selectedFlag");
+        langBtn.addEventListener("click", () => {
+            overlay.style.display = "flex";
+        });
+        closeBtn.addEventListener("click", () => {
+            overlay.style.display = "none";
+        });
+        overlay.addEventListener("click", (e) => {
+            if (e.target === overlay) overlay.style.display = "none";
+        });
+        document.querySelectorAll("#langList .row").forEach((row) => {
+            row.addEventListener("click", () => {
+                document.querySelectorAll("#langList .row").forEach(r => {
+                    r.classList.remove("selected");
+                    r.setAttribute("aria-selected", "false");
+                });
+                row.classList.add("selected");
+                row.setAttribute("aria-selected", "true");
+                selectedNameEl.textContent = row.dataset.name;
+                selectedFlagEl.textContent = row.dataset.flag;
+                langBtn.textContent = row.dataset.code;
+                overlay.style.display = "none";
+            });
+        });
 
-      try {
-        const stored = localStorage.getItem("appLanguage");
-        if (stored === "en" || stored === "tet") {
-          lang = stored;
-        }
-      } catch (e) {
-        console.warn("Could not access localStorage:", e);
-      }
-
-      const langBtn = document.querySelector(".lang-btn");
-      // langBtn.textContent = lang === "en" ? "EN" : "TET";
-
-      const overlay = document.getElementById("langOverlay");
-      const closeBtn = document.getElementById("closeOverlay");
-      const chooseEn = document.getElementById("chooseEn");
-      const chooseTet = document.getElementById("chooseTet");
-
-      langBtn.addEventListener("click", () => {
-        overlay.style.display = "flex";
-        console.log("Language overlay opened");
-      });
-
-      closeBtn.addEventListener("click", () => {
-        overlay.style.display = "none";
-      });
-
-      chooseEn.addEventListener("click", () => {
-        localStorage.setItem("appLanguage", "en");
-        langBtn.textContent = "EN";
-        overlay.style.display = "none";
-        window.location.href = "home.html";
-      });
-
-      chooseTet.addEventListener("click", () => {
-        localStorage.setItem("appLanguage", "tet");
-        langBtn.textContent = "TET";
-        overlay.style.display = "none";
-        window.location.href = "tetum.html";
-      });
-
-      // document.querySelectorAll("#langList .row").forEach((row) => {
-      //   row.addEventListener("click", () => {
-      //     document.querySelectorAll("#langList .row").forEach((r) => {
-      //       r.classList.remove("selected");
-      //       r.setAttribute("aria-selected", "false");
-      //     });
-      //     row.classList.add("selected");
-      //     row.setAttribute("aria-selected", "true");
-      //     selectedNameEl.textContent = row.dataset.name;
-      //     selectedFlagEl.textContent = row.dataset.flag;
-      //     langBtn.textContent = row.dataset.code;
-      //     overlay.style.display = "none";
-      //   });
-      // });
-      const selectedNameEl = document.getElementById("selectedName");
-      const selectedFlagEl = document.getElementById("selectedFlag");
       // ------------------------------
       // FILTER OVERLAY JS (NEW)
       // ------------------------------
