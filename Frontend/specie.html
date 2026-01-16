@@ -14,6 +14,9 @@
       rel="stylesheet"
     />
 
+        <!-- Online Banner-->
+    <link rel="stylesheet" href="css/onlineBanner.css">
+
     <style>
       body {
         margin: 0;
@@ -208,6 +211,7 @@
   </head>
 
   <body>
+    <main class="app-shell">
     <div class="container">
       <!-- app header -->
       <div class="species-details-header">
@@ -281,10 +285,12 @@
 
       <!-- <a href="home.html" class="back-btn">← Back to List</a> -->
     </div>
+    </main>
 
     <script src="js/general.js"></script>
     <script src="scripts/specieslist.js"></script>
     <script src="scripts/imageCache.js"></script>
+    <script src="scripts/detectOnline.js" defer></script>
     <script>
       const params = new URLSearchParams(window.location.search);
       const plantID = params.get("id");
