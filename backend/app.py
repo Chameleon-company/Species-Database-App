@@ -33,12 +33,12 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 #register auth and authz routes
 register_auth_routes(app, supabase)
 
-def wrap_require_role(roles):
-    return require_role(supabase, roles)
+# def wrap_require_role(roles):
+#     return require_role(supabase, roles)
 
 #register media routes
 from media import register_media_routes
-register_media_routes(app, supabase, wrap_require_role)
+register_media_routes(app, supabase)
 
 SUPABASE_URL_TETUM = os.getenv("VITE_SUPABASE_URL_TETUM")
 SUPABASE_SERVICE_KEY_TETUM = os.getenv("VITE_SUPABASE_PUBLISHABLE_KEY_TETUM")

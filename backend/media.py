@@ -11,7 +11,7 @@ from changelog import log_change, get_next_version
 from auth_authz import register_auth_routes, require_role, get_admin_user
 
 
-def register_media_routes(app, supabase, require_role):
+def register_media_routes(app, supabase):
     """
     attach all media related routes to main flask app
     """
@@ -26,9 +26,11 @@ def register_media_routes(app, supabase, require_role):
         """
 
         #checking permissions
+        # Instead of get_admin_user in POST
         admin_id, err = get_admin_user(supabase)
         if err:
             return jsonify({"error": err[0]}), err[1]
+
         #metadaata only not files
         data = request.get_json(silent=True)
         if not data:
@@ -82,6 +84,7 @@ def register_media_routes(app, supabase, require_role):
             .table("media")
             .insert({
                 "species_id": species_id,
+                "species_name": species_name,
                 "media_type": media_type,
                 "download_link": download_link,
                 "streaming_link": streaming_link,
@@ -92,7 +95,7 @@ def register_media_routes(app, supabase, require_role):
 
         media_id = res.data[0]["media_id"]
         #for changelog
-        log_change("media", media_id, "CREATE")
+        log_change(supabase, "media", media_id, "CREATE")
         return jsonify({
             "status": "success",
             "message": "media upload successful",
@@ -110,8 +113,8 @@ def register_media_routes(app, supabase, require_role):
         """
 
         #checking permissions
-        ok, err = require_role(["admin"])
-        if not ok:
+        admin_id, err = get_admin_user(supabase)
+        if err:
             return jsonify({"error": err[0]}), err[1]
 
         result = (
@@ -119,6 +122,7 @@ def register_media_routes(app, supabase, require_role):
             .select("""
                 media_id,
                 species_id,
+                species_name,
                 media_type,
                 download_link,
                 streaming_link,
@@ -137,8 +141,8 @@ def register_media_routes(app, supabase, require_role):
         updates media metadata
         """
         #checking permissions
-        ok, err = require_role(["admin"])
-        if not ok:
+        admin_id, err = get_admin_user(supabase)
+        if err:
             return jsonify({"error": err[0]}), err[1]
 
         data = request.get_json(silent=True)
@@ -173,6 +177,7 @@ def register_media_routes(app, supabase, require_role):
                 }), 400
             
             update_data["species_id"] = species_resp.data[0]["species_id"]
+            update_data["species_name"] = data["species_name"]
         
         if not update_data:
             return jsonify({"error": "no fields given to update"}), 400
@@ -180,8 +185,7 @@ def register_media_routes(app, supabase, require_role):
         supabase.table("media").update(update_data).eq("media_id", media_id).execute()
 
         #logging uupdate
-        log_change("media", media_id, "UPDATE")
-
+        log_change(supabase, "media", media_id, "UPDATE")
         return jsonify({"status": "updated"}), 200
     
     ########### DELETE MEDIA #############
@@ -193,8 +197,8 @@ def register_media_routes(app, supabase, require_role):
         NOT ACTUAL FILE FROM STORAGE
         """
 
-        ok, err = require_role(["admin"])
-        if not ok:
+        admin_id, err = get_admin_user(supabase)
+        if err:
             return jsonify({"error": err[0]}), err[1]
 
         #find species media belongs to
@@ -215,7 +219,7 @@ def register_media_routes(app, supabase, require_role):
         supabase.table("media").delete().eq("media_id", media_id).execute()
 
         #loggin deletion for sync
-        log_change("media", media_id, "DELETE")
+        log_change(supabase, "media", media_id, "DELETE")
 
         return jsonify({
             "status": "deleted",

@@ -1,4 +1,4 @@
-import { Alert, Box, Button, IconButton } from "@mui/material"
+import { Alert, Box, Button, IconButton, TextField } from "@mui/material"
 import { DataGrid, type GridColDef } from "@mui/x-data-grid"
 import { useEffect, useState } from "react"
 import DeleteIcon from "@mui/icons-material/Delete"
@@ -26,14 +26,24 @@ export default function MediaManager() {
         setLoading(true)
         setError(null)
 
-        try {
-            const res = await fetch("http://127.0.0.1:5000/api/bundle")
+        const token = localStorage.getItem("admin_token")
 
+        try {
+            const res = await fetch("http://127.0.0.1:5000/upload-media",
+            {
+                headers: {
+                    Authorization: token || "",
+                },
+            })
+            if (!res.ok) {
+                throw new Error("Failed to load media")
+            }
             const data = await res.json()
-            setMedia(data.media || [])
+            setMedia(Array.isArray(data) ? data : [])
         }
-        catch {
-            setError("could not load media list")
+        catch (err: any) {
+            setError(err.message)
+            setMedia([])
         }
         finally {
             setLoading(false)
@@ -58,10 +68,10 @@ export default function MediaManager() {
     const saveMedia = async (row:Media) => {
         const token = localStorage.getItem("admin_token")
 
-        if (!row.species_name || !row.download_link)
+        if (!row.species_name || !row.media_type || !row.download_link)
         {
-            setError("species_name and download_link required")
-            return row
+            setError("species_name, media_type and download_link required")
+            return
         }
 
         const isNew= row.media_id < 0
@@ -95,12 +105,12 @@ export default function MediaManager() {
             }
 
             await fetchMedia()
-            return row
+            return
         }
         catch (err: any)
         {
             setError(err.message)
-            return row
+            return
         }
         finally {
             setLoading(false)
@@ -151,8 +161,9 @@ export default function MediaManager() {
         {
             field: "species_name",
             headerName: "Species name",
-            width: 120,
-            editable: true,            
+            width: 220,
+            editable: true,
+                   
         },
         {
             field: "media_type",
@@ -213,9 +224,15 @@ export default function MediaManager() {
                 getRowId={((row) => row.media_id)}
                 loading={loading}
                 editMode="row"
-                processRowUpdate={saveMedia}
+                processRowUpdate={async (row) => {
+                    await saveMedia(row)
+                    return row
+                }}
                 disableRowSelectionOnClick
                 sx={{backgroundColor: "#fff"}}
+                onProcessRowUpdateError={(error) => {
+                    setError(error.message)
+                }}
             />
         </Box>
         

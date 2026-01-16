@@ -7,6 +7,9 @@ export default function ProtectedAdmin({ children }: { children: ReactNode }) {
 
     if(!token)
     {
+        localStorage.removeItem("admin_token")
+        localStorage.removeItem("admin_role")
+
         return <Navigate to="/admin-login" replace />
     }
     return <>{children}</>
