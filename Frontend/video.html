@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Video Playback</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#fff3ff" />
+
+    <style>
+        /* Body background and font (SAME AS HOME) */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #9ACD6B;
+            color: #000000;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 1rem 0;
+        }
+
+        /* App container (SAME AS HOME) */
+        .app-shell {
+            background: #ffffff;
+            width: 100%;
+            max-width: 480px;
+            min-height: 600px;
+            margin: 0 auto;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
+            padding: 0;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header (MATCHES HOME HEADER STYLE) */
+        .app-header {
+            width: 100%;
+            background-color: #0B5C37;
+            padding: 1.5rem;
+            border-radius: 16px 16px 0 0;
+            box-sizing: border-box;
+        }
+
+        .header-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #FFFFFF;
+            margin: 0;
+            text-align: center;
+        }
+
+        /* Video area */
+        .video-container {
+            position: relative;
+            width: 100%;
+            background: #000;
+            aspect-ratio: 16 / 9;
+        }
+
+        .video-thumbnail {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .play-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 4rem;
+            color: white;
+            background: rgba(0,0,0,0.35);
+            cursor: pointer;
+        }
+
+        /* Metadata */
+        .video-meta {
+            padding: 1.5rem;
+        }
+
+        .video-meta p {
+            margin: 0.4rem 0;
+            font-size: 0.95rem;
+        }
+
+        /* Download section */
+        .download-section {
+            margin-top: auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .download-btn {
+            background: #0B5C37;
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+
+        .download-btn:disabled {
+            background: #9CA3AF;
+            cursor: not-allowed;
+        }
+
+        .download-status {
+            font-size: 0.85rem;
+            color: #475569;
+        }
+    </style>
+</head>
+<body>
+
+<main class="app-shell">
+
+    <!-- Header -->
+    <header class="app-header">
+        <h1 class="header-title">Video Playback</h1>
+    </header>
+
+    <!-- Video Preview -->
+    <div class="video-container">
+        <img
+            src="./Assets/Images/video-thumbnail-placeholder.jpg"
+            alt="Video thumbnail"
+            class="video-thumbnail"
+            id="videoThumbnail"
+        />
+        <div class="play-overlay" id="playOverlay">▶</div>
+    </div>
+
+    <!-- Metadata -->
+    <div class="video-meta">
+        <p><strong>Title:</strong> Tree Identification Guide</p>
+        <p><strong>Duration:</strong> 02:45</p>
+        <p><strong>Size:</strong> <span id="videoSize">24 MB</span></p>
+    </div>
+
+    <!-- Download -->
+    <div class="download-section">
+        <span class="download-status" id="downloadStatus">Not downloaded</span>
+        <button class="download-btn" id="downloadBtn">Download</button>
+    </div>
+
+</main>
+
+<script src="scripts/video.js"></script>
+</body>
+</html>

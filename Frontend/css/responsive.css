@@ -1,0 +1,80 @@
+/* Responsive helpers for Species-Database-App */
+:root { --app-max-width: 480px; --card-gap: 1rem; }
+html,body{height:100%;}
+body{box-sizing:border-box;-webkit-font-smoothing:antialiased;}
+/* -----------------------------
+   Responsive helpers for Species-Database-App
+   Includes performance optimizations for smoother UI
+   ----------------------------- */
+:root { --app-max-width: 480px; --card-gap: 1rem; }
+html,body{height:100%;}
+body{box-sizing:border-box;-webkit-font-smoothing:antialiased;}
+
+/* -----------------------------
+   Performance optimizations
+   - Add GPU/compositing hints
+   - Reduce repaint areas and heavy shadows
+   - Favor transform-based transitions
+   ----------------------------- */
+.app-shell, .app-header, .filter-carousel, .species-list-card, .filter-button, .lang-btn, .lang-choice, .tutorial-pill {
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transform: translateZ(0);
+}
+
+/* Reduce extremely heavy shadows that can cause repaint jank; keep subtle elevation */
+.app-shell { box-shadow: 0 12px 36px rgba(15,23,42,0.12); }
+.species-list-card { box-shadow: 0 6px 18px rgba(15,23,42,0.08); transition: transform 140ms ease-out, box-shadow 140ms ease-out; }
+.filter-button { transition: transform 120ms ease-out, box-shadow 120ms ease-out; }
+
+/* Improve scroll performance for horizontal carousels */
+.filter-carousel{ -webkit-overflow-scrolling: touch; scroll-behavior: smooth; overflow-x:auto; overscroll-behavior-x:contain; }
+
+/* Ensure app shell uses available width but never exceeds max */
+.app-shell{width:100%; max-width:var(--app-max-width); margin:1rem auto;}
+
+/* Keep images predictable and prevent layout shift */
+.species-list-card, .species-item{height:auto; padding:0.8rem; align-items:center; gap:0.75rem;}
+.species-list-card img, .species-item img{width:64px; height:64px; aspect-ratio:1/1; object-fit:cover; flex-shrink:0; will-change: transform;}
+.species-list-card img{border-radius:10px;}
+
+/* Truncate long names to avoid wrapping pushing layout */
+.species-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:calc(100% - 96px);}
+
+/* Make filter carousel touch-friendly and tighter on small screens */
+.filter-carousel{padding-left:0.5rem; padding-right:0.5rem;}
+.filter-button{white-space:nowrap;}
+
+/* Smaller devices adjustments */
+@media (max-width:420px){
+  .app-shell{padding:0; border-radius:12px;}
+  .app-title{font-size:1.25rem;}
+  .header-title{font-size:1.25rem;}
+  .filter-button{padding:0.45rem 0.75rem; font-size:0.8rem;}
+  .species-list-card img{width:56px;height:56px;}
+  .search-bar input{font-size:0.95rem;}
+}
+
+/* Very small screens */
+@media (max-width:360px){
+  .app-shell{margin:0.5rem;}
+  .app-title{font-size:1.05rem;}
+}
+
+/* Larger viewports: center and add breathing room */
+@media (min-width:900px){
+  body{display:flex; justify-content:center; align-items:flex-start; padding:3rem;}
+  .app-shell{transform:scale(1);}
+}
+
+/* Modal sizing */
+.lang-modal, .filter-modal{width:90%; max-width:360px;}
+
+/* Improve tap targets */
+.lang-choice, .filter-button, .tutorial-pill, .lang-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+
+/* Minor utility */
+.container#species-list{padding:1rem;}
+
+/* End responsive helpers */
