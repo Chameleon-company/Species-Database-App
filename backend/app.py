@@ -233,9 +233,9 @@ def upload_species_file():
     for uploading species data
     """
     #checking peermissions
-    admin_id, err = get_admin_user(supabase)
-    if err:
-        return jsonify({"error": err[0]}), err[1]
+    # admin_id, err = get_admin_user(supabase)
+    # if err:
+    #     return jsonify({"error": err[0]}), err[1]
 
     #at this point we've confirmed theyre admin
 
