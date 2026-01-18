@@ -1,0 +1,32 @@
+/* Task 2: Species List Cards  */
+.species-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #f5f7fa;
+  padding: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.1);
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.species-item:hover {
+  background-color: #8ac642;
+}
+
+/* Task 4: Image Gallery Visuals [cite: 16, 17] */
+.species-card-img {
+  width: 90px;
+  height: 80px;
+  border-radius: 8px;
+  object-fit: cover; /* Task 4 & 5: prevent stretching  */
+  flex-shrink: 0;
+}
+
+.species-text {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Task 5: Prevent text overflow [cite: 23] */
+}

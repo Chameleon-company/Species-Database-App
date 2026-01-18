@@ -34,15 +34,13 @@ function renderSpecies(data){
     speciesList.innerHTML = "";
 
     data.forEach(species => {
+        // Task 2: Replaced 'style' attribute with 'species-item' class 
+        // Task 4: Ensure images are handled via CSS for object-fit 
         speciesList.innerHTML += `
-        <div id="${species.id}" class="species-list-card" 
-             style="display:flex; align-items:center; margin-bottom:8px; border: 2px solid #4E8A16; border-radius: 8px; padding: 10px; height:80px;" 
-             onclick="goToDetail('${species.id}')">
-            
-            <img src="${species.image_url}" width="90" style="border-radius:8px; margin-right:15px;">
-            
-            <div style="display:flex; flex-direction:column; justify-content:center; align-items:flex-start;">
-                <h3 style="margin:0; font-weight:500;">${species.scientific_name}</h3>
+        <div id="${species.id}" class="species-item" onclick="goToDetail('${species.id}')">
+            <img src="${species.image_url}" alt="${species.scientific_name}" class="species-card-img">
+            <div class="species-text">
+                <h3 class="species-name">${species.scientific_name}</h3>
                 <p class="common-name-species">${species.common_name}</p>
             </div>
         </div>`;

@@ -9,6 +9,7 @@
     <link rel="manifest" href="manifest.json" />
     <meta name="theme-color" content="#fff3ff" />
     <link rel="stylesheet" href="css/responsive.css" />
+    <link rel="stylesheet" href="css/filters.css" />
 
     <style>
       /* Body background and font */
@@ -129,60 +130,6 @@
         width: 140px;
         display: block;
         margin: 0 auto 1.25rem auto;
-      }
-
-      .filter-carousel-container {
-        margin-bottom: 1.5rem;
-        position: relative;
-      }
-
-      .filter-carousel {
-        display: flex;
-        overflow-x: auto;
-        overflow-y: hidden;
-        scroll-behavior: smooth;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-        gap: 0.75rem;
-        padding: 0.5rem 1.5rem;
-        scroll-padding-left: 1.5rem;
-        cursor: grab;
-      }
-
-      .filter-carousel:active {
-        cursor: grabbing;
-      }
-
-      .filter-carousel::-webkit-scrollbar {
-        display: none;
-      }
-
-      .filter-button {
-        flex: 0 0 auto;
-        padding: 0.625rem 1.25rem;
-        border-radius: 10px;
-        border: 1.5px solid #0b5c37;
-        background: #ffffff;
-        color: #0b5c37;
-        font-size: 0.875rem;
-        font-weight: 500;
-        cursor: pointer;
-        white-space: nowrap;
-        transition: all 0.2s ease;
-        user-select: none;
-      }
-
-      .filter-button:hover {
-        background: #f1f5f9;
-        border-color: #94a3b8;
-      }
-
-      .filter-button.active {
-        background: #0b5c37;
-        color: #ffffff;
-        border-color: #0b5c37;
-        box-shadow: 0 2px 4px rgba(15, 23, 42, 0.2);
-        transform: scale(1.05);
       }
 
       /* Species list */
@@ -390,62 +337,6 @@
 
       .row.selected .radio svg {
         display: block;
-      }
-
-      /* -------------------------
-           FILTER OVERLAY (NEW)
-        -------------------------*/
-      .filter-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.55);
-        display: none;
-        justify-content: center;
-        align-items: center;
-        z-index: 9998;
-      }
-
-      .filter-modal {
-        background: #ffffff;
-        padding: 2rem;
-        border-radius: 16px;
-        width: 80%;
-        max-width: 320px;
-        text-align: center;
-        position: relative;
-      }
-
-      #filterDescription:empty {
-        display: none;
-      }
-
-      .close-filter-overlay {
-        position: absolute;
-        top: 8px;
-        right: 12px;
-        background: #ff4d4d;
-        border: none;
-        color: white;
-        font-size: 1.2rem;
-        padding: 0.4rem 0.6rem;
-        border-radius: 6px;
-        cursor: pointer;
-      }
-
-      .placeholder-option {
-        display: block;
-        width: 100%;
-        padding: 0.8rem;
-        margin-top: 0.6rem;
-        font-size: 1.1rem;
-        background: #0b5c37;
-        color: white;
-        border: none;
-        border-radius: 10px;
-        cursor: pointer;
       }
 
       .species-list-card:hover {
