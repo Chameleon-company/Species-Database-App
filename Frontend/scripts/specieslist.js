@@ -31,18 +31,31 @@ const dummyData = [
 //Render the Species list 
 function renderSpecies(data){
     const speciesList = document.getElementById("species-list");
+    
+    if (!speciesList) {
+        console.error("Species list element not found");
+        return;
+    }
+    
     speciesList.innerHTML = "";
 
+    // Check if data exists and has items
+    if (!data || data.length === 0) {
+        console.warn("No species data to render");
+        if (typeof renderNoResults === 'function') {
+            renderNoResults();
+        }
+        return;
+    }
+
     data.forEach(species => {
+        // Task 2: Replaced 'style' attribute with 'species-item' class 
+        // Task 4: Ensure images are handled via CSS for object-fit 
         speciesList.innerHTML += `
-        <div id="${species.id}" class="species-list-card" 
-             style="display:flex; align-items:center; margin-bottom:8px; border: 2px solid #4E8A16; border-radius: 8px; padding: 10px; height:80px;" 
-             onclick="goToDetail('${species.id}')">
-            
-            <img src="${species.image_url}" width="90" style="border-radius:8px; margin-right:15px;">
-            
-            <div style="display:flex; flex-direction:column; justify-content:center; align-items:flex-start;">
-                <h3 style="margin:0; font-weight:500;">${species.scientific_name}</h3>
+        <div id="${species.id}" class="species-item" onclick="goToDetail('${species.id}')">
+            <img src="${species.image_url}" alt="${species.scientific_name}" class="species-card-img">
+            <div class="species-text">
+                <h3 class="species-name">${species.scientific_name}</h3>
                 <p class="common-name-species">${species.common_name}</p>
             </div>
         </div>`;
@@ -64,7 +77,7 @@ function renderNoResults() {
 let loadedSpeciesData = [];
 
 //Species xlsx path source
-const excelFileUrl = './data/species.xlsx';
+const excelFileUrl = '../../data/species.xlsx';
 
 //Load excel data
 async function loadExcelData(url) {
