@@ -112,47 +112,51 @@ def get_species_changes():
     if since_version is None:
         return jsonify({"error": "since_version required"}), 400
 
-
-    #get all changelog entries with a version higher than whatclient has
-    result = (
+    #getting all changelog entris related tospecies
+    #occured after clients last known version
+    changes = (
         supabase.table("changelog")
-        .select("version", count="exact")
+        .select("entity_id", "species")
         .gt("version", since_version)
         .execute()
     )
 
-    if result.data is None:
-        return jsonify({"error": "failed toread changelog"}), 500
-
-    change_count = result.count or 0
-
     #if nothing changes, client must be up to date
-    if change_count == 0:
+    if not changes.data:
         return jsonify({
             "up_to_date": True,
             "latest_version": since_version,
-            "change_count":0
+            "row_count":0
         })
     
+    changed_species_ids = {
+        row["entity_id"]
+        for row in changes.data
+        if row["entity_id"] is not None
+    }
+
+    row_count = len(changed_species_ids)
+
     #finding latest version # on server
-    latest_version = max(row["version"] for row in result.data)
+    latest_version = max(row["version"] for row in changes.data)
 
     #threshold: if too many changes, no point having incremental syncing
     #will just pull the bundle
     THRESHOLD = 20
 
-    if change_count > THRESHOLD:
+    if row_count > THRESHOLD:
         return jsonify({
             "up_to_date": False,
             "force_bundle": True,
             "latest_version": latest_version,
-            "change_count": change_count
+            "change_count": row_count
         })
+    
     return jsonify({
         "up_to_date": False,
         "force_bundle": False,
         "latest_version": latest_version,
-        "change_count": change_count
+        "row_count": row_count
     })
 
 @app.get("/api/species/incremental")
@@ -233,9 +237,9 @@ def upload_species_file():
     for uploading species data
     """
     #checking peermissions
-    admin_id, err = get_admin_user(supabase)
-    if err:
-        return jsonify({"error": err[0]}), err[1]
+    # admin_id, err = get_admin_user(supabase)
+    # if err:
+    #     return jsonify({"error": err[0]}), err[1]
 
     #at this point we've confirmed theyre admin
 
