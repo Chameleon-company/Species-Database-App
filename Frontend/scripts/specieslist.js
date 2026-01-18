@@ -31,7 +31,22 @@ const dummyData = [
 //Render the Species list 
 function renderSpecies(data){
     const speciesList = document.getElementById("species-list");
+    
+    if (!speciesList) {
+        console.error("Species list element not found");
+        return;
+    }
+    
     speciesList.innerHTML = "";
+
+    // Check if data exists and has items
+    if (!data || data.length === 0) {
+        console.warn("No species data to render");
+        if (typeof renderNoResults === 'function') {
+            renderNoResults();
+        }
+        return;
+    }
 
     data.forEach(species => {
         // Task 2: Replaced 'style' attribute with 'species-item' class 

@@ -1,4 +1,17 @@
-/* Task 2: Species List Cards  */
+/* ========================================
+   SPECIES LIST CARDS - Task 2: Reusable Card Styles
+   ======================================== */
+
+/* Species List Container */
+.container#species-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.5rem;
+  flex-wrap: nowrap; /* Task 5: No wrapping needed for column layout */
+}
+
+/* Species Card/Item */
 .species-item {
   display: flex;
   align-items: center;
@@ -7,26 +20,106 @@
   padding: 1rem;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.1);
-  margin-bottom: 8px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
+  flex-wrap: nowrap; /* Task 5: Keep image and text on same line */
+  min-height: auto; /* Task 5: No fixed height, scale to content */
 }
 
 .species-item:hover {
   background-color: #8ac642;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
 }
 
-/* Task 4: Image Gallery Visuals [cite: 16, 17] */
+/* Species Card Image - Task 4 & 5: Prevent stretching with object-fit */
+.species-item img,
 .species-card-img {
-  width: 90px;
-  height: 80px;
-  border-radius: 8px;
-  object-fit: cover; /* Task 4 & 5: prevent stretching  */
-  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
+  object-fit: cover; /* Task 5: Prevent image stretching */
+  flex-shrink: 0; /* Task 5: Don't shrink image */
+  display: block;
 }
 
+/* Species Text Container - Task 5: Handle overflow */
 .species-text {
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* Task 5: Prevent text overflow [cite: 23] */
+  overflow: hidden; /* Task 5: Prevent text overflow */
+  flex: 1; /* Take remaining space */
+  min-width: 0; /* Task 5: Allow proper text truncation */
+}
+
+/* Species Name - Task 5: Prevent text overflow */
+.species-name {
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin: 0 0 0.25rem 0;
+  overflow: hidden; /* Task 5: Handle overflow */
+  text-overflow: ellipsis; /* Task 5: Show ellipsis */
+  white-space: nowrap; /* Task 5: Prevent wrapping */
+}
+
+/* Species Common Name / Subname - Task 5: Prevent text overflow */
+.species-subname,
+.common-name-species {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin: 0;
+  overflow: hidden; /* Task 5: Handle overflow */
+  text-overflow: ellipsis; /* Task 5: Show ellipsis */
+  white-space: nowrap; /* Task 5: Prevent wrapping */
+}
+
+/* Hover effects for species card text */
+.species-item:hover .common-name-species {
+  color: white;
+}
+
+.species-item:hover .species-name {
+  color: #0b5c37;
+}
+
+/* Legacy species-list-card class (if used elsewhere) */
+.species-list-card {
+  flex-wrap: nowrap; /* Task 5: Prevent wrapping */
+  min-height: auto; /* Task 5: No fixed height */
+}
+
+.species-list-card:hover {
+  background-color: #8ac642;
+  color: #0b5c37;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.species-list-card:hover .common-name-species {
+  color: white;
+}
+
+/* Task 5: Mobile Responsiveness for Cards */
+@media (max-width: 420px) {
+  .container#species-list {
+    padding: 1rem;
+    gap: 0.75rem;
+  }
+
+  .species-item {
+    padding: 0.75rem;
+  }
+
+  .species-item img,
+  .species-card-img {
+    width: 56px;
+    height: 56px;
+  }
+
+  .species-name {
+    font-size: 1rem;
+  }
+
+  .species-subname,
+  .common-name-species {
+    font-size: 0.85rem;
+  }
 }

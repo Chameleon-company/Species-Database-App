@@ -2,13 +2,15 @@
    FILTER STYLES - Task 1: Reusable Filter Buttons
    ======================================== */
 
-/* Filter Carousel Container */
+/* Filter Carousel Container - Task 5: Responsive */
 .filter-carousel-container {
   margin-bottom: 1.5rem;
   position: relative;
+  width: 100%; /* Task 5: Full width */
+  overflow: hidden; /* Task 5: Prevent container overflow */
 }
 
-/* Filter Carousel (Horizontal Scroll) */
+/* Filter Carousel (Horizontal Scroll) - Task 5: No wrapping, allow scroll */
 .filter-carousel {
   display: flex;
   overflow-x: auto;
@@ -20,6 +22,7 @@
   padding: 0.5rem 1.5rem;
   scroll-padding-left: 1.5rem;
   cursor: grab;
+  flex-wrap: nowrap; /* Task 5: Don't wrap, allow horizontal scroll */
 }
 
 .filter-carousel:active {
@@ -30,9 +33,9 @@
   display: none;
 }
 
-/* Filter Buttons */
+/* Filter Buttons - Task 5: Prevent text wrapping */
 .filter-button {
-  flex: 0 0 auto;
+  flex: 0 0 auto; /* Task 5: Don't grow or shrink */
   padding: 0.625rem 1.25rem;
   border-radius: 10px;
   border: 1.5px solid #0b5c37;
@@ -41,9 +44,10 @@
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
-  white-space: nowrap;
+  white-space: nowrap; /* Task 5: Prevent text wrapping */
   transition: all 0.2s ease;
   user-select: none;
+  min-height: auto; /* Task 5: No fixed height */
 }
 
 .filter-button:hover {
@@ -60,7 +64,7 @@
 }
 
 /* ========================================
-   FILTER OVERLAY STYLES
+   FILTER OVERLAY STYLES - Task 5: Responsive
    ======================================== */
 
 .filter-overlay {
@@ -74,16 +78,18 @@
   justify-content: center;
   align-items: center;
   z-index: 9998;
+  padding: 1rem; /* Task 5: Add padding for small screens */
 }
 
 .filter-modal {
   background: #ffffff;
   padding: 2rem;
   border-radius: 16px;
-  width: 80%;
+  width: 90%; /* Task 5: Responsive width */
   max-width: 320px;
   text-align: center;
   position: relative;
+  box-sizing: border-box; /* Task 5: Include padding in width */
 }
 
 #filterDescription:empty {
@@ -101,6 +107,11 @@
   padding: 0.4rem 0.6rem;
   border-radius: 6px;
   cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.close-filter-overlay:hover {
+  background: #e60000;
 }
 
 .placeholder-option {
@@ -114,4 +125,42 @@
   border: none;
   border-radius: 10px;
   cursor: pointer;
+  transition: background 0.2s ease;
+  box-sizing: border-box; /* Task 5: Include padding in width */
+  white-space: normal; /* Task 5: Allow wrapping in modal options */
+  word-wrap: break-word; /* Task 5: Break long words */
+}
+
+.placeholder-option:hover {
+  background: #094d2d;
+}
+
+/* Task 5: Mobile Responsiveness for Filters */
+@media (max-width: 420px) {
+  .filter-carousel {
+    padding: 0.5rem 1rem;
+    gap: 0.5rem;
+  }
+
+  .filter-button {
+    padding: 0.45rem 0.75rem;
+    font-size: 0.8rem;
+  }
+
+  .filter-modal {
+    width: 95%;
+    padding: 1.5rem;
+  }
+
+  .placeholder-option {
+    font-size: 1rem;
+    padding: 0.7rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .filter-button {
+    padding: 0.4rem 0.65rem;
+    font-size: 0.75rem;
+  }
 }

@@ -1,19 +1,412 @@
-/* Task 5: Responsiveness [cite: 20, 21] */
+/* ========================================
+   LAYOUT STYLES - Task 3: Headers and Top Sections
+   ======================================== */
+
+/* Body Background and Font */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background: #9acd6b;
+  color: #000000;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 0.5rem 0;
+}
+
+/* Container for the App - Task 5: Responsiveness */
 .app-shell {
   background: #ffffff;
   width: 100%;
   max-width: 480px;
-  min-height: 100vh; /* Task 5: use min-height [cite: 20] */
+  min-height: 100vh; /* Task 5: use min-height instead of fixed height */
   margin: 0 auto;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
+  padding: 0;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
 }
 
-/* Task 3: Headers [cite: 11, 12] */
+/* ========================================
+   HEADER STYLES - Task 3
+   ======================================== */
+
+/* App Header */
 .app-header {
+  width: 100%;
   background-color: #0b5c37;
   padding: 1.5rem;
+  border-radius: 16px 16px 0 0;
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  box-sizing: border-box;
+}
+
+/* Header Top Section - Task 5: Responsive */
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem; /* Task 5: Add gap for spacing */
+  flex-wrap: nowrap; /* Task 5: Keep on one line */
+}
+
+/* Header Title - Task 5: Prevent overflow */
+.header-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+  overflow: hidden; /* Task 5: Handle overflow */
+  text-overflow: ellipsis; /* Task 5: Show ellipsis */
+  white-space: nowrap; /* Task 5: Prevent wrapping */
+  flex: 1; /* Task 5: Take available space */
+  min-width: 0; /* Task 5: Allow proper truncation */
+}
+
+/* Language Button */
+.lang-btn {
+  background: white;
+  color: #0b5c37;
+  border: none;
+  padding: 0.5rem 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.25s;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.lang-btn:hover {
+  background: #f1f5f9;
+}
+
+/* ========================================
+   SEARCH BAR STYLES - Task 3 & 5: Responsive
+   ======================================== */
+
+.search-bar {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  width: 100%; /* Task 5: Full width */
+  box-sizing: border-box; /* Task 5: Include padding in width */
+  flex-wrap: nowrap; /* Task 5: Keep on one line */
+}
+
+.search-icon {
+  font-size: 1.2rem;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 0.5rem;
+  flex-shrink: 0; /* Task 5: Don't shrink icon */
+}
+
+.search-icon img {
+  width: 20px;
+  height: 20px;
+  opacity: 0.65;
+  display: block; /* Task 5: Remove inline spacing */
+}
+
+.search-bar input {
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 1rem;
+  background: transparent;
+  flex: 1; /* Task 5: Take remaining space */
+  min-width: 0; /* Task 5: Allow proper shrinking */
+}
+
+/* ========================================
+   APP TITLE & LOGO STYLES - Task 3
+   ======================================== */
+
+.app-title {
+  text-align: center;
+  margin: 0 0 2.5rem 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.app-subtitle {
+  text-align: center;
+  margin: -1.5rem 0 2.5rem 0;
+  font-size: 1rem;
+  color: #475569;
+}
+
+.app-logo {
+  width: 140px;
+  display: block;
+  margin: 0 auto 1.25rem auto;
+}
+
+/* ========================================
+   UTILITY STYLES
+   ======================================== */
+
+.back-link {
+  display: block;
+  text-align: center;
+  color: #0b5c37;
+  font-weight: 600;
+  text-decoration: none;
+  margin-bottom: 2rem;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.debug {
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+/* ========================================
+   LANGUAGE OVERLAY - Task 3
+   ======================================== */
+
+.lang-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  padding: 16px;
+}
+
+.lang-modal {
+  background: #ffffff;
+  width: 100%;
+  max-width: 460px;
+  border-radius: 22px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+  padding: 18px 18px 16px;
+  position: relative;
+}
+
+.lang-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #0f1625;
+  margin: 10px 0 14px;
+}
+
+.selected-pill {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 999px;
+  border: 2px solid #d8dbe2;
+  background: #ffffff;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.12);
+}
+
+.flag {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.06);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
+  flex: 0 0 auto;
+  font-size: 20px;
+}
+
+.selected-name {
+  flex: 1;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  font-size: 15px;
+  color: #0f1625;
+  text-transform: uppercase;
+}
+
+.check-dot {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #27c861;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 10px 18px rgba(39, 200, 97, 0.25);
+  flex: 0 0 auto;
+}
+
+.check-dot svg {
+  width: 18px;
+  height: 18px;
+  fill: #fff;
+}
+
+.card {
+  margin-top: 10px;
+  border-radius: 22px;
+  overflow: hidden;
+  border: 2px solid #d8dbe2;
+  background: #ffffff;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.1);
+}
+
+.list {
+  background: #ffffff;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 14px;
+  font-size: 18px;
+  font-weight: 800;
+  border-bottom: 1px solid #eef1f6;
+  cursor: pointer;
+  user-select: none;
+  color: #0f1625;
+  transition: background 0.15s ease, transform 0.05s ease;
+}
+
+.row:active {
+  transform: scale(0.995);
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.row .name {
+  flex: 1;
+}
+
+.radio {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 3px solid #cfd5e2;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+
+.radio svg {
+  width: 16px;
+  height: 16px;
+  fill: #fff;
+  display: none;
+}
+
+.row.selected {
+  background: rgba(39, 200, 97, 0.1);
+}
+
+.row.selected .radio {
+  border-color: transparent;
+  background: #27c861;
+  box-shadow: 0 10px 18px rgba(39, 200, 97, 0.22);
+}
+
+.row.selected .radio svg {
+  display: block;
+}
+
+/* Language Overlay Close Button */
+.lang-modal .close-overlay,
+.close-overlay {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: #ff4d4d;
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.close-overlay:hover {
+  background: #e60000;
+}
+
+.lang-choice {
+  padding: 1rem 2rem;
+  width: 100%;
+  margin-bottom: 1rem;
+  font-size: 1.3rem;
+  font-weight: bold;
+  background: #0b5c37;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.lang-choice:hover {
+  background: #094d2d;
+}
+
+/* ========================================
+   RESPONSIVE LAYOUT - Task 5
+   ======================================== */
+
+/* Mobile adjustments */
+@media (max-width: 420px) {
+  .app-header {
+    padding: 1.25rem;
+  }
+
+  .header-title {
+    font-size: 1.25rem;
+  }
+
+  .lang-btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 1rem;
+  }
+
+  .search-bar {
+    padding: 0.65rem 0.85rem;
+  }
+
+  .search-bar input {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 360px) {
+  body {
+    padding: 0.25rem 0;
+  }
+
+  .app-header {
+    padding: 1rem;
+  }
+
+  .header-title {
+    font-size: 1.1rem;
+  }
+
+  .search-bar {
+    padding: 0.6rem 0.75rem;
+  }
 }
