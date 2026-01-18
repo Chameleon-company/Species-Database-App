@@ -40,8 +40,6 @@ register_auth_routes(app, supabase)
 from media import register_media_routes
 register_media_routes(app, supabase)
 
-SUPABASE_URL_TETUM = os.getenv("VITE_SUPABASE_URL_TETUM")
-SUPABASE_SERVICE_KEY_TETUM = os.getenv("VITE_SUPABASE_PUBLISHABLE_KEY_TETUM")
 
 print("Supabase URL:", SUPABASE_URL)
 
@@ -116,7 +114,8 @@ def get_species_changes():
     #occured after clients last known version
     changes = (
         supabase.table("changelog")
-        .select("entity_id", "species")
+        .select("entity_id, version")
+        .eq("entity_type", "species")
         .gt("version", since_version)
         .execute()
     )
@@ -179,7 +178,7 @@ def get_species_incremental():
     #find ewhich species ids changed
     changes = (
         supabase.table("changelog")
-        .select("species_id, version")
+        .select("entity_id, version")
         .gt("version", since_version)
         .execute()
     )
@@ -191,7 +190,7 @@ def get_species_incremental():
             "latest_version": since_version
         })
     #deduplicating
-    species_ids = list({row["species_id"] for row in changes.data})
+    species_ids = list({row["entity_id"] for row in changes.data})
     
     latest_version =max(row["version"] for row in changes.data)
 
@@ -313,8 +312,8 @@ def audit_species_file():
 
 
 
-@app.route("/upload", methods=["POST"])
-def upload():
+@app.route("/species", methods=["POST"])
+def create_species():
     print(f"Raw request data: {request.data}")
     
     #Get variables from request
@@ -415,7 +414,7 @@ def upload():
         print("Upload to Tetum database successful")
         
         try:
-            log_change("species", rollback_id, "upload")
+            log_change("species", rollback_id, "CREATE")
         except Exception as log_change_error:
             print(f"Change log error, rolling back uploads: {str(log_change_error)}")
             try:
@@ -442,7 +441,116 @@ def upload():
                 print(f"Rollback failed: {str(rollback_error)}")
                 return jsonify({"error": f"ROLLBACK ERROR, DATABASES MAY NOT BE IN SYNC {str(rollback_error)}"}), 500
         
+@app.delete("/api/species/<int:species_id>")
+def delete_species(species_id):
+    """
+    DELETE SPECIES
 
+    -delete species from both language tables
+    -logs one row deletion for incremental sync
+    """
+
+    admin_id, err = get_admin_user(supabase)
+    if err:
+        return jsonify({"error": err[0]}), err[1]
+    supabase.table("species_en").delete().eq("species_id", species_id).execute()
+    supabase.table("species_tet").delete().eq("species_id", species_id).execute()
+
+    log_change("species", species_id, "DELETE")
+
+    return jsonify({"status": "deleted"}), 200
+
+@app.put("/api/species/<int:species_id>")
+def update_species(species_id):
+    """
+    UPDAATE SPECIES
+
+    - english source of truth
+    - tet auto-generated when english changes
+    - admin manually edit tet after if necessary
+    """
+    admin_id, err = get_admin_user(supabase)
+    if err:
+        return jsonify({"error": err[0]}), err[1]
+
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "missing Json body"}), 400
+
+    ############# ENGLISH UPDATE PAYLOAD ##############
+    en_update = {}
+    EN_FIELDS = [
+        "scientific_name",
+        "common_name",
+        "etymology",
+        "habitat",
+        "identification_character",
+        "leaf_type",
+        "fruit_type",
+        "phenology",
+        "seed_germination",
+        "pest"
+    ]
+
+    for field in EN_FIELDS:
+        if field in data:
+            en_update[field] = data[field]
+    if not en_update:
+        return jsonify({"error": "no english fields provided"}), 400
+
+    # update english row
+    supabase.table("species_en")\
+        .update(en_update)\
+        .eq("species_id", species_id)\
+        .execute()
+    
+    try:
+        to_translate_fields = [
+            en_update.get("scientific_name", ""),
+            en_update.get("common_name", ""),
+            en_update.get("etymology", ""),
+            en_update.get("habitat", ""),
+            en_update.get("identification_character", ""),
+            en_update.get("leaf_type",  ""),
+            en_update.get("fruit_type", ""),
+            en_update.get("phenology", ""),
+            en_update.get("seed_germination", ""),
+            en_update.get("pest", "")
+        ]
+        translated= asyncio.run(
+            translateMultipleTexts(to_translate_fields)
+        )
+
+        tet_update = {
+            "scientific_name": translated[0],
+            "common_name": translated[1],
+            "etymology": translated[2],
+            "habitat": translated[3],
+            "identification_character": translated[4],
+            "leaf_type": translated[5],
+            "fruit_type": translated[6],
+            "phenology": translated[7],
+            "seed_germination": translated[8],
+            "pest": translated[9],
+        }
+
+        # update tet if translation runs
+        supabase.table("species_tet") \
+            .update(tet_update)\
+            .eq("species_id", species_id)\
+            .execute()
+
+    except Exception as e:
+        #if translation fails allow english update
+        print("translation failed:", e)
+
+    #row based change logged
+    log_change("species", species_id, "UPDATE")
+
+    return jsonify({
+        "status": "updated",
+        "species_id": species_id
+    }), 200
 
 async def translateMultipleTexts(texts):
     tasks = [translate_to_tetum(text) for text in texts]
@@ -450,6 +558,48 @@ async def translateMultipleTexts(texts):
     results = await asyncio.gather(*tasks)
     
     return results
+
+@app.put("/api/species/<int:species_id>/tetum")
+def update_species_tet(species_id):
+    admin_id, err = get_admin_user(supabase)
+    if err:
+        return jsonify({"error": err[0]}), err[1]
+    
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "missing JSON body"}), 400
+    
+    tet_update = {}
+
+    TET_FIELDS = [
+        "scientific_name",
+        "common_name",
+        "etymology",
+        "habitat",
+        "identification_character",
+        "leaf_type",
+        "fruit_type",
+        "phenology",
+        "seed_germination",
+        "pest"        
+    ]
+
+    for field in TET_FIELDS:
+        if field in data:
+            tet_update[field] = data[field]
+
+    if not tet_update:
+        return jsonify({"error": "no tetum fields provided"}), 400
+    
+    # update tet row
+    supabase.table("species_tet")\
+        .update(tet_update)\
+        .eq("species_id", species_id)\
+        .execute()
+    
+    log_change("species", species_id, "UPDATE")
+
+    return jsonify({"status": "tetum updated"}), 200
 
 
 @app.route("/translate", methods=["POST"])

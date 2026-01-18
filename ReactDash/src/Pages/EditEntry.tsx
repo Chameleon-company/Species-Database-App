@@ -71,23 +71,7 @@ const errorContainerSx = {
     marginBottom: 2
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 export function EditEntry() {
-    if (!supabase || !supabaseTetum) {
-        return <div>ERROR! Database connection failed!</div>
-    }
 
     const [error, setError] = useState('')
     
@@ -113,7 +97,7 @@ export function EditEntry() {
         phenology: '',
         seedGermination: '',
         pests: ''
-    }) 
+    })
 
     const [open, setOpen] = useState(false)
 
@@ -134,30 +118,29 @@ export function EditEntry() {
         setLoading(true)
         setStatus('')
         setError('')
+    
+        const token = localStorage.getItem("admin_token")
+        if(!token)
+        {
+            throw new Error("Admin token missing")
+        }
 
         try {
-            const { error } = await supabase!
-                .from('species_en')
-                .delete()
-                .eq('species_id', ID)
-
-            if (error) {
-                console.error('========== SUPABASE ERROR DETAILS ==========')
-                console.error('Error object:', error)
-                console.error('Error code:', error.code)
-                console.error('Error details:', error.details)
-                console.error('Error hint:', error.hint)
-                console.error('Full error JSON:', JSON.stringify(error, null, 2))
-                console.error('===========================================')
-                
-                let errorMsg = `Error Code: ${error.code}\n`
-                errorMsg += `Message: ${error.message}\n`
-                if (error.details) errorMsg += `Details: ${error.details}\n`
-                if (error.hint) errorMsg += `Hint: ${error.hint}`
-                
-                throw new Error(errorMsg)
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/species/${ID}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: token,
+                }
+            })
+            
+            if(!res.ok)
+            {
+                const err = await res.json().catch(() => ({}))
+                throw new Error(err.error || 'failed to delete species')
             }
 
+            //*
             setResetKey(prev => prev + 1)
             setStatus('Species deleted successfully!')
             setError('')
@@ -221,60 +204,60 @@ export function EditEntry() {
         setError('')
 
         try {
-            const { error } = await supabase!
-                .from('species_en')
-                .update([
-                    { 
-                        scientific_name: formData.scientificName,
-                        common_name: formData.commonName ,
-                        etymology: formData.etymology,
-                        habitat: formData.habitat,
-                        identification_character: formData.identificationCharacteristics,
-                        leaf_type: formData.leafType,
-                        fruit_type: formData.fruitType,
-                        phenology: formData.phenology,
-                        seed_germination: formData.seedGermination,
-                        pest: formData.pests 
-                    }
-                ])
-                .eq('species_id', ID)
-                .select()
-
-            if (error) {
-                console.error('========== SUPABASE ERROR DETAILS ==========')
-                console.error('Error object:', error)
-                console.error('Error code:', error.code)
-                console.error('Error details:', error.details)
-                console.error('Error hint:', error.hint)
-                console.error('Full error JSON:', JSON.stringify(error, null, 2))
-                console.error('===========================================')
-                
-                let errorMsg = `Error Code: ${error.code}\n`
-                errorMsg += `Message: ${error.message}\n`
-                if (error.details) errorMsg += `Details: ${error.details}\n`
-                if (error.hint) errorMsg += `Hint: ${error.hint}`
-                
-                throw new Error(errorMsg)
+            const token = localStorage.getItem("admin_token")
+            if(!token)
+            {
+                throw new Error("admin token missing")
             }
 
-            setResetKey(prev => prev + 1)
-            setStatus('Species added successfully!')
-            setError('')
-            setRowSelected(false)
-            setID(-1)
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/species/${ID}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: token,
+                },
+                body: JSON.stringify({
+                    scientific_name: formData.scientificName,
+                    common_name: formData.commonName ,
+                    etymology: formData.etymology,
+                    habitat: formData.habitat,
+                    identification_character: formData.identificationCharacteristics,
+                    leaf_type: formData.leafType,
+                    fruit_type: formData.fruitType,
+                    phenology: formData.phenology,
+                    seed_germination: formData.seedGermination,
+                    pest: formData.pests 
+                })
 
-            setFormData({
-                scientificName: '',
-                commonName: '',
-                leafType: '',
-                fruitType: '',
-                etymology: '',
-                habitat: '',
-                identificationCharacteristics: '',
-                phenology: '',
-                seedGermination: '',
-                pests: ''
             })
+
+            if(!res.ok)
+            {
+                const err = await res.json().catch(() => ({}))
+                throw new Error(err.error || 'Update failed')
+            }
+            const data = await res.json()
+            console.log('update response:', data)
+
+            //species updated successfullty in db
+            setResetKey(prev => prev + 1)
+            setStatus('Species updated successfully!')
+            setRowSelected(false)
+            // setRowSelected(false)
+            // setID(-1)
+
+            // setFormData({
+            //     scientificName: '',
+            //     commonName: '',
+            //     leafType: '',
+            //     fruitType: '',
+            //     etymology: '',
+            //     habitat: '',
+            //     identificationCharacteristics: '',
+            //     phenology: '',
+            //     seedGermination: '',
+            //     pests: ''
+            // })
 
 
         }
@@ -290,12 +273,10 @@ export function EditEntry() {
     }
 
 
-
-    
-
     const handleRowSelect = (rowData: Species | null) => {
         setStatus('')
         console.log(rowData)
+        setError('')
         if (rowData) {
             setID(rowData.species_id)
             setFormData({

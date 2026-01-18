@@ -48,13 +48,6 @@ const paginationModel = { page: 0, pageSize: 10 }
 
 
 export default function MainTableSelect({ onRowSelect }: MainTableProps) {
-      if (!supabase || !supabaseTetum) {
-        return (
-          <Box sx={{ marginTop: 10}}>
-            <h2 style={{ color: 'red' }}>Critical Error: Database not accessible!</h2>
-          </Box>
-        )
-      }
 
   if (true) {
       
@@ -64,9 +57,23 @@ export default function MainTableSelect({ onRowSelect }: MainTableProps) {
     }, [])
 
     async function getSpecies() {
-      if (!supabase) { throw new Error('Failed to get rows to display'); }
-      const { data } = await supabase.from("species_en").select()
-      setSpecies(data ?? [])
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/bundle`, {
+          credentials: "include",
+        })
+
+        if(!res.ok) {
+          throw new Error("failed to fetch species")
+        }
+
+        const data = await res.json()
+        setSpecies(data.species_en ?? [])
+
+      }
+      catch (err) {
+        console.error(err)
+        setSpecies([])
+      }
     }
 
     const handleRowSelection = (selectionModel: any) => {

@@ -9,7 +9,6 @@ import axios from 'axios'
 
 
 const API_URL = import.meta.env.VITE_API_URL
-const API_UPLOAD_URL = import.meta.env.VITE_API_UPLOAD_URL
 
 export default function Page1() {
 
@@ -58,13 +57,17 @@ export default function Page1() {
 
 
     const translateToTetum = async () => {
-        setLoading(true)
+        setError('')
         //Checks
-        if (formData.scientificName == "") {setError('Scientific Name Cannot be empty'); setLoading(false); setTetumTranslate(false); return}
-        if (formData.commonName == "") {setError('Common Name Cannot be empty'); setLoading(false); setTetumTranslate(false); return}
-        if (formData.leafType == "") {setError('Leaf Type Cannot be empty'); setLoading(false); setTetumTranslate(false); return}
-        if (formData.fruitType == "") {setError('Fruit Type Cannot be empty'); setLoading(false); setTetumTranslate(false); return}
-        
+        if (!formData.scientificName) {setError('Scientific Name Cannot be empty')}
+        else if (!formData.commonName) {setError('Common Name Cannot be empty')}
+        else if (!formData.leafType) {setError('Leaf Type Cannot be empty')}
+        else if (!formData.fruitType) {setError('Fruit Type Cannot be empty')}
+        if(error)
+        {
+            setLoading(false)
+            return
+        }
         console.log("URL: ", API_URL)
         const tempEtymology = formData.etymology == "" ? "-" : formData.etymology
         const tempHabitat = formData.habitat == "" ? "-" : formData.habitat
@@ -77,29 +80,18 @@ export default function Page1() {
         const textArray = [formData.scientificName, formData.commonName, formData.leafType, formData.fruitType, tempEtymology, tempHabitat, tempIdent, tempPhenology, tempSeed, tempPest]
         console.log('Translation: ', textArray)
         try {
-            const response = await axios.post(API_URL, { text: textArray})
+            const response = await axios.post(`${API_URL}/translate`, { text: textArray })
             console.log('Translation: ', response)
 
             const translations = response.data
 
-            if (translations[4] == "-") {
-                translations[4] == ""
-            }
-            if (translations[5] == "-") {
-                translations[5] == ""
-            }
-            if (translations[6] == "-") {
-                translations[6] == ""
-            }
-            if (translations[7] == "-") {
-                translations[7] == ""
-            }
-            if (translations[8] == "-") {
-                translations[8] == ""
-            }
-            if (translations[9] == "-") {
-                translations[9] == ""
-            }
+            if (translations[4] === "-") translations[4] = ""
+            if (translations[5] === "-") translations[5] = ""
+            if (translations[6] === "-") translations[6] = ""
+            if (translations[7] === "-") translations[7] = ""
+            if (translations[8] === "-") translations[8] = ""
+            if (translations[9] === "-") translations[9] = ""
+
 
             setFormDataTetum({
                 scientificNameTetum: translations[0],
@@ -138,21 +130,56 @@ export default function Page1() {
 
     //Handles change in tetum language text boxes
     const handleChangeTetum = (field: keyof typeof formDataTetum) => (event: React.ChangeEvent<HTMLInputElement>) => {
-        setFormData((prevFormData) => ({
+        setFormDataTetum((prevFormData) => ({
             ...prevFormData,
             [field]: event.target.value
         }))
     }
 
+    //reset tetum before every translate
+    const resetTetumForm = () => {
+        setFormDataTetum({
+            scientificNameTetum: '',
+            commonNameTetum: '',
+            leafTypeTetum: '',
+            fruitTypeTetum: '',
+            etymologyTetum: '',
+            habitatTetum: '',
+            identificationCharacteristicsTetum: '',
+            phenologyTetum: '',
+            seedGerminationTetum: '',
+            pestsTetum: ''
+        })
+    }
+
     //Hendles the translate button being pressed. 
     const handleTetumTranslate = async () => {
+        setError('')
+        resetTetumForm()
         setTetumTranslate(true)
         await translateToTetum()
     }
 
     //Handles the clear button being pressed. 
-    const handleClear = async () => {
+    const handleClear = () => {
+        setError('')
+        setStatus('')
         setTetumTranslate(false)
+
+        setFormData( {
+            scientificName: '',
+            commonName: '',
+            leafType: '',
+            fruitType: '',
+            etymology: '',
+            habitat: '',
+            identificationCharacteristics: '',
+            phenology: '',
+            seedGermination: '',
+            pests: ''
+        })
+
+        resetTetumForm()
     }
 
     //What happens when the add button is pressed
@@ -182,7 +209,7 @@ export default function Page1() {
         setError('')
 
         try {
-            const response = await fetch(API_UPLOAD_URL, {
+            const response = await fetch(`${API_URL}/species`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
