@@ -459,18 +459,15 @@ export default function Page1() {
             <Box>
                 <Button variant="contained"
                 onClick={handleTetumTranslate}
-                disabled={loading}
                 >
-                    {loading ? 'Adding...' : 'Translate to tetum'}
+                    Translate to tetum
                 </Button>
             </Box>
 
             <Box sx={{ marginTop: 2 }}>
                 <Button variant="contained"
-                onClick={handleClear}
-                disabled={loading}
                 >
-                    {loading ? 'Clearing...' : 'Clear Entry'}
+                    Clear Entry
                 </Button>
             </Box>
 
