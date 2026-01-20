@@ -368,8 +368,13 @@
 
       <div class="container" id="species-list"></div>
 
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
+      <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script> -->
+      
+      <script src="scripts/config.js"></script>
+      <script src="scripts/db.js"></script>
+      <script src="scripts/dataService.js"></script>
+      <script src="scripts/sync.js"></script>
+      
       <script src="scripts/specieslist.js"></script>
       <script src="scripts/filterCarousel.js"></script>
 
@@ -402,6 +407,34 @@
     </main>
 
     <script>
+
+       document.addEventListener("DOMContentLoaded", async () => {
+    console.log("[Tetum] Page loaded");
+
+    // Try syncing with backend (ignored if offline)
+    try {
+      if (window.syncManager && typeof syncManager.checkAndSync === "function") {
+        const result = await syncManager.checkAndSync({ forceBundle: true });
+        console.log("[Tetum] Sync result:", result);
+      }
+    } catch (err) {
+      console.warn("[Tetum] Sync failed:", err);
+    }
+
+    // Always load species from IndexedDB
+    try {
+      const species = await dataService.getAllSpecies("tet");
+      console.log("[Tetum] Loaded species:", species.length);
+
+      if (typeof window.setSpeciesData === "function") {
+        window.setSpeciesData(species);
+      }
+    } catch (err) {
+      console.error("[Tetum] IndexedDB load error:", err);
+    }
+  });
+
+      
       // LANGUAGE HANDLER
       let lang = "en";
 
