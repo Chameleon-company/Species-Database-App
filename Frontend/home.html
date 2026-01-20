@@ -140,13 +140,43 @@
         </div>
       </div>
     </main>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script> -->
+    <script src="scripts/config.js"></script>
+    <script src="scripts/db.js"></script>
+    <script src="scripts/dataService.js"></script>
+    <script src="scripts/sync.js"></script>
+    
     <script src="scripts/specieslist.js"></script>
     <script src="scripts/filterCarousel.js"></script>
     <script src="scripts/detectOnline.js" defer></script>
 
     <script>
+      document.addEventListener("DOMContentLoaded", async () => {
+  console.log("[Home] Page loaded");
+
+  const code = (document.querySelector(".lang-btn")?.textContent || "EN")
+    .trim()
+    .toLowerCase();
+  const language = code === "tet" ? "tet" : "en";
+
+  // Always do sync
+  try {
+    const syncResult = await syncManager.checkAndSync({ forceBundle: true });
+    console.log("[Home] Sync result:", syncResult);
+  } catch (err) {
+    console.warn("[Home] Sync failed (offline mode). Using cached data:", err);
+  }
+
+  // Always load from IndexedDB (offline-safe)
+  try {
+    const species = await dataService.getAllSpecies(language);
+    console.log("[Home] Loaded species:", species.length);
+    window.setSpeciesData(species);
+  } catch (err) {
+    console.error("[Home] ERROR loading species from IndexedDB:", err);
+  }
+});
+
       // LANGUAGE HANDLER
       const langBtn = document.querySelector(".lang-btn");
       const overlay = document.getElementById("langOverlay");
