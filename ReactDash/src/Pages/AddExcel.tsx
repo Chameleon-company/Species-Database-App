@@ -55,6 +55,7 @@ export function AddExcel() {
       setError(
         err?.message || "Upload failed"
       );
+      setFile(null);
     } finally {
       setLoading(false);
     }

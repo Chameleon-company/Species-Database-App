@@ -396,9 +396,10 @@ def create_species():
         rollback_id = data1.data[0]['species_id']
         print("Upload to English database successful")
         
-        # Insert into Tetum database
+        # Insert into Tetum database with same species id as english
         print("Starting Tetum Upload")
         data2 = supabase.table('species_tet').insert({
+            'species_id': rollback_id,
             'scientific_name': scientific_name_tetum,
             'common_name': common_name_tetum,
             'etymology': etymology_tetum,
@@ -467,11 +468,10 @@ def delete_species(species_id):
 @app.put("/api/species/<int:species_id>")
 def update_species(species_id):
     """
-    UPDAATE SPECIES
+    UPDATE SPECIES
 
     - english source of truth
-    - tet auto-generated when english changes
-    - admin manually edit tet after if necessary
+    - tet generated in admin panel
     """
     admin_id, err = get_admin_user(supabase)
     if err:
@@ -501,53 +501,41 @@ def update_species(species_id):
             en_update[field] = data[field]
     if not en_update:
         return jsonify({"error": "no english fields provided"}), 400
-
+    
     # update english row
     supabase.table("species_en")\
         .update(en_update)\
         .eq("species_id", species_id)\
         .execute()
     
-    try:
-        to_translate_fields = [
-            en_update.get("scientific_name", ""),
-            en_update.get("common_name", ""),
-            en_update.get("etymology", ""),
-            en_update.get("habitat", ""),
-            en_update.get("identification_character", ""),
-            en_update.get("leaf_type",  ""),
-            en_update.get("fruit_type", ""),
-            en_update.get("phenology", ""),
-            en_update.get("seed_germination", ""),
-            en_update.get("pest", "")
-        ]
-        translated= asyncio.run(
-            translateMultipleTexts(to_translate_fields)
-        )
+    ############# TETUM UPDATE PAYLOAD ##############
+    tet_update = {}
+    TET_FIELDS = [
+        "scientific_name",
+        "common_name",
+        "etymolog",
+        "habitat",
+        "identification_character",
+        "leaf_type",
+        "fruit_type",
+        "phenology",
+        "seed_germination",
+        "pest"
+    ]
 
-        tet_update = {
-            "scientific_name": translated[0],
-            "common_name": translated[1],
-            "etymology": translated[2],
-            "habitat": translated[3],
-            "identification_character": translated[4],
-            "leaf_type": translated[5],
-            "fruit_type": translated[6],
-            "phenology": translated[7],
-            "seed_germination": translated[8],
-            "pest": translated[9],
-        }
-
-        # update tet if translation runs
-        supabase.table("species_tet") \
-            .update(tet_update)\
-            .eq("species_id", species_id)\
-            .execute()
-
-    except Exception as e:
-        #if translation fails allow english update
-        print("translation failed:", e)
-
+    for field in TET_FIELDS:
+        tetum_field_name = f"{field}_tetum"
+        if tetum_field_name in data:
+            tet_update[field] = data[tetum_field_name]
+    if not tet_update:
+        return jsonify({"error": "no tetum fields provided"}), 400
+    
+    # update tetum row
+    supabase.table("species_tet")\
+        .update(tet_update)\
+        .eq("species_id", species_id)\
+        .execute()
+    
     #row based change logged
     log_change("species", species_id, "UPDATE")
 
@@ -555,6 +543,7 @@ def update_species(species_id):
         "status": "updated",
         "species_id": species_id
     }), 200
+ 
 
 async def translateMultipleTexts(texts):
     tasks = [translate_to_tetum(text) for text in texts]
@@ -562,6 +551,48 @@ async def translateMultipleTexts(texts):
     results = await asyncio.gather(*tasks)
     
     return results
+
+@app.put("/api/species/<int:species_id>/english")
+def update_species_english(species_id):
+    admin_id, err = get_admin_user(supabase)
+    if err:
+        return jsonify({"error": err[0]}), err[1]
+    
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "missing JSON body"}), 400
+    
+    english_update = {}
+
+    ENGLISH_FIELDS = [
+        "scientific_name",
+        "common_name",
+        "etymology",
+        "habitat",
+        "identification_character",
+        "leaf_type",
+        "fruit_type",
+        "phenology",
+        "seed_germination",
+        "pest"        
+    ]
+
+    for field in ENGLISH_FIELDS:
+        if field in data:
+            english_update[field] = data[field]
+
+    if not english_update:
+        return jsonify({"error": "no tetum fields provided"}), 400
+    
+    # update english row
+    supabase.table("species_en")\
+        .update(english_update)\
+        .eq("species_id", species_id)\
+        .execute()
+    
+    log_change("species", species_id, "UPDATE")
+
+    return jsonify({"status": "english updated"}), 200
 
 @app.put("/api/species/<int:species_id>/tetum")
 def update_species_tet(species_id):

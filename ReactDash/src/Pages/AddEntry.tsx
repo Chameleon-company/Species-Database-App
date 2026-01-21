@@ -466,6 +466,7 @@ export default function Page1() {
 
             <Box sx={{ marginTop: 2 }}>
                 <Button variant="contained"
+                onClick={handleClear}
                 >
                     Clear Entry
                 </Button>
