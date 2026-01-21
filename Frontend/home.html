@@ -204,6 +204,11 @@
           selectedFlagEl.textContent = row.dataset.flag;
           langBtn.textContent = row.dataset.code;
           overlay.style.display = "none";
+          if (row.dataset.code === "TET") {
+            window.location.href = "tetum.html";
+          } else {
+            window.location.href = "home.html";
+          }
         });
       });
 
