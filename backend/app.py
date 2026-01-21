@@ -7,7 +7,6 @@ from uploader import process_file, translate_to_tetum
 from supabase import create_client, Client
 from flask_cors import CORS
 import os
-from flask_cors import CORS
 from pathlib import Path
 from dotenv import load_dotenv
 from audit import read_file_to_df, audit_dataframe
@@ -113,7 +112,7 @@ def get_species_changes():
     #occured after clients last known version
     changes = (
         supabase.table("changelog")
-        .select("entity_id, version")
+        .select("entity_id, version, operation")
         .eq("entity_type", "species")
         .gt("version", since_version)
         .execute()
@@ -189,7 +188,7 @@ def get_species_incremental():
             "latest_version": since_version
         })
     #deduplicating
-    species_ids = list({row["entity_id"] for row in changes.data})
+    species_ids = list({row["entity_id"] for row in changes.data if row["entity_id"] is not None})
     
     latest_version =max(row["version"] for row in changes.data)
 
@@ -217,10 +216,16 @@ def get_species_incremental():
 
     if species_en.data is None or species_tet.data is None:
         return jsonify({"error": "failed to fetch incremental species"}), 500
+    deleted_ids = [
+        row["entity_id"]
+        for row in changes.data
+        if row["operation"] == "DELETE"
+    ]
     return jsonify({
         "latest_version": latest_version,
         "species_en": species_en.data,
-        "species_tet": species_tet.data
+        "species_tet": species_tet.data,
+        "deleted_species_ids": deleted_ids
     })
 """
 This endpoint accepts an Excel or CSV file upload 
@@ -727,28 +732,40 @@ def create_user():
     name = data.get("name")
     role = data.get("role")
     password = data.get("password")
+    auth_provider = data.get("auth_provider", "local")
 
     if not name or not role:
         return jsonify({"error": "Required fields: name and role"}), 400
 
-    if not password:
-        return jsonify({"error": "Password required"}), 400
+    if not name or not role:
+        return jsonify({"error": "required fields: name and role"}), 400
+    
+    if auth_provider not in ["local", "google"]:
+        return jsonify({"error": "Invalid auth_provider"}), 400
+    
+    if auth_provider == "local":
+        if not password:
+            return jsonify({"error": "password required for local users"}),400
+        
+    if auth_provider == "google":
+        if role != "admin":
+            return jsonify({"error": "Google auth allowed for admin only"}), 403
+        password = None
 
-    # Hash the password
-    try:
+    password_hash = None
+
+    if auth_provider == "local":
         password_hash = bcrypt.hashpw(
             password.encode("utf-8"),
             bcrypt.gensalt()
-        ).decode("utf-8")
-    except Exception as e:
-        app.logger.exception("Password hashing failed")
-        return jsonify({"error": "Password hashing failed", "detail": str(e)}), 500
+        ).decode("utf-8")             
 
     user = {
         "name": name,
         "role": role,
         "is_active": data.get("is_active", True),
         "password_hash": password_hash,
+        "auth_provider": auth_provider,
     }
 
     # Insert into database with robust error handling
@@ -796,6 +813,13 @@ def get_users():
 
 @app.route("/api/users/<int:user_id>", methods=["PUT"])
 def update_user(user_id):
+
+    existing = supabase.table("users").select("auth_provider").eq("user_id", user_id).limit(1).execute()
+    if not existing.data:
+        return jsonify({"error": "User not found"}), 404
+    
+    auth_provider = existing.data[0]["auth_provider"]
+
     data = request.json
 
     update_data = {
@@ -805,6 +829,9 @@ def update_user(user_id):
     }
 
     if data.get("password"):
+        if auth_provider != "local":
+            return jsonify({"error": "google users cannot have passwords"}),400
+    
         update_data["password_hash"] = bcrypt.hashpw(
             data["password"].encode("utf-8"),
             bcrypt.gensalt()

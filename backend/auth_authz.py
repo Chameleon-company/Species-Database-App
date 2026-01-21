@@ -150,6 +150,11 @@ def register_auth_routes(app, supabase):
         
         user = resp.data[0]
 
+        if not user.get("password_hash"):
+            return jsonify({
+                "error": "This account doesnt support password login. Try using google."
+            }), 401
+
         #admin can disable users... applies when device is online
         if not user["is_active"]:
             return jsonify({"error": "account disabled"}), 403
@@ -246,6 +251,12 @@ def register_auth_routes(app, supabase):
         if not user["is_active"]:
             return jsonify({"error": "account disabled"}), 403
         
+        #guard
+        if not user.get("password_hash"):
+            return jsonify({
+                "error": "this account does not support password login. try using google"
+            }), 401
+
         #comparing inputted password with stored hash
         if not bcrypt.checkpw(
             password.encode("utf-8"),

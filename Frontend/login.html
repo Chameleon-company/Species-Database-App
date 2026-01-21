@@ -18,20 +18,16 @@
         Identify plant species instantly using your smartphone.
         Scan, explore and save your favourite discoveries.
       </div>
-      <button class="btn" id="guestBtn">
-        Continue as Guest
-      </button>
-
-      <div class="divider">
-        <span>OR</span>
-      </div>
+    <div class="guest-link">
+      <a href="#" id="guestBtn">Continue as guest</a>
+    </div>
 
       <div class="email-group">
         <label class="email-label">Username</label>
-        <input type="tetx" class="email-input" placeholder="" id="usernameInput" required />
+        <input type="text" class="email-input" placeholder="" id="usernameInput" required />
         <label class="email-label">Password</label>
-
         <input type="password" class="email-input" id="passwordInput" required />
+        <div class="error-text" id="loginError"></div>
         <button class="btn email-btn" id="emailContinueBtn">
           Sign in
         </button>
