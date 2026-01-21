@@ -86,7 +86,7 @@ async def process_file(file_path: str, translate: bool = True):
     missing_cols = [col for col in db_cols if normalize(col) not in normalized_cols]
     if missing_cols:
         raise Exception(
-            f"❌ Missing required columns in uploaded file: {missing_cols}. "
+            f"Missing required columns in uploaded file: {missing_cols}. "
             f"Please check the column names and try again."
         )
     inserted_count = 0;
