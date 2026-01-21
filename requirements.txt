@@ -14,6 +14,7 @@ et_xmlfile==2.0.0
 Flask==3.1.2
 frozenlist==1.8.0
 googletrans==4.0.2
+google-auth==2.47.0
 h11==0.16.0
 h2==3.2.0
 hpack==3.0.0
@@ -27,7 +28,7 @@ Jinja2==3.1.6
 MarkupSafe==3.0.3
 multidict==6.7.0
 numpy==2.3.5
-openpyxl==3.1.5
+openpyxl==3.1.5pip download -r requirements.txt -d ./packages --break-system-packages
 pandas==2.3.3
 propcache==0.4.1
 python-dateutil==2.9.0.post0

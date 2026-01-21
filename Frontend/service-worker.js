@@ -12,7 +12,7 @@ const FILES_TO_CACHE = [
     "/scripts/imageCache.js",
     "/scripts/preloadImages.js",
     "/scripts/filterCarousel.js",
-    "/data/images.json"
+    "../data/images.json"
 ];
 
 self.addEventListener('install', (event) => {
@@ -44,6 +44,7 @@ self.addEventListener('fetch', (event) => {
                 if (cached) return cached;
 
                 return fetch(event.request).then(response => {
+
                     if (event.request.destination === "image") {
                     return caches.open(CACHE_NAME).then(cache => {
                         cache.put(event.request, response.clone());

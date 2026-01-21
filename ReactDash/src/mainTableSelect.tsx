@@ -48,25 +48,32 @@ const paginationModel = { page: 0, pageSize: 10 }
 
 
 export default function MainTableSelect({ onRowSelect }: MainTableProps) {
-      if (!supabase || !supabaseTetum) {
-        return (
-          <Box sx={{ marginTop: 10}}>
-            <h2 style={{ color: 'red' }}>Critical Error: Database not accessible!</h2>
-          </Box>
-        )
-      }
 
   if (true) {
       
-    const [species, setSpecies] = useState<Species[]>([])
+    const [speciesEn, setSpeciesEn] = useState<Species[]>([])
+
     useEffect(() => {
       getSpecies()
     }, [])
 
     async function getSpecies() {
-      if (!supabase) { throw new Error('Failed to get rows to display'); }
-      const { data } = await supabase.from("species_en").select()
-      setSpecies(data ?? [])
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/bundle`, {
+          credentials: "include",
+        })
+
+        if(!res.ok) {
+          throw new Error("failed to fetch species")
+        }
+
+        const data = await res.json()
+        setSpeciesEn(data.species_en ?? [])
+      }
+      catch (err) {
+        console.error(err)
+        setSpeciesEn([])
+      }
     }
 
     const handleRowSelection = (selectionModel: any) => {
@@ -78,7 +85,7 @@ export default function MainTableSelect({ onRowSelect }: MainTableProps) {
       if (selectedIds.length > 0) {
         const selectedId = selectedIds[0]
         console.log("Selected ID:", selectedId)
-        const selectedSpecies = species.find(s => s.species_id === selectedId)
+        const selectedSpecies = speciesEn.find(s => s.species_id === selectedId)
         console.log("Found species:", selectedSpecies)
         onRowSelect(selectedSpecies || null)
       } else {
@@ -94,7 +101,7 @@ export default function MainTableSelect({ onRowSelect }: MainTableProps) {
     return (
       <Paper sx={{ height: 600, width: '100%' }}>
         <DataGrid
-          rows={species}
+          rows={speciesEn}
           columns={columns}
           getRowId={(row) => row.species_id}
           initialState={{ 
