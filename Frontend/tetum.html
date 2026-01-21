@@ -368,8 +368,10 @@
 
       <div class="container" id="species-list"></div>
 
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
+      <script src="scripts/config.js"></script>
+      <script src="scripts/db.js"></script>
+      <script src="scripts/dataService.js"></script>
+      <script src="scripts/sync.js"></script>
       <script src="scripts/specieslist.js"></script>
       <script src="scripts/filterCarousel.js"></script>
 
@@ -402,8 +404,31 @@
     </main>
 
     <script>
+      document.addEventListener("DOMContentLoaded", async () => {
+        try {
+          console.log("[Tetum] Starting sync...");
+          if (window.syncManager && typeof syncManager.checkAndSync === "function") {
+            const result = await syncManager.checkAndSync({ forceBundle: true });
+            console.log("[Tetum] Sync result:", result);
+          } else {
+            console.warn("[Tetum] syncManager not available");
+          }
+
+          const species = await dataService.getAllSpecies("tet");
+          console.log("[Tetum] Loaded species:", species.length);
+
+          if (typeof window.setSpeciesData === "function") {
+            window.setSpeciesData(species);
+          } else {
+            console.warn("[Tetum] setSpeciesData is not defined");
+          }
+        } catch (err) {
+          console.error("[Tetum] Error during initial load:", err);
+        }
+      });
+
       // LANGUAGE HANDLER
-      let lang = "en";
+      let lang = "tet";
 
       try {
         const stored = localStorage.getItem("appLanguage");
