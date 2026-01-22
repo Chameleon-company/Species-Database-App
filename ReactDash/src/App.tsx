@@ -1,5 +1,4 @@
 import "./App.css";
-import TheDrawer from "./Components/drawer";
 import { Home } from "./Pages/Home";
 import Page1 from "./Pages/AddEntry";
 import { EditEntry } from "./Pages/EditEntry";
@@ -11,6 +10,7 @@ import Audit from "./Pages/Audit";
 import AdminLoginForm from "./Pages/AdminLoginForm";
 import AdminLayout from "./Components/AdminLayout";
 import MediaManager from "./Pages/MediaManager";
+import SpeciesPage from "./Pages/Species";
 
 function App() {
   return (
@@ -20,59 +20,85 @@ function App() {
         <Route path="/admin-login" element={<AdminLoginForm />} />
 
         {/*ADMIN */}
-        <Route path="/" element={<AdminLayout>
-          <Home />
-        </AdminLayout>} />
+        <Route
+          path="/"
+          element={
+            <AdminLayout>
+              <Home />
+            </AdminLayout>
+          }
+        />
 
-        <Route 
-          path="/Page1" 
+        <Route
+          path="/species"
+          element={
+            <AdminLayout>
+              <SpeciesPage />
+            </AdminLayout>
+          }
+        />
+
+        <Route
+          path="/AddExcel"
+          element={
+            <AdminLayout>
+              <AddExcel />
+            </AdminLayout>
+          }
+        />
+
+        <Route
+          path="/Page1"
           element={
             <AdminLayout>
               <Page1 />
-            </AdminLayout>} />
-            
-        <Route path="/AddExcel" element={
-          <AdminLayout>
-            <AddExcel />
-          </AdminLayout> } />
-
-        <Route 
-          path="/EditEntry" 
+            </AdminLayout>
+          }
+        />
+        <Route
+          path="/EditEntry"
           element={
-          <AdminLayout>
-            <EditEntry />
-          </AdminLayout>
-          } />
+            <AdminLayout>
+              <EditEntry />
+            </AdminLayout>
+          }
+        />
 
-        <Route 
-          path="/Users" 
+        <Route
+          path="/Users"
           element={
-          <AdminLayout>
-            <UsersPage />
-          </AdminLayout>
-          } />
-        
-        <Route 
-        path="/Analytics" 
-        element={
-        <AdminLayout>
-          <Analytics />
-        </AdminLayout>} />
+            <AdminLayout>
+              <UsersPage />
+            </AdminLayout>
+          }
+        />
 
-        <Route 
-        path="/Audit" 
-        element={
-        <AdminLayout>
-          <Audit />
-        </AdminLayout>} />
+        <Route
+          path="/Analytics"
+          element={
+            <AdminLayout>
+              <Analytics />
+            </AdminLayout>
+          }
+        />
 
-        <Route 
-        path="/Media" 
-        element={
-        <AdminLayout>
-          <MediaManager />
-        </AdminLayout>} />
+        <Route
+          path="/Audit"
+          element={
+            <AdminLayout>
+              <Audit />
+            </AdminLayout>
+          }
+        />
 
+        <Route
+          path="/Media"
+          element={
+            <AdminLayout>
+              <MediaManager />
+            </AdminLayout>
+          }
+        />
       </Routes>
     </Router>
   );

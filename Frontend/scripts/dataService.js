@@ -57,19 +57,28 @@ const dataService = {
       const tx = database.transaction("species", "readonly");
       const store = tx.objectStore("species");
 
-      const req = store.get(id);
+      // Accept numeric or base id (e.g. 1 or "1") and construct composite key
+      // used by the DB: `${species_id}_${language}` (e.g. "1_en").
+      let key = id;
+      if (typeof key === "number") {
+        key = `${key}_${language}`;
+      } else if (typeof key === "string" && !key.includes("_")) {
+        key = `${key}_${language}`;
+      }
+
+      const req = store.get(key);
 
       req.onsuccess = () => {
         const row = req.result;
         if (!row) return resolve(null);
 
-        // Language checks
-        if (row.language && row.language !== language) return resolve(null);
+        // Prefer explicit language match if field exists
+        if (row.language && row.language !== language) {
+          return resolve(null);
+        }
 
-        if (
-          typeof row.id === "string" &&
-          !row.id.endsWith(`_${language}`)
-        ) {
+        // Otherwise, also accept id-suffix match as backup
+        if (typeof row.id === "string" && !row.id.endsWith(`_${language}`)) {
           return resolve(null);
         }
 
@@ -126,7 +135,8 @@ const dataService = {
       const store = tx.objectStore("media");
 
       const index = store.index("species_id");
-      const req = index.getAll(speciesId);
+      const req = index.getAll(parseInt(speciesId));
+      console.log(req);
 
       req.onsuccess = () => resolve(req.result || []);
       req.onerror = () => resolve([]);
