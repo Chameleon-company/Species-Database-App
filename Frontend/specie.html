@@ -251,7 +251,7 @@
           </div>
           <div class="key-detail">
             <div class="sub-heading">Fruit Type</div>
-            <div id="plant-fruit">Berry</div>
+            <div id="plant-fruit"></div>
           </div>
         </div>
       </div>
@@ -288,69 +288,125 @@
     </div>
     </main>
 
-    <script src="js/general.js"></script>
+ <script src="js/general.js"></script>
+    <script src="scripts/config.js"></script>
+    <script src="scripts/db.js"></script>
+    <script src="scripts/dataService.js"></script>
+    <script src="scripts/sync.js"></script>
     <script src="scripts/specieslist.js"></script>
     <script src="scripts/imageCache.js"></script>
     <script src="scripts/detectOnline.js" defer></script>
+    
     <script>
       const params = new URLSearchParams(window.location.search);
       const plantID = params.get("id");
 
-      //const species = dummyData.find(s => s.id === plantID);
-      //Get the detail data from Local Storage for selected species
-      const species = JSON.parse(localStorage.getItem("selected_species"));
-      //   console.log(species);
+      let species = [];
 
-      if (!species) {
-        const container = document.querySelector(".container");
-        container.innerHTML = `
-          <div class="species-details-header">
-            <img src="Assets/icons/leftarrow.png" alt="" class="left-arrow-icon go-back" onclick="window.history.back()" />
-            <h1>Species Not Found</h1>
-            <div style="width:34px;"></div>
-          </div>
-        `;
-      } else {
-        document.getElementById("plant-image").src = species.image_url;
-        document.getElementById("plant-common").textContent =
-          species.common_name;
-        document.getElementById("plant-scientific").textContent =
-          species.scientific_name;
-        document.getElementById("plant-etymology").textContent =
-          species.etymology;
-        document.getElementById("plant-habitat").textContent = species.habitat;
-        document.getElementById("plant-phenology").textContent =
-          species.phenology;
-        document.getElementById("plant-idchars").textContent =
-          species.identification_characters;
-        document.getElementById("plant-leaf").textContent = species.leaf_type;
-        document.getElementById("plant-fruit").textContent = species.fruit_type;
-        document.getElementById("plant-seed").textContent =
-          species.seed_germination;
-      }
+      document.addEventListener("DOMContentLoaded", async () => {
+        try {
+          const syncResult = await syncManager.checkAndSync({
+            forceBundle: true,
+          });
 
-      const gallery = document.getElementById("image-gallery");
+          const code = (
+            document.querySelector(".lang-btn")?.textContent || "EN"
+          )
+            .trim()
+            .toLowerCase();
+          const language = code === "tet" ? "tet" : "en";
 
-      gallery.addEventListener("click", (e) => {
-        if (e.target.tagName === "IMG") {
-          const src = e.target.src;
-          document.getElementById("plant-image").src = src;
-          //   console.log("SRC " + src);
-          //   window.location.href =
-          //     "imagepreview.html?src=" + encodeURIComponent(src);
+          species = await dataService.getSpeciesById(plantID, language);
+
+          if (!species) {
+            document.querySelector(".container").innerHTML =
+              "<h1>Species Not Found</h1>";
+            return;
+          }
+
+          // Populate DOM with species data
+
+          document.getElementById("plant-common").textContent =
+            species.common_name || "";
+          document.getElementById("plant-scientific").textContent =
+            species.scientific_name || "";
+          document.getElementById("plant-etymology").textContent =
+            species.etymology || "";
+          document.getElementById("plant-habitat").textContent =
+            species.habitat || "";
+          document.getElementById("plant-phenology").textContent =
+            species.phenology || "";
+          document.getElementById("plant-idchars").textContent =
+            species.identification_characters || "";
+          document.getElementById("plant-leaf").textContent =
+            species.leaf_type || "";
+          document.getElementById("plant-fruit").textContent =
+            species.fruit_type || "";
+          document.getElementById("plant-seed").textContent =
+            species.seed_germination || "";
+
+          // get species images from getSpeciesMedia
+          const mediaItems = await dataService.getSpeciesMedia(plantID);
+
+          document.getElementById("plant-image").src =
+            mediaItems[0].download_link || "";
+
+          const gallery = document.getElementById("image-gallery");
+          gallery.innerHTML = "";
+
+          if (mediaItems.length !== 0) {
+            mediaItems.forEach((url) => {
+              const img = document.createElement("img");
+              img.src = url.download_link;
+              img.loading = "lazy";
+
+              gallery.appendChild(img);
+            });
+          }
+
+          gallery.addEventListener("click", (e) => {
+            if (e.target.tagName === "IMG") {
+              const src = e.target.src;
+              document.getElementById("plant-image").src = src;
+            }
+          });
+
+          const img = document.getElementById("plant-image");
+
+          img.addEventListener("click", (e) => {
+            const rect = img.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width) * 100;
+            const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+            img.style.transformOrigin = `${x}% ${y}%`;
+            img.classList.toggle("zoomed");
+          });
+        } catch (err) {
+          console.error("Error fetching species data:", err);
         }
       });
 
-      const img = document.getElementById("plant-image");
-
-      img.addEventListener("click", (e) => {
-        const rect = img.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width) * 100;
-        const y = ((e.clientY - rect.top) / rect.height) * 100;
-
-        img.style.transformOrigin = `${x}% ${y}%`;
-        img.classList.toggle("zoomed");
-      });
+      //   if (!species) {
+      //     document.querySelector(".container").innerHTML =
+      //       "<h1>Species Not Found</h1>";
+      //   } else {
+      //     document.getElementById("plant-image").src = species.image_url;
+      //     document.getElementById("plant-common").textContent =
+      //       species.common_name;
+      //     document.getElementById("plant-scientific").textContent =
+      //       species.scientific_name;
+      //     document.getElementById("plant-etymology").textContent =
+      //       species.etymology;
+      //     document.getElementById("plant-habitat").textContent = species.habitat;
+      //     document.getElementById("plant-phenology").textContent =
+      //       species.phenology;
+      //     document.getElementById("plant-idchars").textContent =
+      //       species.identification_characters;
+      //     document.getElementById("plant-leaf").textContent = species.leaf_type;
+      //     document.getElementById("plant-fruit").textContent = species.fruit_type;
+      //     document.getElementById("plant-seed").textContent =
+      //       species.seed_germination;
+      //   }
     </script>
   </body>
 </html>
