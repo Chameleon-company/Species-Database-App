@@ -18,27 +18,35 @@
     <link rel="stylesheet" href="css/onlineBanner.css">
 
     <style>
-      body {
+      body, html {
         margin: 0;
         padding: 0;
+        height: 100svh;
         background: #8dc63f;
         display: flex;
         justify-content: center;
         font-family: "Roboto", sans-serif;
       }
 
+      .app-shell {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        padding: 1rem;
+      }
+
       .container {
         width: 90%;
         max-width: 520px;
         background: #fff;
-        margin-top: 20px;
-        padding: 20px;
+        margin-top: clamp(16px, 3vw, 32px);
+        padding: clamp(16px, 4vw, 28px);
         border-radius: 12px;
       }
 
       .image-layer {
         width: 100%;
-        height: 250px;
+        height: clamp(180px, 25vw, 300px);
         overflow: hidden;
       }
 
@@ -54,17 +62,16 @@
       } */
 
       .description-block {
-        margin-top: 20px;
+        margin-top: clamp(12px, 3vw, 20px);
       }
 
       .description-block h3 {
-        margin-bottom: 5px;
-        font-size: 20px;
+        margin-bottom: 4px;
+        font-size: clamp(16px, 4vw, 20px);
       }
 
       .description-block p {
-        line-height: 1.6;
-        font-size: 15px;
+        font-size: clamp(14px, 3.5vw, 16px);
       }
 
       .back-btn {
@@ -80,22 +87,12 @@
       }
 
       #image-gallery {
-        display: flex;
-        flex-direction: row;
-        gap: 5px;
-        overflow-x: auto;
-        padding: 10px 0;
+        gap: clamp(4px, 2vw, 8px);
+        padding: clamp(6px, 2vw, 10px) 0;
       }
 
       #image-gallery img {
-        height: 100px;
-        width: 100px;
-        border-radius: 8px;
-        flex-shrink: 0;
-        cursor: pointer;
-        border: 1px solid #0b5c37;
-        border-radius: 6px;
-        object-fit: cover;
+        height: clamp(80px, 12vw, 120px);
       }
 
       /* header */
@@ -105,22 +102,26 @@
         justify-content: space-between;
       }
 
-      /* left arrow icon */
       .left-arrow-icon {
-        width: 34px;
-        height: 34px;
-        cursor: pointer;
+        width: clamp(28px, 6vw, 34px);
+        height: clamp(28px, 6vw, 34px);
       }
-      /* heart-icon */
+
       .heart-icon {
-        width: 28px;
-        height: 28px;
-        cursor: pointer;
+        width: clamp(24px, 5vw, 28px);
+        height: clamp(24px, 5vw, 28px);
       }
+
       #plant-common {
-        color: #4e8a16;
-        font-weight: bold;
+        font-size: clamp(20px, 5vw, 26px);
       }
+
+      #plant-scientific {
+        font-size: clamp(16px, 4vw, 20px);
+        padding-bottom: clamp(12px, 3vw, 20px);
+        margin-top: clamp(12px, 3vw, 20px);
+      }
+
       .green-h1 {
         color: #4e8a16;
         font-weight: bold;
@@ -138,10 +139,10 @@
       }
       .key-info-details {
         display: flex;
-        gap: 100px;
-        font-size: 16px;
-        padding: 20px 0;
-        border-top: 1px solid #c7c7c7;
+        gap: clamp(16px, 8vw, 100px);
+        flex-wrap: wrap;
+        font-size: clamp(14px, 3.5vw, 16px);
+        padding: clamp(12px, 3vw, 20px) 0;
       }
       .key-info-details:last-child {
         border-bottom: 1px solid #c7c7c7;
@@ -301,8 +302,14 @@
       //   console.log(species);
 
       if (!species) {
-        document.querySelector(".container").innerHTML =
-          "<h1>Species Not Found</h1>";
+        const container = document.querySelector(".container");
+        container.innerHTML = `
+          <div class="species-details-header">
+            <img src="Assets/icons/leftarrow.png" alt="" class="left-arrow-icon go-back" onclick="window.history.back()" />
+            <h1>Species Not Found</h1>
+            <div style="width:34px;"></div>
+          </div>
+        `;
       } else {
         document.getElementById("plant-image").src = species.image_url;
         document.getElementById("plant-common").textContent =
