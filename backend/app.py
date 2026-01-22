@@ -7,7 +7,6 @@ from uploader import process_file, translate_to_tetum
 from supabase import create_client, Client
 from flask_cors import CORS
 import os
-from flask_cors import CORS
 from pathlib import Path
 from dotenv import load_dotenv
 from audit import read_file_to_df, audit_dataframe
@@ -19,15 +18,14 @@ from auth_authz import register_auth_routes, require_role, get_admin_user
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
 
-
-SUPABASE_URL = os.getenv("VITE_SUPABASE_URL")
-SUPABASE_SERVICE_KEY = os.getenv("VITE_SUPABASE_PUBLISHABLE_KEY")
-
-
 load_dotenv()
+
+
+
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
+print("Supabase URL:", SUPABASE_URL)
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 #register auth and authz routes
@@ -40,10 +38,8 @@ register_auth_routes(app, supabase)
 from media import register_media_routes
 register_media_routes(app, supabase)
 
-SUPABASE_URL_TETUM = os.getenv("VITE_SUPABASE_URL_TETUM")
-SUPABASE_SERVICE_KEY_TETUM = os.getenv("VITE_SUPABASE_PUBLISHABLE_KEY_TETUM")
 
-print("Supabase URL:", SUPABASE_URL)
+
 
 #supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 #supabase_tetum = create_client(SUPABASE_URL_TETUM, SUPABASE_SERVICE_KEY_TETUM)
@@ -112,47 +108,52 @@ def get_species_changes():
     if since_version is None:
         return jsonify({"error": "since_version required"}), 400
 
-
-    #get all changelog entries with a version higher than whatclient has
-    result = (
+    #getting all changelog entris related tospecies
+    #occured after clients last known version
+    changes = (
         supabase.table("changelog")
-        .select("version", count="exact")
+        .select("entity_id, version, operation")
+        .eq("entity_type", "species")
         .gt("version", since_version)
         .execute()
     )
 
-    if result.data is None:
-        return jsonify({"error": "failed toread changelog"}), 500
-
-    change_count = result.count or 0
-
     #if nothing changes, client must be up to date
-    if change_count == 0:
+    if not changes.data:
         return jsonify({
             "up_to_date": True,
             "latest_version": since_version,
-            "change_count":0
+            "row_count":0
         })
     
+    changed_species_ids = {
+        row["entity_id"]
+        for row in changes.data
+        if row["entity_id"] is not None
+    }
+
+    row_count = len(changed_species_ids)
+
     #finding latest version # on server
-    latest_version = max(row["version"] for row in result.data)
+    latest_version = max(row["version"] for row in changes.data)
 
     #threshold: if too many changes, no point having incremental syncing
     #will just pull the bundle
     THRESHOLD = 20
 
-    if change_count > THRESHOLD:
+    if row_count > THRESHOLD:
         return jsonify({
             "up_to_date": False,
             "force_bundle": True,
             "latest_version": latest_version,
-            "change_count": change_count
+            "change_count": row_count
         })
+    
     return jsonify({
         "up_to_date": False,
         "force_bundle": False,
         "latest_version": latest_version,
-        "change_count": change_count
+        "row_count": row_count
     })
 
 @app.get("/api/species/incremental")
@@ -175,7 +176,7 @@ def get_species_incremental():
     #find ewhich species ids changed
     changes = (
         supabase.table("changelog")
-        .select("species_id, version")
+        .select("entity_id, version")
         .gt("version", since_version)
         .execute()
     )
@@ -187,7 +188,7 @@ def get_species_incremental():
             "latest_version": since_version
         })
     #deduplicating
-    species_ids = list({row["species_id"] for row in changes.data})
+    species_ids = list({row["entity_id"] for row in changes.data if row["entity_id"] is not None})
     
     latest_version =max(row["version"] for row in changes.data)
 
@@ -215,10 +216,16 @@ def get_species_incremental():
 
     if species_en.data is None or species_tet.data is None:
         return jsonify({"error": "failed to fetch incremental species"}), 500
+    deleted_ids = [
+        row["entity_id"]
+        for row in changes.data
+        if row["operation"] == "DELETE"
+    ]
     return jsonify({
         "latest_version": latest_version,
         "species_en": species_en.data,
-        "species_tet": species_tet.data
+        "species_tet": species_tet.data,
+        "deleted_species_ids": deleted_ids
     })
 """
 This endpoint accepts an Excel or CSV file upload 
@@ -233,9 +240,9 @@ def upload_species_file():
     for uploading species data
     """
     #checking peermissions
-    admin_id, err = get_admin_user(supabase)
-    if err:
-        return jsonify({"error": err[0]}), err[1]
+    # admin_id, err = get_admin_user(supabase)
+    # if err:
+    #     return jsonify({"error": err[0]}), err[1]
 
     #at this point we've confirmed theyre admin
 
@@ -309,8 +316,8 @@ def audit_species_file():
 
 
 
-@app.route("/upload", methods=["POST"])
-def upload():
+@app.route("/species", methods=["POST"])
+def create_species():
     print(f"Raw request data: {request.data}")
     
     #Get variables from request
@@ -389,9 +396,10 @@ def upload():
         rollback_id = data1.data[0]['species_id']
         print("Upload to English database successful")
         
-        # Insert into Tetum database
+        # Insert into Tetum database with same species id as english
         print("Starting Tetum Upload")
         data2 = supabase.table('species_tet').insert({
+            'species_id': rollback_id,
             'scientific_name': scientific_name_tetum,
             'common_name': common_name_tetum,
             'etymology': etymology_tetum,
@@ -411,7 +419,7 @@ def upload():
         print("Upload to Tetum database successful")
         
         try:
-            log_change("species", rollback_id, "upload")
+            log_change("species", rollback_id, "CREATE")
         except Exception as log_change_error:
             print(f"Change log error, rolling back uploads: {str(log_change_error)}")
             try:
@@ -438,7 +446,104 @@ def upload():
                 print(f"Rollback failed: {str(rollback_error)}")
                 return jsonify({"error": f"ROLLBACK ERROR, DATABASES MAY NOT BE IN SYNC {str(rollback_error)}"}), 500
         
+@app.delete("/api/species/<int:species_id>")
+def delete_species(species_id):
+    """
+    DELETE SPECIES
 
+    -delete species from both language tables
+    -logs one row deletion for incremental sync
+    """
+
+    admin_id, err = get_admin_user(supabase)
+    if err:
+        return jsonify({"error": err[0]}), err[1]
+    supabase.table("species_en").delete().eq("species_id", species_id).execute()
+    supabase.table("species_tet").delete().eq("species_id", species_id).execute()
+
+    log_change("species", species_id, "DELETE")
+
+    return jsonify({"status": "deleted"}), 200
+
+@app.put("/api/species/<int:species_id>")
+def update_species(species_id):
+    """
+    UPDATE SPECIES
+
+    - english source of truth
+    - tet generated in admin panel
+    """
+    admin_id, err = get_admin_user(supabase)
+    if err:
+        return jsonify({"error": err[0]}), err[1]
+
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "missing Json body"}), 400
+
+    ############# ENGLISH UPDATE PAYLOAD ##############
+    en_update = {}
+    EN_FIELDS = [
+        "scientific_name",
+        "common_name",
+        "etymology",
+        "habitat",
+        "identification_character",
+        "leaf_type",
+        "fruit_type",
+        "phenology",
+        "seed_germination",
+        "pest"
+    ]
+
+    for field in EN_FIELDS:
+        if field in data:
+            en_update[field] = data[field]
+    if not en_update:
+        return jsonify({"error": "no english fields provided"}), 400
+    
+    # update english row
+    supabase.table("species_en")\
+        .update(en_update)\
+        .eq("species_id", species_id)\
+        .execute()
+    
+    ############# TETUM UPDATE PAYLOAD ##############
+    tet_update = {}
+    TET_FIELDS = [
+        "scientific_name",
+        "common_name",
+        "etymology",
+        "habitat",
+        "identification_character",
+        "leaf_type",
+        "fruit_type",
+        "phenology",
+        "seed_germination",
+        "pest"
+    ]
+
+    for field in TET_FIELDS:
+        tetum_field_name = f"{field}_tetum"
+        if tetum_field_name in data:
+            tet_update[field] = data[tetum_field_name]
+    if not tet_update:
+        return jsonify({"error": "no tetum fields provided"}), 400
+    
+    # update tetum row
+    supabase.table("species_tet")\
+        .update(tet_update)\
+        .eq("species_id", species_id)\
+        .execute()
+    
+    #row based change logged
+    log_change("species", species_id, "UPDATE")
+
+    return jsonify({
+        "status": "updated",
+        "species_id": species_id
+    }), 200
+ 
 
 async def translateMultipleTexts(texts):
     tasks = [translate_to_tetum(text) for text in texts]
@@ -446,6 +551,90 @@ async def translateMultipleTexts(texts):
     results = await asyncio.gather(*tasks)
     
     return results
+
+@app.put("/api/species/<int:species_id>/english")
+def update_species_english(species_id):
+    admin_id, err = get_admin_user(supabase)
+    if err:
+        return jsonify({"error": err[0]}), err[1]
+    
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "missing JSON body"}), 400
+    
+    english_update = {}
+
+    ENGLISH_FIELDS = [
+        "scientific_name",
+        "common_name",
+        "etymology",
+        "habitat",
+        "identification_character",
+        "leaf_type",
+        "fruit_type",
+        "phenology",
+        "seed_germination",
+        "pest"        
+    ]
+
+    for field in ENGLISH_FIELDS:
+        if field in data:
+            english_update[field] = data[field]
+
+    if not english_update:
+        return jsonify({"error": "no tetum fields provided"}), 400
+    
+    # update english row
+    supabase.table("species_en")\
+        .update(english_update)\
+        .eq("species_id", species_id)\
+        .execute()
+    
+    log_change("species", species_id, "UPDATE")
+
+    return jsonify({"status": "english updated"}), 200
+
+@app.put("/api/species/<int:species_id>/tetum")
+def update_species_tet(species_id):
+    admin_id, err = get_admin_user(supabase)
+    if err:
+        return jsonify({"error": err[0]}), err[1]
+    
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "missing JSON body"}), 400
+    
+    tet_update = {}
+
+    TET_FIELDS = [
+        "scientific_name",
+        "common_name",
+        "etymology",
+        "habitat",
+        "identification_character",
+        "leaf_type",
+        "fruit_type",
+        "phenology",
+        "seed_germination",
+        "pest"        
+    ]
+
+    for field in TET_FIELDS:
+        if field in data:
+            tet_update[field] = data[field]
+
+    if not tet_update:
+        return jsonify({"error": "no tetum fields provided"}), 400
+    
+    # update tet row
+    supabase.table("species_tet")\
+        .update(tet_update)\
+        .eq("species_id", species_id)\
+        .execute()
+    
+    log_change("species", species_id, "UPDATE")
+
+    return jsonify({"status": "tetum updated"}), 200
 
 
 @app.route("/translate", methods=["POST"])
@@ -574,28 +763,40 @@ def create_user():
     name = data.get("name")
     role = data.get("role")
     password = data.get("password")
+    auth_provider = data.get("auth_provider", "local")
 
     if not name or not role:
         return jsonify({"error": "Required fields: name and role"}), 400
 
-    if not password:
-        return jsonify({"error": "Password required"}), 400
+    if not name or not role:
+        return jsonify({"error": "required fields: name and role"}), 400
+    
+    if auth_provider not in ["local", "google"]:
+        return jsonify({"error": "Invalid auth_provider"}), 400
+    
+    if auth_provider == "local":
+        if not password:
+            return jsonify({"error": "password required for local users"}),400
+        
+    if auth_provider == "google":
+        if role != "admin":
+            return jsonify({"error": "Google auth allowed for admin only"}), 403
+        password = None
 
-    # Hash the password
-    try:
+    password_hash = None
+
+    if auth_provider == "local":
         password_hash = bcrypt.hashpw(
             password.encode("utf-8"),
             bcrypt.gensalt()
-        ).decode("utf-8")
-    except Exception as e:
-        app.logger.exception("Password hashing failed")
-        return jsonify({"error": "Password hashing failed", "detail": str(e)}), 500
+        ).decode("utf-8")             
 
     user = {
         "name": name,
         "role": role,
         "is_active": data.get("is_active", True),
         "password_hash": password_hash,
+        "auth_provider": auth_provider,
     }
 
     # Insert into database with robust error handling
@@ -643,6 +844,13 @@ def get_users():
 
 @app.route("/api/users/<int:user_id>", methods=["PUT"])
 def update_user(user_id):
+
+    existing = supabase.table("users").select("auth_provider").eq("user_id", user_id).limit(1).execute()
+    if not existing.data:
+        return jsonify({"error": "User not found"}), 404
+    
+    auth_provider = existing.data[0]["auth_provider"]
+
     data = request.json
 
     update_data = {
@@ -652,6 +860,9 @@ def update_user(user_id):
     }
 
     if data.get("password"):
+        if auth_provider != "local":
+            return jsonify({"error": "google users cannot have passwords"}),400
+    
         update_data["password_hash"] = bcrypt.hashpw(
             data["password"].encode("utf-8"),
             bcrypt.gensalt()

@@ -96,6 +96,7 @@
             <div class="sync-progress-fill" id="syncProgressFill" style="width: 0%"></div>
           </div>
           <div class="sync-status-text" id="syncStatusText">Syncing...</div>
+          <button class="lang-btn">EN</button>
         </div>
 
         <div class="search-bar">
@@ -128,6 +129,7 @@
       <div class="debug" id="debugInfo"></div>
 
       <!-- LANGUAGE OVERLAY -->
+
       <div class="lang-overlay" id="langOverlay">
         <div
           class="lang-modal"
@@ -205,6 +207,7 @@
       </div>
 
       <!-- FILTER OVERLAY -->
+      <!-- FILTER OVERLAY (NEW) -->
       <div class="filter-overlay" id="filterOverlay">
         <div class="filter-modal">
           <button class="close-filter-overlay" id="closeFilterOverlay">
@@ -218,6 +221,7 @@
     </main>
 
     <!-- Scripts (Original + PWA additions) -->
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script> -->
     <script src="scripts/config.js"></script>
     <script src="scripts/db.js"></script>
     <script src="scripts/dataService.js"></script>
@@ -322,6 +326,35 @@
       // ============================================
       // LANGUAGE HANDLER
       // ============================================
+
+    <script>
+      document.addEventListener("DOMContentLoaded", async () => {
+  console.log("[Home] Page loaded");
+
+  const code = (document.querySelector(".lang-btn")?.textContent || "EN")
+    .trim()
+    .toLowerCase();
+  const language = code === "tet" ? "tet" : "en";
+
+  // Always do sync
+  try {
+    const syncResult = await syncManager.checkAndSync({ forceBundle: true });
+    console.log("[Home] Sync result:", syncResult);
+  } catch (err) {
+    console.warn("[Home] Sync failed (offline mode). Using cached data:", err);
+  }
+
+  // Always load from IndexedDB (offline-safe)
+  try {
+    const species = await dataService.getAllSpecies(language);
+    console.log("[Home] Loaded species:", species.length);
+    window.setSpeciesData(species);
+  } catch (err) {
+    console.error("[Home] ERROR loading species from IndexedDB:", err);
+  }
+});
+
+      // LANGUAGE HANDLER
       const langBtn = document.querySelector(".lang-btn");
       const overlay = document.getElementById("langOverlay");
       const closeBtn = document.getElementById("closeOverlay");
@@ -361,17 +394,22 @@
       // ============================================
       // FILTER OVERLAY
       // ============================================
+      // ------------------------------
+      // FILTER OVERLAY JS (NEW)
+      // ------------------------------
       const filterOverlay = document.getElementById("filterOverlay");
       const closeFilterOverlay = document.getElementById("closeFilterOverlay");
       const filterTitle = document.getElementById("filterTitle");
       const filterOptions = document.getElementById("filterOptions");
       const filterDescription = document.getElementById("filterDescription");
 
+      // Global state for active filters
       let activeFilters = {
         leafType: null,
         fruitType: null,
       };
 
+      // Leaf Type options
       const leafTypeOptions = [
         "Simple",
         "Pinnately compound (single)",
@@ -380,6 +418,7 @@
         "Palmately compound",
       ];
 
+      // Fruit Type options
       const fruitTypeOptions = ["Drupe", "Capsule", "Follicle", "Pod"];
 
       const filterConfigs = {
@@ -411,6 +450,7 @@
         },
       };
 
+      // Function to apply all active filters and search
       function applyFilters() {
         if (!loadedSpeciesData || loadedSpeciesData.length === 0) {
           console.warn("No species data loaded yet");
@@ -419,6 +459,7 @@
 
         let filtered = [...loadedSpeciesData];
 
+        // Apply leaf type filter
         if (activeFilters.leafType) {
           filtered = filtered.filter(
             (species) =>
@@ -426,6 +467,7 @@
           );
         }
 
+        // Apply fruit type filter
         if (activeFilters.fruitType) {
           filtered = filtered.filter(
             (species) =>
@@ -434,6 +476,7 @@
           );
         }
 
+        // Apply search filter
         const searchInput = document.getElementById("searchInput");
         if (searchInput && searchInput.value.trim() !== "") {
           const query = searchInput.value.toLowerCase().trim();
@@ -444,6 +487,7 @@
           );
         }
 
+        // Render results or show no results message
         if (filtered.length === 0 && typeof renderNoResults === 'function') {
           renderNoResults();
         } else {
@@ -465,6 +509,34 @@
         }
       }
 
+      // Make applyFilters available globally
+      window.applyFilters = applyFilters;
+
+      // Function to update filter button active states
+      function updateFilterButtonStates() {
+        const leafTypeBtn = document.querySelector('[data-filter="leaf-type"]');
+        const fruitTypeBtn = document.querySelector(
+          '[data-filter="fruit-type"]'
+        );
+
+        if (leafTypeBtn) {
+          if (activeFilters.leafType) {
+            leafTypeBtn.classList.add("active");
+          } else {
+            leafTypeBtn.classList.remove("active");
+          }
+        }
+
+        if (fruitTypeBtn) {
+          if (activeFilters.fruitType) {
+            fruitTypeBtn.classList.add("active");
+          } else {
+            fruitTypeBtn.classList.remove("active");
+          }
+        }
+      }
+
+      // Function to create option buttons with active state
       function createOptionButton(option, filterType) {
         const optionBtn = document.createElement("button");
         optionBtn.className = "placeholder-option";
@@ -474,6 +546,12 @@
         const isActive =
           (filterType === "leaf-type" && activeFilters.leafType === optionValue) ||
           (filterType === "fruit-type" && activeFilters.fruitType === optionValue);
+        // Check if this option is currently active
+        const isActive =
+          (filterType === "leaf-type" &&
+            activeFilters.leafType === optionValue) ||
+          (filterType === "fruit-type" &&
+            activeFilters.fruitType === optionValue);
 
         if (isActive) {
           optionBtn.style.background = "#0f172a";
@@ -489,6 +567,28 @@
 
           updateFilterButtonStates();
           applyFilters();
+            // Toggle leaf type filter
+            if (activeFilters.leafType === optionValue) {
+              activeFilters.leafType = null; // Deselect if already selected
+            } else {
+              activeFilters.leafType = optionValue; // Select new option
+            }
+          } else if (filterType === "fruit-type") {
+            // Toggle fruit type filter
+            if (activeFilters.fruitType === optionValue) {
+              activeFilters.fruitType = null; // Deselect if already selected
+            } else {
+              activeFilters.fruitType = optionValue; // Select new option
+            }
+          }
+
+          // Update filter button states
+          updateFilterButtonStates();
+
+          // Apply filters
+          applyFilters();
+
+          // Close overlay
           filterOverlay.style.display = "none";
         };
 
@@ -503,6 +603,11 @@
             activeFilters.leafType = null;
             activeFilters.fruitType = null;
 
+            // Clear all filters
+            activeFilters.leafType = null;
+            activeFilters.fruitType = null;
+
+            // Remove active state from all filter buttons except "all"
             document.querySelectorAll(".filter-button").forEach((b) => {
               if (b.dataset.filter !== "all") {
                 b.classList.remove("active");
@@ -510,6 +615,7 @@
             });
             btn.classList.add("active");
 
+            // Reset search input
             const searchInput = document.getElementById("searchInput");
             if (searchInput) {
               searchInput.value = "";
@@ -522,6 +628,33 @@
           }
 
           if (key === "a-z") {
+            // Render all species - check if data is loaded
+            if (loadedSpeciesData && loadedSpeciesData.length > 0) {
+              renderSpecies(loadedSpeciesData);
+            } else {
+              console.warn("Species data not loaded yet");
+            }
+            
+            // Don't show overlay for "All" button
+            return;
+          }
+
+          // Don't remove active state for leaf-type and fruit-type buttons
+          // They can be active simultaneously
+          // A-Z is a sort, not a filter, so it can work alongside filters
+          if (key === "a-z") {
+            // A-Z can be active alongside leaf-type and fruit-type
+            btn.classList.add("active");
+          } else if (key !== "leaf-type" && key !== "fruit-type") {
+            document.querySelectorAll(".filter-button").forEach((b) => {
+              if (
+                b.dataset.filter !== "leaf-type" &&
+                b.dataset.filter !== "fruit-type" &&
+                b.dataset.filter !== "a-z"
+              ) {
+                b.classList.remove("active");
+              }
+            });
             btn.classList.add("active");
           }
 
@@ -536,6 +669,7 @@
             let optionBtn;
 
             if (option.action) {
+              // For A-Z filter with actions
               optionBtn = document.createElement("button");
               optionBtn.className = "placeholder-option";
               optionBtn.textContent = option.label;
@@ -544,6 +678,13 @@
                 filterOverlay.style.display = "none";
               };
             } else {
+                if (option.action) {
+                  option.action();
+                }
+                filterOverlay.style.display = "none";
+              };
+            } else {
+              // For leaf-type and fruit-type filters
               optionBtn = createOptionButton(option, key);
             }
 
@@ -558,6 +699,7 @@
         filterOverlay.style.display = "none";
       });
 
+      // Initialize: Set "All" button as active by default when page loads
       document.addEventListener("DOMContentLoaded", () => {
         const allButton = document.querySelector('[data-filter="all"]');
         if (allButton) {
@@ -571,6 +713,12 @@
         originalOrder = Array.from(document.querySelectorAll(".species-item"));
       });
 
+      function resetSpeciesList() {
+        const list = document.getElementById("species-list");
+        if (!originalOrder) return;
+        originalOrder.forEach((item) => list.appendChild(item));
+      }
+
       function sortSpecies(direction) {
         if (!loadedSpeciesData || loadedSpeciesData.length === 0) {
           console.warn("No species data to sort.");
@@ -580,6 +728,7 @@
         const sorted = [...loadedSpeciesData].sort((a, b) => {
           const nameA = a.scientific_name.toLowerCase();
           const nameB = b.scientific_name.toLowerCase();
+
           return direction === "az"
             ? nameA.localeCompare(nameB)
             : nameB.localeCompare(nameA);
@@ -589,4 +738,5 @@
       }
     </script>
   </body>
+</html>
 </html>

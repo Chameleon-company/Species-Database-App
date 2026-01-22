@@ -26,7 +26,6 @@ def register_media_routes(app, supabase):
         """
 
         #checking permissions
-        # Instead of get_admin_user in POST
         admin_id, err = get_admin_user(supabase)
         if err:
             return jsonify({"error": err[0]}), err[1]

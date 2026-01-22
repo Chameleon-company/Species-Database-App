@@ -1,181 +1,349 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Species Details</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#8DC63F">
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#8DC63F" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet"
+    />
+
+        <!-- Online Banner-->
+    <link rel="stylesheet" href="css/onlineBanner.css">
 
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background: #8DC63F;
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-        }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #8dc63f;
+        display: flex;
+        justify-content: center;
+        font-family: "Roboto", sans-serif;
+      }
 
-        .container {
-            width: 90%;
-            max-width: 520px;
-            background: #fff;
-            margin-top: 20px;
-            padding: 20px;
-            border-radius: 12px;
-        }
+      .container {
+        width: 90%;
+        max-width: 520px;
+        background: #fff;
+        margin-top: 20px;
+        padding: 20px;
+        border-radius: 12px;
+      }
 
-        .plant-img {
-            width: 100%;
-            height: auto;
-            border-radius: 12px;
-        }
+      .image-layer {
+        width: 100%;
+        height: 250px;
+        overflow: hidden;
+      }
 
-        h1 {
-            margin-top: 15px;
-            font-size: 26px;
-        }
+      h1 {
+        margin-top: 15px;
+        font-size: 26px;
+      }
 
-        .classification {
-            font-size: 18px;
-            color: #444;
-            margin-bottom: 15px;
-        }
+      /* .classification {
+        font-size: 18px;
+        color: #444;
+        margin-bottom: 15px;
+      } */
 
-        .description-block {
-            margin-top: 20px;
-        }
+      .description-block {
+        margin-top: 20px;
+      }
 
-        .description-block h3 {
-            margin-bottom: 5px;
-            font-size: 20px;
-        }
+      .description-block h3 {
+        margin-bottom: 5px;
+        font-size: 20px;
+      }
 
-        .description-block p {
-            line-height: 1.6;
-            font-size: 15px;
-        }
+      .description-block p {
+        line-height: 1.6;
+        font-size: 15px;
+      }
 
-        .back-btn {
-            margin-top: 25px;
-            display: block;
-            text-align: center;
-            padding: 12px;
-            background: #8DC63F;
-            color: black;
-            text-decoration: none;
-            border-radius: 10px;
-            font-weight: bold;
-        }
+      .back-btn {
+        margin-top: 25px;
+        display: block;
+        text-align: center;
+        padding: 12px;
+        background: #8dc63f;
+        color: black;
+        text-decoration: none;
+        border-radius: 10px;
+        font-weight: bold;
+      }
 
-        #image-gallery {
-            display: flex;
-            flex-direction: row;
-            gap: 5px;
-            overflow-x: auto; 
-            padding: 10px 0;
-        }
+      #image-gallery {
+        display: flex;
+        flex-direction: row;
+        gap: 5px;
+        overflow-x: auto;
+        padding: 10px 0;
+      }
 
-        #image-gallery img {
-            height: 100px;
-            width: 100px;
-            border-radius: 8px;
-            flex-shrink: 0;   
-            cursor: pointer;
-            border: 1px solid #0B5C37;
-            border-radius: 6px;
-            object-fit: cover;
-        }
+      #image-gallery img {
+        height: 100px;
+        width: 100px;
+        border-radius: 8px;
+        flex-shrink: 0;
+        cursor: pointer;
+        border: 1px solid #0b5c37;
+        border-radius: 6px;
+        object-fit: cover;
+      }
 
+      /* header */
+      .species-details-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
 
- </style>
-</head>
+      /* left arrow icon */
+      .left-arrow-icon {
+        width: 34px;
+        height: 34px;
+        cursor: pointer;
+      }
+      /* heart-icon */
+      .heart-icon {
+        width: 28px;
+        height: 28px;
+        cursor: pointer;
+      }
+      #plant-common {
+        color: #4e8a16;
+        font-weight: bold;
+      }
+      .green-h1 {
+        color: #4e8a16;
+        font-weight: bold;
+      }
+      .scientific-name {
+        font-style: regular;
+        font-size: 18px;
+      }
+      .mid-container {
+        margin: 15px 0;
+      }
+      .sub-heading {
+        margin-bottom: 10px;
+        color: #0b5c37;
+      }
+      .key-info-details {
+        display: flex;
+        gap: 100px;
+        font-size: 16px;
+        padding: 20px 0;
+        border-top: 1px solid #c7c7c7;
+      }
+      .key-info-details:last-child {
+        border-bottom: 1px solid #c7c7c7;
+      }
+      /* Zoom overlay styles */
+      .zoom-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.85);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        padding: 1rem;
+      }
 
-<body>
+      .zoom-modal {
+        position: relative;
+        max-width: 96%;
+        max-height: 96%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .zoom-img {
+        max-width: 100%;
+        max-height: 100%;
+        width: auto;
+        height: auto;
+        border-radius: 8px;
+        transition: transform 150ms ease;
+        will-change: transform;
+        cursor: grab;
+      }
+
+      .zoom-close {
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        background: #fff;
+        border: none;
+        border-radius: 999px;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+        font-weight: 700;
+      }
+
+      .plant-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+        cursor: zoom-in;
+      }
+
+      .plant-img.zoomed {
+        transform: scale(2); /* adjust zoom level */
+        cursor: zoom-out;
+      }
+    </style>
+  </head>
+
+  <body>
+    <main class="app-shell">
     <div class="container">
-        <img id="plant-image" class="plant-img" src="" alt="Image">
-
-        <div id="image-gallery"></div>
-
+      <!-- app header -->
+      <div class="species-details-header">
+        <img
+          src="Assets/icons/leftarrow.png"
+          alt=""
+          class="left-arrow-icon go-back"
+        />
         <h1 id="plant-common"></h1>
-        <div id="plant-scientific" class="classification"></div>
-
-        <div class="description-block">
-            <h3>Etymology</h3>
-            <p id="plant-etymology"></p>
+        <img src="Assets/icons/heart.png" alt="" class="heart-icon" />
+      </div>
+      <div>
+        <div class="image-layer">
+          <img id="plant-image" class="plant-img" src="" alt="Image" />
         </div>
+        <div id="image-gallery"></div>
+      </div>
 
-        <div class="description-block">
-            <h3>Habitat</h3>
-            <p id="plant-habitat"></p>
+      <!-- Scientific Name -->
+      <div class="mid-container">
+        <!-- <h1 id="plant-common" class="green-h1"></h1> -->
+        <h2
+          id="plant-scientific"
+          class="green-h1"
+          style="border-bottom: 1px solid #eee; padding-bottom: 20px"
+        ></h2>
+      </div>
+
+      <!-- Key Information -->
+      <div class="mid-container">
+        <h2 class="green-h1" style="margin-bottom: 20px">Key Information</h2>
+        <div class="key-info-details">
+          <div class="key-detail">
+            <div class="sub-heading">Leaf Type</div>
+            <div id="plant-leaf"></div>
+          </div>
+          <div class="key-detail">
+            <div class="sub-heading">Fruit Type</div>
+            <div id="plant-fruit">Berry</div>
+          </div>
         </div>
+      </div>
 
-        <div class="description-block">
-            <h3>Phenology</h3>
-            <p id="plant-phenology"></p>
-        </div>
+      <!-- <h1 id="plant-common"></h1> -->
+      <!-- <div id="plant-scientific" class="classification"></div> -->
 
-        <div class="description-block">
-            <h3>Identification</h3>
-            <p id="plant-idchars"></p>
-        </div>
+      <div class="description-block">
+        <h3 class="green-h1">Etymology</h3>
+        <p id="plant-etymology"></p>
+      </div>
 
-        <div class="description-block">
-            <h3>Leaf Type</h3>
-            <p id="plant-leaf"></p>
-        </div>
+      <div class="description-block">
+        <h3 class="green-h1">Habitat</h3>
+        <p id="plant-habitat"></p>
+      </div>
 
-        <div class="description-block">
-            <h3>Fruit Type</h3>
-            <p id="plant-fruit"></p>
-        </div>
+      <div class="description-block">
+        <h3 class="green-h1">Phenology</h3>
+        <p id="plant-phenology"></p>
+      </div>
 
-        <div class="description-block">
-            <h3>Seed Germination</h3>
-            <p id="plant-seed"></p>
-        </div>
+      <div class="description-block">
+        <h3 class="green-h1">Identification</h3>
+        <p id="plant-idchars"></p>
+      </div>
 
-        <a href="home.html" class="back-btn">← Back to List</a>
+      <div class="description-block">
+        <h3 class="green-h1">Seed Germination</h3>
+        <p id="plant-seed"></p>
+      </div>
+
+      <!-- <a href="home.html" class="back-btn">← Back to List</a> -->
     </div>
+    </main>
 
+    <script src="js/general.js"></script>
     <script src="scripts/specieslist.js"></script>
     <script src="scripts/imageCache.js"></script>
+    <script src="scripts/detectOnline.js" defer></script>
     <script>
+      const params = new URLSearchParams(window.location.search);
+      const plantID = params.get("id");
 
-        const params = new URLSearchParams(window.location.search);
-        const plantID = params.get("id");
+      //const species = dummyData.find(s => s.id === plantID);
+      //Get the detail data from Local Storage for selected species
+      const species = JSON.parse(localStorage.getItem("selected_species"));
+      //   console.log(species);
 
-        //const species = dummyData.find(s => s.id === plantID);
-        //Get the detail data from Local Storage for selected species
-        const species = JSON.parse(localStorage.getItem("selected_species"));
-        console.log(species);
+      if (!species) {
+        document.querySelector(".container").innerHTML =
+          "<h1>Species Not Found</h1>";
+      } else {
+        document.getElementById("plant-image").src = species.image_url;
+        document.getElementById("plant-common").textContent =
+          species.common_name;
+        document.getElementById("plant-scientific").textContent =
+          species.scientific_name;
+        document.getElementById("plant-etymology").textContent =
+          species.etymology;
+        document.getElementById("plant-habitat").textContent = species.habitat;
+        document.getElementById("plant-phenology").textContent =
+          species.phenology;
+        document.getElementById("plant-idchars").textContent =
+          species.identification_characters;
+        document.getElementById("plant-leaf").textContent = species.leaf_type;
+        document.getElementById("plant-fruit").textContent = species.fruit_type;
+        document.getElementById("plant-seed").textContent =
+          species.seed_germination;
+      }
 
-        if (!species) {
-            document.querySelector(".container").innerHTML = "<h1>Species Not Found</h1>";
-        } else {
-            document.getElementById("plant-image").src = species.image_url;
-            document.getElementById("plant-common").textContent = species.common_name;
-            document.getElementById("plant-scientific").textContent = species.scientific_name;
-            document.getElementById("plant-etymology").textContent = species.etymology;
-            document.getElementById("plant-habitat").textContent = species.habitat;
-            document.getElementById("plant-phenology").textContent = species.phenology;
-            document.getElementById("plant-idchars").textContent = species.identification_characters;
-            document.getElementById("plant-leaf").textContent = species.leaf_type;
-            document.getElementById("plant-fruit").textContent = species.fruit_type;
-            document.getElementById("plant-seed").textContent = species.seed_germination;
+      const gallery = document.getElementById("image-gallery");
+
+      gallery.addEventListener("click", (e) => {
+        if (e.target.tagName === "IMG") {
+          const src = e.target.src;
+          document.getElementById("plant-image").src = src;
+          //   console.log("SRC " + src);
+          //   window.location.href =
+          //     "imagepreview.html?src=" + encodeURIComponent(src);
         }
+      });
 
-        const gallery = document.getElementById("image-gallery");
+      const img = document.getElementById("plant-image");
 
-        gallery.addEventListener("click", (e) => {
-            if (e.target.tagName === "IMG") {
-                const src = e.target.src;
-                console.log("SRC "+src);
-                window.location.href = "imagepreview.html?src=" + encodeURIComponent(src);
-            }
-        });
+      img.addEventListener("click", (e) => {
+        const rect = img.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+        img.style.transformOrigin = `${x}% ${y}%`;
+        img.classList.toggle("zoomed");
+      });
     </script>
-</body>
+  </body>
 </html>

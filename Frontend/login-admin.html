@@ -7,35 +7,47 @@
   <title>Species Database - Splash</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="css/login.css" />
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
 </head>
 
 <body>
   <div class="app-shell">
     <div class="app-container">
-      <img src="Assets/Images/Camouflage18/image.png" alt="Species Database Logo" class="logo-img" />
+      <img src="Assets/Images/Camouflage18/logo-placeholder.png" alt="Species Database Logo" class="logo-img" />
       <div class="title">SPECIES DATABASE</div>
       <div class="subtitle">
         Identify plant species instantly using your smartphone.
         Scan, explore and save your favourite discoveries.
       </div>
-    <div class="guest-link">
-      <a href="#" id="guestBtn">Continue as guest</a>
-    </div>
+      <div class="googleB" id="googleBtn" aria-label="Admin Google Sign In"></div>
+      
+      <div class="guest-link">
+        <a href="#" id="guestBtn">Continue as guest</a>
+      </div>
+
+      <div class="divider">
+        <span>OR</span>
+      </div>
 
       <div class="email-group">
-        <label class="email-label">Username</label>
+        <label class="email-label" for="usernameInput">Username</label>
         <input type="text" class="email-input" placeholder="" id="usernameInput" required />
-        <label class="email-label">Password</label>
-        <input type="password" class="email-input" id="passwordInput" required />
+
+        <label class="email-label" for="username2Input">Password</label>
+        <input type="password" class="email-input" placeholder="" id="passwordInput" required />
+        
         <div class="error-text" id="loginError"></div>
+
         <button class="btn email-btn" id="emailContinueBtn">
-          Sign in
+          Sign In
         </button>
       </div>
 
+
       <div class="footer">
-        Admin?
-        <a href="login-admin.html">Go to admin login</a>
+        Not an Admin?
+        <a href="login.html" id="signInLink">Sign In as User</a>
       </div>
     </div>
   </div>
