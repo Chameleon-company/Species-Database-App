@@ -38,18 +38,18 @@
 
     .app-container {
       width: 100%;
-      aspect-ratio: 1080 / 2408;
-      max-height: 100vh;
-      background: var(--bg-inner);
-      border-radius: 32px;
-      box-shadow: var(--card-shadow);
-      padding: 40px 28px 48px;
+      max-width: 480px;
+      padding: clamp(24px, 5vw, 40px) clamp(20px, 5vw, 28px) clamp(24px, 5vw, 48px);
       display: flex;
       flex-direction: column;
       align-items: center;
-      position: relative;
-      overflow: hidden;
+      border-radius: 32px;
+      box-shadow: var(--card-shadow);
+      background: var(--bg-inner);
+      box-sizing: border-box;
       justify-content: center;
+      overflow: hidden;
+      position: relative;
     }
 
     @media (min-height: 800px) {
@@ -59,11 +59,9 @@
     }
 
     .logo-img {
-      width: 52%;
-      max-width: 260px;
+      width: clamp(140px, 30vw, 260px);
+      height: auto;
       margin-bottom: 40px;
-      opacity: 0;
-      transform: translateY(30px) scale(0.96);
     }
 
     .title {
@@ -208,12 +206,8 @@
     }
 
     .email-input {
-      width: 100%;
-      padding: 18px 20px;
-      border-radius: 18px;
-      border: 1.5px solid #d8dbe2;
-      font-size: 15px;
-      outline: none;
+      padding: clamp(12px, 2.5vw, 18px);
+      font-size: clamp(14px, 3.5vw, 16px);
     }
 
     .email-input:focus {
@@ -221,10 +215,10 @@
       box-shadow: 0 0 0 3px rgba(39, 200, 97, 0.18);
     }
 
-    .btn.email-btn {
-      background: #0B5C37;
+    .btn, .btn.email-btn {
+      padding: clamp(14px, 3vw, 18px);
+      font-size: clamp(14px, 3.5vw, 16px);
     }
-
 
     @keyframes fadeInUpSoft {
       from {
