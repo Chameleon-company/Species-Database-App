@@ -61,14 +61,14 @@ export async function syncBundle(options = {}) {
   // Cache media URLs in Service Worker
   if (navigator.serviceWorker?.controller && media.length > 0) {
     const urls = media
-      .filter(m=> m.media_type === "image")
-      .map(m => m.download_link || m.media_url || m.url)
+      .filter(m=> m.media_type === "image" || m.media_type === "video")
+      .map(m => m.download_link)
       .filter(Boolean);
     
     if (urls.length > 0) {
       navigator.serviceWorker.controller.postMessage({
         type: "CACHE_MEDIA",
-        urls: urls,
+        urls,
       });
       console.log("[Sync] Sent", urls.length, "URLs to Service Worker");
     }

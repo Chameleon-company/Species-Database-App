@@ -291,6 +291,12 @@
       <div class="description-block">
         <h3 class="green-h1">Seed Germination</h3>
         <p id="plant-seed"></p>
+        <button
+          id="germinationVideoBtn"
+          class="back-btn"
+          style="margin-top: 10px"
+        >
+          Watch Germination Video</button>
       </div>
 
       <!-- <a href="home.html" class="back-btn">← Back to List</a> -->
@@ -363,6 +369,22 @@
 
           // get species images from getSpeciesMedia
           const mediaItems = await dataService.getSpeciesMedia(plantID);
+
+          //GERMINATION VIDEO BUTTON
+          const videoBtn = document.getElementById("germinationVideoBtn")
+
+          //find first video for species
+          const videoItem = mediaItems.find(m => m.media_type === "video")
+
+          if(videoItem && videoItem.download_link)
+          {
+            videoBtn.addEventListener("click", ()=>{
+              window.location.href =`video.html?media=${encodeURIComponent(videoItem.download_link)}&species_id=${plantID}`;
+            })
+          }
+          else {
+            videoBtn.style.display = "none"
+          }
 
           if(mediaItems.length > 0)
           {

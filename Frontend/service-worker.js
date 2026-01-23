@@ -6,14 +6,19 @@ const CORE_ASSETS = [
   "./",
   "./index.html",
   "./home.html",
+  "./tetum.html",
   "./specie.html",
   "./manifest.json",
+  "./css/layout.css",
   "./css/responsive.css",
-  "./scripts/specieslist.js",
-  "./scripts/filterCarousel.js",
-  "./scripts/sync.js",
+  "./css/filters.css",
+  "./css/cards.css",
+  "./scripts/config.js",
   "./scripts/db.js",
   "./scripts/dataService.js",
+  "./scripts/sync.js",
+  "./scripts/specieslist.js",
+  "./scripts/filterCarousel.js",
 ];
 
 // Install - cache core assets
@@ -111,7 +116,21 @@ async function handleAppRequest(request) {
   }
 }
 
-// Message handler - cache media URLs
+//helper for sending from SW toopen app tabs
+async function notifyClients(message) {
+  //get all pages controlled by SW
+  const clients =await self.clients.matchAll({
+    includeUncontrolled: true
+  }) 
+  
+  //sendig messager to each page
+  for(const client of clients)
+  {
+    client.postMessage(message)
+  }
+}
+
+//message handler - cache media URLs
 self.addEventListener("message", async (event) => {
   const { type, urls } = event.data;
 
@@ -119,15 +138,30 @@ self.addEventListener("message", async (event) => {
     console.log("[SW] Caching", urls.length, "media URLs");
     const cache = await caches.open(MEDIA_CACHE);
 
+    //keepig track of medai cache progress
+    let done = 0
+    const total = urls.length
+
     for (const url of urls) {
       try {
-        const res = await fetch(url);
-        if (res.ok) await cache.put(url, res);
+
+        const req = new Request(url, {cache: "no-store"})
+        //skipping if cached
+        const cached = await cache.match(req)
+        if(!cached)
+        {
+          const res = await fetch(url);
+          if (res.ok) await cache.put(req, res.clone());
+        }
+        done++
+        notifyClients({type: "MEDIA_CACHE_PROGRESS", done, total,url})
+
       } catch (e) {
-        console.warn("[SW] Failed to cache media:", url);
+        done++
+        notifyClients({type: "MEDIA_CACHE_PROGRESS", done, total,url,error: true})
       }
     }
-    console.log("[SW] Media caching complete");
+    notifyClients({type: "MEDIA_CACHE_DONE",total})
   }
 });
 
