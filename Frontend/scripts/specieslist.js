@@ -2,7 +2,7 @@ let loadedSpeciesData = [];
 
 // Render species cards
 
-function renderSpecies(data) {
+async function renderSpecies(data) {
   const speciesList = document.getElementById("species-list");
 
   if (!speciesList) {
@@ -17,27 +17,30 @@ function renderSpecies(data) {
     return;
   }
 
-  data.forEach((species) => {
+  for(const species of data){
     const id = species.id ?? "";
     const scientific = species.scientific_name ?? "";
     const common = species.common_name ?? "";
 
-    const imgSrc =
-      species.image_url ||
-      species.image ||
-      (species.images && species.images[0]) ||
-      "Assets/icons/image-placeholder.svg";
+    const thumb = await dataService.getThumbnail(species.species_id)
+
+    const imgSrc = thumb
 
     speciesList.innerHTML += `
       <div id="${id}" class="species-item" onclick="goToDetail('${id}')">
-        <img src="${imgSrc}" alt="${scientific}" class="species-card-img" onerror="this.src='Assets/icons/image-placeholder.svg'">
+      ${
+        thumb
+        ? `<img src="${imgSrc}" alt="${scientific}" class="species-card-img">`
+        : ``
+      }  
+      
         <div class="species-text">
           <h3 class="species-name">${scientific}</h3>
           <p class="common-name-species">${common}</p>
         </div>
       </div>
     `;
-  });
+  };
 }
 
 

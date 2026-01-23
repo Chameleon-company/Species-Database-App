@@ -410,3 +410,41 @@ body {
     padding: 0.6rem 0.75rem;
   }
 }
+
+#image-gallery {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 8px 0;
+
+  align-items: center;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+#image-gallery img {
+  width: 72px !important;
+  height: 72px !important;
+  min-width: 72px;
+  min-height: 72px;
+
+  object-fit: cover;
+  border-radius: 8px;
+
+  flex-shrink: 0;
+  scroll-snap-align: start;
+
+  max-width: none;
+  max-height: none;
+  border: 1.4px solid #0d0d0dd0;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.03);
+}
+
+#image-gallery::-webkit-scrollbar {
+  display: none;
+}
+#image-gallery {
+  scrollbar-width: none;
+}
