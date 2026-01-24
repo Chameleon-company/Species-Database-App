@@ -145,44 +145,14 @@ const dataService = {
   },
   // getting one thumbnail image for species... first image
   async getThumbnail(speciesId) {
-    if (!speciesId) return null;
-
-    await window.db.init();
-    const database = await window.db._openDB();
-
-    return new Promise((resolve) => {
-      const tx = database.transaction("media", "readonly");
-      const store = tx.objectStore("media");
-      const index = store.index("species_id");
-
-      const req = index.getAll(parseInt(speciesId));
-
-      req.onsuccess = () => {
-        const media = req.result || [];
-
-        const images = media.filter(
-          (m) => m.media_type === "image" && m.download_link
-        );
-
-        if (images.length === 0) {
-          resolve(null);
-          return;
-        }
-
-        //oldest first (earliest created)
-        images.sort(
-          (a, b) =>
-            new Date(a.created_at || 0) - new Date(b.created_at || 0)
-        );
-
-        resolve(images[0].download_link);
-      };
-
-      req.onerror = () => {
-        console.warn("Failed to load media for species", speciesId);
-        resolve(null);
-      };
-    });
+    let earliest = null
+    for(const m of media){
+      if(m.media_type !== "image" || !m.download_link) continue
+      if(!earliest || new Date(m.created_at || 0) < new Date(earliest.created_at || 0)){
+        earliest = m
+      }
+    }
+    resolve(earliest ? earliest.download_link: null)
   },
 
 };

@@ -161,14 +161,6 @@
     .toLowerCase();
   const language = code === "tet" ? "tet" : "en";
 
-  // Always do sync
-  try {
-    const syncResult = await syncManager.checkAndSync({ forceBundle: false });
-    console.log("[Home] Sync result:", syncResult);
-  } catch (err) {
-    console.warn("[Home] Sync failed (offline mode). Using cached data:", err);
-  }
-
   // Always load from IndexedDB (offline-safe)
   try {
     const species = await dataService.getAllSpecies(language);
@@ -177,6 +169,16 @@
   } catch (err) {
     console.error("[Home] ERROR loading species from IndexedDB:", err);
   }
+  // Always do sync
+  try {
+    syncManager.checkAndSync({ forceBundle: false })
+      .then(res => console.log("[Home] Sync result:", res))
+      .catch(err => console.warn("[Home] Sync failed:", err))
+    console.log("[Home] Sync result:", syncResult);
+  } catch (err) {
+    console.warn("[Home] Sync failed (offline mode). Using cached data:", err);
+  }
+
 });
 
       // LANGUAGE HANDLER
