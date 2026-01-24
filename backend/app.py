@@ -16,8 +16,13 @@ import bcrypt
 from auth_authz import register_auth_routes, require_role, get_admin_user
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True)
-
+CORS(
+    app,
+    supports_credentials=True,
+    origins=[
+        "https://species-database-app.onrender.com"
+    ]
+)
 load_dotenv()
 
 

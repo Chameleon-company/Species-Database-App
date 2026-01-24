@@ -10,7 +10,7 @@ const API_CONFIG = {
   // Automatically detects development vs production environment
   baseUrl: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://127.0.0.1:5000'  // Development (local Flask server)
-    : window.location.origin,   // Production (update this to your production URL if different)
+    : "https://species-database-app-api.onrender.com",   // Production (update this to your production URL if different)
   
   // API endpoint paths (relative to baseUrl)
   endpoints: {
@@ -21,17 +21,20 @@ const API_CONFIG = {
     
     // Auth endpoints
     login: '/api/auth/login',                 // User login
-    userState: '/api/auth/user-state'         // Check user status
+    userState: '/api/auth/user-state',// Check user status
+    translate: "/api/translate",         
   }
 };
 
-// Make API_CONFIG available globally
-if (typeof window !== 'undefined') {
-  window.API_CONFIG = API_CONFIG;
-}
+console.log("[API_CONFIG]", API_CONFIG)
 
-// Export for Node.js environments (testing)
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = API_CONFIG;
-}
+// // Make API_CONFIG available globally
+// if (typeof window !== 'undefined') {
+//   window.API_CONFIG = API_CONFIG;
+// }
+
+// // Export for Node.js environments (testing)
+// if (typeof module !== 'undefined' && module.exports) {
+//   module.exports = API_CONFIG;
+// }
 

@@ -23,10 +23,13 @@ def require_role(supabase, allowed_roles):
     """
 
     #user id from request header sent from frontend
-    user_id = request.headers.get("auth-user-id", type=int)
+    user_id = request.headers.get("auth-user-id")
 
-    if not user_id:
-        return False, ("missing user id", 401)
+    if user_id:
+        try:
+            user_id = int(user_id)
+        except ValueError:
+            return False, ("invalid user id", 401)
     
     #getting user from supabase
     resp =(
