@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="tet">
   <head>
     <meta charset="UTF-8" />
     <title>Species Details</title>
@@ -252,14 +252,14 @@
 
       <!-- Key Information -->
       <div class="mid-container">
-        <h2 class="green-h1" style="margin-bottom: 20px">Key Information</h2>
+        <h2 class="green-h1" style="margin-bottom: 20px">Informasaun Prinsipál</h2>
         <div class="key-info-details">
           <div class="key-detail">
-            <div class="sub-heading">Leaf Type</div>
+            <div class="sub-heading">Tipu Daun</div>
             <div id="plant-leaf"></div>
           </div>
           <div class="key-detail">
-            <div class="sub-heading">Fruit Type</div>
+            <div class="sub-heading">Tipu Ai-fuan</div>
             <div id="plant-fruit"></div>
           </div>
         </div>
@@ -269,34 +269,38 @@
       <!-- <div id="plant-scientific" class="classification"></div> -->
 
       <div class="description-block">
-        <h3 class="green-h1">Etymology</h3>
+        <h3 class="green-h1">Etimolojia</h3>
         <p id="plant-etymology"></p>
       </div>
 
       <div class="description-block">
-        <h3 class="green-h1">Habitat</h3>
+        <h3 class="green-h1">Abitat</h3>
         <p id="plant-habitat"></p>
       </div>
 
       <div class="description-block">
-        <h3 class="green-h1">Phenology</h3>
+        <h3 class="green-h1">Fenolojia</h3>
         <p id="plant-phenology"></p>
       </div>
 
       <div class="description-block">
-        <h3 class="green-h1">Identification</h3>
+        <h3 class="green-h1">Identifikasaun</h3>
         <p id="plant-idchars"></p>
       </div>
 
       <div class="description-block">
-        <h3 class="green-h1">Seed Germination</h3>
+        <h3 class="green-h1">Jerminasaun Fini</h3>
+        <p id="plant-seed"></p>
+      </div>
+      <div class="description-block">
+        <h3 class="green-h1">Jerminasaun Fini</h3>
         <p id="plant-seed"></p>
         <button
           id="germinationVideoBtn"
           class="back-btn"
           style="margin-top: 10px"
         >
-          Watch Germination Video</button>
+          Haree Vídeo Jerminasaun</button>
       </div>
 
       <!-- <a href="home.html" class="back-btn">← Back to List</a> -->
@@ -311,7 +315,7 @@
     <script src="scripts/detectOnline.js" defer></script>
     
     <script>
-      const PAGE_LANGUAGE = "en";
+      const PAGE_LANGUAGE = "tet";
       const params = new URLSearchParams(window.location.search);
       const plantID = params.get("id");
 
@@ -329,12 +333,7 @@
 
           }
 
-          const code = (
-            document.querySelector(".lang-btn")?.textContent || "EN"
-          )
-            .trim()
-            .toLowerCase();
-          const language = code === "tet" ? "tet" : "en";
+          const language = "tet"
 
           species = await dataService.getSpeciesById(plantID, language);
           //DEBUG
@@ -342,7 +341,7 @@
 
           if (!species) {
             document.querySelector(".container").innerHTML =
-              "<h1>Species Not Found</h1>";
+              "<h1>Espésie sira ne'ebé la hetan</h1>";
             return;
           }
 
@@ -369,22 +368,6 @@
 
           // get species images from getSpeciesMedia
           const mediaItems = await dataService.getSpeciesMedia(plantID);
-
-          //GERMINATION VIDEO BUTTON
-          const videoBtn = document.getElementById("germinationVideoBtn")
-
-          //find first video for species
-          const videoItem = mediaItems.find(m => m.media_type === "video")
-
-          if(videoItem && videoItem.download_link)
-          {
-            videoBtn.addEventListener("click", ()=>{
-              window.location.href =`video.html?media=${encodeURIComponent(videoItem.download_link)}&species_id=${plantID}`;
-            })
-          }
-          else {
-            videoBtn.style.display = "none"
-          }
 
           if(mediaItems.length > 0)
           {

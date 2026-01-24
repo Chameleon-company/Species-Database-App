@@ -46,10 +46,18 @@
 
     searchEl.addEventListener("input", (e) => renderList(e.target.value));
 
-    document.getElementById("continueBtn").addEventListener("click", () => {
-      console.log("Selected language:", selected);
-      localStorage.setItem("appLanguage", selected.code);
-      window.location.href = "login.html"; // move to home page?
-    });
+    continueBtn.addEventListener("click", () => {
+      if (!currentLanguage) return alert("Please select a language first!");
+      
+      // Save the language in localStorage
+      localStorage.setItem("appLanguage", currentLanguage.code);
+
+      // Go to login page
+        if (currentLanguage.code === "tet") {
+          window.location.href = "login_tetum.html";
+        } else {
+          window.location.href = "login.html";
+        }
+    })
 
     renderList();

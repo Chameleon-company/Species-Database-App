@@ -149,27 +149,33 @@
     </main>
 
     <script>
+      const PAGE_LANGUAGE = "tet";
       document.addEventListener("DOMContentLoaded", async () => {
         try {
-          console.log("[Tetum] Starting sync...");
-          if (window.syncManager && typeof syncManager.checkAndSync === "function") {
-            const result = await syncManager.checkAndSync({ forceBundle: true });
-            console.log("[Tetum] Sync result:", result);
-          } else {
-            console.warn("[Tetum] syncManager not available");
-          }
+          console.log("[Tetum] Starting sync...")
 
-          const species = await dataService.getAllSpecies("tet");
-          console.log("[Tetum] Loaded species:", species.length);
+          //always load from indexedDB first
+          const species =await dataService.getAllSpecies(PAGE_LANGUAGE)
+          console.log("TET loaded from iDB", species.length)
 
-          if (typeof window.setSpeciesData === "function") {
-            window.setSpeciesData(species);
-          } else {
-            console.warn("[Tetum] setSpeciesData is not defined");
+          window.setSpeciesData(species)
+
+          //backgroudn sync if online
+          if(navigator.onLine && window.syncManger)
+          {
+            syncManger.checkAndSync({forceBundle: false})
+              .then(() => console.log("TET background sync complete"))
+              .catch(() => console.warn("Tet background sync skipped...."))
           }
-        } catch (err) {
-          console.error("[Tetum] Error during initial load:", err);
         }
+        catch(err)
+        {
+          console.error("TET fatal load error:", err)
+
+          //absolute fallback
+          window.setSpeciesData([])
+        }
+
       });
 
       // LANGUAGE HANDLER
@@ -224,27 +230,27 @@
 
       // Leaf Type options
       const leafTypeOptions = [
-        "Simple",
-        "Pinnately compound (single)",
-        "Pinnately compound (double)",
-        "Pinnately compound (triple)",
-        "Palmately compound",
+        "Simples",
+        "Kompostu pinnadu (ida de'it)",
+        "Kompostu pinnadu (duplu)",
+        "Kompostu pinnadu (triplu)",
+        "Kompostu palmadu",
       ];
 
       // Fruit Type options
-      const fruitTypeOptions = ["Drupe", "Capsule", "Follicle", "Pod"];
+      const fruitTypeOptions = ["Drupe", "Kapsula", "Folíkulu", "Pod"];
 
       const filterConfigs = {
         "a-z": {
-          title: "Sort Alphabetically",
-          description: "Sort species in ascending or descending order.",
+          title: "Klasifika tuir alfabetu",
+          description: "Klasifika espésie sira tuir orden sa'e ka tun.",
           options: [
             { label: "A → Z", action: () => sortSpecies("az") },
             { label: "Z → A", action: () => sortSpecies("za") },
           ],
         },
         "leaf-type": {
-          title: "Leaf Type",
+          title: "Tipu ai-funan",
           description: "",
           options: leafTypeOptions.map((option) => ({
             label: option,
@@ -253,7 +259,7 @@
           })),
         },
         "fruit-type": {
-          title: "Fruit Type",
+          title: "Tipu Ai-fuan",
           description: "",
           options: fruitTypeOptions.map((option) => ({
             label: option,
@@ -496,7 +502,7 @@
 
       function sortSpecies(direction) {
         if (!loadedSpeciesData || loadedSpeciesData.length === 0) {
-          console.warn("No species data to sort.");
+          renderSpecies([])
           return;
         }
 

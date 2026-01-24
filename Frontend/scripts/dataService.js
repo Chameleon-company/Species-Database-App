@@ -2,8 +2,17 @@
 if (!window.db) {
   console.error("dataService.js: db.js not loaded!");
 }
+  if (navigator.serviceWorker) {
+    navigator.serviceWorker.ready.then(() => {
+      if (!navigator.serviceWorker.controller) {
+        console.warn("SW active but page not  controlled...");
+        window.location.reload();
+      }
+    });
+  }
 
 const dataService = {
+
   // Get all species for a language
   async getAllSpecies(language = "en") {
     await window.db.init();
@@ -142,6 +151,48 @@ const dataService = {
       req.onerror = () => resolve([]);
     });
   },
+  // getting one thumbnail image for species... first image
+  async getThumbnail(speciesId) {
+    if (!speciesId) return null;
+
+    await window.db.init();
+    const database = await window.db._openDB();
+
+    return new Promise((resolve) => {
+      const tx = database.transaction("media", "readonly");
+      const store = tx.objectStore("media");
+      const index = store.index("species_id");
+
+      const req = index.getAll(parseInt(speciesId));
+
+      req.onsuccess = () => {
+        const media = req.result || [];
+
+        const images = media.filter(
+          (m) => m.media_type === "image" && m.download_link
+        );
+
+        if (images.length === 0) {
+          resolve(null);
+          return;
+        }
+
+        //oldest first (earliest created)
+        images.sort(
+          (a, b) =>
+            new Date(a.created_at || 0) - new Date(b.created_at || 0)
+        );
+
+        resolve(images[0].download_link);
+      };
+
+      req.onerror = () => {
+        console.warn("Failed to load media for species", speciesId);
+        resolve(null);
+      };
+    });
+  },
+
 };
 
 // Expose globally

@@ -17,6 +17,15 @@ function initGoogle()
     })
   }
 }
+function redirectPostLogin() {
+  const lang = localStorage.getItem("appLanguage") || "en";
+
+  if (lang === "tet") {
+    window.location.href = "tetum.html";
+  } else {
+    window.location.href = "home.html";
+  }
+}
 
 document.addEventListener("DOMContentLoaded", () => {
   document.body.classList.add("loaded");
@@ -84,7 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       console.log("Logged in as", data.role)
 
-      window.location.href ="home.html"
+      redirectPostLogin();
     }
     catch (err)
     {

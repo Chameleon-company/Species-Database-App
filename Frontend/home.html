@@ -151,8 +151,9 @@
     <script src="scripts/detectOnline.js" defer></script>
 
     <script>
+      const PAGE_LANGUAGE = "en";
       document.addEventListener("DOMContentLoaded", async () => {
-  console.log("[Home] Page loaded");
+      console.log("[Home] Page loaded");
 
   const code = (document.querySelector(".lang-btn")?.textContent || "EN")
     .trim()

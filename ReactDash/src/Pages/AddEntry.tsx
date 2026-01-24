@@ -23,6 +23,11 @@ export default function Page1() {
 
     const [error, setError] = useState('')
 
+    const [touched, setTouched] = useState<Record<string, boolean>>({});
+    const markTouched = (field: string) => {
+        setTouched(prev => ({ ...prev, [field]: true }))
+    }
+
 
     const [formData, setFormData] = useState({
         scientificName: '',
@@ -54,7 +59,6 @@ export default function Page1() {
     const [status, setStatus] = useState('')
 
     const [tetumTranslate, setTetumTranslate] = useState(false)
-
 
     const translateToTetum = async () => {
         setError('')
@@ -270,106 +274,88 @@ export default function Page1() {
     //UI
     }
     return (
-        <Box sx={{ width: '100%', paddingX: 0 }}>
+        <Box width="100%">
 
             <div><TheDrawer></TheDrawer></div>
             <h1>Add Species</h1>
-            <Box>   
-                <TextField
-                    id="TextBox1"
-                    label="Scientific Name"
-                    helperText="Required"
-                    value={formData.scientificName}
-                    onChange={handleChange('scientificName')}
-                    slotProps={{ htmlInput: { maxLength: maxSmallTextChar } }}
-                    sx={{
-                        '& .MuiInputBase-input': { color: 'white' },
-                        '& .MuiInputLabel-root': { color: 'white' },
-                        '& .MuiFormHelperText-root': { color: 'red' },
-                        marginRight: 8
-                    }}
+
+            <Box width="100%" maxWidth={900} mx="auto" mt={3} px={2}>   
+                <Box display="flex" justifyContent="center" gap={2} mb={2}>   
+                    <TextField
+                        fullWidth
+                        sx={{ maxWidth: 320 }}
+                        label="Scientific Name"
+                        value={formData.scientificName}
+                        onChange={handleChange('scientificName')}
+                        onBlur={() => markTouched('scientificName')}
+                        required
+                        error={touched.scientificName && !formData.scientificName}
                     />
 
                     <TextField
-                    id="TextBox2"
-                    label="Common Name"
-                    helperText="Required"
-                    value={formData.commonName}
-                    onChange={handleChange('commonName')}
-                    slotProps={{ htmlInput: { maxLength: maxSmallTextChar } }}
-                    sx={{
-                        '& .MuiInputBase-input': { color: 'white' },
-                        '& .MuiInputLabel-root': { color: 'white' },
-                        '& .MuiFormHelperText-root': { color: 'red' }
-                    }}
-                    />
+                        fullWidth
+                        sx={{ maxWidth: 320 }}
+                        label="Common Name"
+                        value={formData.commonName}
+                        onChange={handleChange('commonName')}
+                        onBlur={() => markTouched('commonName')}
+                        required
+                        error={touched.commonName &&!formData.commonName}
+                        />
 
-            
-            </Box>
+                </Box>
 
-            <Box sx={{marginTop: 2}}>   
-                <TextField
-                    id="TextBox3"
-                    label="Leaf Type"
-                    helperText="Required"
-                    value={formData.leafType}
-                    onChange={handleChange('leafType')}
-                    slotProps={{ htmlInput: { maxLength: maxSmallTextChar } }}
-                    sx={{
-                        '& .MuiInputBase-input': { color: 'white' },
-                        '& .MuiInputLabel-root': { color: 'white' },
-                        '& .MuiFormHelperText-root': { color: 'red' },
-                        marginRight: 8
-                    }}
+                <Box display="flex" justifyContent="center" gap={2} mb={2}>   
+                    <TextField
+                        fullWidth
+                        sx={{ maxWidth: 320 }}
+                        label="Leaf Type"
+                        value={formData.leafType}
+                        onChange={handleChange('leafType')}
+                        onBlur={() => markTouched('leafType')}
+                        required
+                        error={touched.leafType && !formData.leafType}
                     />
 
                     <TextField
-                    id="TextBox4"
-                    label="Fruit Type"
-                    helperText="Required"
-                    value={formData.fruitType}
-                    onChange={handleChange('fruitType')}
-                    slotProps={{ htmlInput: { maxLength: maxSmallTextChar } }}
-                    sx={{
-                        '& .MuiInputBase-input': { color: 'white' },
-                        '& .MuiInputLabel-root': { color: 'white' },
-                        '& .MuiFormHelperText-root': { color: 'red' }
-                    }}
-                    />
+                        fullWidth
+                        sx={{ maxWidth: 320 }}
+                        label="Fruit Type"
+                        value={formData.fruitType}
+                        onChange={handleChange('fruitType')}
+                        onBlur={() => markTouched('fruitType')}
+                        required
+                        error={touched.fruitType &&!formData.fruitType}
+                        />
 
-            
+                </Box>
             </Box>
 
             <div><h5>Optional:</h5></div>
 
-            <Box sx={{ display: 'flex', gap: 1, marginTop: 3, marginBottom: 3, maxWidth: '70%', marginX: 'auto'}}>
+            <Box display="flex" justifyContent="center" gap={10} mb={2}>
                 <TextField 
-                    fullWidth 
-                    label="Etymology" 
-                    id="BigText1"
+                    fullWidth
                     multiline
                     rows={4}
                     value={formData.etymology}
                     onChange={handleChange('etymology')}
                     slotProps={{ htmlInput: { maxLength: maxEnglishChar } }}
-                    sx={{
-                    '& .MuiInputBase-input': { color: 'white' },
-                    '& .MuiInputLabel-root': { color: 'white' },
-                    }}
+                    sx={{maxWidth: 320}}
+                    label="Etymology"
+                    
                 />
 
                 <TextField 
                     fullWidth 
                     label="Habitat" 
-                    id="BigText2"
                     multiline
                     rows={4}
                     value={formData.habitat}
                     onChange={handleChange('habitat')}
                     slotProps={{ htmlInput: { maxLength: maxEnglishChar } }}
                     sx={{
-                    '& .MuiInputBase-input': { color: 'white' },
-                    '& .MuiInputLabel-root': { color: 'white' },
+                        maxWidth: 320
                     }}
                 />
             </Box>
@@ -544,7 +530,11 @@ export default function Page1() {
 
                     <div><h5>Optional:</h5></div>
 
-                    <Box sx={{ display: 'flex', gap: 1, marginTop: 3, marginBottom: 3, maxWidth: '70%', marginX: 'auto'}}>
+                    <Box sx={{ display: 'flex', gap: 1, marginBottom: 3}}>
+                        <TextField 
+                            multiline rows={4} 
+                            fullWidth label ="Etymology" />
+                        <TextField multiline rows={4} fullWidth label="Habitat" />
                         <TextField 
                             fullWidth 
                             label="Etymology" 

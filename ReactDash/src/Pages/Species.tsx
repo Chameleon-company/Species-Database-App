@@ -5,8 +5,9 @@ import AddIcon from "@mui/icons-material/Add";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import TableLayout from "../Components/TableLayout";
+import UploadFileIcon from "@mui/icons-material/UploadFile";
 
-const apiUrl = import.meta.env.VITE_API_BASE_URL;
+const apiUrl = import.meta.env.VITE_API_URL;
 
 export default function SpeciesPage() {
   const [rows, setRows] = useState([]);
@@ -109,21 +110,39 @@ export default function SpeciesPage() {
     <div>
       <div className="flex justify-between mb-4">
         <h2 className="text-3xl font-bold">Species Page</h2>
-        <Button
-          component={Link}
-          to="/Page1"
-          variant="contained"
-          className="hover:!text-white hover:!shadow-lg hover:!bg-[#3b6910]"
-          style={{
-            backgroundColor: "#4E8A16",
-            borderRadius: "8px",
-            boxShadow: "none",
-            textTransform: "none",
-          }}
-          startIcon={<AddIcon />}
-        >
-          Add Species
-        </Button>
+        <div style={{display:"flex", gap: 12}}>
+          <Button
+            component={Link}
+            to="/Page1"
+            variant="contained"
+            className="hover:!text-white hover:!shadow-lg hover:!bg-[#3b6910]"
+            style={{
+              backgroundColor: "#4E8A16",
+              borderRadius: "8px",
+              boxShadow: "none",
+              textTransform: "none",
+            }}
+            startIcon={<AddIcon />}
+          >
+            Add Species
+          </Button>
+          <Button
+            component={Link}
+            to="/AddExcel"
+            variant="contained"
+            className="hover:!text-white hover:!shadow-lg hover:!bg-[#3b6910]"
+            style={{
+              backgroundColor: "#4E8A16",
+              borderRadius: "8px",
+              boxShadow: "none",
+              textTransform: "none",
+            }}
+            startIcon={<UploadFileIcon />}
+          >
+            Upload Excel
+          </Button>
+
+        </div>
       </div>
       <div className="w-full overflow-hidden">
         <TableLayout loading={loading} rows={rows} columns={columns} />

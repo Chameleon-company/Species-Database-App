@@ -112,8 +112,8 @@ def get_species_changes():
     #occured after clients last known version
     changes = (
         supabase.table("changelog")
-        .select("entity_id, version, operation")
-        .eq("entity_type", "species")
+        .select("entity_id, version, operation, entity_type")
+        .in_("entity_type", ["species", "media"])
         .gt("version", since_version)
         .execute()
     )
@@ -126,6 +126,21 @@ def get_species_changes():
             "row_count":0
         })
     
+    #finding latest version # on server
+    latest_version = max(row["version"] for row in changes.data)
+
+    has_media_changed =any(
+        row["entity_type"] == "media"
+        for row in changes.data
+    )
+    if has_media_changed:
+        return jsonify({
+            "up_to_date": False,
+            "force_bundle": True,
+            "latest_version": latest_version,
+            "reason": "media_changed"
+        })
+    
     changed_species_ids = {
         row["entity_id"]
         for row in changes.data
@@ -133,9 +148,6 @@ def get_species_changes():
     }
 
     row_count = len(changed_species_ids)
-
-    #finding latest version # on server
-    latest_version = max(row["version"] for row in changes.data)
 
     #threshold: if too many changes, no point having incremental syncing
     #will just pull the bundle
@@ -153,7 +165,7 @@ def get_species_changes():
         "up_to_date": False,
         "force_bundle": False,
         "latest_version": latest_version,
-        "row_count": row_count
+        "change_count": row_count
     })
 
 @app.get("/api/species/incremental")
