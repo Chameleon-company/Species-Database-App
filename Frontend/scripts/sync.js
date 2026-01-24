@@ -13,9 +13,12 @@ class SyncManager {
   constructor() {
     // Get API config (assumes config.js is loaded)
     this.apiConfig = typeof API_CONFIG !== 'undefined' ? API_CONFIG : {
-      baseUrl: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-        ? 'http://127.0.0.1:5000'
-        : window.location.origin,
+    baseUrl:
+      location.hostname === "localhost" ||
+      location.hostname === "127.0.0.1"
+        ? "http://127.0.0.1:5000"
+        : "https://species-database-app.onrender.com",
+
       endpoints: {
         bundle: '/api/bundle',
         changes: '/api/species/changes',
