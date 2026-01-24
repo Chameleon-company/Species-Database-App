@@ -16,7 +16,7 @@ const API_CONFIG = {
   endpoints: {
     // Sync endpoints
     bundle: '/api/bundle',                    // Full data bundle download
-    changes: '/species/changes',          // Check if updates available
+    changes: '/api/species/changes',          // Check if updates available
     incremental: '/api/species/incremental', // Get changed species only
     
     // Auth endpoints
