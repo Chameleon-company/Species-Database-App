@@ -64,13 +64,13 @@ function renderNoResults() {
 window.setSpeciesData = function setSpeciesData(data) {
   window.loadedSpeciesData = Array.isArray(data) ? data : [];
 
-  if (typeof window.applyFilters === "function")
-  {
-    window.applyFilters()
+  if(typeof window.applyFilters === "function" && typeof window.renderSpecies === "function") {
+    window.applyFilters();
   }
-  else {
-    renderSpecies(window.loadedSpeciesData)
+  else if(typeof window.renderSpecies === "function") {
+    renderSpecies(window.loadedSpeciesData);
   }
+
 };
 
 window.getLoadedSpeciesData = function () {
@@ -112,7 +112,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const filtered = loadedSpeciesData.filter((s) => {
+    const filtered = window.loadedSpeciesData.filter((s) => {
       const sci = (s.scientific_name || "").toLowerCase();
       const common = (s.common_name || "").toLowerCase();
       const habitat = (s.habitat || "").toLowerCase();
