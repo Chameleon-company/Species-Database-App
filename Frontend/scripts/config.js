@@ -24,7 +24,9 @@ const API_CONFIG = {
     userState: '/api/auth/user-state',// Check user status
     translate: "/translate",         
   }
-};
+}
+
+window.API_CONFIG = API_CONFIG
 
 console.log("[API_CONFIG]", API_CONFIG)
 
