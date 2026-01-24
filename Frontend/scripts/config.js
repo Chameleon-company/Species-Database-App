@@ -16,13 +16,13 @@ const API_CONFIG = {
   endpoints: {
     // Sync endpoints
     bundle: '/api/bundle',                    // Full data bundle download
-    changes: '/api/species/changes',          // Check if updates available
+    changes: '/species/changes',          // Check if updates available
     incremental: '/api/species/incremental', // Get changed species only
     
     // Auth endpoints
     login: '/api/auth/login',                 // User login
     userState: '/api/auth/user-state',// Check user status
-    translate: "/api/translate",         
+    translate: "/translate",         
   }
 };
 

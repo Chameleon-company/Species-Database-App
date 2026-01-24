@@ -66,16 +66,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     try {
-      const res = await fetch("http://127.0.0.1:5000/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({name, password})
-      })
+      const res = await fetch(
+        `${API_CONFIG.baseUrl}${API_CONFIG.endpoints.login}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, password })
+        }
+      )
 
       const data = await res.json()
-
 
       if(!res.ok)
       {
@@ -117,16 +117,13 @@ async function handleGoogleResponse(res) {
       throw new Error("no google credential returned")
     }
 
-    const fetchRes = await fetch(
-      "http://127.0.0.1:5000/api/auth/google-admin",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({id_token: res.credential})
-      }
-    )
+    const fetchRes = await fetch(`${API_CONFIG.baseUrl}/api/auth/google-admin`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({id_token: res.credential})
+    })
 
     const data = await fetchRes.json()
 
