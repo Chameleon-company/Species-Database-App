@@ -163,7 +163,7 @@
 
   // Always do sync
   try {
-    const syncResult = await syncManager.checkAndSync({ forceBundle: true });
+    const syncResult = await syncManager.checkAndSync({ forceBundle: false });
     console.log("[Home] Sync result:", syncResult);
   } catch (err) {
     console.warn("[Home] Sync failed (offline mode). Using cached data:", err);
