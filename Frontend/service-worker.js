@@ -3,22 +3,22 @@ const CACHE_NAME = "species-app-v1";
 const MEDIA_CACHE = "media-cache-v1";
 
 const CORE_ASSETS = [
-  "./",
-  "./index.html",
-  "./home.html",
-  "./tetum.html",
-  "./specie.html",
-  "./manifest.json",
-  "./css/layout.css",
-  "./css/responsive.css",
-  "./css/filters.css",
-  "./css/cards.css",
-  "./scripts/config.js",
-  "./scripts/db.js",
-  "./scripts/dataService.js",
-  "./scripts/sync.js",
-  "./scripts/specieslist.js",
-  "./scripts/filterCarousel.js",
+  "/",
+  "/index.html",
+  "/home.html",
+  "/tetum.html",
+  "/specie.html",
+  "/manifest.json",
+  "/css/layout.css",
+  "/css/responsive.css",
+  "/css/filters.css",
+  "/css/cards.css",
+  "/scripts/config.js",
+  "/scripts/db.js",
+  "/scripts/dataService.js",
+  "/scripts/sync.js",
+  "/scripts/specieslist.js",
+  "/scripts/filterCarousel.js",
 ];
 
 // Install - cache core assets
@@ -37,7 +37,6 @@ self.addEventListener("install", (event) => {
       console.log("[SW] Core assets cached");
     })
   );
-  self.skipWaiting();
 });
 
 // Activate - clean old caches
@@ -54,7 +53,6 @@ self.addEventListener("activate", (event) => {
       )
     )
   );
-  self.clients.claim();
 });
 
 // Fetch - serve from cache, fallback to network
@@ -109,9 +107,9 @@ async function handleAppRequest(request) {
     }
     return response;
   } catch (e) {
-    if (request.mode === "navigate") {
-      return cache.match("./home.html") || cache.match("./index.html");
-    }
+    // if (request.mode === "navigate") {
+    //   return cache.match("/home.html") || cache.match("/index.html");
+    // }
     return new Response("Offline", { status: 503 });
   }
 }
