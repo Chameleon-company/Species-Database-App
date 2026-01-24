@@ -3,7 +3,6 @@ const CACHE_NAME = "species-app-v1";
 const MEDIA_CACHE = "media-cache-v1";
 
 const CORE_ASSETS = [
-  "/",
   "/index.html",
   "/home.html",
   "/tetum.html",
@@ -43,15 +42,18 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   console.log("[SW] Activating...");
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys.map((k) => {
-          if (k !== CACHE_NAME && k !== MEDIA_CACHE) {
-            return caches.delete(k);
-          }
-        })
-      )
-    )
+    Promise.all([
+      caches.keys().then((keys) =>
+        Promise.all(
+          keys.map((k) => {
+            if (k !== CACHE_NAME && k !== MEDIA_CACHE) {
+              return caches.delete(k);
+            }
+          })
+        )
+      ),
+      self.clients.claim()
+    ])
   );
 });
 
