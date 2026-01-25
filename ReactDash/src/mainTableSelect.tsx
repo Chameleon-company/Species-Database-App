@@ -2,13 +2,6 @@ import { DataGrid } from '@mui/x-data-grid'
 import type { GridColDef } from '@mui/x-data-grid'
 import Paper from '@mui/material/Paper'
 import { useEffect, useState } from "react"
-import Box from '@mui/material/Box'
-import {supabase, supabaseTetum} from './supabaseClient'
-
-
-
-
-
 
 type Species = {
   species_id: number

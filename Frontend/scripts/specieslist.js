@@ -1,4 +1,4 @@
-let loadedSpeciesData = [];
+window.loadedSpeciesData = [];
 
 // Render species cards
 
@@ -17,6 +17,7 @@ async function renderSpecies(data) {
     return;
   }
 
+  let html = ""
   for(const species of data){
     const id = species.id ?? "";
     const scientific = species.scientific_name ?? "";
@@ -24,13 +25,12 @@ async function renderSpecies(data) {
 
     const thumb = await dataService.getThumbnail(species.species_id)
 
-    const imgSrc = thumb
 
-    speciesList.innerHTML += `
+    html += `
       <div id="${id}" class="species-item" onclick="goToDetail('${id}')">
       ${
         thumb
-        ? `<img src="${imgSrc}" alt="${scientific}" class="species-card-img">`
+        ? `<img src="${thumb}" alt="${scientific}" class="species-card-img">`
         : ``
       }  
       
@@ -40,7 +40,8 @@ async function renderSpecies(data) {
         </div>
       </div>
     `;
-  };
+  }
+  speciesList.innerHTML = html
 }
 
 
@@ -61,18 +62,19 @@ function renderNoResults() {
 // Public API for home.html
 
 window.setSpeciesData = function setSpeciesData(data) {
-  loadedSpeciesData = Array.isArray(data) ? data : [];
-  if (typeof window.applyFilters === "function")
-  {
-    window.applyFilters()
+  window.loadedSpeciesData = Array.isArray(data) ? data : [];
+
+  if(typeof window.applyFilters === "function" && typeof window.renderSpecies === "function") {
+    window.applyFilters();
   }
-  else {
-    renderSpecies(loadedSpeciesData)
+  else if(typeof window.renderSpecies === "function") {
+    renderSpecies(window.loadedSpeciesData);
   }
+
 };
 
 window.getLoadedSpeciesData = function () {
-  return loadedSpeciesData;
+  return window.loadedSpeciesData;
 };
 
 
@@ -106,11 +108,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const query = (searchInput.value || "").toLowerCase().trim();
     if (!query) {
-      renderSpecies(loadedSpeciesData);
+      renderSpecies(window.loadedSpeciesData);
       return;
     }
 
-    const filtered = loadedSpeciesData.filter((s) => {
+    const filtered = window.loadedSpeciesData.filter((s) => {
       const sci = (s.scientific_name || "").toLowerCase();
       const common = (s.common_name || "").toLowerCase();
       const habitat = (s.habitat || "").toLowerCase();

@@ -453,3 +453,8 @@ body {
   background: #f1f5f9;
   border-radius: 8px;
 }
+
+#species-list:empty {
+  padding: 0;
+  min-height: 0;
+}

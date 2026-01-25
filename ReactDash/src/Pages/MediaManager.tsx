@@ -1,4 +1,4 @@
-import { Alert, Box, Button, IconButton, TextField } from "@mui/material"
+import { Alert, Box, Button, IconButton } from "@mui/material"
 import { DataGrid, type GridColDef } from "@mui/x-data-grid"
 import { useEffect, useState } from "react"
 import DeleteIcon from "@mui/icons-material/Delete"
@@ -16,6 +16,7 @@ export default function MediaManager() {
     const [media, setMedia] =useState<Media[]>([])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const API_URL = import.meta.env.VITE_API_BASE;
 
     //load media when page opens
     useEffect(() => {
@@ -29,7 +30,7 @@ export default function MediaManager() {
         const token = localStorage.getItem("admin_token")
 
         try {
-            const res = await fetch("http://127.0.0.1:5000/upload-media",
+            const res = await fetch(`${API_URL}/upload-media`,
             {
                 headers: {
                     Authorization: token || "",
@@ -77,8 +78,8 @@ export default function MediaManager() {
         const isNew= row.media_id < 0
 
         const url = isNew
-        ? "http://127.0.0.1:5000/upload-media"
-        : `http://127.0.0.1:5000/upload-media/${row.media_id}`
+        ? `${API_URL}/upload-media`
+        : `${API_URL}/upload-media/${row.media_id}`
 
         const method = isNew ? "POST" : "PUT"
 
@@ -125,7 +126,7 @@ export default function MediaManager() {
         setError(null)
         try{
             const res = await fetch(
-                `http://127.0.0.1:5000/upload-media/${media_id}`,
+                `${API_URL}/upload-media/${media_id}`,
                 {
                     method: "DELETE",
                     headers: {

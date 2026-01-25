@@ -14,17 +14,18 @@ from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 import bcrypt
 from auth_authz import register_auth_routes, require_role, get_admin_user
+load_dotenv()
+print("CORS_ORIGINS =", os.getenv("CORS_ORIGINS"))
+
 
 app = Flask(__name__)
 CORS(
     app,
     supports_credentials=True,
-    origins=[
-        "https://species-database-app-1.onrender.com",
-        "http://127.0.0.1:5000"
-    ]
+    origins=os.getenv("CORS_ORIGINS", "").split(","),
+    allow_headers=["Content-Type", "Authorization"],
+    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
 )
-load_dotenv()
 
 
 

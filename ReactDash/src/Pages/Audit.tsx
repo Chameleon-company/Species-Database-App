@@ -10,6 +10,7 @@ export default function Audit() {
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<AuditApiResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const API_URL = import.meta.env.VITE_API_BASE;
 
   async function runAudit() {
     if (!file) return;
@@ -21,7 +22,7 @@ export default function Audit() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await fetch("http://127.0.0.1:5000/audit-species", {
+      const res = await fetch(`${API_URL}/audit-species`, {
         method: "POST",
         body: formData,
       });

@@ -279,12 +279,12 @@
 
       // Function to apply all active filters and search
       function applyFilters() {
-        if (!loadedSpeciesData || loadedSpeciesData.length === 0) {
+      if (!window.loadedSpeciesData || window.loadedSpeciesData.length === 0) {
           console.warn("No species data loaded yet");
           return;
         }
 
-        let filtered = [...loadedSpeciesData];
+        let filtered = [...window.loadedSpeciesData];
 
         // Apply leaf type filter
         if (activeFilters.leafType) {
@@ -422,8 +422,8 @@
             }
 
             // Render all species - check if data is loaded
-            if (loadedSpeciesData && loadedSpeciesData.length > 0) {
-              renderSpecies(loadedSpeciesData);
+            if (window.loadedSpeciesData && window.loadedSpeciesData.length > 0) {
+              renderSpecies(window.loadedSpeciesData);
             } else {
               console.warn("Species data not loaded yet");
             }
@@ -509,12 +509,12 @@
       }
 
       function sortSpecies(direction) {
-        if (!loadedSpeciesData || loadedSpeciesData.length === 0) {
+        if (!window.loadedSpeciesData || window.loadedSpeciesData.length === 0) {
           console.warn("No species data to sort.");
           return;
         }
 
-        const sorted = [...loadedSpeciesData].sort((a, b) => {
+        const sorted = [...window.loadedSpeciesData].sort((a, b) => {
           const nameA = a.scientific_name.toLowerCase();
           const nameB = b.scientific_name.toLowerCase();
 
