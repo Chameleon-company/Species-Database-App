@@ -34,6 +34,7 @@ type UserAnalytics = {
   average_duration: number;
   last_login: string | null;
 };
+const API_URL = import.meta.env.VITE_API_BASE;
 
 export default function Analytics() {
   const [overview, setOverview] = useState<Overview | null>(null);
@@ -42,10 +43,10 @@ export default function Analytics() {
 
   useEffect(() => {
     Promise.all([
-      fetch(`http://127.0.0.1:5000/analytics/overview`).then((res) =>
+      fetch(`${API_URL}/analytics/overview`).then((res) =>
         res.json()
       ),
-      fetch(`http://127.0.0.1:5000/analytics/users`).then((res) => res.json()),
+      fetch(`${API_URL}/analytics/users`).then((res) => res.json()),
     ])
       .then(([overviewData, userData]) => {
         setOverview(overviewData);

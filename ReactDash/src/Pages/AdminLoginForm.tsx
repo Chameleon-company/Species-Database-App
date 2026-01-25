@@ -17,6 +17,7 @@ export default function AdminLoginForm()
     //ui state
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const API_URL = import.meta.env.VITE_API_BASE;
 
     //runs when the admin clicks login
     const loginAdmin = async () => {
@@ -25,7 +26,7 @@ export default function AdminLoginForm()
 
         try {
             const response = await fetch(
-                "http://127.0.0.1:5000/api/auth/admin-login",
+                `${API_URL}/api/auth/admin-login`,
                 {
                     method: "POST",
                     headers: {

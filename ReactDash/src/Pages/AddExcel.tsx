@@ -8,6 +8,7 @@ export function AddExcel() {
   const [error, setError] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const API_URL = import.meta.env.VITE_API_BASE;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFile(e.target.files?.[0] ?? null);
@@ -37,7 +38,7 @@ export function AddExcel() {
       //token needed for upload endpoint
       const token = localStorage.getItem("admin_token")
   
-      const response = await fetch("http://127.0.0.1:5000/upload-species", {
+      const response = await fetch(`${API_URL}/upload-species`, {
         method: "POST",
         headers: {Authorization: token || "",},
         body: formData,
