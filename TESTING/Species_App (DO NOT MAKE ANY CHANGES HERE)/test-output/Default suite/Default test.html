@@ -1,0 +1,307 @@
+<html>
+<head>
+<title>TestNG:  Default test</title>
+<link href="../testng.css" rel="stylesheet" type="text/css" />
+<link href="../my-testng.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+.log { display: none;} 
+.stack-trace { display: none;} 
+</style>
+<script type="text/javascript">
+<!--
+function flip(e) {
+  current = e.style.display;
+  if (current == 'block') {
+    e.style.display = 'none';
+    return 0;
+  }
+  else {
+    e.style.display = 'block';
+    return 1;
+  }
+}
+
+function toggleBox(szDivId, elem, msg1, msg2)
+{
+  var res = -1;  if (document.getElementById) {
+    res = flip(document.getElementById(szDivId));
+  }
+  else if (document.all) {
+    // this is the way old msie versions work
+    res = flip(document.all[szDivId]);
+  }
+  if(elem) {
+    if(res == 0) elem.innerHTML = msg1; else elem.innerHTML = msg2;
+  }
+
+}
+
+function toggleAllBoxes() {
+  if (document.getElementsByTagName) {
+    d = document.getElementsByTagName('div');
+    for (i = 0; i < d.length; i++) {
+      if (d[i].className == 'log') {
+        flip(d[i]);
+      }
+    }
+  }
+}
+
+// -->
+</script>
+
+</head>
+<body>
+<h2 align='center'>Default test</h2><table border='1' align="center">
+<tr>
+<td>Tests passed/Failed/Skipped:</td><td>14/5/0</td>
+</tr><tr>
+<td>Started on:</td><td>Mon Jan 19 18:24:15 AEDT 2026</td>
+</tr>
+<tr><td>Total time:</td><td>25 seconds (25340 ms)</td>
+</tr><tr>
+<td>Included groups:</td><td></td>
+</tr><tr>
+<td>Excluded groups:</td><td></td>
+</tr>
+</table><p/>
+<small><i>(Hover the method name to see the test class name)</i></small><p/>
+<table width='100%' border='1' class='invocation-failed'>
+<tr><td colspan='4' align='center'><b>FAILED TESTS</b></td></tr>
+<tr><td><b>Test method</b></td>
+<td><b>Attribute(s)</b></td>
+<td width="30%"><b>Exception</b></td>
+<td width="10%"><b>Time (seconds)</b></td>
+<td><b>Instance</b></td>
+</tr>
+<tr>
+<td title='runners.TestRunner.runScenario()'><b>runScenario</b><br>Test class: runners.TestRunner<br>Test method: Runs Cucumber Scenarios<br>Parameters: "Navigate to registration page", "Login and registration"</td>
+<td><div><pre>java.lang.AssertionError: Sign In is not interactable in current UI implementation
+	at org.testng.Assert.fail(Assert.java:111)
+	at stepdefinitions.LoginSteps.the_user_clicks_on(LoginSteps.java:33)
+	at ✽.the user clicks on &quot;Sign In&quot;(file:///Users/tarunkaushik/selenium-workspace/Species_App/src/test/resources/features/login.feature:12)
+</pre></div><a href='#' onClick='toggleBox("stack-trace1239728853", this, "Click to show all stack frames", "Click to hide stack frames")'>Click to show all stack frames</a>
+<div class='stack-trace' id='stack-trace1239728853'><pre>java.lang.AssertionError: Sign In is not interactable in current UI implementation
+	at org.testng.Assert.fail(Assert.java:111)
+	at stepdefinitions.LoginSteps.the_user_clicks_on(LoginSteps.java:33)
+	at ✽.the user clicks on &quot;Sign In&quot;(file:///Users/tarunkaushik/selenium-workspace/Species_App/src/test/resources/features/login.feature:12)
+</pre></div></td>
+<td>0</td>
+<td>runners.TestRunner@77888435</td></tr>
+<tr>
+<td title='runners.TestRunner.runScenario()'><b>runScenario</b><br>Test class: runners.TestRunner<br>Test method: Runs Cucumber Scenarios<br>Parameters: "Email input reveals password field", "Login and registration"</td>
+<td><div><pre>java.lang.AssertionError: Email input not implemented yet
+	at org.testng.Assert.fail(Assert.java:111)
+	at stepdefinitions.LoginSteps.the_user_enters_email(LoginSteps.java:44)
+	at ✽.the user enters email(file:///Users/tarunkaushik/selenium-workspace/Species_App/src/test/resources/features/login.feature:20)
+</pre></div><a href='#' onClick='toggleBox("stack-trace1662824745", this, "Click to show all stack frames", "Click to hide stack frames")'>Click to show all stack frames</a>
+<div class='stack-trace' id='stack-trace1662824745'><pre>java.lang.AssertionError: Email input not implemented yet
+	at org.testng.Assert.fail(Assert.java:111)
+	at stepdefinitions.LoginSteps.the_user_enters_email(LoginSteps.java:44)
+	at ✽.the user enters email(file:///Users/tarunkaushik/selenium-workspace/Species_App/src/test/resources/features/login.feature:20)
+</pre></div></td>
+<td>0</td>
+<td>runners.TestRunner@77888435</td></tr>
+<tr>
+<td title='runners.TestRunner.runScenario()'><b>runScenario</b><br>Test class: runners.TestRunner<br>Test method: Runs Cucumber Scenarios<br>Parameters: "Sign up with Google", "Login and registration"</td>
+<td><div><pre>java.lang.AssertionError: Sign Up With Google is not interactable in current UI implementation
+	at org.testng.Assert.fail(Assert.java:111)
+	at stepdefinitions.LoginSteps.the_user_clicks_on(LoginSteps.java:33)
+	at ✽.the user clicks on &quot;Sign Up With Google&quot;(file:///Users/tarunkaushik/selenium-workspace/Species_App/src/test/resources/features/login.feature:25)
+</pre></div><a href='#' onClick='toggleBox("stack-trace1680365536", this, "Click to show all stack frames", "Click to hide stack frames")'>Click to show all stack frames</a>
+<div class='stack-trace' id='stack-trace1680365536'><pre>java.lang.AssertionError: Sign Up With Google is not interactable in current UI implementation
+	at org.testng.Assert.fail(Assert.java:111)
+	at stepdefinitions.LoginSteps.the_user_clicks_on(LoginSteps.java:33)
+	at ✽.the user clicks on &quot;Sign Up With Google&quot;(file:///Users/tarunkaushik/selenium-workspace/Species_App/src/test/resources/features/login.feature:25)
+</pre></div></td>
+<td>0</td>
+<td>runners.TestRunner@77888435</td></tr>
+<tr>
+<td title='runners.TestRunner.runScenario()'><b>runScenario</b><br>Test class: runners.TestRunner<br>Test method: Runs Cucumber Scenarios<br>Parameters: "Change language from ENGLISH AU to Tetum", "Language selection screen"</td>
+<td><div><pre>io.cucumber.testng.UndefinedStepException: The step &apos;the user selects &quot;Tetum&quot; from All Languages&apos; is undefined.
+You can implement this step using the snippet(s) below:
+
+@When(&quot;the user selects {string} from All Languages&quot;)
+public void the_user_selects_from_all_languages(String string) {
+    // Write code here that turns the phrase above into concrete actions
+    throw new io.cucumber.java.PendingException();
+}
+
+	at io.cucumber.core.runtime.TestCaseResultObserver.assertTestCasePassed(TestCaseResultObserver.java:69)
+	at io.cucumber.testng.TestCaseResultObserver.assertTestCasePassed(TestCaseResultObserver.java:23)
+	at io.cucumber.testng.TestNGCucumberRunner.lambda$runScenario$1(TestNGCucumberRunner.java:133)
+	at io.cucumber.core.runtime.CucumberExecutionContext.lambda$runTestCase$5(CucumberExecutionContext.java:137)
+	at io.cucumber.core.runtime.RethrowingThrowableCollector.executeAndThrow(RethrowingThrowableCollector.java:23)
+	at io.cucumber.core.runtime.CucumberExecutionContext.runTestCase(CucumberExecutionContext.java:137)
+	at io.cucumber.testng.TestNGCucumberRunner.runScenario(TestNGCucumberRunner.java:129)
+	at io.cucumber.testng.AbstractTestNGCucumberTests.runScenario(AbstractTestNGCucumberTests.java:35)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.testng.internal.invokers.MethodInvocationHelper.invokeMethod(MethodInvocationHelper.java:139)
+	at org.testng.internal.invokers.TestInvoker.invokeMethod(TestInvoker.java:664)
+	at org.testng.internal.invokers.TestInvoker.invokeTestMethod(TestInvoker.java:228)
+	at org.testng.internal.invokers.MethodRunner.runInSequence(MethodRunner.java:63)
+	at org.testng.internal.invokers.TestInvoker$MethodInvocationAgent.invoke(TestInvoker.java:961)
+	at org.testng.internal.invokers.TestInvoker.invokeTestMethods(TestInvoker.java:201)
+	at org.testng.internal.invokers.TestMethodWorker.invokeTestMethods(TestMethodWorker.java:148)
+	at org.testng.internal.invokers.TestMethodWorker.run(TestMethodWorker.java:128)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at org.testng.TestRunner.privateRun(TestRunner.java:819)
+	at org.testng.TestRunner.run(TestRunner.java:619)
+	at org.testng.SuiteRunner.runTest(SuiteRunner.java:443)
+	at org.testng.SuiteRunner.runSequentially(SuiteRunner.java:437)
+	at org.testng.SuiteRunner.privateRun(SuiteRunner.java:397)
+	at org.testng.SuiteRunner.run(SuiteRunner.java:336)
+	at org.testng.SuiteRunnerWorker.runSuite(SuiteRunnerWorker.java:52)
+	at org.testng.SuiteRunnerWorker.run(SuiteRunnerWorker.java:95)
+	at org.testng.TestNG.runSuitesSequentially(TestNG.java:1301)
+	at org.testng.TestNG.runSuitesLocally(TestNG.java:1228)
+	at org.testng.TestNG.runSuites(TestNG.java:1134)
+	at org.testng.TestNG.run(TestNG.java:1101)
+	at org.testng.remote.AbstractRemoteTestNG.run(AbstractRemoteTestNG.java:115)
+	at org.testng.remote.RemoteTestNG.initAndRun(RemoteTestNG.java:293)
+	at org.testng.remote.RemoteTestNG.main(RemoteTestNG.java:91)
+</pre></div><a href='#' onClick='toggleBox("stack-trace1135936028", this, "Click to show all stack frames", "Click to hide stack frames")'>Click to show all stack frames</a>
+<div class='stack-trace' id='stack-trace1135936028'><pre>io.cucumber.testng.UndefinedStepException: The step &apos;the user selects &quot;Tetum&quot; from All Languages&apos; is undefined.
+You can implement this step using the snippet(s) below:
+
+@When(&quot;the user selects {string} from All Languages&quot;)
+public void the_user_selects_from_all_languages(String string) {
+    // Write code here that turns the phrase above into concrete actions
+    throw new io.cucumber.java.PendingException();
+}
+
+	at io.cucumber.core.runtime.TestCaseResultObserver.assertTestCasePassed(TestCaseResultObserver.java:69)
+	at io.cucumber.testng.TestCaseResultObserver.assertTestCasePassed(TestCaseResultObserver.java:23)
+	at io.cucumber.testng.TestNGCucumberRunner.lambda$runScenario$1(TestNGCucumberRunner.java:133)
+	at io.cucumber.core.runtime.CucumberExecutionContext.lambda$runTestCase$5(CucumberExecutionContext.java:137)
+	at io.cucumber.core.runtime.RethrowingThrowableCollector.executeAndThrow(RethrowingThrowableCollector.java:23)
+	at io.cucumber.core.runtime.CucumberExecutionContext.runTestCase(CucumberExecutionContext.java:137)
+	at io.cucumber.testng.TestNGCucumberRunner.runScenario(TestNGCucumberRunner.java:129)
+	at io.cucumber.testng.AbstractTestNGCucumberTests.runScenario(AbstractTestNGCucumberTests.java:35)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.testng.internal.invokers.MethodInvocationHelper.invokeMethod(MethodInvocationHelper.java:139)
+	at org.testng.internal.invokers.TestInvoker.invokeMethod(TestInvoker.java:664)
+	at org.testng.internal.invokers.TestInvoker.invokeTestMethod(TestInvoker.java:228)
+	at org.testng.internal.invokers.MethodRunner.runInSequence(MethodRunner.java:63)
+	at org.testng.internal.invokers.TestInvoker$MethodInvocationAgent.invoke(TestInvoker.java:961)
+	at org.testng.internal.invokers.TestInvoker.invokeTestMethods(TestInvoker.java:201)
+	at org.testng.internal.invokers.TestMethodWorker.invokeTestMethods(TestMethodWorker.java:148)
+	at org.testng.internal.invokers.TestMethodWorker.run(TestMethodWorker.java:128)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at org.testng.TestRunner.privateRun(TestRunner.java:819)
+	at org.testng.TestRunner.run(TestRunner.java:619)
+	at org.testng.SuiteRunner.runTest(SuiteRunner.java:443)
+	at org.testng.SuiteRunner.runSequentially(SuiteRunner.java:437)
+	at org.testng.SuiteRunner.privateRun(SuiteRunner.java:397)
+	at org.testng.SuiteRunner.run(SuiteRunner.java:336)
+	at org.testng.SuiteRunnerWorker.runSuite(SuiteRunnerWorker.java:52)
+	at org.testng.SuiteRunnerWorker.run(SuiteRunnerWorker.java:95)
+	at org.testng.TestNG.runSuitesSequentially(TestNG.java:1301)
+	at org.testng.TestNG.runSuitesLocally(TestNG.java:1228)
+	at org.testng.TestNG.runSuites(TestNG.java:1134)
+	at org.testng.TestNG.run(TestNG.java:1101)
+	at org.testng.remote.AbstractRemoteTestNG.run(AbstractRemoteTestNG.java:115)
+	at org.testng.remote.RemoteTestNG.initAndRun(RemoteTestNG.java:293)
+	at org.testng.remote.RemoteTestNG.main(RemoteTestNG.java:91)
+</pre></div></td>
+<td>0</td>
+<td>runners.TestRunner@77888435</td></tr>
+<tr>
+<td title='runners.TestRunner.runScenario()'><b>runScenario</b><br>Test class: runners.TestRunner<br>Test method: Runs Cucumber Scenarios<br>Parameters: "Email validation error", "Login and registration"</td>
+<td><div><pre>java.lang.AssertionError: Email flow not implemented yet
+	at org.testng.Assert.fail(Assert.java:111)
+	at stepdefinitions.LoginSteps.the_user_clicks_on_without_entering_email(LoginSteps.java:39)
+	at ✽.the user clicks on &quot;Continue with Email&quot; without entering email(file:///Users/tarunkaushik/selenium-workspace/Species_App/src/test/resources/features/login.feature:16)
+</pre></div><a href='#' onClick='toggleBox("stack-trace377667724", this, "Click to show all stack frames", "Click to hide stack frames")'>Click to show all stack frames</a>
+<div class='stack-trace' id='stack-trace377667724'><pre>java.lang.AssertionError: Email flow not implemented yet
+	at org.testng.Assert.fail(Assert.java:111)
+	at stepdefinitions.LoginSteps.the_user_clicks_on_without_entering_email(LoginSteps.java:39)
+	at ✽.the user clicks on &quot;Continue with Email&quot; without entering email(file:///Users/tarunkaushik/selenium-workspace/Species_App/src/test/resources/features/login.feature:16)
+</pre></div></td>
+<td>0</td>
+<td>runners.TestRunner@77888435</td></tr>
+</table><p>
+<table width='100%' border='1' class='invocation-passed'>
+<tr><td colspan='4' align='center'><b>PASSED TESTS</b></td></tr>
+<tr><td><b>Test method</b></td>
+<td><b>Attribute(s)</b></td>
+<td width="30%"><b>Exception</b></td>
+<td width="10%"><b>Time (seconds)</b></td>
+<td><b>Instance</b></td>
+</tr>
+<tr>
+<td title='runners.TestRunner.runScenario()'><b>runScenario</b><br>Test class: runners.TestRunner<br>Test method: Runs Cucumber Scenarios<br>Parameters: "Sort plants Z-A", "Home page plant listing and filters"</td>
+<td></td>
+<td>2</td>
+<td>runners.TestRunner@77888435</td></tr>
+<tr>
+<td title='runners.TestRunner.runScenario()'><b>runScenario</b><br>Test class: runners.TestRunner<br>Test method: Runs Cucumber Scenarios<br>Parameters: "Leaf Type - Simple", "Home page plant listing and filters"</td>
+<td></td>
+<td>0</td>
+<td>runners.TestRunner@77888435</td></tr>
+<tr>
+<td title='runners.TestRunner.runScenario()'><b>runScenario</b><br>Test class: runners.TestRunner<br>Test method: Runs Cucumber Scenarios<br>Parameters: "Fruit Type - Follicle", "Home page plant listing and filters"</td>
+<td></td>
+<td>0</td>
+<td>runners.TestRunner@77888435</td></tr>
+<tr>
+<td title='runners.TestRunner.runScenario()'><b>runScenario</b><br>Test class: runners.TestRunner<br>Test method: Runs Cucumber Scenarios<br>Parameters: "Default A-Z order and All selected", "Home page plant listing and filters"</td>
+<td></td>
+<td>13</td>
+<td>runners.TestRunner@77888435</td></tr>
+<tr>
+<td title='runners.TestRunner.runScenario()'><b>runScenario</b><br>Test class: runners.TestRunner<br>Test method: Runs Cucumber Scenarios<br>Parameters: "Continue as guest", "Login and registration"</td>
+<td></td>
+<td>0</td>
+<td>runners.TestRunner@77888435</td></tr>
+<tr>
+<td title='runners.TestRunner.runScenario()'><b>runScenario</b><br>Test class: runners.TestRunner<br>Test method: Runs Cucumber Scenarios<br>Parameters: "Default language selection on launch", "Language selection screen"</td>
+<td></td>
+<td>0</td>
+<td>runners.TestRunner@77888435</td></tr>
+<tr>
+<td title='runners.TestRunner.runScenario()'><b>runScenario</b><br>Test class: runners.TestRunner<br>Test method: Runs Cucumber Scenarios<br>Parameters: "Fruit Type - Drupe", "Home page plant listing and filters"</td>
+<td></td>
+<td>0</td>
+<td>runners.TestRunner@77888435</td></tr>
+<tr>
+<td title='runners.TestRunner.runScenario()'><b>runScenario</b><br>Test class: runners.TestRunner<br>Test method: Runs Cucumber Scenarios<br>Parameters: "Leaf Type - Triple", "Home page plant listing and filters"</td>
+<td></td>
+<td>0</td>
+<td>runners.TestRunner@77888435</td></tr>
+<tr>
+<td title='runners.TestRunner.runScenario()'><b>runScenario</b><br>Test class: runners.TestRunner<br>Test method: Runs Cucumber Scenarios<br>Parameters: "Fruit Type - Pod", "Home page plant listing and filters"</td>
+<td></td>
+<td>0</td>
+<td>runners.TestRunner@77888435</td></tr>
+<tr>
+<td title='runners.TestRunner.runScenario()'><b>runScenario</b><br>Test class: runners.TestRunner<br>Test method: Runs Cucumber Scenarios<br>Parameters: "Fruit Type - Capsule", "Home page plant listing and filters"</td>
+<td></td>
+<td>0</td>
+<td>runners.TestRunner@77888435</td></tr>
+<tr>
+<td title='runners.TestRunner.runScenario()'><b>runScenario</b><br>Test class: runners.TestRunner<br>Test method: Runs Cucumber Scenarios<br>Parameters: "Open species details", "Home page plant listing and filters"</td>
+<td></td>
+<td>0</td>
+<td>runners.TestRunner@77888435</td></tr>
+<tr>
+<td title='runners.TestRunner.runScenario()'><b>runScenario</b><br>Test class: runners.TestRunner<br>Test method: Runs Cucumber Scenarios<br>Parameters: "Leaf Type - Palmately Compound", "Home page plant listing and filters"</td>
+<td></td>
+<td>0</td>
+<td>runners.TestRunner@77888435</td></tr>
+<tr>
+<td title='runners.TestRunner.runScenario()'><b>runScenario</b><br>Test class: runners.TestRunner<br>Test method: Runs Cucumber Scenarios<br>Parameters: "Leaf Type - Double", "Home page plant listing and filters"</td>
+<td></td>
+<td>0</td>
+<td>runners.TestRunner@77888435</td></tr>
+<tr>
+<td title='runners.TestRunner.runScenario()'><b>runScenario</b><br>Test class: runners.TestRunner<br>Test method: Runs Cucumber Scenarios<br>Parameters: "Leaf Type - Single", "Home page plant listing and filters"</td>
+<td></td>
+<td>0</td>
+<td>runners.TestRunner@77888435</td></tr>
+</table><p>
+</body>
+</html>
