@@ -20,9 +20,10 @@ app = Flask(__name__)
 CORS(
     app,
     supports_credentials=True,
-    origins=os.getenv("CORS_ORIGINS", "").split(",")
+    origins=os.getenv("CORS_ORIGINS", "").split(","),
+    allow_headers=["Content-Type", "Authorization"],
+    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
 )
-print("CORS_ORIGINS =", os.getenv("CORS_ORIGINS"))
 
 
 
