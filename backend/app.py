@@ -15,6 +15,8 @@ from google.auth.transport import requests as google_requests
 import bcrypt
 from auth_authz import register_auth_routes, require_role, get_admin_user
 load_dotenv()
+print("CORS_ORIGINS =", os.getenv("CORS_ORIGINS"))
+
 
 app = Flask(__name__)
 CORS(
