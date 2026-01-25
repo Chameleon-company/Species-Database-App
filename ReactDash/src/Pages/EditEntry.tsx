@@ -11,7 +11,6 @@ import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogContentText from '@mui/material/DialogContentText'
 import DialogTitle from '@mui/material/DialogTitle'
-import {supabase, supabaseTetum} from '../supabaseClient'
 import axios from 'axios'
 
 
@@ -126,7 +125,8 @@ export function EditEntry() {
         pestsTetum: ''
     })
 
-    const [tetumRowError, setTetumRowError] = useState(false)
+    //const [tetumRowError, setTetumRowError] = useState(false)
+    const [, setTetumRowError] = useState(false)
 
     const [open, setOpen] = useState(false)
 
