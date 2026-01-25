@@ -19,10 +19,7 @@ app = Flask(__name__)
 CORS(
     app,
     supports_credentials=True,
-    origins=[
-        "https://species-database-app-1.onrender.com",
-        "http://127.0.0.1:5000"
-    ]
+    origins=os.getenv("CORS_ORIGINS", "").split(",")
 )
 load_dotenv()
 
