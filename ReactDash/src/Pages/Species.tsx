@@ -14,9 +14,16 @@ export default function SpeciesPage() {
   const [loading, setLoading] = useState(false);
 
   async function fetchSpecies() {
+    const token = localStorage.getItem("admin_token");
     setLoading(true);
     try {
-      const res = await fetch(`${apiUrl}/bundle`);
+      const res = await fetch(`${apiUrl}/bundle`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token || "",
+        },
+      });
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -110,7 +117,7 @@ export default function SpeciesPage() {
     <div>
       <div className="flex justify-between mb-4">
         <h2 className="text-3xl font-bold">Species Page</h2>
-        <div style={{display:"flex", gap: 12}}>
+        <div style={{ display: "flex", gap: 12 }}>
           <Button
             component={Link}
             to="/Page1"
@@ -141,7 +148,6 @@ export default function SpeciesPage() {
           >
             Upload Excel
           </Button>
-
         </div>
       </div>
       <div className="w-full overflow-hidden">
