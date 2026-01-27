@@ -2,7 +2,6 @@ import "./App.css";
 import { Home } from "./Pages/Home";
 import Page1 from "./Pages/AddEntry";
 import { EditEntry } from "./Pages/EditEntry";
-import { AddExcel } from "./Pages/AddExcel";
 import { HashRouter as Router, Routes, Route } from "react-router-dom";
 import UsersPage from "./Pages/Users";
 import Analytics from "./Pages/Analytics";
@@ -11,6 +10,7 @@ import AdminLoginForm from "./Pages/AdminLoginForm";
 import AdminLayout from "./Components/AdminLayout";
 import MediaManager from "./Pages/MediaManager";
 import SpeciesPage from "./Pages/Species";
+import AddExcel from "./Pages/AddExcel";
 
 function App() {
   return (
