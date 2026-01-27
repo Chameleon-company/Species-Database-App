@@ -18,6 +18,10 @@ import { Link } from "react-router-dom";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import FilterIcon from "@mui/icons-material/Filter";
 import Logo from "../assets/logo-color.png";
+import { useNavigate } from "react-router-dom"
+import { Menu } from "@mui/material";
+import MenuItem from "@mui/material/MenuItem";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 
 const drawerWidth = 240;
 
@@ -28,6 +32,12 @@ export default function DrawerComponent({
 }) {
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [isClosing, setIsClosing] = React.useState(false);
+
+  const [menuOpen, setMenuOpen] = React.useState(false)
+  //open menu
+  const openMenu = () => setMenuOpen(true)
+  //close menu
+  const closeMenu = () => setMenuOpen(false)
 
   const handleDrawerClose = () => {
     setIsClosing(true);
@@ -44,6 +54,16 @@ export default function DrawerComponent({
     }
   };
 
+  const navigate = useNavigate()
+
+  //for when user logs out, remove token and role
+  const handleLogout = () => {
+    localStorage.removeItem("admin_token")
+    localStorage.removeItem("admin_role")
+    navigate("/admin-login")
+  }
+
+
   const drawer = (
     <div>
       <Toolbar
@@ -52,7 +72,9 @@ export default function DrawerComponent({
           backgroundColor: "#e2ecdd",
         }}
       >
-        <img src={Logo} alt="Logo" className="h-10 w-auto object-contain" />
+        <IconButton onClick={openMenu}>
+
+        </IconButton>
       </Toolbar>
       <Divider />
       <List>
@@ -61,6 +83,16 @@ export default function DrawerComponent({
         <ListComponent url="/Media" text="Media" icon={<FilterIcon />} />
         <ListComponent url="/Audit" text="Audit" icon={<VerifiedUserIcon />} />
         <ListComponent url="/Users" text="Users" icon={<GroupIcon />} />
+      </List>
+
+      <Divider />
+      <List>
+        <ListItemButton onClick={handleLogout}>
+          <ListItemIcon>
+            <VerifiedUserIcon />
+          </ListItemIcon>
+          <ListItemText primary="Logout" />
+        </ListItemButton>
       </List>
       {/* <Divider />
       <List>
@@ -102,11 +134,9 @@ export default function DrawerComponent({
             <MenuIcon />
           </IconButton>
           <div className="flex flex-1 items-center justify-end gap-4">
-            <img
-              src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-              alt=""
-              className="size-10 rounded-full outline -outline-offset-1 outline-white/10"
-            />
+            <IconButton onClick={openMenu} sx={{color: "black"}}>
+              <AccountCircleIcon sx={{fontSize: 36}} />
+            </IconButton>
           </div>
         </Toolbar>
       </AppBar>

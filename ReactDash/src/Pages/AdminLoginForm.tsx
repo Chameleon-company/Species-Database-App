@@ -96,35 +96,43 @@ export default function AdminLoginForm()
                     </Alert>
                 )}
 
-                <TextField
-                    label="Username"
-                    fullWidth
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    sx={{mb:2}}
-                />
-                <TextField
-                    label="Password"
-                    type="password"
-                    fullWidth
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    sx={{mb:3}}
-                />
-                <Button
-                    fullWidth
-                    variant="contained"
-                    disabled={loading}
-                    onClick={loginAdmin}
-                    sx={{
-                        backgroundColor: "#3f7e13",
-                        "&:hover":{backgroundColor: "#33650f"},
-                        padding: 1.4,
-                        fontWeight: 600
+                <form
+                    onSubmit={(e) => {
+                        e.preventDefault()
+                        loginAdmin()
                     }}
                 >
-                    {loading ? "Logging you in..." : "LOGIN"}
-                </Button>
+                    <TextField
+                        label="Username"
+                        fullWidth
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        sx={{mb:2}}
+                    />
+                    <TextField
+                        label="Password"
+                        type="password"
+                        fullWidth
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        sx={{mb:3}}
+                    />
+                    <Button
+                        type="submit"
+                        fullWidth
+                        variant="contained"
+                        disabled={loading}
+                        onClick={loginAdmin}
+                        sx={{
+                            backgroundColor: "#3f7e13",
+                            "&:hover":{backgroundColor: "#33650f"},
+                            padding: 1.4,
+                            fontWeight: 600
+                        }}
+                    >
+                        {loading ? "Logging you in..." : "LOGIN"}
+                    </Button>
+                </form>
             </Box>
         </Box>
     )
