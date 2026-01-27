@@ -300,7 +300,12 @@ def upload_species_file():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
+    finally:
+        if temp_path and os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+            except Exception as cleanup_err:
+                print(f"Temp file cleanup failed: {cleanup_err}")  
 
 
 @app.post("/audit-species")
