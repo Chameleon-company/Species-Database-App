@@ -1,6 +1,6 @@
 // species pages
 import type { GridColDef } from "@mui/x-data-grid";
-import { Button } from "@mui/material";
+import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -10,9 +10,78 @@ import UploadFileIcon from "@mui/icons-material/UploadFile";
 const apiUrl = import.meta.env.VITE_API_URL;
 
 export default function SpeciesPage() {
-  const [rows, setRows] = useState([]);
+
+  type SpeciesRow = {
+    id: number
+    species_id: number
+  }
+
+  const [rows, setRows] = useState<SpeciesRow[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const [deleteId, setDeleteId] = useState<number | null>(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [error, setError] = useState('')
+  const[status, setStatus] = useState('')
+
+  //forpopup after delete
+  const [deleteName, setDeleteName] = useState<string | null>(null)
+
+  const [open, setOpen] = useState(false)
+
+  const handleClickOpen = (id: number) => {
+    setDeleteId(id)
+    setOpen(true)
+  }
+
+  const handleClose = () => {
+      setOpen(false)
+      setDeleteId(null)
+      setDeleteName(null)
+  }
+
+  const handleConfirmDelete = async () => {
+      setOpen(false) 
+      await handleSubmitDelete() 
+  }
+
+  const handleSubmitDelete = async () => {
+      setDeleteLoading(true)
+      setStatus('')
+      setError('')
+  
+      const token = localStorage.getItem("admin_token")
+      if(!token)
+      {
+          throw new Error("Admin token missing")
+      }
+
+      try {
+          const res = await fetch(`${import.meta.env.VITE_API_URL}/species/${deleteId}`, {
+              method: 'DELETE',
+              headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: token,
+              }
+          })
+          
+          if(!res.ok)
+          {
+              const err = await res.json().catch(() => ({}))
+              throw new Error(err.error || 'failed to delete species')
+          }
+          setRows(prev => prev.filter(row => row.species_id !== deleteId))
+          setStatus('species deleted successfully!')
+      }
+      catch (error) {
+          setError(`Error: ${(error as Error).message}`)
+      }
+      finally {
+          setDeleteLoading(false)
+          setDeleteId(null)
+          setDeleteName(null)
+      }
+  }
   async function fetchSpecies() {
     setLoading(true);
     try {
@@ -76,16 +145,24 @@ export default function SpeciesPage() {
             <Link
               style={{
                 color: "#4E8A16",
+                cursor: "pointer"
               }}
               to={`/edit/${params.id}`}
             >
               Edit
             </Link>
             <Link
+              to="#"
               style={{
                 color: "#4E8A16",
+                cursor: "pointer"
               }}
-              to={`/delete/${params.id}`}
+              onClick={(e) => {
+                e.preventDefault()
+                setDeleteId(params.row.species_id)
+                setDeleteName(params.row.common_name)
+                setOpen(true)
+              }}
             >
               Delete
             </Link>
@@ -141,12 +218,27 @@ export default function SpeciesPage() {
           >
             Upload Excel
           </Button>
-
         </div>
       </div>
       <div className="w-full overflow-hidden">
         <TableLayout loading={loading} rows={rows} columns={columns} />
       </div>
+      <Dialog open={open} onClose={handleClose} aria-labelledby="alert-dialog-title" aria-describedby="alert-dialog-description">
+          <DialogTitle id="alert-dialog-title">
+              {"Delete Species Entry?"}
+          </DialogTitle>
+          <DialogContent>
+              <DialogContentText id="alert-dialog-description">
+                  Are you sure you want to delete{" "} <strong>{deleteName}</strong>? This action cannot be undone.
+              </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+              <Button onClick={handleClose}>Cancel</Button>
+              <Button onClick={handleConfirmDelete} color="error" autoFocus>
+                  Delete
+              </Button>
+          </DialogActions>
+      </Dialog>
     </div>
   );
 }

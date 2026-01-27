@@ -56,13 +56,23 @@ function App() {
           }
         />
         <Route
-          path="/EditEntry"
+          path="/edit"
           element={
             <AdminLayout>
               <EditEntry />
             </AdminLayout>
           }
         />
+
+        <Route
+          path="/edit/:id"
+          element={
+            <AdminLayout>
+              <EditEntry />
+            </AdminLayout>
+          }
+        />
+
 
         <Route
           path="/Users"

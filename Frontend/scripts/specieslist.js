@@ -19,7 +19,7 @@ async function renderSpecies(data) {
 
   let html = ""
   for(const species of data){
-    const id = species.id ?? "";
+    const id = species.species_id ?? ""
     const scientific = species.scientific_name ?? "";
     const common = species.common_name ?? "";
 
@@ -27,7 +27,7 @@ async function renderSpecies(data) {
 
 
     html += `
-      <div id="${id}" class="species-item" onclick="goToDetail('${id}')">
+      <div class="species-item" onclick="goToDetail('${id}')">
       ${
         thumb
         ? `<img src="${thumb}" alt="${scientific}" class="species-card-img">`

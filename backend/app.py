@@ -465,24 +465,27 @@ def create_species():
                 print(f"Rollback failed: {str(rollback_error)}")
                 return jsonify({"error": f"ROLLBACK ERROR, DATABASES MAY NOT BE IN SYNC {str(rollback_error)}"}), 500
         
-@app.delete("/api/species/<int:species_id>")
-def delete_species(species_id):
-    """
-    DELETE SPECIES
-
-    -delete species from both language tables
-    -logs one row deletion for incremental sync
-    """
-
+@app.get("/api/species/<int:species_id>")
+def get_species_by_id(species_id):
     admin_id, err = get_admin_user(supabase)
     if err:
         return jsonify({"error": err[0]}), err[1]
-    supabase.table("species_en").delete().eq("species_id", species_id).execute()
-    supabase.table("species_tet").delete().eq("species_id", species_id).execute()
+    
+    row = (
+        supabase.table("species_en")
+        .select("*")
+        .eq("species_id", species_id)
+        .single()
+        .execute()
+    )
+    return jsonify(row.data)
 
-    log_change("species", species_id, "DELETE")
-
-    return jsonify({"status": "deleted"}), 200
+async def translateMultipleTexts(texts):
+    tasks = [translate_to_tetum(text) for text in texts]
+    
+    results = await asyncio.gather(*tasks)
+    
+    return results
 
 @app.put("/api/species/<int:species_id>")
 def update_species(species_id):
@@ -562,14 +565,26 @@ def update_species(species_id):
         "status": "updated",
         "species_id": species_id
     }), 200
- 
 
-async def translateMultipleTexts(texts):
-    tasks = [translate_to_tetum(text) for text in texts]
-    
-    results = await asyncio.gather(*tasks)
-    
-    return results
+@app.delete("/api/species/<int:species_id>")
+def delete_species(species_id):
+    """
+    DELETE SPECIES
+
+    -delete species from both language tables
+    -logs one row deletion for incremental sync
+    """
+
+    admin_id, err = get_admin_user(supabase)
+    if err:
+        return jsonify({"error": err[0]}), err[1]
+    supabase.table("species_en").delete().eq("species_id", species_id).execute()
+    supabase.table("species_tet").delete().eq("species_id", species_id).execute()
+
+    log_change("species", species_id, "DELETE")
+
+    return jsonify({"status": "deleted"}), 200
+
 
 @app.put("/api/species/<int:species_id>/english")
 def update_species_english(species_id):

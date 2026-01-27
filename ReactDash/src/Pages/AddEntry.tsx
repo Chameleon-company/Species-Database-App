@@ -9,6 +9,7 @@ import axios from 'axios'
 
 
 const API_URL = import.meta.env.VITE_API_URL
+const API_BASE = import.meta.env.VITE_API_BASE
 
 export default function Page1() {
 
@@ -83,7 +84,7 @@ export default function Page1() {
         const textArray = [formData.scientificName, formData.commonName, formData.leafType, formData.fruitType, tempEtymology, tempHabitat, tempIdent, tempPhenology, tempSeed, tempPest]
         console.log('Translation: ', textArray)
         try {
-            const response = await axios.post(`${API_URL}/translate`, { text: textArray })
+            const response = await axios.post(`${API_BASE}/translate`, { text: textArray })
             console.log('Translation: ', response)
 
             const translations = response.data
@@ -97,7 +98,7 @@ export default function Page1() {
 
 
             setFormDataTetum({
-                scientificNameTetum: translations[0],
+                scientificNameTetum: formData.scientificName,
                 commonNameTetum: translations[1],
                 leafTypeTetum: translations[2],
                 fruitTypeTetum: translations[3],
@@ -212,10 +213,17 @@ export default function Page1() {
         setError('')
 
         try {
-            const response = await fetch(`${API_URL}/species`, {
+            const token = localStorage.getItem("admin_token")
+            if (!token) {
+                setError("Admin token missing")
+                setLoading(false)
+                return
+            }
+            const response = await fetch(`${API_BASE}/species`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    Authorization: token,
                 },
                 body: JSON.stringify({
                     scientific_name: formData.scientificName,
@@ -242,20 +250,24 @@ export default function Page1() {
                 }),
             })
             
-            const data = await response.json()
-            
-            if (response.ok){
-                console.log('Success:', data)
-                setLoading(false)
-                setStatus('Upload Successful')
-            } else {
-                setLoading(false)
-                console.log('Failed:', data)
-                setError(`Upload Failed (${data.error})`)
-                console.error('Error:', response.status)
+            const text = await response.text()
+            let data
+
+            try {
+                data = JSON.parse(text)
             }
-
-
+            catch {
+                data = {raw: text}
+            }
+            if (!response.ok){
+                console.error('UPLOAD FAILED:', response.status, data)
+                setError(
+                    data?.error || data?.message || data?.raw || `Upload failed (${response.status})`
+                )
+                return
+            }
+            console.log("success:", data)
+            setStatus("Upload successful")
 
         } catch (error) {
             console.error('Error:', error)
@@ -465,10 +477,9 @@ export default function Page1() {
                         <TextField
                             id="TetumTextBox1"
                             label="Scientific Name"
-                            helperText="Required"
-                            value={formDataTetum.scientificNameTetum}
-                            onChange={handleChangeTetum('scientificNameTetum')}
-                            slotProps={{ htmlInput: { maxLength: maxTetumChar } }}
+                            helperText="Not Translated"
+                            value={formData.scientificName}
+                            disabled
                             sx={{
                                 '& .MuiInputBase-input': { color: 'white' },
                                 '& .MuiInputLabel-root': { color: 'white' },

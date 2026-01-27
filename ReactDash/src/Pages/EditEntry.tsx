@@ -12,13 +12,15 @@ import DialogContent from '@mui/material/DialogContent'
 import DialogContentText from '@mui/material/DialogContentText'
 import DialogTitle from '@mui/material/DialogTitle'
 import axios from 'axios'
+import { useParams } from "react-router-dom";
+
 
 
 
 
 const API_URL = import.meta.env.VITE_API_URL
 
-
+const API_BASE = import.meta.env.VITE_API_BASE
 
 const textFieldBaseSx = {
     '& .MuiInputBase-input': { color: 'white' },
@@ -75,6 +77,7 @@ const errorContainerSx = {
 }
 
 export function EditEntry() {
+    const { id } = useParams<{ id: string }>();
 
     //Used for errors that are a result of interactions with database
     const [error, setError] = useState('')
@@ -130,14 +133,10 @@ export function EditEntry() {
 
     const [open, setOpen] = useState(false)
 
-    useEffect(() => {
-        fetchTet()
-    }, [])
-
 
     async function fetchTet() {
         try{
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/bundle`)
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/bundle`)
             if(!res.ok) throw new Error("Failed to fetch bundle")
             
             const data = await res.json()
@@ -177,7 +176,7 @@ export function EditEntry() {
         }
 
         try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/species/${ID}`, {
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/species/${ID}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
@@ -247,12 +246,19 @@ export function EditEntry() {
 
 
     const handleTranslate = async () => {
+        ///we want to generate a new tet version for this one
+        resetTet()
+        setTranslated(false)
+        setError('')
         setTranslateLoading(true)
-        if (!formData.scientificName) {setError('Scientific Name Cannot be empty')}
-        else if (!formData.commonName) {setError('Common Name Cannot be empty')}
-        else if (!formData.leafType) {setError('Leaf Type Cannot be empty')}
-        else if (!formData.fruitType) {setError('Fruit Type Cannot be empty')}
-        if(error)
+
+        let hasError = false
+
+        if (!formData.scientificName) {setError('Scientific Name Cannot be empty'), hasError = true}
+        else if (!formData.commonName) {setError('Common Name Cannot be empty'), hasError = true}
+        else if (!formData.leafType) {setError('Leaf Type Cannot be empty'), hasError = true}
+        else if (!formData.fruitType) {setError('Fruit Type Cannot be empty'), hasError = true}
+        if(hasError)
         {
             setTranslateLoading(false)
             return
@@ -269,7 +275,7 @@ export function EditEntry() {
         const textArray = [formData.scientificName, formData.commonName, formData.leafType, formData.fruitType, tempEtymology, tempHabitat, tempIdent, tempPhenology, tempSeed, tempPest]
         console.log('Translation: ', textArray)
         try {
-            const response = await axios.post(`${API_URL}/translate`, { text: textArray })
+            const response = await axios.post(`${API_BASE}/translate`, { text: textArray })
             console.log('Translation: ', response)
 
             const translations = response.data
@@ -283,7 +289,7 @@ export function EditEntry() {
 
 
             setFormDataTetum({
-                scientificNameTetum: translations[0],
+                scientificNameTetum: formData.scientificName,
                 commonNameTetum: translations[1],
                 leafTypeTetum: translations[2],
                 fruitTypeTetum: translations[3],
@@ -294,15 +300,13 @@ export function EditEntry() {
                 seedGerminationTetum: translations[8],
                 pestsTetum: translations[9]
             })
-            
-
-
+            setTranslated(true)
         }
-        catch {
-            console.error('Translation error:', error)
+        catch(err) {
+            console.error('Translation error:', err)
+            setError("translation failed")
         }
         finally {
-            setTranslated(true)
             setTranslateLoading(false)
         }
     }
@@ -336,7 +340,7 @@ export function EditEntry() {
                 throw new Error("admin token missing")
             }
 
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/species/${ID}`, {
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/species/${ID}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -396,6 +400,21 @@ export function EditEntry() {
         }
     }
 
+    //clears all tet fields... used for db row fields to load and when user clicks translate
+    const resetTet =() => {
+        setFormDataTetum({
+            scientificNameTetum: '',
+            commonNameTetum: '',
+            leafTypeTetum: '',
+            fruitTypeTetum: '',
+            etymologyTetum: '',
+            habitatTetum: '',
+            identificationCharacteristicsTetum: '',
+            phenologyTetum: '',
+            seedGerminationTetum: '',
+            pestsTetum: ''            
+        })
+    }
 
     const handleRowSelect = async (rowData: Species | null) => {
         setStatus('')
@@ -404,30 +423,11 @@ export function EditEntry() {
         setTranslated(false)
         let rowID = 0
 
-        if (speciesTet.length === 0) {
-            console.warn("tet data not loaded yet");
-            return;
-        }
+        if(!rowData)
+        {
+            setRowSelected(false)
+            setID(-1)
 
-        
-        //First we attempt to get english row, if successful attempt to fetch tetum row. 
-        if (rowData) {
-            setID(rowData.species_id)
-            rowID = rowData.species_id
-            setFormData({
-                scientificName: rowData.scientific_name || '',
-                commonName: rowData.common_name || '',
-                leafType: rowData.leaf_type || '',
-                fruitType: rowData.fruit_type || '',
-                etymology: rowData.etymology || '',
-                habitat: rowData.habitat || '',
-                identificationCharacteristics: rowData.identification_character || '',
-                phenology: rowData.phenology || '',
-                seedGermination: rowData.seed_germination || '',
-                pests: rowData.pest || ''
-                })
-                setRowSelected(true)
-        } else {
             setFormData({
                 scientificName: '',
                 commonName: '',
@@ -440,23 +440,26 @@ export function EditEntry() {
                 seedGermination: '',
                 pests: ''
             })
-            setFormDataTetum({
-                scientificNameTetum: '',
-                commonNameTetum: '',
-                leafTypeTetum: '',
-                fruitTypeTetum: '',
-                etymologyTetum: '',
-                habitatTetum: '',
-                identificationCharacteristicsTetum: '',
-                phenologyTetum: '',
-                seedGerminationTetum: '',
-                pestsTetum: ''
-            })
-            setRowSelected(false)
-            console.log("Setting ID to -1")
-            setID(-1)
+            resetTet()
             return
         }
+        
+        //First we attempt to get english row, if successful attempt to fetch tetum row. 
+        rowID = rowData.species_id
+        setID(rowID)
+        setFormData({
+            scientificName: rowData.scientific_name || '',
+            commonName: rowData.common_name || '',
+            leafType: rowData.leaf_type || '',
+            fruitType: rowData.fruit_type || '',
+            etymology: rowData.etymology || '',
+            habitat: rowData.habitat || '',
+            identificationCharacteristics: rowData.identification_character || '',
+            phenology: rowData.phenology || '',
+            seedGermination: rowData.seed_germination || '',
+            pests: rowData.pest || ''
+        })
+        setRowSelected(true)
 
         //Fetch tetum row
         try {
@@ -466,64 +469,85 @@ export function EditEntry() {
             if(!tetumRow)
             {
                 setTetumRowError(true)
-                setError("No tetum entry exists")
+                resetTet()
 
-                setFormDataTetum({
-                    scientificNameTetum: '',
-                    commonNameTetum: '',
-                    leafTypeTetum: '',
-                    fruitTypeTetum: '',
-                    etymologyTetum: '',
-                    habitatTetum: '',
-                    identificationCharacteristicsTetum: '',
-                    phenologyTetum: '',
-                    seedGerminationTetum: '',
-                    pestsTetum: ''
-                })
+                setError('')
+
                 return
             }
-            else {
-                setFormDataTetum({
-                    scientificNameTetum: tetumRow.scientific_name || '',
-                    commonNameTetum: tetumRow.common_name || '',
-                    leafTypeTetum: tetumRow.leaf_type || '',
-                    fruitTypeTetum: tetumRow.fruit_type || '',
-                    etymologyTetum: tetumRow.etymology || '',
-                    habitatTetum: tetumRow.habitat || '',
-                    identificationCharacteristicsTetum: tetumRow.identification_character || '',
-                    phenologyTetum: tetumRow.phenology || '',
-                    seedGerminationTetum: tetumRow.seed_germination || '',
-                    pestsTetum: tetumRow.pest || ''
-                })
-            }
+            setFormDataTetum({
+                scientificNameTetum: tetumRow.scientific_name || '',
+                commonNameTetum: tetumRow.common_name || '',
+                leafTypeTetum: tetumRow.leaf_type || '',
+                fruitTypeTetum: tetumRow.fruit_type || '',
+                etymologyTetum: tetumRow.etymology || '',
+                habitatTetum: tetumRow.habitat || '',
+                identificationCharacteristicsTetum: tetumRow.identification_character || '',
+                phenologyTetum: tetumRow.phenology || '',
+                seedGerminationTetum: tetumRow.seed_germination || '',
+                pestsTetum: tetumRow.pest || ''
+            })
             setTetumRowError(false)
             setError('')
         }
         catch {
-            setFormDataTetum({
-                scientificNameTetum: '',
-                commonNameTetum: '',
-                leafTypeTetum: '',
-                fruitTypeTetum: '',
-                etymologyTetum: '',
-                habitatTetum: '',
-                identificationCharacteristicsTetum: '',
-                phenologyTetum: '',
-                seedGerminationTetum: '',
-                pestsTetum: ''
-            })
+            resetTet()
             setTetumRowError(true)
             setError("Error loading Tetum row. Does a tetum entry exist for this species??")
         }
 
     }
+    //runs when edit page loads
+    //autoloads species if ID exists in URL
+    useEffect(() => {
+
+        //load one species based on id from url
+        async function loadSpecies() {
+            //if no id in url, nothing done
+            if(!id) return
+            try {
+
+                //load tetum bundle
+                const bundRes = await fetch(`${API_URL}/bundle`)
+                if(!bundRes) throw new Error("failed to load bundle")
+                const bundle = await bundRes.json()
+                const tetList = bundle.species_tet ?? []
+
+                const token = localStorage.getItem("admin_token")
+                if(!token) throw new Error("admin token missing")
+                //load english row by id
+                const res =await fetch(`${API_URL}/species/${id}`, {
+                    headers: {
+                        Authorization: token,
+                    },
+                })
+
+                if(!res.ok){
+                    const text = await res.text()
+                    throw new Error(`failed to load species`)
+                }
+
+                //backend returns eng species row
+                const species = await res.json()
+
+                //set tet first
+                setSpeciesTet(tetList)
+
+                //populating form and showing fields
+                handleRowSelect(species)
+            }
+            catch(err){
+                console.error("failed loading species for editting", err)
+                setError("Failed to load species")
+            }
+        }
+        loadSpecies()
+    }, [id])
 
     return (
         <>
             <div><TheDrawer></TheDrawer></div>
             <h1>Edit Entry</h1>
-            <h4 style={{marginTop: 3, marginBottom:5}}>Select Entry to edit</h4>
-            <div><MainTableSelect key={resetKey} onRowSelect={handleRowSelect}></MainTableSelect></div>
             <Box sx={containerBoxSx}>
                 {status && (
                     <Alert severity="success">
@@ -697,9 +721,9 @@ export function EditEntry() {
                         <TextField
                             label="Scientific Name" 
                             name="scientificNameTetum"
-                            helperText="Required"
+                            helperText="Not Translated"
                             value={formDataTetum.scientificNameTetum}
-                            onChange={handleChangeTetum}
+                            disabled
                             sx={requiredFieldSx}
                             />
 
@@ -777,7 +801,7 @@ export function EditEntry() {
 
                         <TextField fullWidth 
                             label="Phenology" 
-                            name="phenology"
+                            name="phenologyTetum"
                             multiline
                             rows={4}
                             value={formDataTetum.phenologyTetum}
