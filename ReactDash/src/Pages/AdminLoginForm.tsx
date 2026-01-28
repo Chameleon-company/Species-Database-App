@@ -4,10 +4,22 @@ import Box from "@mui/material/Box"
 import  TextField from "@mui/material/TextField";
 import  Typography from "@mui/material/Typography";
 import Alert from "@mui/material/Alert"
-
+import { useEffect } from "react"
 import logo from "../assets/logo.png"
 import Button from "@mui/material/Button";
 import { adminFetch } from "../utils/adminFetch";
+
+type GoogleCredentialResponse ={
+    credential: string
+    select_by?: string
+}
+declare global
+{
+    interface Window {
+        google: any
+        handleGoogleLogin?: (response:any) => void
+    }
+}
 
 export default function AdminLoginForm()
 {
@@ -20,6 +32,68 @@ export default function AdminLoginForm()
     const [error, setError] = useState<string | null>(null)
     const API_URL = import.meta.env.VITE_API_BASE;
 
+    /**
+     * registers global callback google calls after login
+     * initialises google id
+     * renders google login button
+     */
+    useEffect(() => {
+        //google calls with id token after successful login
+        window.handleGoogleLogin = async(response: GoogleCredentialResponse) =>{
+            try {
+                setLoading(true)
+                setError(null)
+
+                //send gogole id token to backedn for verification
+                const res = await fetch(`${API_URL}/api/auth/google-admin`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        id_token: response.credential
+                    })
+                })
+
+                const data = await res.json()
+                if(!res.ok)
+                {
+                    throw new Error(data.error || "google login failed")
+                }
+
+                //store short lived admin token
+                localStorage.setItem("admin_token", data.access_token)
+
+                //redirect into admin areaa
+                navigate("/")
+            }
+            catch{
+                setError("google login failed")
+            }
+            finally {
+                setLoading(false)
+            }
+        }
+        if (!window.google?.accounts?.id) {
+            console.warn("Google Identity not loaded")
+            return
+        }
+
+        //init google id services
+        window.google.accounts.id.initialize({
+            client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+            callback: window.handleGoogleLogin
+        })
+
+        window.google.accounts.id.renderButton(
+            document.getElementById("google-login"),
+            {
+                theme: "outline",
+                size: "large",
+                width: "100%"
+            }
+        )
+    }, [])
     //runs when the admin clicks login
     const loginAdmin = async () => {
         setError(null)
@@ -133,6 +207,15 @@ export default function AdminLoginForm()
                     >
                         {loading ? "Logging you in..." : "LOGIN"}
                     </Button>
+                    <Typography 
+                        variant="body2" 
+                        sx={{my:2, 
+                            color: "#6b7280"
+                        }}
+                    >
+                        OR
+                    </Typography>
+                    <div id="google-login" />
                 </form>
             </Box>
         </Box>
