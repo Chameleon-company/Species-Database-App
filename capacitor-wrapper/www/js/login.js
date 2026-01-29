@@ -27,7 +27,21 @@ function redirectPostLogin() {
   }
 }
 
+//need to make sure user cant go back tologin adn wont be prompted if they are already logged in
+(function checkExistingLogin() {
+  const userId = localStorage.getItem("user_id")
+  const role = localStorage.getItem("role")
+  if(userId)
+  {
+    const lang = localStorage.getItem("appLanguage") || "en"
+    window.location.replace(lang === "tet" ? "tetum.html" : "home.html")
+  }
+
+})
+
 document.addEventListener("DOMContentLoaded", () => {
+  //login only displayed if user not already logged in
+  document.body.style.display = "block"
   document.body.classList.add("loaded");
 
   const interval = setInterval(() => {

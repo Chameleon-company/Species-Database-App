@@ -61,8 +61,8 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
-  // Handle Supabase storage URLs (images/videos)
-  if (url.hostname.includes("supabase.co") && url.pathname.includes("/storage/")) {
+  //all images
+  if (event.request.destination === "image") {
     event.respondWith(handleMediaRequest(event.request));
     return;
   }
