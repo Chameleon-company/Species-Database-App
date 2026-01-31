@@ -1,4 +1,3 @@
-<img width="465" height="366" alt="image" src="https://github.com/user-attachments/assets/26989391-dba3-4a42-a07d-82bc31d30623" /># Admin Dashboard
 This repository contains the **Admin Dashboard frontend** for the Species Database App.
 
 The Admin Dashboard is used by authorised admins to manage all backend data that powers the mobile app and PWA used by the Rai Matak reforestation program.
@@ -33,6 +32,7 @@ Admins can usethis dahboard to:
 
 ## Project Structure
 
+```text
 src/
  ├── Components/
  │   ├── AdminLayout.tsx # wraps all admin pages
