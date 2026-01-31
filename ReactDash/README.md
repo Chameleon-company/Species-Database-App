@@ -35,33 +35,35 @@ Admins can usethis dahboard to:
 ```text
 src/
  ├── Components/
- │   ├── AdminLayout.tsx # wraps all admin pages
- │   ├── drawer.tsx # side navigation
- │   ├── ProtectedAdmin.tsx # route protection
- │   ├── DrawerComponent.tsx # renders the side navigation drawer
- │   ├── TableLayout.tsx # shared layout wrapper for table-based pages
- │   ├── DeleteConfirmModal.tsx # reusable confirmation dialog for deletions
- │   ├── UserForm.tsx # Form component for creating and editing admin users
- │   └── UserTable.tsx # table component displaying admin users
+ │   ├── AdminLayout.tsx           # wraps all admin pages
+ │   ├── drawer.tsx                # side navigation
+ │   ├── ProtectedAdmin.tsx        # route protection
+ │   ├── DrawerComponent.tsx       # renders the side navigation drawer
+ │   ├── TableLayout.tsx           # shared layout wrapper for table-based pages
+ │   ├── DeleteConfirmModal.tsx    # reusable confirmation dialog for deletions
+ │   ├── UserForm.tsx              # Form component for creating and editing admin users
+ │   └── UserTable.tsx             # table component displaying admin users
  │
  ├── Pages/
- │   ├── Home.tsx # dashboard landing page
- │   ├── AdminLoginForm.tsx # login page (Supports local admin login (username + password) and Google Sign-In
- │   ├── Species.tsx # species table (delete, edit entry point)
- │   ├── AddEntry.tsx # add species
- │   ├── EditEntry.tsx # edit species (allows updates, re-translation, and deletion)
- │   ├── AddExcel.tsx # Bulk upload page for species data
- │   ├── MediaManager.tsx # Used to add, edit, and delete media metadata
- │   ├── Users.tsx # Allows creation, editing, activation/deactivation and deletion of admin user accounts
- │   ├── Analytics.tsx # Analytics overview #Displays high-level system usage metrics
- │   └── Audit.tsx # Allows admins to upload Excel or CSV files for validation and quality checks before or after data import.
+ │   ├── Home.tsx                  # dashboard landing page
+ │   ├── AdminLoginForm.tsx        # login page (Supports local admin login (username + password) and Google Sign-In
+ │   ├── Species.tsx               # species table (delete, edit entry point)
+ │   ├── AddEntry.tsx              # add species
+ │   ├── EditEntry.tsx             # edit species (allows updates, re-translation, and deletion)
+ │   ├── AddExcel.tsx              # Bulk upload page for species data
+ │   ├── MediaManager.tsx          # Used to add, edit, and delete media metadata
+ │   ├── Users.tsx                 # Allows creation, editing, activation/deactivation and deletion of admin user accounts
+ │   ├── Analytics.tsx             # Analytics overview #Displays high-level system usage metrics
+ │   └── Audit.tsx                 # Allows admins to upload Excel or CSV files for validation and quality checks before or after data import.
  │
  ├── utils/
- │   └── adminFetch.ts # authenticated API helper
+ │   └── adminFetch.ts             # authenticated API helper
  │
- ├── types/ # Shared TypeScript types
- ├── App.tsx # Routing + layout wiring
- ├── main.tsx # App entry point
+ ├── types/                        # Shared TypeScript types
+ ├── App.tsx                       # Routing + layout wiring
+ ├── main.tsx                      # App entry point
+
+---
 
 ## For Local ENV 
 ```
