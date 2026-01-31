@@ -61,7 +61,7 @@ src/
  │
  ├── types/                        # Shared TypeScript types
  ├── App.tsx                       # Routing + layout wiring
- ├── main.tsx                      # App entry point
+ └── main.tsx                      # App entry point
 
 ---
 
