@@ -6,7 +6,7 @@ This dashboard is not accessible to general users or field users
 
 ## What This Dashboard Is Used For
 
-Admins can usethis dahboard to:
+Admins can use this dahboard to:
 - Add, edit and delete plant species both in English and Tetum
 - Upload species data in bulk via Excel files
 - Manage media metadata (images and videos linked to species)
@@ -27,7 +27,7 @@ Admins can usethis dahboard to:
 ---
 
 ## Admin Dashboard Overview Diagram
-<img width="970" height="469" alt="Untitled drawing" src="https://github.com/user-attachments/assets/fb3cfd48-2bfc-4047-81eb-2b7c58b95ab5" />
+<img width="970" height="469" alt="Untitled drawing (1)" src="https://github.com/user-attachments/assets/3d3b65ca-b421-492c-a820-b4712aa422f5" />
 
 
 ## Project Structure
@@ -63,14 +63,36 @@ src/
  ├── App.tsx                       # Routing + layout wiring
  └── main.tsx                      # App entry point
 
+```
 ---
 
 ## For Local ENV 
 ```
-VITE_SUPABASE_URL=
-VITE_SUPABASE_PUBLISHABLE_KEY=
-VITE_API_BASE_URL=http://127.0.0.1:5000/api
+VITE_API_BASE=http://127.0.0.1:5000
+VITE_API_URL=http://127.0.0.1:5000/api
+VITE_GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID
 ```
+## Running the project locally
+
+Ensure the backend API is running locally:
+```
+http://127.0.0.1:5000
+```
+Set the required frontend environment variables (see above)
+
+Install dependencies and start the dashboard:
+```
+npm install
+npm run dev
+```
+
+---
+# Deploymnet Notes
+When deployed on Render:
+- Build command: ``` npm run build ```
+- Publish directory: ``` dist ```
+
+Currently, 3 render services are used due to late-stage integration and time constraints. Consolidation recommended.
 
 # React + TypeScript + Vite
 
