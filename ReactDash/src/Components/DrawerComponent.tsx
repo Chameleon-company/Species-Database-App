@@ -22,7 +22,7 @@ import { useNavigate } from "react-router-dom";
 import { Menu } from "@mui/material";
 import MenuItem from "@mui/material/MenuItem";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
-
+import AnalyticsIcon from "@mui/icons-material/Analytics";
 
 const drawerWidth = 240;
 
@@ -82,6 +82,7 @@ export default function DrawerComponent({
         <ListComponent url="/Media" text="Media" icon={<FilterIcon />} />
         <ListComponent url="/Audit" text="Audit" icon={<VerifiedUserIcon />} />
         <ListComponent url="/Users" text="Users" icon={<GroupIcon />} />
+        <ListComponent url="/Analytics" text="Analytics" icon={<AnalyticsIcon />} />
       </List>
 
       <Divider />
