@@ -707,11 +707,6 @@ export function EditEntry() {
 
                 </Box>
 
-                
-             
-
-                
-
             )}
 
             {rowSelected && (
@@ -729,6 +724,7 @@ export function EditEntry() {
                             sx={{ ...bigFieldSx, maxWidth: 280 }}
                             label="Scientific Name"
                             name="scientificNameTetum"
+                            value={formData.scientificName}
                             disabled
                             />
                         <TextField
@@ -766,20 +762,26 @@ export function EditEntry() {
                             }                            />
 
                             <TextField
+                            sx={{ ...bigFieldSx, maxWidth: 280 }}
                             label="Fruit Type"
                             name="fruitTypeTetum"
-                            helperText="Required"
                             value={formDataTetum.fruitTypeTetum}
                             onChange={handleChangeTetum}
-                            sx={requiredFieldSxNoMargin}
+                            onBlur={() => markTouched('fruitTypeTetum')}
+                            required
+                            error={touched.fruitTypeTetum && !formDataTetum.fruitTypeTetum}
+                            helperText={
+                                touched.fruitTypeTetum && !formDataTetum.fruitTypeTetum
+                                ? 'Required'
+                                : ' '
+                            }
                             />
-
                     
                     </Box>
 
                     <div><h5>Optional:</h5></div>
 
-                    <Box sx={multilineRowSx}>
+                    <Box display="flex" gap={2} mb={2}>
                         <TextField 
                             fullWidth 
                             label="Etymology" 
@@ -788,7 +790,7 @@ export function EditEntry() {
                             rows={4}
                             value={formDataTetum.etymologyTetum}
                             onChange={handleChangeTetum}
-                            sx={multilineFieldSx}
+                            sx={bigFieldSx}
                         />
 
                         <TextField 
@@ -799,12 +801,12 @@ export function EditEntry() {
                             rows={4}
                             value={formDataTetum.habitatTetum}
                             onChange={handleChangeTetum}
-                            sx={multilineFieldSx}
+                            sx={bigFieldSx}
                         />
                     </Box>
 
 
-                    <Box sx={multilineRowSx}>
+                    <Box display="flex" gap={2} mb={2}>
                         <TextField fullWidth 
                             label="Identification Characteristics" 
                             name="identificationCharacteristicsTetum"
@@ -812,7 +814,7 @@ export function EditEntry() {
                             rows={4}
                             value={formDataTetum.identificationCharacteristicsTetum}
                             onChange={handleChangeTetum}
-                            sx={multilineFieldSx}
+                            sx={bigFieldSx}
                         />
 
                         <TextField fullWidth 
@@ -822,12 +824,12 @@ export function EditEntry() {
                             rows={4}
                             value={formDataTetum.phenologyTetum}
                             onChange={handleChangeTetum}
-                            sx={multilineFieldSx}
+                            sx={bigFieldSx}
                         />
                     </Box>
 
 
-                    <Box sx={multilineRowSx}>
+                    <Box display="flex" gap={2} mb={2}>
                         <TextField fullWidth 
                             label="Seed Germination" 
                             name="seedGerminationTetum"
@@ -835,7 +837,7 @@ export function EditEntry() {
                             rows={4}
                             value={formDataTetum.seedGerminationTetum}
                             onChange={handleChangeTetum}
-                            sx={multilineFieldSx}
+                            sx={bigFieldSx}
                         />
 
                         <TextField fullWidth 
@@ -845,7 +847,7 @@ export function EditEntry() {
                             rows={4}
                             value={formDataTetum.pestsTetum}
                             onChange={handleChangeTetum}
-                            sx={multilineFieldSx}
+                            sx={bigFieldSx}
                         />
                         
                     </Box>

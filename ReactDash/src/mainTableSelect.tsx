@@ -41,79 +41,72 @@ const paginationModel = { page: 0, pageSize: 10 }
 
 
 export default function MainTableSelect({ onRowSelect }: MainTableProps) {
-
-  if (true) {
       
-    const [speciesEn, setSpeciesEn] = useState<Species[]>([])
+  const [speciesEn, setSpeciesEn] = useState<Species[]>([])
 
-    useEffect(() => {
-      getSpecies()
-    }, [])
+  useEffect(() => {
+    getSpecies()
+  }, [])
 
-    async function getSpecies() {
-      try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/bundle`, {
-          credentials: "include",
-        })
+  async function getSpecies() {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/bundle`, {
+        credentials: "include",
+      })
 
-        if(!res.ok) {
-          throw new Error("failed to fetch species")
-        }
-
-        const data = await res.json()
-        setSpeciesEn(data.species_en ?? [])
+      if(!res.ok) {
+        throw new Error("failed to fetch species")
       }
-      catch (err) {
-        console.error(err)
-        setSpeciesEn([])
-      }
+
+      const data = await res.json()
+      setSpeciesEn(data.species_en ?? [])
     }
-
-    const handleRowSelection = (selectionModel: any) => {
-      console.log("Selection model:", selectionModel)
-
-      const selectedIds = Array.from(selectionModel.ids || [])
-      console.log("Selected IDs:", selectedIds)
-
-      if (selectedIds.length > 0) {
-        const selectedId = selectedIds[0]
-        console.log("Selected ID:", selectedId)
-        const selectedSpecies = speciesEn.find(s => s.species_id === selectedId)
-        console.log("Found species:", selectedSpecies)
-        onRowSelect(selectedSpecies || null)
-      } else {
-        onRowSelect(null)
-      }
-
-
-
+    catch (err) {
+      console.error(err)
+      setSpeciesEn([])
     }
-
-
-
-    return (
-      <Paper sx={{ height: 600, width: '100%' }}>
-        <DataGrid
-          rows={speciesEn}
-          columns={columns}
-          getRowId={(row) => row.species_id}
-          initialState={{ 
-            pagination: { paginationModel },
-            sorting: {
-              sortModel: [{ field: 'species_id', sort: 'asc' }]
-            }
-          }}
-          pageSizeOptions={[10, 20]}
-          checkboxSelection
-          disableMultipleRowSelection
-          onRowSelectionModelChange={handleRowSelection}
-          sx={{ border: 0, backgroundColor: '#cdcdcdff' }}
-        />
-      </Paper>
-    )
   }
 
-}
-  
+  const handleRowSelection = (selectionModel: any) => {
+    console.log("Selection model:", selectionModel)
+
+    const selectedIds = Array.from(selectionModel || [])
+    console.log("Selected IDs:", selectedIds)
+
+    if (selectedIds.length > 0) {
+      const selectedId = selectedIds[0]
+      console.log("Selected ID:", selectedId)
+      const selectedSpecies = speciesEn.find(s => s.species_id === selectedId)
+      console.log("Found species:", selectedSpecies)
+      onRowSelect(selectedSpecies || null)
+    } else {
+      onRowSelect(null)
+    }
+
+  }
+
+
+
+  return (
+    <Paper sx={{ height: 600, width: '100%' }}>
+      <DataGrid
+        rows={speciesEn}
+        columns={columns}
+        getRowId={(row) => row.species_id}
+        initialState={{ 
+          pagination: { paginationModel },
+          sorting: {
+            sortModel: [{ field: 'species_id', sort: 'asc' }]
+          }
+        }}
+        pageSizeOptions={[10, 20]}
+        checkboxSelection
+        disableMultipleRowSelection
+        onRowSelectionModelChange={handleRowSelection}
+        sx={{ border: 0, backgroundColor: '#cdcdcdff' }}
+      />
+    </Paper>
+  )
+}  
 
 export type {Species}

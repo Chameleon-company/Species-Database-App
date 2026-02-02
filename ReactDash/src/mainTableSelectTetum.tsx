@@ -48,72 +48,57 @@ const paginationModel = { page: 0, pageSize: 10 }
 
 
 export default function MainTableSelectTetum({ onRowSelect }: MainTableProps) {
-      if (!supabase || !supabaseTetum) {
-        return (
-          <Box sx={{ marginTop: 10}}>
-            <h2 style={{ color: 'red' }}>Critical Error: Database not accessible!</h2>
-          </Box>
-        )
-      }
 
-  if (true) {
-      
-    const [species, setSpecies] = useState<Species[]>([])
-    useEffect(() => {
-      getSpecies()
-    }, [])
+  const [species, setSpecies] = useState<Species[]>([])
+  useEffect(() => {
+    getSpecies()
+  }, [])
 
-    async function getSpecies() {
-      if (!supabase) { throw new Error('Failed to get rows to display'); }
-      const { data } = await supabase.from("species_tet").select()
-      setSpecies(data ?? [])
-    }
-
-    const handleRowSelection = (selectionModel: any) => {
-      console.log("Selection model:", selectionModel)
-
-      const selectedIds = Array.from(selectionModel.ids || [])
-      console.log("Selected IDs:", selectedIds)
-
-      if (selectedIds.length > 0) {
-        const selectedId = selectedIds[0]
-        console.log("Selected ID:", selectedId)
-        const selectedSpecies = species.find(s => s.species_id === selectedId)
-        console.log("Found species:", selectedSpecies)
-        onRowSelect(selectedSpecies || null)
-      } else {
-        onRowSelect(null)
-      }
-
-
-
-    }
-
-
-
-    return (
-      <Paper sx={{ height: 600, width: '100%' }}>
-        <DataGrid
-          rows={species}
-          columns={columns}
-          getRowId={(row) => row.species_id}
-          initialState={{ 
-            pagination: { paginationModel },
-            sorting: {
-              sortModel: [{ field: 'species_id', sort: 'asc' }]
-            }
-          }}
-          pageSizeOptions={[10, 20]}
-          checkboxSelection
-          disableMultipleRowSelection
-          onRowSelectionModelChange={handleRowSelection}
-          sx={{ border: 0, backgroundColor: '#cdcdcdff' }}
-        />
-      </Paper>
-    )
+  async function getSpecies() {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/bundle`, {
+      credentials:"include"
+    })
+    if (!res.ok) { throw new Error('Failed to get rows to display'); }
+    const data  = await res.json()
+    setSpecies(data.species_tet ?? [])
   }
 
-}
-  
+  const handleRowSelection = (selectionModel: any) => {
+    console.log("Selection model:", selectionModel)
 
+    const selectedIds = Array.from(selectionModel || [])
+    console.log("Selected IDs:", selectedIds)
+
+    if (selectedIds.length > 0) {
+      const selectedId = selectedIds[0]
+      console.log("Selected ID:", selectedId)
+      const selectedSpecies = species.find(s => s.species_id === selectedId)
+      console.log("Found species:", selectedSpecies)
+      onRowSelect(selectedSpecies || null)
+    } else {
+      onRowSelect(null)
+    }
+  }
+
+  return (
+    <Paper sx={{ height: 600, width: '100%' }}>
+      <DataGrid
+        rows={species}
+        columns={columns}
+        getRowId={(row) => row.species_id}
+        initialState={{ 
+          pagination: { paginationModel },
+          sorting: {
+            sortModel: [{ field: 'species_id', sort: 'asc' }]
+          }
+        }}
+        pageSizeOptions={[10, 20]}
+        checkboxSelection
+        disableMultipleRowSelection
+        onRowSelectionModelChange={handleRowSelection}
+        sx={{ border: 0, backgroundColor: '#cdcdcdff' }}
+      />
+    </Paper>
+  )
+}
 export type {Species}
