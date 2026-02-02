@@ -7,7 +7,6 @@ import Alert from "@mui/material/Alert"
 import { useEffect } from "react"
 import logo from "../assets/logo.png"
 import Button from "@mui/material/Button";
-import { adminFetch } from "../utils/adminFetch";
 
 type GoogleCredentialResponse ={
     credential: string
@@ -161,7 +160,7 @@ export default function AdminLoginForm()
                 </Box>
                 <Typography
                     variant="body2"
-                    sx={{textAlign: "center", color: "#6b7280", mb: 4}}
+                    sx={{textAlign: "center", color: "#294a8b", mb: 4}}
                 >
                     Authorised Admins Only
                 </Typography>

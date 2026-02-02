@@ -17,10 +17,7 @@ import Toolbar from "@mui/material/Toolbar";
 import { Link } from "react-router-dom";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import FilterIcon from "@mui/icons-material/Filter";
-import Logo from "../assets/logo-color.png";
 import { useNavigate } from "react-router-dom"
-import { Menu } from "@mui/material";
-import MenuItem from "@mui/material/MenuItem";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 
 const drawerWidth = 240;
@@ -33,11 +30,10 @@ export default function DrawerComponent({
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [isClosing, setIsClosing] = React.useState(false);
 
-  const [menuOpen, setMenuOpen] = React.useState(false)
+  const [, setMenuOpen] = React.useState(false)
   //open menu
   const openMenu = () => setMenuOpen(true)
   //close menu
-  const closeMenu = () => setMenuOpen(false)
 
   const handleDrawerClose = () => {
     setIsClosing(true);

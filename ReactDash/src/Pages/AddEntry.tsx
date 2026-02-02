@@ -12,7 +12,17 @@ const API_URL = import.meta.env.VITE_API_URL
 const API_BASE = import.meta.env.VITE_API_BASE
 
 export default function Page1() {
-
+    const bigFieldSx = {
+    '& .MuiInputBase-input': {
+        fontSize: '1.1rem',
+    },
+    '& .MuiInputLabel-root': {
+        fontSize: '1rem',
+    },
+    '& .MuiFormHelperText-root': {
+        fontSize: '0.9rem',
+    },
+    }
   
     //Max char length for english text boxes
     const maxEnglishChar = 2000
@@ -282,10 +292,9 @@ export default function Page1() {
             <h1>Add Species</h1>
 
             <Box width="100%" maxWidth={900} mx="auto" mt={3} px={2}>   
-                <Box display="flex" justifyContent="center" gap={2} mb={2}>   
+                <Box display="flex" gap={2} mb={2} justifyContent="center">
                     <TextField
-                        fullWidth
-                        sx={{ maxWidth: 320 }}
+                        sx={{ ...bigFieldSx, maxWidth: 280 }}
                         label="Scientific Name"
                         value={formData.scientificName}
                         onChange={handleChange('scientificName')}
@@ -295,8 +304,7 @@ export default function Page1() {
                     />
 
                     <TextField
-                        fullWidth
-                        sx={{ maxWidth: 320 }}
+                        sx={{ ...bigFieldSx, maxWidth: 280 }}
                         label="Common Name"
                         value={formData.commonName}
                         onChange={handleChange('commonName')}
@@ -307,10 +315,9 @@ export default function Page1() {
 
                 </Box>
 
-                <Box display="flex" justifyContent="center" gap={2} mb={2}>   
+                <Box display="flex" gap={2} mb={2} justifyContent="center">
                     <TextField
-                        fullWidth
-                        sx={{ maxWidth: 320 }}
+                        sx={{ ...bigFieldSx, maxWidth: 280 }}
                         label="Leaf Type"
                         value={formData.leafType}
                         onChange={handleChange('leafType')}
@@ -320,8 +327,7 @@ export default function Page1() {
                     />
 
                     <TextField
-                        fullWidth
-                        sx={{ maxWidth: 320 }}
+                        sx={{ ...bigFieldSx, maxWidth: 280 }}
                         label="Fruit Type"
                         value={formData.fruitType}
                         onChange={handleChange('fruitType')}
@@ -333,9 +339,11 @@ export default function Page1() {
                 </Box>
             </Box>
 
-            <div><h5>Optional:</h5></div>
-
-            <Box display="flex" justifyContent="center" gap={10} mb={2}>
+            <Box sx={{ mt: 4, mb: 2, textAlign: 'center' }}>
+                <h5>Optional:</h5>
+            </Box>
+            <Box sx={{ maxWidth: 1000, marginX: 'auto' }}>
+            <Box display="flex" gap={2} mb={2}>
                 <TextField 
                     fullWidth
                     multiline
@@ -343,9 +351,8 @@ export default function Page1() {
                     value={formData.etymology}
                     onChange={handleChange('etymology')}
                     slotProps={{ htmlInput: { maxLength: maxEnglishChar } }}
-                    sx={{maxWidth: 320}}
-                    label="Etymology"
-                    
+                    sx={bigFieldSx}
+                    label="Etymology"   
                 />
 
                 <TextField 
@@ -356,14 +363,12 @@ export default function Page1() {
                     value={formData.habitat}
                     onChange={handleChange('habitat')}
                     slotProps={{ htmlInput: { maxLength: maxEnglishChar } }}
-                    sx={{
-                        maxWidth: 320
-                    }}
+                    sx={bigFieldSx}
                 />
             </Box>
 
 
-            <Box sx={{ display: 'flex', gap: 1, marginTop: 3, marginBottom: 3, maxWidth: '70%', marginX: 'auto'}}>
+            <Box display="flex" gap={2} mb={2}>
                 <TextField fullWidth 
                     label="Identification Characteristics" 
                     id="BigText3"
@@ -372,10 +377,7 @@ export default function Page1() {
                     value={formData.identificationCharacteristics}
                     onChange={handleChange('identificationCharacteristics')}
                     slotProps={{ htmlInput: { maxLength: maxEnglishChar } }}
-                    sx={{
-                        '& .MuiInputBase-input': { color: 'white' },
-                        '& .MuiInputLabel-root': { color: 'white' },
-                    }}
+                    sx={bigFieldSx}
                 />
 
                 <TextField fullWidth 
@@ -386,15 +388,13 @@ export default function Page1() {
                     value={formData.phenology}
                     onChange={handleChange('phenology')}
                     slotProps={{ htmlInput: { maxLength: maxEnglishChar } }}
-                    sx={{
-                        '& .MuiInputBase-input': { color: 'white' },
-                        '& .MuiInputLabel-root': { color: 'white' },
-                    }}
+                    sx={bigFieldSx}
+
                 />
             </Box>
 
 
-            <Box sx={{ display: 'flex', gap: 1, marginTop: 3, marginBottom: 3, maxWidth: '70%', marginX: 'auto'}}>
+            <Box display="flex" gap={2} mb={2}>
                 <TextField fullWidth 
                     label="Seed Germination" 
                     id="BigText5"
@@ -403,10 +403,8 @@ export default function Page1() {
                     value={formData.seedGermination}
                     onChange={handleChange('seedGermination')}
                     slotProps={{ htmlInput: { maxLength: maxEnglishChar } }}
-                    sx={{
-                        '& .MuiInputBase-input': { color: 'white' },
-                        '& .MuiInputLabel-root': { color: 'white' },
-                    }}
+                    sx={bigFieldSx}
+
                 />
 
                 <TextField fullWidth 
@@ -417,15 +415,12 @@ export default function Page1() {
                     value={formData.pests}
                     onChange={handleChange('pests')}
                     slotProps={{ htmlInput: { maxLength: maxEnglishChar } }}
-                    sx={{
-                        '& .MuiInputBase-input': { color: 'white' },
-                        '& .MuiInputLabel-root': { color: 'white' },
-                    }}
+                    sx={bigFieldSx}
                 />
             </Box>
-            
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: 2}}>
-                
+            </Box>
+
+            <Box display="flex" justifyContent="center" alignItems="center" mb={3}>
                 {status && (
                     <Alert severity="success">
                         {status}
@@ -462,173 +457,121 @@ export default function Page1() {
 
             {tetumTranslate && (
                 <Box sx={{marginTop: 2}}>
+                    <Box sx={{ mt: 4, mb: 2, textAlign: 'center' }}>
                     <div><h3>Tetum Translation:</h3></div>
                     <div><h5>Please review, edit if needed and then confirm using the button at the bottom</h5></div>
-                    <Box sx={{marginTop: 2}}>   
-                        <TextField
-                            id="TetumTextBox1"
+                    </Box>
+                    <Box display="flex" gap={2} mb={2} justifyContent="center"> 
+                            <TextField
+                            sx={{ ...bigFieldSx, maxWidth: 280 }}
                             label="Scientific Name"
-                            helperText="Not Translated"
                             value={formData.scientificName}
                             disabled
-                            sx={{
-                                '& .MuiInputBase-input': { color: 'white' },
-                                '& .MuiInputLabel-root': { color: 'white' },
-                                '& .MuiFormHelperText-root': { color: 'red' },
-                                marginRight: 8
-                            }}
                             />
 
                             <TextField
-                            id="TetumTextBox2"
+                            sx={{ ...bigFieldSx, maxWidth: 280 }}
                             label="Common Name"
-                            helperText="Required"
                             value={formDataTetum.commonNameTetum}
                             onChange={handleChangeTetum('commonNameTetum')}
-                            slotProps={{ htmlInput: { maxLength: maxTetumChar } }}
-                            sx={{
-                                '& .MuiInputBase-input': { color: 'white' },
-                                '& .MuiInputLabel-root': { color: 'white' },
-                                '& .MuiFormHelperText-root': { color: 'red' }
-                            }}
-                            />
-
-                    
+                            onBlur={() => markTouched('commonNameTetum')}
+                            required
+                            error={touched.commonNameTetum && !formDataTetum.commonNameTetum}
+                            />                    
                     </Box>
 
-                    <Box sx={{marginTop: 2}}>   
+                    <Box display="flex" gap={2} mb={2} justifyContent="center"> 
                         <TextField
-                            id="TetumTextBox3"
-                            label="Leaf Type"
-                            helperText="Required"
-                            value={formDataTetum.leafTypeTetum}
-                            onChange={handleChangeTetum('leafTypeTetum')}
-                            slotProps={{ htmlInput: { maxLength: maxTetumChar } }}
-                            sx={{
-                                '& .MuiInputBase-input': { color: 'white' },
-                                '& .MuiInputLabel-root': { color: 'white' },
-                                '& .MuiFormHelperText-root': { color: 'red' },
-                                marginRight: 8
-                            }}
-                            />
+                        sx={{ ...bigFieldSx, maxWidth: 280 }}
+                        label="Leaf Type"
+                        value={formDataTetum.leafTypeTetum}
+                        onChange={handleChangeTetum('leafTypeTetum')}
+                        onBlur={() => markTouched('leafTypeTetum')}
+                        required
+                        error={touched.leafTypeTetum && !formDataTetum.leafTypeTetum}
+                        />
 
-                            <TextField
-                            id="TetumTextBox4"
-                            label="Fruit Type"
-                            helperText="Required"
-                            value={formDataTetum.fruitTypeTetum}
-                            onChange={handleChangeTetum('fruitTypeTetum')}
-                            slotProps={{ htmlInput: { maxLength: maxTetumChar } }}
-                            sx={{
-                                '& .MuiInputBase-input': { color: 'white' },
-                                '& .MuiInputLabel-root': { color: 'white' },
-                                '& .MuiFormHelperText-root': { color: 'red' }
-                            }}
-                            />
-
+                        <TextField
+                        sx={{ ...bigFieldSx, maxWidth: 280 }}
+                        label="Fruit Type"
+                        value={formDataTetum.fruitTypeTetum}
+                        onChange={handleChangeTetum('fruitTypeTetum')}
+                        onBlur={() => markTouched('fruitTypeTetum')}
+                        required
+                        error={touched.fruitTypeTetum && !formDataTetum.fruitTypeTetum}
+                        />
                     
                     </Box>      
 
-                    <div><h5>Optional:</h5></div>
-
-                    <Box sx={{ display: 'flex', gap: 1, marginBottom: 3}}>
-                        <TextField 
-                            multiline rows={4} 
-                            fullWidth label ="Etymology" />
-                        <TextField multiline rows={4} fullWidth label="Habitat" />
-                        <TextField 
-                            fullWidth 
-                            label="Etymology" 
-                            id="TetumBigText1"
-                            multiline
-                            rows={4}
-                            value={formDataTetum.etymologyTetum}
-                            onChange={handleChangeTetum('etymologyTetum')}
-                            slotProps={{ htmlInput: { maxLength: maxTetumChar } }}
-                            sx={{
-                            '& .MuiInputBase-input': { color: 'white' },
-                            '& .MuiInputLabel-root': { color: 'white' },
-                            }}
+                    <Box sx={{ mt: 4, mb: 2, textAlign: 'center' }}>
+                        <h5>Optional:</h5>
+                    </Box>
+                    <Box sx={{ maxWidth: 1000, marginX: 'auto' }}>
+                    <Box display="flex" gap={2} mb={2}>
+                        <TextField
+                        fullWidth
+                        label="Etymology"
+                        multiline
+                        rows={4}
+                        value={formDataTetum.etymologyTetum}
+                        onChange={handleChangeTetum('etymologyTetum')}
+                        sx={bigFieldSx}
                         />
 
-                        <TextField 
-                            fullWidth 
-                            label="Habitat" 
-                            id="TetumBigText2"
-                            multiline
-                            rows={4}
-                            value={formDataTetum.habitatTetum}
-                            onChange={handleChangeTetum('habitatTetum')}
-                            slotProps={{ htmlInput: { maxLength: maxTetumChar } }}
-                            sx={{
-                            '& .MuiInputBase-input': { color: 'white' },
-                            '& .MuiInputLabel-root': { color: 'white' },
-                            }}
+                        <TextField
+                        fullWidth
+                        label="Habitat"
+                        multiline
+                        rows={4}
+                        value={formDataTetum.habitatTetum}
+                        onChange={handleChangeTetum('habitatTetum')}
+                        sx={bigFieldSx}
                         />
                     </Box>
 
-
-                    <Box sx={{ display: 'flex', gap: 1, marginTop: 3, marginBottom: 3, maxWidth: '70%', marginX: 'auto'}}>
+                    <Box display="flex" gap={2} mb={2}>
                         <TextField fullWidth 
                             label="Identification Characteristics" 
-                            id="TetumBigText3"
                             multiline
                             rows={4}
                             value={formDataTetum.identificationCharacteristicsTetum}
                             onChange={handleChangeTetum('identificationCharacteristicsTetum')}
-                            slotProps={{ htmlInput: { maxLength: maxTetumChar } }}
-                            sx={{
-                                '& .MuiInputBase-input': { color: 'white' },
-                                '& .MuiInputLabel-root': { color: 'white' },
-                            }}
+                            sx={{bigFieldSx}}
                         />
 
                         <TextField fullWidth 
                             label="Phenology" 
-                            id="TetumBigText4"
                             multiline
                             rows={4}
                             value={formDataTetum.phenologyTetum}
                             onChange={handleChangeTetum('phenologyTetum')}
-                            slotProps={{ htmlInput: { maxLength: maxTetumChar } }}
-                            sx={{
-                                '& .MuiInputBase-input': { color: 'white' },
-                                '& .MuiInputLabel-root': { color: 'white' },
-                            }}
+                            sx={{bigFieldSx}}
                         />
                     </Box>
 
 
-                    <Box sx={{ display: 'flex', gap: 1, marginTop: 3, marginBottom: 3, maxWidth: '70%', marginX: 'auto'}}>
+                    <Box display="flex" gap={2} mb={2}>
                         <TextField fullWidth 
                             label="Seed Germination" 
-                            id="TetumBigText5"
                             multiline
                             rows={4}
                             value={formDataTetum.seedGerminationTetum}
                             onChange={handleChangeTetum('seedGerminationTetum')}
-                            slotProps={{ htmlInput: { maxLength: maxTetumChar } }}
-                            sx={{
-                                '& .MuiInputBase-input': { color: 'white' },
-                                '& .MuiInputLabel-root': { color: 'white' },
-                            }}
+                            sx={{bigFieldSx}}
                         />
 
                         <TextField fullWidth 
                             label="Pests" 
-                            id="TetumBigText6"
                             multiline
                             rows={4}
                             value={formDataTetum.pestsTetum}
                             onChange={handleChangeTetum('pestsTetum')}
-                            slotProps={{ htmlInput: { maxLength: 2500 } }}
                             sx={{
-                                '& .MuiInputBase-input': { color: 'white' },
-                                '& .MuiInputLabel-root': { color: 'white' },
+                                bigFieldSx
                             }}
                         />
                     </Box>
-
+                    </Box>
                     <Box sx={{ marginTop: 2 }}>
                         <Button variant="contained"
                         onClick={handleSubmit}

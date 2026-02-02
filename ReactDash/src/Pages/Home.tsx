@@ -10,8 +10,6 @@ import { TextField } from '@mui/material'
 
 export function Home() {
 
-
-
     const [selectedSpecies, setSelectedSpecies] = useState<Species | null>(null)
     const [selectedSpeciesTetum, setSelectedSpeciesTetum] = useState<Species | null>(null)
 

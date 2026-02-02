@@ -1,5 +1,4 @@
 import TheDrawer from '../Components/drawer'
-import MainTableSelect from '../mainTableSelect'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import React, { useEffect, useState } from 'react'
@@ -77,6 +76,18 @@ const errorContainerSx = {
     marginBottom: 2
 }
 
+const bigFieldSx = {
+  '& .MuiInputBase-input': {
+    fontSize: '1.1rem',
+  },
+  '& .MuiInputLabel-root': {
+    fontSize: '1rem',
+  },
+  '& .MuiFormHelperText-root': {
+    fontSize: '0.9rem',
+  },
+}
+
 export function EditEntry() {
     const { id } = useParams<{ id: string }>();
 
@@ -95,13 +106,19 @@ export function EditEntry() {
     //Keeps track of the ID of the row selected (used to fetch Tetum row)
     const [ID, setID] = useState(-1)
 
-    const [resetKey, setResetKey] = useState(0)
+    const [, setResetKey] = useState(0)
     //Keep track of if a translation has been made (used to change text display)
     const [translated, setTranslated] = useState(false)
     //Disables the translate button
     const [translateLoading, setTranslateLoading] = useState(false)
 
     const [speciesTet, setSpeciesTet] = useState<Species[]>([])
+
+    const [touched, setTouched] = useState<Record<string, boolean>>({})
+
+    const markTouched = (name: string) => {
+        setTouched(prev => ({ ...prev, [name]: true }))
+    }
 
     const [formData, setFormData] = useState({
         scientificName: '',
@@ -135,22 +152,22 @@ export function EditEntry() {
     const [open, setOpen] = useState(false)
 
 
-    async function fetchTet() {
-        try{
-            const res = await adminFetch(`${import.meta.env.VITE_API_URL}/bundle`)
-            if(!res.ok) throw new Error("Failed to fetch bundle")
+    // async function fetchTet() {
+    //     try{
+    //         const res = await adminFetch(`${import.meta.env.VITE_API_URL}/bundle`)
+    //         if(!res.ok) throw new Error("Failed to fetch bundle")
             
-            const data = await res.json()
+    //         const data = await res.json()
 
-            console.log("Loaded tetum rows:", data.species_tet)
-            setSpeciesTet(data.species_tet ?? [])
-        }
-        catch (err)
-        {
-            console.error("tetum failed to load from bundle", err)
-            setSpeciesTet([])
-        }
-    }
+    //         console.log("Loaded tetum rows:", data.species_tet)
+    //         setSpeciesTet(data.species_tet ?? [])
+    //     }
+    //     catch (err)
+    //     {
+    //         console.error("tetum failed to load from bundle", err)
+    //         setSpeciesTet([])
+    //     }
+    // }
 
     const handleClickOpen = () => {
         setOpen(true)
@@ -502,7 +519,6 @@ export function EditEntry() {
                 })
 
                 if(!res.ok){
-                    const text = await res.text()
                     throw new Error(`failed to load species`)
                 }
 
@@ -544,60 +560,77 @@ export function EditEntry() {
             </Box>
             
 
-
-            
-
             {rowSelected && (
                 <Box sx={formContainerSx}>
-                    <h2 style={{ fontSize: '1.5rem' }} >English Database</h2>
-                    <h3>Edit fields below:</h3>
-                    <Box>   
+                    <h2 style={{ fontSize: '1.75rem' }}>English Entry</h2>
+                    <Box display="flex" gap={2} mb={2} justifyContent="center">   
                         <TextField
+                            sx={{...bigFieldSx ,maxWidth: 280 }}
                             name="scientificName" 
                             label="Scientific Name"
-                            helperText="Required"
                             value={formData.scientificName}
                             onChange={handleChange}
-                            sx={requiredFieldSx}
+                            onBlur={() =>markTouched('scientificName')}
+                            required
+                            error={touched.scientificName && !formData.scientificName}
+                            helperText={
+                            touched.scientificName && !formData.scientificName
+                                ? 'Required'
+                                : ' '
+                            }                            
                             />
 
                             <TextField
+                            sx={{...bigFieldSx ,maxWidth: 280 }}
                             name="commonName"
                             label="Common Name"
-                            helperText="Required"
+                            error={touched.commonName && !formData.commonName}
+                            helperText={
+                            touched.commonName && !formData.commonName
+                                ? 'Required'
+                                : ' '
+                            }
+                            required
+                            onBlur={() => markTouched('commonName')}                          
                             value={formData.commonName}
                             onChange={handleChange}
-                            sx={requiredFieldSxNoMargin}
-                            />
-
-                    
+                            />  
                     </Box>
 
-                    <Box sx={fieldRowSx}>   
+                    <Box display="flex" gap={2} mb={2} justifyContent={"center"}>   
                         <TextField
+                            sx={{ ...bigFieldSx ,maxWidth: 280 }}
                             name="leafType"
                             label="Leaf Type"
-                            helperText="Required"
                             value={formData.leafType}
                             onChange={handleChange}
-                            sx={requiredFieldSx}
+                            onBlur={() => markTouched('leafType')}
+                            required
+                            error={touched.leafType && !formData.leafType}
+                            helperText={
+                            touched.leafType && !formData.leafType
+                                ? 'Required'
+                                : ' '
+                            }
                             />
 
-                            <TextField
+                            <TextField                            
+                            sx={{ ...bigFieldSx ,maxWidth: 280 }}
                             name="fruitType"
                             label="Fruit Type"
-                            helperText="Required"
                             value={formData.fruitType}
                             onChange={handleChange}
-                            sx={requiredFieldSxNoMargin}
+                            onBlur={() => markTouched('fruitType')}
+                            required
+                            error={touched.fruitType && !formData.fruitType}
+                            helperText={
+                            touched.fruitType && !formData.fruitType
+                                ? 'Required'
+                                : ' '
+                            }
                             />
-
-                    
                     </Box>
-
-                    <div><h5>Optional:</h5></div>
-
-                    <Box sx={multilineRowSx}>
+                    <Box display="flex" gap={2} mb={2}>
                         <TextField 
                             fullWidth 
                             label="Etymology" 
@@ -606,7 +639,7 @@ export function EditEntry() {
                             rows={4}
                             value={formData.etymology}
                             onChange={handleChange}
-                            sx={multilineFieldSx}
+                            sx={bigFieldSx}
                         />
 
                         <TextField 
@@ -617,12 +650,10 @@ export function EditEntry() {
                             rows={4}
                             value={formData.habitat}
                             onChange={handleChange}
-                            sx={multilineFieldSx}
+                            sx={bigFieldSx}
                         />
                     </Box>
-
-
-                    <Box sx={multilineRowSx}>
+                    <Box display="flex" gap={2} mb={2}>
                         <TextField fullWidth 
                             label="Identification Characteristics" 
                             name="identificationCharacteristics"
@@ -630,7 +661,7 @@ export function EditEntry() {
                             rows={4}
                             value={formData.identificationCharacteristics}
                             onChange={handleChange}
-                            sx={multilineFieldSx}
+                            sx={bigFieldSx}
                         />
 
                         <TextField fullWidth 
@@ -640,33 +671,30 @@ export function EditEntry() {
                             rows={4}
                             value={formData.phenology}
                             onChange={handleChange}
-                            sx={multilineFieldSx}
+                            sx={bigFieldSx}
                         />
-                    </Box>
-
-
-                    <Box sx={multilineRowSx}>
+                        </Box>
+                    <Box display="flex" gap={2} mb={2}>
                         <TextField fullWidth 
                             label="Seed Germination" 
                             name="seedGermination"
                             multiline
-                            rows={4}
+                            rows={5}
                             value={formData.seedGermination}
                             onChange={handleChange}
-                            sx={multilineFieldSx}
+                            sx={bigFieldSx}
                         />
 
                         <TextField fullWidth 
                             label="Pests" 
                             name="pests"
                             multiline
-                            rows={4}
+                            rows={5}
                             value={formData.pests}
                             onChange={handleChange}
-                            sx={multilineFieldSx}
+                            sx={bigFieldSx}
                         />
-                    </Box>
-                    
+                    </Box>                   
                    <Box>
                         <Button variant="contained"
                             onClick={handleTranslate}
@@ -678,11 +706,6 @@ export function EditEntry() {
                     
 
                 </Box>
-
-                
-             
-
-                
 
             )}
 
@@ -696,53 +719,69 @@ export function EditEntry() {
                     )}
                 
                     <h3>Please check fields to ensure correct translation:</h3>
-                    <Box>   
+                    <Box display="flex" gap={2} mb={2} justifyContent={"center"}>   
                         <TextField
-                            label="Scientific Name" 
+                            sx={{ ...bigFieldSx, maxWidth: 280 }}
+                            label="Scientific Name"
                             name="scientificNameTetum"
-                            helperText="Not Translated"
-                            value={formDataTetum.scientificNameTetum}
+                            value={formData.scientificName}
                             disabled
-                            sx={requiredFieldSx}
                             />
-
-                            <TextField
+                        <TextField
+                            sx={{ ...bigFieldSx, maxWidth: 280 }}
                             label="Common Name"
                             name="commonNameTetum"
-                            helperText="Required"
                             value={formDataTetum.commonNameTetum}
                             onChange={handleChangeTetum}
-                            sx={requiredFieldSxNoMargin}
-                            />
-
-                    
+                            onBlur={() => markTouched('commonName')}
+                            required
+                            error={touched.commonNameTetum && !formDataTetum.commonNameTetum}
+                            helperText={
+                                touched.commonNameTetum && !formDataTetum.commonNameTetum
+                                ? 'Required'
+                                : ' '
+                            }
+                        />
                     </Box>
 
-                    <Box sx={fieldRowSx}>   
+                    <Box display="flex" gap={2} mb={2} justifyContent={"center"}>   
+
                         <TextField
+                            sx={{ ...bigFieldSx, maxWidth: 280 }}
                             label="Leaf Type"
                             name="leafTypeTetum"
-                            helperText="Required"
                             value={formDataTetum.leafTypeTetum}
                             onChange={handleChangeTetum}
-                            sx={requiredFieldSx}
-                            />
+                            onBlur={() => markTouched('leafTypeTetum')}
+                            required
+                            error={touched.leafTypeTetum && !formDataTetum.leafTypeTetum}
+                            helperText={
+                                touched.leafTypeTetum && !formDataTetum.leafTypeTetum
+                                ? 'Required'
+                                : ' '
+                            }                            />
 
                             <TextField
+                            sx={{ ...bigFieldSx, maxWidth: 280 }}
                             label="Fruit Type"
                             name="fruitTypeTetum"
-                            helperText="Required"
                             value={formDataTetum.fruitTypeTetum}
                             onChange={handleChangeTetum}
-                            sx={requiredFieldSxNoMargin}
+                            onBlur={() => markTouched('fruitTypeTetum')}
+                            required
+                            error={touched.fruitTypeTetum && !formDataTetum.fruitTypeTetum}
+                            helperText={
+                                touched.fruitTypeTetum && !formDataTetum.fruitTypeTetum
+                                ? 'Required'
+                                : ' '
+                            }
                             />
-
                     
                     </Box>
 
                     <div><h5>Optional:</h5></div>
 
-                    <Box sx={multilineRowSx}>
+                    <Box display="flex" gap={2} mb={2}>
                         <TextField 
                             fullWidth 
                             label="Etymology" 
@@ -751,7 +790,7 @@ export function EditEntry() {
                             rows={4}
                             value={formDataTetum.etymologyTetum}
                             onChange={handleChangeTetum}
-                            sx={multilineFieldSx}
+                            sx={bigFieldSx}
                         />
 
                         <TextField 
@@ -762,12 +801,12 @@ export function EditEntry() {
                             rows={4}
                             value={formDataTetum.habitatTetum}
                             onChange={handleChangeTetum}
-                            sx={multilineFieldSx}
+                            sx={bigFieldSx}
                         />
                     </Box>
 
 
-                    <Box sx={multilineRowSx}>
+                    <Box display="flex" gap={2} mb={2}>
                         <TextField fullWidth 
                             label="Identification Characteristics" 
                             name="identificationCharacteristicsTetum"
@@ -775,7 +814,7 @@ export function EditEntry() {
                             rows={4}
                             value={formDataTetum.identificationCharacteristicsTetum}
                             onChange={handleChangeTetum}
-                            sx={multilineFieldSx}
+                            sx={bigFieldSx}
                         />
 
                         <TextField fullWidth 
@@ -785,12 +824,12 @@ export function EditEntry() {
                             rows={4}
                             value={formDataTetum.phenologyTetum}
                             onChange={handleChangeTetum}
-                            sx={multilineFieldSx}
+                            sx={bigFieldSx}
                         />
                     </Box>
 
 
-                    <Box sx={multilineRowSx}>
+                    <Box display="flex" gap={2} mb={2}>
                         <TextField fullWidth 
                             label="Seed Germination" 
                             name="seedGerminationTetum"
@@ -798,7 +837,7 @@ export function EditEntry() {
                             rows={4}
                             value={formDataTetum.seedGerminationTetum}
                             onChange={handleChangeTetum}
-                            sx={multilineFieldSx}
+                            sx={bigFieldSx}
                         />
 
                         <TextField fullWidth 
@@ -808,7 +847,7 @@ export function EditEntry() {
                             rows={4}
                             value={formDataTetum.pestsTetum}
                             onChange={handleChangeTetum}
-                            sx={multilineFieldSx}
+                            sx={bigFieldSx}
                         />
                         
                     </Box>

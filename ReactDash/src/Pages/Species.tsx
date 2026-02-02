@@ -21,19 +21,15 @@ export default function SpeciesPage() {
   const [loading, setLoading] = useState(false);
 
   const [deleteId, setDeleteId] = useState<number | null>(null)
-  const [deleteLoading, setDeleteLoading] = useState(false)
-  const [error, setError] = useState('')
-  const[status, setStatus] = useState('')
+  const [, setDeleteLoading] = useState(false)
+  const [, setError] = useState('')
+  const[, setStatus] = useState('')
 
   //forpopup after delete
   const [deleteName, setDeleteName] = useState<string | null>(null)
 
   const [open, setOpen] = useState(false)
 
-  const handleClickOpen = (id: number) => {
-    setDeleteId(id)
-    setOpen(true)
-  }
 
   const handleClose = () => {
       setOpen(false)
