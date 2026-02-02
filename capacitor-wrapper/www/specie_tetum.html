@@ -291,10 +291,6 @@
       <div class="description-block">
         <h3 class="green-h1">Jerminasaun Fini</h3>
         <p id="plant-seed"></p>
-      </div>
-      <div class="description-block">
-        <h3 class="green-h1">Jerminasaun Fini</h3>
-        <p id="plant-seed"></p>
         <button
           id="germinationVideoBtn"
           class="back-btn"
@@ -386,6 +382,19 @@
               gallery.appendChild(img);
             });
           }
+          const videoBtn = document.getElementById("germinationVideoBtn")
+
+          const videoItem = mediaItems.find(m => m.media_type === "video")
+
+          if (videoItem && videoItem.download_link) {
+            videoBtn.addEventListener("click", () => {
+              window.location.href =
+                `video.html?media=${encodeURIComponent(videoItem.download_link)}&species_id=${plantID}`
+            })
+          } else {
+            videoBtn.style.display = "none"
+          }
+
 
           gallery.addEventListener("click", (e) => {
             if (e.target.tagName === "IMG") {
@@ -431,11 +440,6 @@
       //       species.seed_germination;
       //   }
     </script>
-    <script src="scripts/config.js"></script>
-  <script src="scripts/db.js"></script>
-  <script src="scripts/dataService.js"></script>
-  <script src="scripts/sync.js"></script>
-  <script src="scripts/sw-register.js"></script>
 
   </body>
 </html>

@@ -28,7 +28,7 @@
           <span class="search-icon">
             <img src="./Assets/icons/search.svg" alt="Search" />
           </span>
-          <input type="text" placeholder="Buka espésie sira" />
+          <input type="text" placeholder="Buka espésie sira" id="searchInput" />
         </div>
       </header>
 
@@ -60,8 +60,9 @@
       <a class="back-link" href="index.html"></a>
 
       <div class="debug" id="debugInfo"></div>
+    </main>
 
-      <!-- LANGUAGE OVERLAY -->
+          <!-- LANGUAGE OVERLAY -->
       <div class="lang-overlay" id="langOverlay">
         <div
           class="lang-modal"
@@ -76,7 +77,7 @@
           <div class="lang-title">You Selected</div>
 
           <div class="selected-pill" id="selectedPill">
-            <div class="flag" id="selectedFlag" aria-hidden="true">🇦🇹</div>
+            <div class="flag" id="selectedFlag" aria-hidden="true">🇹🇱</div>
             <div class="selected-name" id="selectedName">TETUM</div>
             <div class="check-dot" aria-hidden="true">
               <svg viewBox="0 0 24 24">
@@ -137,7 +138,6 @@
           </section>
         </div>
       </div>
-
       <!-- FILTER OVERLAY (MATCHES HOME.HTML NOW) -->
       <div class="filter-overlay" id="filterOverlay">
         <div class="filter-modal">
@@ -149,7 +149,6 @@
           <div id="filterOptions"></div>
         </div>
       </div>
-    </main>
 
     <script>
       const PAGE_LANGUAGE = "tet";
@@ -164,9 +163,9 @@
           window.setSpeciesData(species)
 
           //backgroudn sync if online
-          if(navigator.onLine && window.syncManger)
+          if(navigator.onLine && window.syncManager)
           {
-            syncManger.checkAndSync({forceBundle: false})
+            syncManager.checkAndSync({forceBundle: false})
               .then(() => console.log("TET background sync complete"))
               .catch(() => console.warn("Tet background sync skipped...."))
           }
@@ -274,7 +273,7 @@
 
       // Function to apply all active filters and search
       function applyFilters() {
-        if (!loadedSpeciesData || loadedSpeciesData.length === 0) {
+        if (!window.loadedSpeciesData || window.loadedSpeciesData.length === 0){
           console.warn("No species data loaded yet");
           return;
         }
@@ -504,7 +503,7 @@
       }
 
       function sortSpecies(direction) {
-        if (!loadedSpeciesData || loadedSpeciesData.length === 0) {
+        if (!window.loadedSpeciesData || window.loadedSpeciesData.length === 0){
           renderSpecies([])
           return;
         }
