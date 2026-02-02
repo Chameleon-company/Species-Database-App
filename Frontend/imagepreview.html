@@ -3,6 +3,8 @@
     <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image Preview</title>
+    <!-- Online Banner-->
+    <link rel="stylesheet" href="css/onlineBanner.css">
     <style>
         body {
             margin: 0;
@@ -42,10 +44,13 @@
     </style>
     </head>
     <body>
-        <div class="container">
-        <img id="full-img">
-        <a class="back-btn" href="javascript:history.back()">Back</a>
-        </div>
+        <main class="app-shell">
+            <div class="container">
+                <img id="full-img">
+                <a class="back-btn" href="javascript:history.back()">Back</a>
+            </div>
+        </main>
+    <script src="scripts/sw-register.js"></script>
     </body>
     <script>
         const params = new URLSearchParams(location.search);

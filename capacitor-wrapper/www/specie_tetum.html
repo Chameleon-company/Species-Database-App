@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="tet">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Species Details</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#8DC63F" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet"
+    />
+
+        <!-- Online Banner-->
+    <link rel="stylesheet" href="css/onlineBanner.css">
+    <link rel="stylesheet" href="css/layout.css" />
+    <link rel="stylesheet" href="css/responsive.css" />
+
+
+    <style>
+      body, html {
+        margin: 0;
+        padding: 0;
+        min-height: 100%;
+        background: #8dc63f;
+        font-family: "Roboto", sans-serif;
+      }
+
+      .app-shell {
+        min-height: 100vh;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: stretch;
+        padding: 1rem;
+      }
+
+      .container {
+        width: 90%;
+        max-width: 520px;
+        background: #fff;
+        margin-top: clamp(16px, 3vw, 32px);
+        padding: clamp(16px, 4vw, 28px);
+        border-radius: 12px;
+      }
+
+      .image-layer {
+        width: 100%;
+        height: clamp(180px, 25vw, 300px);
+        overflow: hidden;
+      }
+
+      h1 {
+        margin-top: 15px;
+        font-size: 26px;
+      }
+
+      /* .classification {
+        font-size: 18px;
+        color: #444;
+        margin-bottom: 15px;
+      } */
+
+      .description-block {
+        margin-top: clamp(12px, 3vw, 20px);
+      }
+
+      .description-block h3 {
+        margin-bottom: 4px;
+        font-size: clamp(16px, 4vw, 20px);
+      }
+
+      .description-block p {
+        font-size: clamp(14px, 3.5vw, 16px);
+      }
+
+      .back-btn {
+        margin-top: 25px;
+        display: block;
+        text-align: center;
+        padding: 12px;
+        background: #8dc63f;
+        color: black;
+        text-decoration: none;
+        border-radius: 10px;
+        font-weight: bold;
+      }
+
+      #image-gallery {
+        gap: clamp(4px, 2vw, 8px);
+        padding: clamp(6px, 2vw, 10px) 0;
+      }
+
+      #image-gallery img {
+        height: clamp(80px, 12vw, 120px);
+      }
+
+      /* header */
+      .species-details-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .left-arrow-icon {
+        width: clamp(28px, 6vw, 34px);
+        height: clamp(28px, 6vw, 34px);
+      }
+
+      .heart-icon {
+        width: clamp(24px, 5vw, 28px);
+        height: clamp(24px, 5vw, 28px);
+      }
+
+      #plant-common {
+        font-size: clamp(20px, 5vw, 26px);
+      }
+
+      #plant-scientific {
+        font-size: clamp(16px, 4vw, 20px);
+        padding-bottom: clamp(12px, 3vw, 20px);
+        margin-top: clamp(12px, 3vw, 20px);
+      }
+
+      .green-h1 {
+        color: #4e8a16;
+        font-weight: bold;
+      }
+      .scientific-name {
+        font-style: regular;
+        font-size: 18px;
+      }
+      .mid-container {
+        margin: 15px 0;
+      }
+      .sub-heading {
+        margin-bottom: 10px;
+        color: #0b5c37;
+      }
+      .key-info-details {
+        display: flex;
+        gap: clamp(16px, 8vw, 100px);
+        flex-wrap: wrap;
+        font-size: clamp(14px, 3.5vw, 16px);
+        padding: clamp(12px, 3vw, 20px) 0;
+      }
+      .key-info-details:last-child {
+        border-bottom: 1px solid #c7c7c7;
+      }
+      /* Zoom overlay styles */
+      .zoom-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.85);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        padding: 1rem;
+      }
+
+      .zoom-modal {
+        position: relative;
+        max-width: 96%;
+        max-height: 96%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .zoom-img {
+        max-width: 100%;
+        max-height: 100%;
+        width: auto;
+        height: auto;
+        border-radius: 8px;
+        transition: transform 150ms ease;
+        will-change: transform;
+        cursor: grab;
+      }
+
+      .zoom-close {
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        background: #fff;
+        border: none;
+        border-radius: 999px;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+        font-weight: 700;
+      }
+
+      .plant-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+        cursor: zoom-in;
+      }
+
+      .plant-img.zoomed {
+        transform: scale(2); /* adjust zoom level */
+        cursor: zoom-out;
+      }
+
+      .container {
+        padding: 1rem;
+        flex: 1;
+      }
+
+    </style>
+  </head>
+
+  <body>
+    <main class="app-shell">
+    <div class="container">
+      <!-- app header -->
+      <div class="species-details-header">
+        <img
+          src="Assets/icons/leftarrow.png"
+          alt=""
+          class="left-arrow-icon go-back"
+        />
+        <h1 id="plant-common"></h1>
+        <img src="Assets/icons/heart.png" alt="" class="heart-icon" />
+      </div>
+      <div>
+        <div class="image-layer">
+          <img id="plant-image" class="plant-img" src="" alt="Image" />
+        </div>
+        <div id="image-gallery"></div>
+      </div>
+
+      <!-- Scientific Name -->
+      <div class="mid-container">
+        <!-- <h1 id="plant-common" class="green-h1"></h1> -->
+        <h2
+          id="plant-scientific"
+          class="green-h1"
+          style="border-bottom: 1px solid #eee; padding-bottom: 20px"
+        ></h2>
+      </div>
+
+      <!-- Key Information -->
+      <div class="mid-container">
+        <h2 class="green-h1" style="margin-bottom: 20px">Informasaun Prinsipál</h2>
+        <div class="key-info-details">
+          <div class="key-detail">
+            <div class="sub-heading">Tipu Daun</div>
+            <div id="plant-leaf"></div>
+          </div>
+          <div class="key-detail">
+            <div class="sub-heading">Tipu Ai-fuan</div>
+            <div id="plant-fruit"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- <h1 id="plant-common"></h1> -->
+      <!-- <div id="plant-scientific" class="classification"></div> -->
+
+      <div class="description-block">
+        <h3 class="green-h1">Etimolojia</h3>
+        <p id="plant-etymology"></p>
+      </div>
+
+      <div class="description-block">
+        <h3 class="green-h1">Abitat</h3>
+        <p id="plant-habitat"></p>
+      </div>
+
+      <div class="description-block">
+        <h3 class="green-h1">Fenolojia</h3>
+        <p id="plant-phenology"></p>
+      </div>
+
+      <div class="description-block">
+        <h3 class="green-h1">Identifikasaun</h3>
+        <p id="plant-idchars"></p>
+      </div>
+
+      <div class="description-block">
+        <h3 class="green-h1">Jerminasaun Fini</h3>
+        <p id="plant-seed"></p>
+        <button
+          id="germinationVideoBtn"
+          class="back-btn"
+          style="margin-top: 10px"
+        >
+          Haree Vídeo Jerminasaun</button>
+      </div>
+
+      <!-- <a href="home.html" class="back-btn">← Back to List</a> -->
+    </div>
+    </main>
+
+ <script src="js/general.js"></script>
+    <script src="scripts/config.js"></script>
+    <script src="scripts/db.js"></script>
+    <script src="scripts/dataService.js"></script>
+    <script src="scripts/sync.js"></script>
+    <script src="scripts/detectOnline.js" defer></script>
+    
+    <script>
+      const PAGE_LANGUAGE = "tet";
+      const params = new URLSearchParams(window.location.search);
+      const plantID = params.get("id");
+
+      let species = null;
+
+      document.addEventListener("DOMContentLoaded", async () => {
+        try {
+          //ONLY SYNC WHEN ONLINE 
+          if(navigator.onLine)
+          {
+            syncManager.checkAndSync({forceBundle: false})
+            .catch(err => {
+              console.warn("background sync failure")
+            })
+
+          }
+
+          const language = "tet"
+
+          species = await dataService.getSpeciesById(plantID, language);
+          //DEBUG
+          console.log("fetched species", species)
+
+          if (!species) {
+            document.querySelector(".container").innerHTML =
+              "<h1>Espésie sira ne'ebé la hetan</h1>";
+            return;
+          }
+
+          // Populate DOM with species data
+
+          document.getElementById("plant-common").textContent =
+            species.common_name || "";
+          document.getElementById("plant-scientific").textContent =
+            species.scientific_name || "";
+          document.getElementById("plant-etymology").textContent =
+            species.etymology || "";
+          document.getElementById("plant-habitat").textContent =
+            species.habitat || "";
+          document.getElementById("plant-phenology").textContent =
+            species.phenology || "";
+          document.getElementById("plant-idchars").textContent =
+            species.identification_character || "";
+          document.getElementById("plant-leaf").textContent =
+            species.leaf_type || "";
+          document.getElementById("plant-fruit").textContent =
+            species.fruit_type || "";
+          document.getElementById("plant-seed").textContent =
+            species.seed_germination || "";
+
+          // get species images from getSpeciesMedia
+          const mediaItems = await dataService.getSpeciesMedia(plantID);
+
+          if(mediaItems.length > 0)
+          {
+            document.getElementById("plant-image").src =
+              mediaItems[0].download_link || "";
+          }
+          const gallery = document.getElementById("image-gallery");
+          gallery.innerHTML = "";
+
+          if (mediaItems.length !== 0) {
+            mediaItems.forEach((url) => {
+              const img = document.createElement("img");
+              img.src = url.download_link;
+              img.loading = "lazy";
+
+              gallery.appendChild(img);
+            });
+          }
+          const videoBtn = document.getElementById("germinationVideoBtn")
+
+          const videoItem = mediaItems.find(m => m.media_type === "video")
+
+          if (videoItem && videoItem.download_link) {
+            videoBtn.addEventListener("click", () => {
+              window.location.href =
+                `video.html?media=${encodeURIComponent(videoItem.download_link)}&species_id=${plantID}`
+            })
+          } else {
+            videoBtn.style.display = "none"
+          }
+
+
+          gallery.addEventListener("click", (e) => {
+            if (e.target.tagName === "IMG") {
+              const src = e.target.src;
+              document.getElementById("plant-image").src = src;
+            }
+          });
+
+          const img = document.getElementById("plant-image");
+
+          img.addEventListener("click", (e) => {
+            const rect = img.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width) * 100;
+            const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+            img.style.transformOrigin = `${x}% ${y}%`;
+            img.classList.toggle("zoomed");
+          });
+        } catch (err) {
+          console.error("Error fetching species data:", err);
+        }
+      });
+
+      //   if (!species) {
+      //     document.querySelector(".container").innerHTML =
+      //       "<h1>Species Not Found</h1>";
+      //   } else {
+      //     document.getElementById("plant-image").src = species.image_url;
+      //     document.getElementById("plant-common").textContent =
+      //       species.common_name;
+      //     document.getElementById("plant-scientific").textContent =
+      //       species.scientific_name;
+      //     document.getElementById("plant-etymology").textContent =
+      //       species.etymology;
+      //     document.getElementById("plant-habitat").textContent = species.habitat;
+      //     document.getElementById("plant-phenology").textContent =
+      //       species.phenology;
+      //     document.getElementById("plant-idchars").textContent =
+      //       species.identification_characters;
+      //     document.getElementById("plant-leaf").textContent = species.leaf_type;
+      //     document.getElementById("plant-fruit").textContent = species.fruit_type;
+      //     document.getElementById("plant-seed").textContent =
+      //       species.seed_germination;
+      //   }
+    </script>
+
+  </body>
+</html>

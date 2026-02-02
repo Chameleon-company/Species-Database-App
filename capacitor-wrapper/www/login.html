@@ -1,0 +1,49 @@
+<!--log in page-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Species Database - Splash</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="css/login.css" />
+</head>
+
+<body style="display:none;">
+  <div class="app-shell">
+    <div class="app-container">
+      <img src="Assets/Images/Camouflage18/image.png" alt="Species Database Logo" class="logo-img" />
+      <div class="title">SPECIES DATABASE</div>
+      <div class="subtitle">
+        Identify plant species instantly using your smartphone.
+        Scan, explore and save your favourite discoveries.
+      </div>
+
+      <div class="email-group">
+        <label class="email-label">Username</label>
+        <input type="text" class="email-input" placeholder="" id="usernameInput" required />
+        <label class="email-label">Password</label>
+        <input type="password" class="email-input" id="passwordInput" required />
+        <div class="error-text" id="loginError"></div>
+        <button class="btn email-btn" id="emailContinueBtn">
+          Sign in
+        </button>
+      </div>
+
+      <div class="footer">
+        Admin?
+        <a href="login-admin.html">Go to admin login</a>
+      </div>
+    </div>
+  </div>
+  
+<script src="scripts/config.js"></script>
+<script src="js/login.js"></script>
+<script src="scripts/db.js"></script>
+<script src="scripts/dataService.js"></script>
+<script src="scripts/sync.js"></script>
+<script src="scripts/sw-register.js"></script>
+
+</body>
+
+</html>

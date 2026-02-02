@@ -4,9 +4,21 @@ import Box from "@mui/material/Box"
 import  TextField from "@mui/material/TextField";
 import  Typography from "@mui/material/Typography";
 import Alert from "@mui/material/Alert"
-
+import { useEffect } from "react"
 import logo from "../assets/logo.png"
 import Button from "@mui/material/Button";
+
+type GoogleCredentialResponse ={
+    credential: string
+    select_by?: string
+}
+declare global
+{
+    interface Window {
+        google: any
+        handleGoogleLogin?: (response:any) => void
+    }
+}
 
 export default function AdminLoginForm()
 {
@@ -17,7 +29,70 @@ export default function AdminLoginForm()
     //ui state
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const API_URL = import.meta.env.VITE_API_BASE;
 
+    /**
+     * registers global callback google calls after login
+     * initialises google id
+     * renders google login button
+     */
+    useEffect(() => {
+        //google calls with id token after successful login
+        window.handleGoogleLogin = async(response: GoogleCredentialResponse) =>{
+            try {
+                setLoading(true)
+                setError(null)
+
+                //send gogole id token to backedn for verification
+                const res = await fetch(`${API_URL}/api/auth/google-admin`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        id_token: response.credential
+                    })
+                })
+
+                const data = await res.json()
+                if(!res.ok)
+                {
+                    throw new Error(data.error || "google login failed")
+                }
+
+                //store short lived admin token
+                localStorage.setItem("admin_token", data.access_token)
+
+                //redirect into admin areaa
+                navigate("/")
+            }
+            catch{
+                setError("google login failed")
+            }
+            finally {
+                setLoading(false)
+            }
+        }
+        if (!window.google?.accounts?.id) {
+            console.warn("Google Identity not loaded")
+            return
+        }
+
+        //init google id services
+        window.google.accounts.id.initialize({
+            client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+            callback: window.handleGoogleLogin
+        })
+
+        window.google.accounts.id.renderButton(
+            document.getElementById("google-login"),
+            {
+                theme: "outline",
+                size: "large",
+                width: "100%"
+            }
+        )
+    }, [])
     //runs when the admin clicks login
     const loginAdmin = async () => {
         setError(null)
@@ -25,7 +100,7 @@ export default function AdminLoginForm()
 
         try {
             const response = await fetch(
-                "http://127.0.0.1:5000/api/auth/admin-login",
+                `${API_URL}/api/auth/admin-login`,
                 {
                     method: "POST",
                     headers: {
@@ -85,7 +160,7 @@ export default function AdminLoginForm()
                 </Box>
                 <Typography
                     variant="body2"
-                    sx={{textAlign: "center", color: "#6b7280", mb: 4}}
+                    sx={{textAlign: "center", color: "#294a8b", mb: 4}}
                 >
                     Authorised Admins Only
                 </Typography>
@@ -95,35 +170,52 @@ export default function AdminLoginForm()
                     </Alert>
                 )}
 
-                <TextField
-                    label="Username"
-                    fullWidth
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    sx={{mb:2}}
-                />
-                <TextField
-                    label="Password"
-                    type="password"
-                    fullWidth
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    sx={{mb:3}}
-                />
-                <Button
-                    fullWidth
-                    variant="contained"
-                    disabled={loading}
-                    onClick={loginAdmin}
-                    sx={{
-                        backgroundColor: "#3f7e13",
-                        "&:hover":{backgroundColor: "#33650f"},
-                        padding: 1.4,
-                        fontWeight: 600
+                <form
+                    onSubmit={(e) => {
+                        e.preventDefault()
+                        loginAdmin()
                     }}
                 >
-                    {loading ? "Logging you in..." : "LOGIN"}
-                </Button>
+                    <TextField
+                        label="Username"
+                        fullWidth
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        sx={{mb:2}}
+                    />
+                    <TextField
+                        label="Password"
+                        type="password"
+                        fullWidth
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        sx={{mb:3}}
+                    />
+                    <Button
+                        type="submit"
+                        fullWidth
+                        variant="contained"
+                        disabled={loading}
+                        onClick={loginAdmin}
+                        sx={{
+                            backgroundColor: "#3f7e13",
+                            "&:hover":{backgroundColor: "#33650f"},
+                            padding: 1.4,
+                            fontWeight: 600
+                        }}
+                    >
+                        {loading ? "Logging you in..." : "LOGIN"}
+                    </Button>
+                    <Typography 
+                        variant="body2" 
+                        sx={{my:2, 
+                            color: "#6b7280"
+                        }}
+                    >
+                        OR
+                    </Typography>
+                    <div id="google-login" />
+                </form>
             </Box>
         </Box>
     )

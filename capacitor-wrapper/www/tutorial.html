@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Tutorials Page</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#fff3ff" />
+
+    <style>
+      /* Body background and font */
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        background: #9acd6b;
+        color: #000000;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        min-height: 100vh;
+        padding: 1rem 0;
+      }
+
+      /* Container for the app */
+      .app-shell {
+        background: #ffffff;
+        width: 100%;
+        max-width: 480px;
+        min-height: 600px;
+        margin: 0 auto;
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      /* NEW HEADER — matches screenshot */
+      .app-header {
+        width: 100%;
+        background-color: #0b5c37;
+        padding: 1.5rem;
+        border-radius: 16px 16px 0 0;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        box-sizing: border-box;
+      }
+
+      .header-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .header-title {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin: 0;
+      }
+
+      .lang-btn {
+        background: white;
+        color: #0b5c37;
+        border: none;
+        padding: 0.5rem 1rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: 0.25s;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      .search-bar {
+        background: #ffffff;
+        border-radius: 999px;
+        padding: 0.75rem 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+      }
+
+      .search-icon {
+        font-size: 1.2rem;
+        color: #475569;
+      }
+
+      .search-bar input {
+        border: none;
+        outline: none;
+        width: 100%;
+        font-size: 1rem;
+      }
+
+      .app-title {
+        text-align: center;
+        margin: 0 0 2.5rem 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #0f172a;
+      }
+
+      .app-subtitle {
+        text-align: center;
+        margin: -1.5rem 0 2.5rem 0;
+        font-size: 1rem;
+        color: #475569;
+      }
+
+      .app-logo {
+        width: 140px;
+        display: block;
+        margin: 0 auto 1.25rem auto;
+      }
+
+      .filter-carousel-container {
+        padding: 0 1.5rem;
+        margin-bottom: 1.5rem;
+        position: relative;
+      }
+
+      .filter-carousel {
+        display: flex;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        gap: 0.75rem;
+        padding: 0.5rem 0;
+        cursor: grab;
+      }
+
+      .filter-carousel:active {
+        cursor: grabbing;
+      }
+
+      .filter-carousel::-webkit-scrollbar {
+        display: none;
+      }
+
+      .filter-button {
+        flex: 0 0 auto;
+        padding: 0.625rem 1.25rem;
+        border-radius: 999px;
+        border: 1.5px solid #cbd5e1;
+        background: #ffffff;
+        color: #475569;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.2s ease;
+        user-select: none;
+      }
+
+      .filter-button:hover {
+        background: #f1f5f9;
+        border-color: #94a3b8;
+      }
+
+      .filter-button.active {
+        background: #0f172a;
+        color: #ffffff;
+        border-color: #0f172a;
+        box-shadow: 0 2px 4px rgba(15, 23, 42, 0.2);
+        transform: scale(1.05);
+      }
+
+      /* Species list */
+      .container#species-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1.5rem;
+      }
+
+      .species-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        background: #f5f7fa;
+        padding: 1rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.1);
+      }
+
+      .species-item img {
+        width: 64px;
+        height: 64px;
+        border-radius: 10px;
+        object-fit: cover;
+      }
+
+      .species-text {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .species-name {
+        font-weight: 700;
+        font-size: 1.1rem;
+        margin: 0 0 0.25rem 0;
+      }
+
+      .species-subname {
+        font-size: 0.9rem;
+        color: #6b7280;
+        margin: 0;
+      }
+
+      .back-link {
+        display: block;
+        text-align: center;
+        color: #0b5c37;
+        font-weight: 600;
+        text-decoration: none;
+        margin-bottom: 2rem;
+      }
+
+      .debug {
+        font-size: 0.8rem;
+        text-align: center;
+      }
+
+      /* -------------------------
+           LANGUAGE OVERLAY
+        -------------------------*/
+      .lang-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.6);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+      }
+
+      .lang-modal {
+        background: #ffffff;
+        padding: 2rem;
+        border-radius: 16px;
+        width: 80%;
+        max-width: 320px;
+        text-align: center;
+        position: relative;
+      }
+
+      .lang-choice {
+        padding: 1rem 2rem;
+        width: 100%;
+        margin-bottom: 1rem;
+        font-size: 1.3rem;
+        font-weight: bold;
+        background: #0b5c37;
+        color: white;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+      }
+
+      .close-overlay {
+        position: absolute;
+        top: 8px;
+        right: 12px;
+        background: #ff4d4d;
+        border: none;
+        color: white;
+        font-size: 1.2rem;
+        padding: 0.4rem 0.6rem;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+
+      /* -------------------------
+           FILTER OVERLAY (NEW)
+        -------------------------*/
+      .filter-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.55);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9998;
+      }
+
+      .filter-modal {
+        background: #ffffff;
+        padding: 2rem;
+        border-radius: 16px;
+        width: 80%;
+        max-width: 320px;
+        text-align: center;
+        position: relative;
+      }
+
+      .close-filter-overlay {
+        position: absolute;
+        top: 8px;
+        right: 12px;
+        background: #ff4d4d;
+        border: none;
+        color: white;
+        font-size: 1.2rem;
+        padding: 0.4rem 0.6rem;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+
+      .placeholder-option {
+        display: block;
+        width: 100%;
+        padding: 0.8rem;
+        margin-top: 0.6rem;
+        font-size: 1.1rem;
+        background: #0b5c37;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+      }
+      .tutorial-body {
+        padding: 1.5rem;
+      }
+      .tutorial-main{
+        margin-bottom: 1.5rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="app-header">
+        <div class="header-top">
+          <h1 class="header-title">Tutorials</h1>
+          <button class="lang-btn">EN</button>
+        </div>
+      </header>
+
+      <div class="tutorial-body">
+        <div class="tutorial-main">
+          <video width="100%" controls>
+            <source src="videos/tutorial.mp4" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+          <h1>Title</h1>
+          <p>
+            This is a tutorial page where users can watch instructional videos
+            on how to use the Species Database App effectively. The video above
+            provides step-by-step guidance on navigating the app's features.
+          </p>
+        </div>
+         <div class="tutorial-main">
+          <video width="100%" controls>
+            <source src="videos/tutorial.mp4" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+          <h1>Title</h1>
+          <p>
+            This is a tutorial page where users can watch instructional videos
+            on how to use the Species Database App effectively. The video above
+            provides step-by-step guidance on navigating the app's features.
+          </p>
+        </div>
+      </div>
+
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+      <script src="scripts/specieslist.js"></script>
+      <script src="scripts/filterCarousel.js"></script>
+
+      <a class="back-link" href="index.html"></a>
+
+      <div class="debug" id="debugInfo"></div>
+
+      <!-- LANGUAGE OVERLAY -->
+      <div class="lang-overlay" id="langOverlay">
+        <div class="lang-modal">
+          <button class="close-overlay" id="closeOverlay">✖</button>
+          <button class="lang-choice" id="chooseEn">English</button>
+          <button class="lang-choice" id="chooseTet">Tetum</button>
+        </div>
+      </div>
+
+      <!-- FILTER OVERLAY (NEW) -->
+      <div class="filter-overlay" id="filterOverlay">
+        <div class="filter-modal">
+          <button class="close-filter-overlay" id="closeFilterOverlay">
+            ✖
+          </button>
+          <h2 id="filterTitle">Filter Options</h2>
+          <p>(Placeholder options)</p>
+          <button class="placeholder-option">Option 1</button>
+          <button class="placeholder-option">Option 2</button>
+          <button class="placeholder-option">Option 3</button>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      // LANGUAGE HANDLER
+      let lang = "en";
+
+      try {
+        const stored = localStorage.getItem("appLanguage");
+        if (stored === "en" || stored === "tet") {
+          lang = stored;
+        }
+      } catch (e) {
+        console.warn("Could not access localStorage:", e);
+      }
+
+      const langBtn = document.querySelector(".lang-btn");
+      langBtn.textContent = lang === "en" ? "EN" : "TET";
+
+      const overlay = document.getElementById("langOverlay");
+      const closeBtn = document.getElementById("closeOverlay");
+      const chooseEn = document.getElementById("chooseEn");
+      const chooseTet = document.getElementById("chooseTet");
+
+      langBtn.addEventListener("click", () => {
+        overlay.style.display = "flex";
+      });
+
+      closeBtn.addEventListener("click", () => {
+        overlay.style.display = "none";
+      });
+
+      chooseEn.addEventListener("click", () => {
+        localStorage.setItem("appLanguage", "en");
+        langBtn.textContent = "EN";
+        overlay.style.display = "none";
+      });
+
+      chooseTet.addEventListener("click", () => {
+        localStorage.setItem("appLanguage", "tet");
+        langBtn.textContent = "TET";
+        overlay.style.display = "none";
+      });
+
+      // ------------------------------
+      // FILTER OVERLAY JS (NEW)
+      // ------------------------------
+      const filterOverlay = document.getElementById("filterOverlay");
+      const closeFilterOverlay = document.getElementById("closeFilterOverlay");
+      const filterTitle = document.getElementById("filterTitle");
+
+      document.querySelectorAll(".filter-button").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const label = btn.textContent.trim();
+          filterTitle.textContent = label + " Options";
+          filterOverlay.style.display = "flex";
+        });
+      });
+
+      closeFilterOverlay.addEventListener("click", () => {
+        filterOverlay.style.display = "none";
+      });
+    </script>
+  </body>
+</html>

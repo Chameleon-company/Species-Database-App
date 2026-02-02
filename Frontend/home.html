@@ -8,511 +8,28 @@
     <!-- PWA -->
     <link rel="manifest" href="manifest.json" />
     <meta name="theme-color" content="#fff3ff" />
+    <link rel="stylesheet" href="css/layout.css" />
     <link rel="stylesheet" href="css/responsive.css" />
-
-    <style>
-      /* Body background and font */
-      body {
-        font-family: Arial, sans-serif;
-        margin: 0;
-        background: #9acd6b;
-        color: #000000;
-        display: flex;
-        justify-content: center;
-        align-items: flex-start;
-        min-height: 100vh;
-        padding: 1rem 0;
-      }
-
-      /* Container for the app */
-      .app-shell {
-        background: #ffffff;
-        width: 100%;
-        max-width: 480px;
-        min-height: 600px;
-        margin: 0 auto;
-        border-radius: 16px;
-        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
-        padding: 0;
-        box-sizing: border-box;
-      }
-
-      /* NEW HEADER — matches screenshot */
-      .app-header {
-        width: 100%;
-        background-color: #0b5c37;
-        padding: 1.5rem;
-        border-radius: 16px 16px 0 0;
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        box-sizing: border-box;
-      }
-
-      .header-top {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-      }
-
-      .header-title {
-        font-size: 1.6rem;
-        font-weight: 700;
-        color: #ffffff;
-        margin: 0;
-      }
-
-      .lang-btn {
-        background: white;
-        color: #0b5c37;
-        border: none;
-        padding: 0.5rem 1rem;
-        font-size: 1.1rem;
-        font-weight: 600;
-        border-radius: 10px;
-        cursor: pointer;
-        transition: 0.25s;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-      }
-
-      .search-bar {
-        background: #ffffff;
-        border-radius: 999px;
-        padding: 0.75rem 1rem;
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-      }
-
-      .search-icon {
-        font-size: 1.2rem;
-        color: #475569;
-      }
-
-      .search-bar input {
-        border: none;
-        outline: none;
-        width: 100%;
-        font-size: 1rem;
-      }
-
-      .app-title {
-        text-align: center;
-        margin: 0 0 2.5rem 0;
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: #0f172a;
-      }
-
-      .app-subtitle {
-        text-align: center;
-        margin: -1.5rem 0 2.5rem 0;
-        font-size: 1rem;
-        color: #475569;
-      }
-
-      .app-logo {
-        width: 140px;
-        display: block;
-        margin: 0 auto 1.25rem auto;
-      }
-
-      .filter-carousel-container {
-        padding: 0 1.5rem;
-        margin-bottom: 1.5rem;
-        position: relative;
-      }
-
-      .filter-carousel {
-        display: flex;
-        overflow-x: auto;
-        overflow-y: hidden;
-        scroll-behavior: smooth;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-        gap: 0.75rem;
-        padding: 0.5rem 0;
-        cursor: grab;
-      }
-
-      .filter-carousel:active {
-        cursor: grabbing;
-      }
-
-      .filter-carousel::-webkit-scrollbar {
-        display: none;
-      }
-
-      .filter-button {
-        flex: 0 0 auto;
-        padding: 0.625rem 1.25rem;
-        border-radius: 999px;
-        border: 1.5px solid #cbd5e1;
-        background: #ffffff;
-        color: #475569;
-        font-size: 0.875rem;
-        font-weight: 500;
-        cursor: pointer;
-        white-space: nowrap;
-        transition: all 0.2s ease;
-        user-select: none;
-      }
-
-      .filter-button:hover {
-        background: #f1f5f9;
-        border-color: #94a3b8;
-      }
-
-      .filter-button.active {
-        background: #0f172a;
-        color: #ffffff;
-        border-color: #0f172a;
-        box-shadow: 0 2px 4px rgba(15, 23, 42, 0.2);
-        transform: scale(1.05);
-      }
-
-      /* Species list */
-      .container#species-list {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        padding: 1.5rem;
-      }
-
-      .species-item {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        background: #f5f7fa;
-        padding: 1rem;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.1);
-      }
-
-      .species-item img {
-        width: 64px;
-        height: 64px;
-        border-radius: 10px;
-        object-fit: cover;
-      }
-
-      .species-text {
-        display: flex;
-        flex-direction: column;
-      }
-
-      .species-name {
-        font-weight: 700;
-        font-size: 1.1rem;
-        margin: 0 0 0.25rem 0;
-      }
-
-      .species-subname {
-        font-size: 0.9rem;
-        color: #6b7280;
-        margin: 0;
-      }
-
-      .back-link {
-        display: block;
-        text-align: center;
-        color: #0b5c37;
-        font-weight: 600;
-        text-decoration: none;
-        margin-bottom: 2rem;
-      }
-
-      .debug {
-        font-size: 0.8rem;
-        text-align: center;
-      }
-
-      /* -------------------------
-           LANGUAGE OVERLAY
-        -------------------------*/
-
-      .lang-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.6);
-        display: none;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-        padding: 16px;
-      }
-
-      .lang-modal {
-        background: #ffffff;
-        width: 100%;
-        max-width: 460px;
-        border-radius: 22px;
-        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
-        padding: 18px 18px 16px;
-        position: relative;
-      }
-
-      .lang-title {
-        font-size: 2rem;
-        font-weight: 800;
-        color: #0f1625;
-        margin: 10px 0 14px;
-      }
-
-      .selected-pill {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 14px 16px;
-        border-radius: 999px;
-        border: 2px solid #d8dbe2;
-        background: #ffffff;
-        box-shadow: 0 10px 22px rgba(0, 0, 0, 0.12);
-      }
-
-      .flag {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        display: grid;
-        place-items: center;
-        background: rgba(0, 0, 0, 0.06);
-        box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
-        flex: 0 0 auto;
-        font-size: 20px;
-      }
-
-      .selected-name {
-        flex: 1;
-        font-weight: 900;
-        letter-spacing: 0.06em;
-        font-size: 15px;
-        color: #0f1625;
-        text-transform: uppercase;
-      }
-
-      .check-dot {
-        width: 42px;
-        height: 42px;
-        border-radius: 50%;
-        background: #27c861;
-        display: grid;
-        place-items: center;
-        box-shadow: 0 10px 18px rgba(39, 200, 97, 0.25);
-        flex: 0 0 auto;
-      }
-
-      .check-dot svg {
-        width: 18px;
-        height: 18px;
-        fill: #fff;
-      }
-
-      .card {
-        margin-top: 10px;
-        border-radius: 22px;
-        overflow: hidden;
-        border: 2px solid #d8dbe2;
-        background: #ffffff;
-        box-shadow: 0 10px 22px rgba(0, 0, 0, 0.1);
-      }
-
-      .list {
-        background: #ffffff;
-      }
-
-      .row {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        padding: 18px 14px;
-        font-size: 18px;
-        font-weight: 800;
-        border-bottom: 1px solid #eef1f6;
-        cursor: pointer;
-        user-select: none;
-        color: #0f1625;
-        transition: background 0.15s ease, transform 0.05s ease;
-      }
-
-      .row:active {
-        transform: scale(0.995);
-      }
-
-      .row:last-child {
-        border-bottom: none;
-      }
-
-      .row .name {
-        flex: 1;
-      }
-
-      .radio {
-        width: 34px;
-        height: 34px;
-        border-radius: 50%;
-        border: 3px solid #cfd5e2;
-        display: grid;
-        place-items: center;
-        flex: 0 0 auto;
-      }
-
-      .radio svg {
-        width: 16px;
-        height: 16px;
-        fill: #fff;
-        display: none;
-      }
-
-      .row.selected {
-        background: rgba(39, 200, 97, 0.1);
-      }
-
-      .row.selected .radio {
-        border-color: transparent;
-        background: #27c861;
-        box-shadow: 0 10px 18px rgba(39, 200, 97, 0.22);
-      }
-
-      .row.selected .radio svg {
-        display: block;
-      }
-
-      /* -------------------------
-           FILTER OVERLAY (NEW)
-        -------------------------*/
-      .filter-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.55);
-        display: none;
-        justify-content: center;
-        align-items: center;
-        z-index: 9998;
-      }
-
-      .filter-modal {
-        background: #ffffff;
-        padding: 2rem;
-        border-radius: 16px;
-        width: 80%;
-        max-width: 320px;
-        text-align: center;
-        position: relative;
-      }
-
-      #filterDescription:empty {
-        display: none;
-      }
-
-      .close-filter-overlay {
-        position: absolute;
-        top: 8px;
-        right: 12px;
-        background: #ff4d4d;
-        border: none;
-        color: white;
-        font-size: 1.2rem;
-        padding: 0.4rem 0.6rem;
-        border-radius: 6px;
-        cursor: pointer;
-      }
-
-      .placeholder-option {
-        display: block;
-        width: 100%;
-        padding: 0.8rem;
-        margin-top: 0.6rem;
-        font-size: 1.1rem;
-        background: #0b5c37;
-        color: white;
-        border: none;
-        border-radius: 10px;
-        cursor: pointer;
-      }
-
-      .species-list-card:hover {
-        background-color: #8ac642;
-        color: #0b5c37;
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-      }
-
-      .common-name-species {
-        color: grey;
-        margin: 0;
-      }
-
-      .species-list-card:hover .common-name-species {
-        color: white;
-      }
-       /* -------------------------
-           LANGUAGE OVERLAY
-        -------------------------*/
-      .lang-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.6);
-        display: none;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-      }
-
-      .lang-modal {
-        background: #ffffff;
-        padding: 2rem;
-        border-radius: 16px;
-        width: 80%;
-        max-width: 320px;
-        text-align: center;
-        position: relative;
-      }
-
-      .lang-choice {
-        padding: 1rem 2rem;
-        width: 100%;
-        margin-bottom: 1rem;
-        font-size: 1.3rem;
-        font-weight: bold;
-        background: #0b5c37;
-        color: white;
-        border: none;
-        border-radius: 12px;
-        cursor: pointer;
-      }
-
-      .close-overlay {
-        position: absolute;
-        top: 8px;
-        right: 12px;
-        background: #ff4d4d;
-        border: none;
-        color: white;
-        font-size: 1.2rem;
-        padding: 0.4rem 0.6rem;
-        border-radius: 6px;
-        cursor: pointer;
-      }
-
-    </style>
+    <link rel="stylesheet" href="css/filters.css" />
+    <link rel="stylesheet" href="css/cards.css" />
+    <link rel="stylesheet" href="css/onlineBanner.css" />
   </head>
   <body>
     <main class="app-shell">
       <header class="app-header">
         <div class="header-top">
           <h1 class="header-title">Species Database</h1>
-          <button class="lang-btn">EN</button>
+          <div class="header-buttons">
+            <button class="sync-btn" id="syncBtn" title="Sync Data">🔄</button>
+            <button class="lang-btn">EN</button>
+          </div>
         </div>
 
         <div class="search-bar">
-          <span class="search-icon">🔍</span>
+          <span class="search-icon">
+            <img src="Assets/icons/search.svg" alt="Search" />
+          </span>
+
           <input type="text" placeholder="Search species" id="searchInput" />
         </div>
       </header>
@@ -520,7 +37,7 @@
       <!-- Filter Carousel -->
       <div class="filter-carousel-container">
         <div class="filter-carousel" id="filter-carousel">
-          <button class="filter-button" data-filter="all">All</button>
+          <button class="filter-button" data-filter="all">Reset</button>
           <button class="filter-button" data-filter="a-z">A-Z</button>
           <button class="filter-button" data-filter="leaf-type">
             Leaf Type
@@ -536,17 +53,82 @@
       <a class="back-link" href="index.html"></a>
 
       <div class="debug" id="debugInfo"></div>
-      <!-- LANGUAGE OVERLAY -->
-      <div class="lang-overlay" id="langOverlay">
-        <div class="lang-modal">
-          <button class="close-overlay" id="closeOverlay">✖</button>
-          <button class="lang-choice" id="chooseEn">English</button>
-          <button class="lang-choice" id="chooseTet">Tetum</button>
-        </div>
-      </div>
+
+
+    </main>
+      <!-- Sync Status Toast -->
+      <div class="sync-status" id="syncStatus"></div>
+      <style>
+      .header-buttons {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .sync-btn {
+        background: #ffffff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .sync-btn:hover {
+        background: #f0f0f0;
+      }
+
+      .sync-btn.syncing {
+        animation: spin 1s linear infinite;
+        pointer-events: none;
+        opacity: 0.7;
+      }
+
+      .sync-btn.success {
+        background: #d4edda;
+        border-color: #28a745;
+      }
+
+      .sync-btn.error {
+        background: #f8d7da;
+        border-color: #dc3545;
+      }
+
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to   { transform: rotate(360deg); }
+      }
+
+      .sync-status {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #333;
+        color: #fff;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 14px;
+        z-index: 1000;
+        display: none;
+      }
+
+      .sync-status.show {
+        display: block;
+        animation: fadeIn 0.3s ease;
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+        to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+      }
+    </style>
+
+
       <!-- LANGUAGE OVERLAY -->
 
-      <!-- <div class="lang-overlay" id="langOverlay">
+      <div class="lang-overlay" id="langOverlay">
         <div
           class="lang-modal"
           role="dialog"
@@ -608,7 +190,7 @@
                 data-flag="🇹🇱"
               >
                 <div class="flag" aria-hidden="true">🇹🇱</div>
-                <div class="name">Tetum</div>
+                <div class="name">TETUM</div>
                 <div class="radio" aria-hidden="true">
                   <svg viewBox="0 0 24 24">
                     <path
@@ -620,7 +202,7 @@
             </div>
           </section>
         </div>
-      </div> -->
+      </div>
 
       <!-- FILTER OVERLAY (NEW) -->
       <div class="filter-overlay" id="filterOverlay">
@@ -633,75 +215,182 @@
           <div id="filterOptions"></div>
         </div>
       </div>
-    </main>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
+      
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script> -->
+    <script src="scripts/config.js"></script>
+    <script src="scripts/db.js"></script>
+    <script src="scripts/dataService.js"></script>
+    <script src="scripts/sync.js"></script>
+    
     <script src="scripts/specieslist.js"></script>
     <script src="scripts/filterCarousel.js"></script>
+    <script src="scripts/detectOnline.js" defer></script>
+    <script src="scripts/sw-register.js"></script>
 
     <script>
-      // LANGUAGE HANDLER
-      let lang = "en";
+      // ====================================
+      // SYNC BUTTON HANDLER
+      // ====================================
+      const syncBtn = document.getElementById('syncBtn');
+      const syncStatus = document.getElementById('syncStatus');
 
-      try {
-        const stored = localStorage.getItem("appLanguage");
-        if (stored === "en" || stored === "tet") {
-          lang = stored;
-        }
-      } catch (e) {
-        console.warn("Could not access localStorage:", e);
+      // Show status toast
+      function showSyncStatus(message, duration = 3000) {
+        syncStatus.textContent = message;
+        syncStatus.classList.add('show');
+        setTimeout(() => {
+          syncStatus.classList.remove('show');
+        }, duration);
       }
 
-      const langBtn = document.querySelector(".lang-btn");
-      // langBtn.textContent = lang === "en" ? "EN" : "TET";
-
-      const overlay = document.getElementById("langOverlay");
-      const closeBtn = document.getElementById("closeOverlay");
-      const chooseEn = document.getElementById("chooseEn");
-      const chooseTet = document.getElementById("chooseTet");
-
-      langBtn.addEventListener("click", () => {
-        overlay.style.display = "flex";
-        console.log("Language overlay opened");
+      // Sync button click handler
+      syncBtn.addEventListener('click', async () => {
+        if (!navigator.onLine) {
+          showSyncStatus('offline.. using cached data');
+          return;
+        }
+        // Prevent double-click
+        if (syncBtn.classList.contains('syncing')) return;
+        
+        // Start syncing state
+        syncBtn.classList.add('syncing');
+        syncBtn.classList.remove('success', 'error');
+        syncBtn.title = 'Syncing...';
+        showSyncStatus('🔄 Syncing data...', 10000);
+        
+        try {
+          // Perform sync
+          const result = await syncManager.manualSync(true);
+          
+          if (result.synced) {
+            // Success
+            syncBtn.classList.add('success');
+            showSyncStatus('✅ Sync complete! Data updated.');
+            
+            // Reload species data
+            const language = (document.querySelector(".lang-btn")?.textContent || "EN").trim().toLowerCase();
+            const lang = language === "tet" ? "tet" : "en";
+            const species = await dataService.getAllSpecies(lang);
+            
+            if (typeof window.setSpeciesData === "function") {
+              window.setSpeciesData(species);
+              if (typeof window.applyFilters === "function")
+              {
+                window.applyFilters()
+              }
+            }
+          } else {
+            // Already up to date
+            syncBtn.classList.add('success');
+            showSyncStatus('ℹ️ Already up to date!');
+          }
+          
+          // Remove success state after 2 seconds
+          setTimeout(() => {
+            syncBtn.classList.remove('success');
+          }, 2000);
+          
+        } catch (error) {
+          console.error('Sync failed:', error);
+          syncBtn.classList.add('error');
+          showSyncStatus('❌ Sync failed: ' + error.message, 5000);
+          
+          // Remove error state after 3 seconds
+          setTimeout(() => {
+            syncBtn.classList.remove('error');
+          }, 3000);
+        } finally {
+          syncBtn.classList.remove('syncing');
+          syncBtn.title = 'Sync Data';
+        }
       });
 
+      // Set up sync progress callback
+      if (typeof syncManager !== 'undefined') {
+        syncManager.setOnProgress((message) => {
+          showSyncStatus('🔄 ' + message, 10000);
+        });
+      }
+
+      // ====================================
+      // PAGE LOAD HANDLER
+      // ====================================
+      document.addEventListener("DOMContentLoaded", async () => {
+        console.log("[Home] Page loaded");
+
+        const code = (document.querySelector(".lang-btn")?.textContent || "EN")
+          .trim()
+          .toLowerCase();
+        const language = code === "tet" ? "tet" : "en";
+  
+  try{
+    // Always load from IndexedDB (offline-safe)
+    const species = await dataService.getAllSpecies(language);
+    console.log("[Home] Loaded species:", species.length);
+    window.setSpeciesData(species);
+  }
+  catch(err)
+  {
+    console.error("Failed loading ccached species:", err)
+  }
+
+  //background sync
+  try{
+
+    if (typeof syncManager !== "undefined") {
+      const res = await syncManager.checkAndSync({ forceBundle: false });
+      if (res?.synced) {
+        const updatedSpecies = await dataService.getAllSpecies(language);
+        window.setSpeciesData(updatedSpecies);
+      }
+    }
+  }
+  catch(err)
+  {
+    console.warn("Offline, using cached data")
+  }
+});
+
+      // ====================================
+      // LANGUAGE HANDLER
+      // ====================================
+      const langBtn = document.querySelector(".lang-btn");
+      const overlay = document.getElementById("langOverlay");
+      const closeBtn = document.getElementById("closeOverlay");
+      const selectedNameEl = document.getElementById("selectedName");
+      const selectedFlagEl = document.getElementById("selectedFlag");
+      langBtn.addEventListener("click", () => {
+        overlay.style.display = "flex";
+      });
       closeBtn.addEventListener("click", () => {
         overlay.style.display = "none";
       });
-
-      chooseEn.addEventListener("click", () => {
-        localStorage.setItem("appLanguage", "en");
-        langBtn.textContent = "EN";
-        overlay.style.display = "none";
-        window.location.href = "home.html";
+      overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) overlay.style.display = "none";
+      });
+      document.querySelectorAll("#langList .row").forEach((row) => {
+        row.addEventListener("click", () => {
+          document.querySelectorAll("#langList .row").forEach((r) => {
+            r.classList.remove("selected");
+            r.setAttribute("aria-selected", "false");
+          });
+          row.classList.add("selected");
+          row.setAttribute("aria-selected", "true");
+          selectedNameEl.textContent = row.dataset.name;
+          selectedFlagEl.textContent = row.dataset.flag;
+          langBtn.textContent = row.dataset.code;
+          overlay.style.display = "none";
+          if (row.dataset.code === "TET") {
+            window.location.href = "tetum.html";
+          } else {
+            window.location.href = "home.html";
+          }
+        });
       });
 
-      chooseTet.addEventListener("click", () => {
-        localStorage.setItem("appLanguage", "tet");
-        langBtn.textContent = "TET";
-        overlay.style.display = "none";
-        window.location.href = "tetum.html";
-      });
-
-      // document.querySelectorAll("#langList .row").forEach((row) => {
-      //   row.addEventListener("click", () => {
-      //     document.querySelectorAll("#langList .row").forEach((r) => {
-      //       r.classList.remove("selected");
-      //       r.setAttribute("aria-selected", "false");
-      //     });
-      //     row.classList.add("selected");
-      //     row.setAttribute("aria-selected", "true");
-      //     selectedNameEl.textContent = row.dataset.name;
-      //     selectedFlagEl.textContent = row.dataset.flag;
-      //     langBtn.textContent = row.dataset.code;
-      //     overlay.style.display = "none";
-      //   });
-      // });
-      const selectedNameEl = document.getElementById("selectedName");
-      const selectedFlagEl = document.getElementById("selectedFlag");
-      // ------------------------------
-      // FILTER OVERLAY JS (NEW)
-      // ------------------------------
+      // ====================================
+      // FILTER OVERLAY JS
+      // ====================================
       const filterOverlay = document.getElementById("filterOverlay");
       const closeFilterOverlay = document.getElementById("closeFilterOverlay");
       const filterTitle = document.getElementById("filterTitle");
@@ -757,9 +446,12 @@
 
       // Function to apply all active filters and search
       function applyFilters() {
-        if (!loadedSpeciesData || loadedSpeciesData.length === 0) return;
+      if (!window.loadedSpeciesData || window.loadedSpeciesData.length === 0) {
+          console.warn("No species data loaded yet");
+          return;
+        }
 
-        let filtered = [...loadedSpeciesData];
+        let filtered = [...window.loadedSpeciesData];
 
         // Apply leaf type filter
         if (activeFilters.leafType) {
@@ -789,7 +481,12 @@
           );
         }
 
-        renderSpecies(filtered);
+        // Render results or show no results message
+        if (filtered.length === 0 && typeof renderNoResults === 'function') {
+          renderNoResults();
+        } else {
+          renderSpecies(filtered);
+        }
       }
 
       // Make applyFilters available globally
@@ -891,9 +588,14 @@
               searchInput.value = "";
             }
 
-            // Render all species
-            renderSpecies(loadedSpeciesData);
-            filterOverlay.style.display = "none";
+            // Render all species - check if data is loaded
+            if (window.loadedSpeciesData && window.loadedSpeciesData.length > 0) {
+              renderSpecies(window.loadedSpeciesData);
+            } else {
+              console.warn("Species data not loaded yet");
+            }
+            
+            // Don't show overlay for "All" button
             return;
           }
 
@@ -974,12 +676,12 @@
       }
 
       function sortSpecies(direction) {
-        if (!loadedSpeciesData || loadedSpeciesData.length === 0) {
+        if (!window.loadedSpeciesData || window.loadedSpeciesData.length === 0) {
           console.warn("No species data to sort.");
           return;
         }
 
-        const sorted = [...loadedSpeciesData].sort((a, b) => {
+        const sorted = [...window.loadedSpeciesData].sort((a, b) => {
           const nameA = a.scientific_name.toLowerCase();
           const nameB = b.scientific_name.toLowerCase();
 

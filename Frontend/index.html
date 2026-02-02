@@ -4,6 +4,37 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Choose Language</title>
+  <script>
+    //need to make sure on opening app we check if user already logged in
+    (function() {
+      const userId = localStorage.getItem("user_id")
+      const role = localStorage.getItem("role")
+      const lang = localStorage.getItem("appLanguage")
+
+      //if logged in go straight to app
+      if(userId) {
+        if(lang === "tet")
+        {
+          window.location.replace("tetum.html")
+        }
+        else {
+          window.location.replace("home.html")
+        }
+        return
+      }
+      //language chosen but not logged in so go to login
+      if(lang) {
+        if(lang === "tet")
+        {
+          window.location.replace("login_tetum.html")
+        }
+        else {
+          window.location.replace("login.html")
+        }
+        return      
+      }
+    })()
+  </script>
   <link rel="stylesheet" href="css/language.css" />
 </head>
 
@@ -43,6 +74,8 @@
       </div>
     </main>
   </div>
-<script src="js/language.js"></script>
+<script src="scripts/language.js"></script>
+<script src="scripts/sw-register.js"></script>
+
 </body>
 </html>

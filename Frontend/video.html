@@ -122,6 +122,9 @@
             color: #475569;
         }
     </style>
+
+    <link rel="stylesheet" href="css/onlineBanner.css" />
+
 </head>
 <body>
 
@@ -133,13 +136,24 @@
     </header>
 
     <!-- Video Preview -->
-    <div class="video-container">
+    <div class="video-container" id="videoContainer">
+        <!--
         <img
             src="./Assets/Images/video-thumbnail-placeholder.jpg"
             alt="Video thumbnail"
             class="video-thumbnail"
             id="videoThumbnail"
         />
+        -->
+        
+        <video
+            id="videoPreview"
+            class="video-thumbnail"
+            muted
+            playsinline
+            preload="auto"
+        ></video>
+
         <div class="play-overlay" id="playOverlay">▶</div>
     </div>
 
@@ -159,5 +173,8 @@
 </main>
 
 <script src="scripts/video.js"></script>
+<script src="scripts/sw-register.js"></script>
+<script src="scripts/detectOnline.js" defer></script>
+
 </body>
 </html>

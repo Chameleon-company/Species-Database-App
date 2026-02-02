@@ -5,6 +5,7 @@ interface User {
   name: string;
   password_hash: string;
   role: string;
+  auth_provider: "local"| "google";
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -17,6 +18,7 @@ interface UserFormProps {
     password: string;
     role: string;
     is_active: boolean;
+    auth_provider: "local" | "google";
   }) => void;
   onClose: () => void;
 }
@@ -27,12 +29,17 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSubmit, onClose }) => {
     password: "",
     role: user?.role || "",
     is_active: user?.is_active ?? true,
+    auth_provider: user?.auth_provider || "local",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validatePassword = (password: string): string | null => {
-    if (!password && !user) {
+    if (
+      formData.auth_provider === "local" &&
+      !password &&
+      !user
+    ){
       return "Password is required";
     }
 
@@ -113,6 +120,27 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSubmit, onClose }) => {
           </div>
 
           <div className="mb-4">
+            <label className="block mb-2">Authentication Method</label>
+            <select
+              value={formData.auth_provider}
+              onChange={(e)=> {
+                const value = e.target.value as "local" | "google";
+                setFormData({
+                  ...formData,
+                  auth_provider: value,
+                  //clear password if using google
+                  password: value === "google"  ? "" :formData.password,
+                })
+                setErrors({...errors, password: ""})
+              }}
+              className="w-full border px-3 py-2 rounded border-gray-300"
+            >
+              <option value="local">Local</option>
+              <option value="google">Google</option>
+            </select>
+          </div>
+
+          <div className="mb-4">
             <label className="block mb-2">
               Password{" "}
               {user && (
@@ -124,15 +152,18 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSubmit, onClose }) => {
             <input
               type="password"
               value={formData.password}
+              disabled={formData.auth_provider === "google"}
               onChange={(e) => {
                 setFormData({ ...formData, password: e.target.value });
                 setErrors({ ...errors, password: "" });
               }}
               className={`w-full border px-3 py-2 rounded ${
                 errors.password ? "border-red-500" : "border-gray-300"
-              }`}
+              }${formData.auth_provider === "google" ? "bg-gray-100 cursor-not-allowed" : ""}`}
               placeholder={
-                user
+                formData.auth_provider === "google"
+                ? "Password disabled for google accounts"
+                : user
                   ? "Leave blank to keep current"
                   : "Min 8 chars with A-Z, a-z, 0-9, special char"
               }

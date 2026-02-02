@@ -3,8 +3,9 @@ import React from "react";
 interface User {
   user_id: number;
   name: string;
-  password: string;
   role: string;
+  auth_provider: "local" | "google";
+  is_active: boolean;
 }
 
 interface UserTableProps {

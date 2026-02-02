@@ -1,7 +1,8 @@
-import { Alert, Box, Button, IconButton, TextField } from "@mui/material"
+import { Alert, Box, Button, IconButton } from "@mui/material"
 import { DataGrid, type GridColDef } from "@mui/x-data-grid"
 import { useEffect, useState } from "react"
 import DeleteIcon from "@mui/icons-material/Delete"
+import { adminFetch } from "../utils/adminFetch"
 
 
 type Media = {
@@ -16,6 +17,7 @@ export default function MediaManager() {
     const [media, setMedia] =useState<Media[]>([])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const API_URL = import.meta.env.VITE_API_BASE;
 
     //load media when page opens
     useEffect(() => {
@@ -26,15 +28,10 @@ export default function MediaManager() {
         setLoading(true)
         setError(null)
 
-        const token = localStorage.getItem("admin_token")
 
         try {
-            const res = await fetch("http://127.0.0.1:5000/upload-media",
-            {
-                headers: {
-                    Authorization: token || "",
-                },
-            })
+            const res = await adminFetch(`${API_URL}/upload-media`,
+            { })
             if (!res.ok) {
                 throw new Error("Failed to load media")
             }
@@ -66,7 +63,6 @@ export default function MediaManager() {
 
     //saving row to backend
     const saveMedia = async (row:Media) => {
-        const token = localStorage.getItem("admin_token")
 
         if (!row.species_name || !row.media_type || !row.download_link)
         {
@@ -77,8 +73,8 @@ export default function MediaManager() {
         const isNew= row.media_id < 0
 
         const url = isNew
-        ? "http://127.0.0.1:5000/upload-media"
-        : `http://127.0.0.1:5000/upload-media/${row.media_id}`
+        ? `${API_URL}/upload-media`
+        : `${API_URL}/upload-media/${row.media_id}`
 
         const method = isNew ? "POST" : "PUT"
 
@@ -86,13 +82,9 @@ export default function MediaManager() {
         setError(null)
 
         try {
-            const res = await fetch(url, {
+            const res = await adminFetch(url, {
 
                 method,
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: token || "",
-                },
                 body: JSON.stringify(row)
             })
             if(!res.ok)
@@ -118,19 +110,15 @@ export default function MediaManager() {
     }
 
     const deleteMedia = async (media_id: number) => {
-        const token = localStorage.getItem("admin_token")
         if(!window.confirm("delete this media item?")) return
 
         setLoading(true)
         setError(null)
         try{
-            const res = await fetch(
-                `http://127.0.0.1:5000/upload-media/${media_id}`,
+            const res = await adminFetch(
+                `${API_URL}/upload-media/${media_id}`,
                 {
                     method: "DELETE",
-                    headers: {
-                        Authorization: token || "",
-                    }
                 }
             )
             if(!res.ok)

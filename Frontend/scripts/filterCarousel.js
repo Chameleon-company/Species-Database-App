@@ -51,11 +51,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Use document-level mousemove to track mouse even outside carousel
     document.addEventListener('mousemove', function(e) {
         if (!isDragging) return;
-        e.preventDefault();
-        hasDragged = true;
         const x = e.pageX - filterCarousel.offsetLeft;
         const walk = (x - startX) * 2; // Scroll speed multiplier
-        filterCarousel.scrollLeft = scrollLeft - walk;
+        dragDistance = Math.abs(walk);
+        
+        if (dragDistance > 5) {
+            e.preventDefault();
+            hasDragged = true;
+            filterCarousel.scrollLeft = scrollLeft - walk;
+        }
     });
 
     // Touch events (Mobile) - Touch and drag scrolling
@@ -76,24 +80,36 @@ document.addEventListener('DOMContentLoaded', function() {
 
     filterCarousel.addEventListener('touchmove', function(e) {
         if (!isDragging) return;
-        hasDragged = true;
         const x = e.touches[0].pageX - filterCarousel.offsetLeft;
         const walk = (x - startX) * 2; // Scroll speed multiplier
-        filterCarousel.scrollLeft = scrollLeft - walk;
+        dragDistance = Math.abs(walk);
+        
+        if (dragDistance > 5) {
+            hasDragged = true;
+            filterCarousel.scrollLeft = scrollLeft - walk;
+        }
     }, { passive: true });
 
     // Handle button clicks (only if not dragging)
     // Note: Active state management is now handled in home.html
     // This code only prevents clicks during drag operations
+    let dragThreshold = 5; // pixels - small movements don't count as drag
+    let dragDistance = 0;
+
     filterButtons.forEach(button => {
         button.addEventListener('click', function(e) {
-            // If user was dragging, prevent the click
-            if (hasDragged) {
+            // If user was dragging significantly, prevent the click
+            if (hasDragged && dragDistance > dragThreshold) {
                 e.preventDefault();
                 e.stopPropagation();
                 hasDragged = false;
+                dragDistance = 0;
                 return;
             }
+
+            // Reset flags
+            hasDragged = false;
+            dragDistance = 0;
 
             // Active state management is handled in home.html
             // to support multiple active filters (leaf-type + fruit-type)

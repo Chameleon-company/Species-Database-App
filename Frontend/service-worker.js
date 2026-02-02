@@ -1,73 +1,167 @@
-//Species Database Application Service Worker (Needs more work done)
+// service-worker.js - PWA Offline Support
+const CACHE_NAME = "species-app-v1";
+const MEDIA_CACHE = "media-cache-v1";
 
-const CACHE_NAME = "sba-cache";
-
-//Files that need to be cahced
-const FILES_TO_CACHE = [
-    "/index.html",
-    "/home.html",
-    "/specie.html",
-    "imagepreview.html",
-    "/scripts/specieslist.js",
-    "/scripts/imageCache.js",
-    "/scripts/preloadImages.js",
-    "/scripts/filterCarousel.js",
-    "/data/images.json"
+const CORE_ASSETS = [
+  "/index.html",
+  "/home.html",
+  "/tetum.html",
+  "/specie.html",
+  "/manifest.json",
+  "/css/layout.css",
+  "/css/responsive.css",
+  "/css/filters.css",
+  "/css/cards.css",
+  "/scripts/config.js",
+  "/scripts/db.js",
+  "/scripts/dataService.js",
+  "/scripts/sync.js",
+  "/scripts/specieslist.js",
+  "/scripts/filterCarousel.js",
 ];
 
-self.addEventListener('install', (event) => {
-    console.log('Service Worker installed');
-    event.waitUntil(
-        caches.open(CACHE_NAME).then(cache => {
-            console.log("Caching files");
-            return cache.addAll(FILES_TO_CACHE);
-        })
-    );
-    self.skipWaiting();
+// Install - cache core assets
+self.addEventListener("install", (event) => {
+  console.log("[SW] Installing...");
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(async (cache) => {
+      for (const url of CORE_ASSETS) {
+        try {
+          const res = await fetch(url, { cache: "no-cache" });
+          if (res.ok) await cache.put(url, res);
+        } catch (e) {
+          console.warn("[SW] Failed to cache:", url);
+        }
+      }
+      console.log("[SW] Core assets cached");
+    })
+  );
 });
 
-self.addEventListener('activate', (event) => {
-    console.log('Service Worker activated');
-    event.waitUntil(
-        caches.keys().then(keys =>
-            Promise.all(
-                keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
-            )
+// Activate - clean old caches
+self.addEventListener("activate", (event) => {
+  console.log("[SW] Activating...");
+  event.waitUntil(
+    Promise.all([
+      caches.keys().then((keys) =>
+        Promise.all(
+          keys.map((k) => {
+            if (k !== CACHE_NAME && k !== MEDIA_CACHE) {
+              return caches.delete(k);
+            }
+          })
         )
-    );
-    self.clients.claim();
+      ),
+      self.clients.claim()
+    ])
+  );
 });
 
-self.addEventListener('fetch', (event) => {
-    event.respondWith(
-            caches.match(event.request).then(cached =>{
-                if (cached) return cached;
+// Fetch - serve from cache, fallback to network
+self.addEventListener("fetch", (event) => {
+  const url = new URL(event.request.url);
 
-                return fetch(event.request).then(response => {
-                    if (event.request.destination === "image") {
-                    return caches.open(CACHE_NAME).then(cache => {
-                        cache.put(event.request, response.clone());
-                         return response;
-                    });
-                }
-                return response;
-            }).catch(() => {
-                //fallback when offline
-                if (event.request.destination === "image") {
-                    return caches.match(event.request) || new Response('', {status:404});
-                }
-                if (event.request.mode === "navigate") {
-                    return caches.match(event.request)
-                }
-            });
-        })
-    );
+  // Handle Supabase storage URLs (images/videos)
+  if (event.request.destination === "image" || event.request.destination === "video") {
+    event.respondWith(handleMediaRequest(event.request));
+    return;
+  }
+
+  // Handle same-origin requests
+  if (url.origin === location.origin) {
+    event.respondWith(handleAppRequest(event.request));
+    return;
+  }
 });
 
-self.addEventListener("message", async event => {
-    if (event.data?.type === "CACHE_IMAGES"){
-        const cache = await caches.open(CACHE_NAME);
-        await cache.addAll(event.data.images);
-        console.log(`Cached ${event.data.images.length} images`);
+// Cache-first for media
+async function handleMediaRequest(request) {
+  const cache = await caches.open(MEDIA_CACHE);
+  const cached = await cache.match(request);
+  if (cached) {
+    console.log("[SW] Media from cache:", request.url);
+    return cached;
+  }
+
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      await cache.put(request, response.clone());
     }
+    return response;
+  } catch (e) {
+    return new Response("", { status: 503 });
+  }
+}
+
+// Cache-first for app files
+async function handleAppRequest(request) {
+  const cache = await caches.open(CACHE_NAME);
+
+  const cached = await cache.match(request);
+  if (cached) return cached;
+
+  try {
+    const response = await fetch(request);
+    if (response.ok && request.method === "GET") {
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch (e) {
+    // if (request.mode === "navigate") {
+    //   return cache.match("/home.html") || cache.match("/index.html");
+    // }
+    return new Response("Offline", { status: 503 });
+  }
+}
+
+//helper for sending from SW toopen app tabs
+async function notifyClients(message) {
+  //get all pages controlled by SW
+  const clients =await self.clients.matchAll({
+    includeUncontrolled: true
+  }) 
+  
+  //sendig messager to each page
+  for(const client of clients)
+  {
+    client.postMessage(message)
+  }
+}
+
+//message handler - cache media URLs
+self.addEventListener("message", async (event) => {
+  const { type, urls } = event.data;
+
+  if (type === "CACHE_MEDIA" && Array.isArray(urls)) {
+    console.log("[SW] Caching", urls.length, "media URLs");
+    const cache = await caches.open(MEDIA_CACHE);
+
+    //keepig track of medai cache progress
+    let done = 0
+    const total = urls.length
+
+    for (const url of urls) {
+      try {
+
+        const req = new Request(url, {cache: "no-store"})
+        //skipping if cached
+        const cached = await cache.match(req)
+        if(!cached)
+        {
+          const res = await fetch(url);
+          if (res.ok) await cache.put(url, res.clone());
+        }
+        done++
+        notifyClients({type: "MEDIA_CACHE_PROGRESS", done, total,url})
+
+      } catch (e) {
+        done++
+        notifyClients({type: "MEDIA_CACHE_PROGRESS", done, total,url,error: true})
+      }
+    }
+    notifyClients({type: "MEDIA_CACHE_DONE",total})
+  }
 });
+
+console.log("[SW] Service Worker loaded");

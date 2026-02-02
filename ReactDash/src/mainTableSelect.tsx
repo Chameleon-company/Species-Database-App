@@ -2,13 +2,6 @@ import { DataGrid } from '@mui/x-data-grid'
 import type { GridColDef } from '@mui/x-data-grid'
 import Paper from '@mui/material/Paper'
 import { useEffect, useState } from "react"
-import Box from '@mui/material/Box'
-import {supabase, supabaseTetum} from './supabaseClient'
-
-
-
-
-
 
 type Species = {
   species_id: number
@@ -48,72 +41,72 @@ const paginationModel = { page: 0, pageSize: 10 }
 
 
 export default function MainTableSelect({ onRowSelect }: MainTableProps) {
-      if (!supabase || !supabaseTetum) {
-        return (
-          <Box sx={{ marginTop: 10}}>
-            <h2 style={{ color: 'red' }}>Critical Error: Database not accessible!</h2>
-          </Box>
-        )
-      }
-
-  if (true) {
       
-    const [species, setSpecies] = useState<Species[]>([])
-    useEffect(() => {
-      getSpecies()
-    }, [])
+  const [speciesEn, setSpeciesEn] = useState<Species[]>([])
 
-    async function getSpecies() {
-      if (!supabase) { throw new Error('Failed to get rows to display'); }
-      const { data } = await supabase.from("species_en").select()
-      setSpecies(data ?? [])
-    }
+  useEffect(() => {
+    getSpecies()
+  }, [])
 
-    const handleRowSelection = (selectionModel: any) => {
-      console.log("Selection model:", selectionModel)
+  async function getSpecies() {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/bundle`, {
+        credentials: "include",
+      })
 
-      const selectedIds = Array.from(selectionModel.ids || [])
-      console.log("Selected IDs:", selectedIds)
-
-      if (selectedIds.length > 0) {
-        const selectedId = selectedIds[0]
-        console.log("Selected ID:", selectedId)
-        const selectedSpecies = species.find(s => s.species_id === selectedId)
-        console.log("Found species:", selectedSpecies)
-        onRowSelect(selectedSpecies || null)
-      } else {
-        onRowSelect(null)
+      if(!res.ok) {
+        throw new Error("failed to fetch species")
       }
 
-
-
+      const data = await res.json()
+      setSpeciesEn(data.species_en ?? [])
     }
-
-
-
-    return (
-      <Paper sx={{ height: 600, width: '100%' }}>
-        <DataGrid
-          rows={species}
-          columns={columns}
-          getRowId={(row) => row.species_id}
-          initialState={{ 
-            pagination: { paginationModel },
-            sorting: {
-              sortModel: [{ field: 'species_id', sort: 'asc' }]
-            }
-          }}
-          pageSizeOptions={[10, 20]}
-          checkboxSelection
-          disableMultipleRowSelection
-          onRowSelectionModelChange={handleRowSelection}
-          sx={{ border: 0, backgroundColor: '#cdcdcdff' }}
-        />
-      </Paper>
-    )
+    catch (err) {
+      console.error(err)
+      setSpeciesEn([])
+    }
   }
 
-}
-  
+  const handleRowSelection = (selectionModel: any) => {
+    console.log("Selection model:", selectionModel)
+
+    const selectedIds = Array.from(selectionModel || [])
+    console.log("Selected IDs:", selectedIds)
+
+    if (selectedIds.length > 0) {
+      const selectedId = selectedIds[0]
+      console.log("Selected ID:", selectedId)
+      const selectedSpecies = speciesEn.find(s => s.species_id === selectedId)
+      console.log("Found species:", selectedSpecies)
+      onRowSelect(selectedSpecies || null)
+    } else {
+      onRowSelect(null)
+    }
+
+  }
+
+
+
+  return (
+    <Paper sx={{ height: 600, width: '100%' }}>
+      <DataGrid
+        rows={speciesEn}
+        columns={columns}
+        getRowId={(row) => row.species_id}
+        initialState={{ 
+          pagination: { paginationModel },
+          sorting: {
+            sortModel: [{ field: 'species_id', sort: 'asc' }]
+          }
+        }}
+        pageSizeOptions={[10, 20]}
+        checkboxSelection
+        disableMultipleRowSelection
+        onRowSelectionModelChange={handleRowSelection}
+        sx={{ border: 0, backgroundColor: '#cdcdcdff' }}
+      />
+    </Paper>
+  )
+}  
 
 export type {Species}

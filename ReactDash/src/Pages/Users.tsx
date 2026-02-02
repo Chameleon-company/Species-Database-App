@@ -12,14 +12,16 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
 import CancelIcon from "@mui/icons-material/Close";
+import { adminFetch } from "../utils/adminFetch";
 
-const API_BASE = "http://127.0.0.1:5000/api";
+const API_BASE = import.meta.env.VITE_API_URL;
 
 export interface User {
   user_id: number;
   name: string;
   role: string;
   is_active: boolean;
+  auth_provider: "local" | "google";
   created_at?: string;
   password?: string;
 }
@@ -54,7 +56,7 @@ export default function Users() {
   async function fetchUsers() {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/users`);
+      const res = await adminFetch(`${API_BASE}/users`);
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -85,6 +87,7 @@ export default function Users() {
       name: "",
       role: "",
       is_active: true,
+      auth_provider: "local",
       password: "",
     };
 
@@ -119,8 +122,8 @@ export default function Users() {
       return;
     }
 
-    if (isNew && !user.password?.trim()) {
-      showSnackbar("Password is required for new users", "error");
+    if (isNew && user.auth_provider === "local" && !user.password?.trim()) {
+      showSnackbar("Password is required for new local users", "error");
       return;
     }
 
@@ -130,15 +133,16 @@ export default function Users() {
       name: user.name.trim(),
       role: user.role.trim(),
       is_active: user.is_active,
+      auth_provider: user.auth_provider,
     };
 
-    if (user.password?.trim()) {
+    if (user.auth_provider === "local" && user.password?.trim()) {
       payload.password = user.password;
     }
 
     setLoading(true);
     try {
-      const res = await fetch(url, {
+      const res = await adminFetch(url, {
         method: isNew ? "POST" : "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -186,7 +190,7 @@ export default function Users() {
 
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/users/${numericId}`, {
+      const res = await adminFetch(`${API_BASE}/users/${numericId}`, {
         method: "DELETE",
       });
 
@@ -273,6 +277,16 @@ export default function Users() {
       type: "boolean",
       width: 100,
       editable: true,
+    },
+    {
+      field: "auth_provider",
+      headerName: "Auth",
+      width: 140,
+      type: "singleSelect",
+      valueOptions: ["local", "google"],
+      editable: true,
+      valueFormatter: (value) =>
+        value === "google" ? "Google" :"Local",
     },
     {
       field: "created_at",
