@@ -17,6 +17,14 @@ function App() {
     <Router>
       <Routes>
         {/*PUBLIC ROUTE */}
+        <Route
+          path="/Users"
+          element={
+              <UsersPage />
+            // <AdminLayout>
+            // </AdminLayout>
+          }
+        />
         <Route path="/admin-login" element={<AdminLoginForm />} />
 
         {/*ADMIN */}
@@ -74,14 +82,14 @@ function App() {
         />
 
 
-        <Route
+        {/* <Route
           path="/Users"
           element={
             <AdminLayout>
               <UsersPage />
             </AdminLayout>
           }
-        />
+        /> */}
 
         <Route
           path="/Analytics"
