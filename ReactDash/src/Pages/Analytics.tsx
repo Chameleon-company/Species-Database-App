@@ -15,7 +15,7 @@ import TimerIcon from "@mui/icons-material/Timer";
 import SpaIcon from "@mui/icons-material/Spa";
 import ImageIcon from "@mui/icons-material/Image";
 import { adminFetch } from "../utils/adminFetch";
-
+import { translations } from "../translations";
 
 type Overview = {
   total_users: number;
@@ -36,18 +36,20 @@ type UserAnalytics = {
   average_duration: number;
   last_login: string | null;
 };
+
 const API_URL = import.meta.env.VITE_API_BASE;
 
 export default function Analytics() {
+  const [lang, setLang] = useState<"en" | "tet">("en");
+  const t = translations[lang];
+
   const [overview, setOverview] = useState<Overview | null>(null);
   const [users, setUsers] = useState<UserAnalytics[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
-      adminFetch(`${API_URL}/analytics/overview`).then((res) =>
-        res.json()
-      ),
+      adminFetch(`${API_URL}/analytics/overview`).then((res) => res.json()),
       adminFetch(`${API_URL}/analytics/users`).then((res) => res.json()),
     ])
       .then(([overviewData, userData]) => {
@@ -67,58 +69,42 @@ export default function Analytics() {
 
   return (
     <Box p={5}>
+      {/* Language buttons */}
+      <Box display="flex" justifyContent="flex-end" mb={2}>
+        <button onClick={() => setLang("en")} style={{ marginRight: 10 }}>
+          EN
+        </button>
+        <button onClick={() => setLang("tet")}>TET</button>
+      </Box>
+
       <Typography variant="h4" align="center" gutterBottom>
-        Analytics Dashboard
+        {t.analyticsDashboard}
       </Typography>
 
       <Typography align="center" mb={5}>
-        Overview of user activity and species database engagement
+        {t.analyticsDescription}
       </Typography>
 
-      {/* OVERVIEW STATS */}
+      {/* OVERVIEW */}
       <Box
         display="grid"
         gridTemplateColumns="repeat(auto-fit, minmax(220px, 1fr))"
         gap={3}
         mb={6}
       >
-        <StatCard
-          icon={<PeopleIcon />}
-          label="Total Users"
-          value={overview?.total_users}
-        />
-        <StatCard
-          icon={<CheckCircleIcon />}
-          label="Active Users"
-          value={overview?.active_users}
-        />
-        <StatCard
-          icon={<LoginIcon />}
-          label="Total Logins"
-          value={overview?.total_logins}
-        />
-        <StatCard
-          icon={<TimerIcon />}
-          label="Avg Session (min)"
-          value={overview?.average_session_duration}
-        />
-        <StatCard
-          icon={<SpaIcon />}
-          label="Total Species"
-          value={overview?.total_species}
-        />
-        <StatCard
-          icon={<ImageIcon />}
-          label="Species with Media"
-          value={overview?.species_with_media}
-        />
+        <StatCard icon={<PeopleIcon />} label={t.totalUsers} value={overview?.total_users} />
+        <StatCard icon={<CheckCircleIcon />} label={t.activeUsers} value={overview?.active_users} />
+        <StatCard icon={<LoginIcon />} label={t.totalLogins} value={overview?.total_logins} />
+        <StatCard icon={<TimerIcon />} label={t.avgSession} value={overview?.average_session_duration} />
+        <StatCard icon={<SpaIcon />} label={t.totalSpecies} value={overview?.total_species} />
+        <StatCard icon={<ImageIcon />} label={t.speciesWithMedia} value={overview?.species_with_media} />
       </Box>
 
       <Divider sx={{ mb: 4, borderColor: "white" }} />
 
-      {/* USER ANALYTICS */}
+      {/* USERS */}
       <Typography variant="h5" mb={3}>
-        User Activity Breakdown
+        {t.userActivity}
       </Typography>
 
       <Box
@@ -130,17 +116,19 @@ export default function Analytics() {
           <Card key={user.user_id} elevation={3}>
             <CardContent>
               <Typography variant="h6">{user.name}</Typography>
-              <Typography color="text.secondary">Role: {user.role}</Typography>
+              <Typography color="text.secondary">
+                {t.role}: {user.role}
+              </Typography>
 
               <Divider sx={{ my: 1 }} />
 
-              <Typography>Logins: {user.login_count}</Typography>
-              <Typography>Total Duration: {user.total_duration} min</Typography>
+              <Typography>{t.logins}: {user.login_count}</Typography>
+              <Typography>{t.totalDuration}: {user.total_duration} min</Typography>
               <Typography>
-                Avg Duration: {user.average_duration.toFixed(1)} min
+                {t.avgDuration}: {user.average_duration.toFixed(1)} min
               </Typography>
               <Typography>
-                Last Login:{" "}
+                {t.lastLogin}:{" "}
                 {user.last_login
                   ? new Date(user.last_login).toLocaleString()
                   : "—"}
@@ -150,7 +138,7 @@ export default function Analytics() {
                 mt={1}
                 color={user.is_active ? "success.main" : "error.main"}
               >
-                {user.is_active ? "Active" : "Inactive"}
+                {user.is_active ? t.active : t.inactive}
               </Typography>
             </CardContent>
           </Card>
@@ -171,14 +159,7 @@ function StatCard({
 }) {
   return (
     <Card elevation={4}>
-      <CardContent
-        sx={{
-          textAlign: "center",
-          display: "flex",
-          flexDirection: "column",
-          gap: 1,
-        }}
-      >
+      <CardContent sx={{ textAlign: "center" }}>
         <Box fontSize={40}>{icon}</Box>
         <Typography variant="h5">{value ?? "—"}</Typography>
         <Typography color="text.secondary">{label}</Typography>
