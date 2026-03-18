@@ -37,7 +37,7 @@
     "jsonfile": "^6.2.0",
     "kleur": "^4.1.5",
     "lru-cache": "^11.2.5",
-    "minimatch": "^10.1.1",
+    "minimatch": "^10.2.4",
     "minipass": "^7.1.2",
     "minizlib": "^3.1.0",
     "ms": "^2.1.3",
