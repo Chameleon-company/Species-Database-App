@@ -3,55 +3,52 @@ import { DataGrid, type GridColDef } from "@mui/x-data-grid"
 import { useEffect, useState } from "react"
 import DeleteIcon from "@mui/icons-material/Delete"
 import { adminFetch } from "../utils/adminFetch"
-
+import { translations } from "../translations"
 
 type Media = {
     media_id: number
     species_name: string
     media_type: string
-    download_link:string
+    download_link: string
     alt_text?: string
 }
 
 export default function MediaManager() {
-    const [media, setMedia] =useState<Media[]>([])
+    const [lang, setLang] = useState<"en" | "tet">("en")
+    const t = translations[lang]
+
+    const [media, setMedia] = useState<Media[]>([])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
-    const API_URL = import.meta.env.VITE_API_BASE;
+    const API_URL = import.meta.env.VITE_API_BASE
 
-    //load media when page opens
     useEffect(() => {
         fetchMedia()
     }, [])
 
-    const fetchMedia = async()=> {
+    const fetchMedia = async () => {
         setLoading(true)
         setError(null)
 
-
         try {
-            const res = await adminFetch(`${API_URL}/upload-media`,
-            { })
+            const res = await adminFetch(`${API_URL}/upload-media`, {})
             if (!res.ok) {
-                throw new Error("Failed to load media")
+                throw new Error(t.failedToLoadMedia)
             }
             const data = await res.json()
             setMedia(Array.isArray(data) ? data : [])
-        }
-        catch (err: any) {
+        } catch (err: any) {
             setError(err.message)
             setMedia([])
-        }
-        finally {
+        } finally {
             setLoading(false)
         }
     }
 
-    //add black row
-    const addMedia =()=> {
+    const addMedia = () => {
         setMedia((prev) => [
             {
-                media_id:Date.now() * -1, //temp id
+                media_id: Date.now() * -1,
                 species_name: "",
                 media_type: "",
                 download_link: "",
@@ -61,20 +58,17 @@ export default function MediaManager() {
         ])
     }
 
-    //saving row to backend
-    const saveMedia = async (row:Media) => {
-
-        if (!row.species_name || !row.media_type || !row.download_link)
-        {
-            setError("species_name, media_type and download_link required")
+    const saveMedia = async (row: Media) => {
+        if (!row.species_name || !row.media_type || !row.download_link) {
+            setError(t.mediaRequiredFields)
             return
         }
 
-        const isNew= row.media_id < 0
+        const isNew = row.media_id < 0
 
         const url = isNew
-        ? `${API_URL}/upload-media`
-        : `${API_URL}/upload-media/${row.media_id}`
+            ? `${API_URL}/upload-media`
+            : `${API_URL}/upload-media/${row.media_id}`
 
         const method = isNew ? "POST" : "PUT"
 
@@ -83,101 +77,99 @@ export default function MediaManager() {
 
         try {
             const res = await adminFetch(url, {
-
                 method,
                 body: JSON.stringify(row)
             })
-            if(!res.ok)
-            {
+
+            if (!res.ok) {
                 const err = await res.json()
-                    if (res.status === 409) {
-                        throw new Error("This media link is already registered");
-                    }
-                throw new Error(err.error || "Upload failed")
+                if (res.status === 409) {
+                    throw new Error(t.mediaLinkAlreadyRegistered)
+                }
+                throw new Error(err.error || t.uploadFailed)
             }
 
             await fetchMedia()
             return
-        }
-        catch (err: any)
-        {
+        } catch (err: any) {
             setError(err.message)
             return
-        }
-        finally {
+        } finally {
             setLoading(false)
         }
     }
 
     const deleteMedia = async (media_id: number) => {
-        if(!window.confirm("delete this media item?")) return
+        if (!window.confirm(t.deleteMediaConfirm)) return
 
         setLoading(true)
         setError(null)
-        try{
+
+        try {
             const res = await adminFetch(
                 `${API_URL}/upload-media/${media_id}`,
                 {
                     method: "DELETE",
                 }
             )
-            if(!res.ok)
-            {
+
+            if (!res.ok) {
                 const err = await res.json()
-                throw new Error(err.error || "delete failed")
+                throw new Error(err.error || t.deleteFailed)
             }
+
             await fetchMedia()
-        }
-        catch(err: any)
-        {
+        } catch (err: any) {
             setError(err.message)
-        }
-        finally{
+        } finally {
             setLoading(false)
         }
     }
 
-    //table columns
     const columns: GridColDef[] = [
         {
             field: "media_id",
-            headerName: "ID",
+            headerName: t.id,
             width: 80,
             valueGetter: (_value, row) =>
-                row.media_id < 0 ? "New" : row.media_id
+                row.media_id < 0 ? t.new : row.media_id
         },
         {
             field: "species_name",
-            headerName: "Species name",
+            headerName: t.speciesName,
             width: 220,
             editable: true,
-                   
         },
         {
             field: "media_type",
-            headerName: "Type",
+            headerName: t.type,
             width: 120,
             editable: true,
             type: "singleSelect",
             valueOptions: ["image", "video"],
+            valueFormatter: (value) => {
+                if (value === "image") return t.image
+                if (value === "video") return t.video
+                return value
+            },
         },
         {
             field: "download_link",
-            headerName: "Media URL",
+            headerName: t.mediaUrl,
             width: 350,
             editable: true,
         },
         {
             field: "alt_text",
-            headerName: "Alt text",
+            headerName: t.altText,
             width: 200,
             editable: true,
         },
         {
-            field:"actions",
+            field: "actions",
             headerName: "",
             width: 80,
-            renderCell: (params) =>  (
+            renderCell: (params) => (
                 <IconButton color="error" onClick={() => deleteMedia(params.row.media_id)}>
                     <DeleteIcon />
                 </IconButton>
@@ -193,15 +185,26 @@ export default function MediaManager() {
                     justifyContent: "space-between",
                     alignItems: "center",
                     mb: 2,
-            }}>
-                <h2>Media Management</h2>
-                <Button variant="contained" onClick={addMedia}>
-                    Add Media
-                </Button>
+                }}
+            >
+                <h2>{t.mediaManagement}</h2>
+
+                <div>
+                    <button onClick={() => setLang("en")} style={{ marginRight: "10px" }}>
+                        EN
+                    </button>
+                    <button onClick={() => setLang("tet")} style={{ marginRight: "10px" }}>
+                        TET
+                    </button>
+
+                    <Button variant="contained" onClick={addMedia}>
+                        {t.addMedia}
+                    </Button>
+                </div>
             </Box>
 
             {error && (
-                <Alert severity="error" sx={{mb: 2}}>
+                <Alert severity="error" sx={{ mb: 2 }}>
                     {error}
                 </Alert>
             )}
@@ -209,7 +212,7 @@ export default function MediaManager() {
             <DataGrid
                 rows={media}
                 columns={columns}
-                getRowId={((row) => row.media_id)}
+                getRowId={(row) => row.media_id}
                 loading={loading}
                 editMode="row"
                 processRowUpdate={async (row) => {
@@ -217,12 +220,11 @@ export default function MediaManager() {
                     return row
                 }}
                 disableRowSelectionOnClick
-                sx={{backgroundColor: "#fff"}}
+                sx={{ backgroundColor: "#fff" }}
                 onProcessRowUpdateError={(error) => {
                     setError(error.message)
                 }}
             />
         </Box>
-        
     )
 }

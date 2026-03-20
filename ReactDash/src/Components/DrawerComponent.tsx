@@ -14,15 +14,14 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import MenuIcon from "@mui/icons-material/Menu";
 import Toolbar from "@mui/material/Toolbar";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import FilterIcon from "@mui/icons-material/Filter";
 import Logo from "../assets/logo-color.png";
-import { useNavigate } from "react-router-dom";
-import { Menu } from "@mui/material";
-import MenuItem from "@mui/material/MenuItem";
+import { Menu, MenuItem } from "@mui/material";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import AnalyticsIcon from "@mui/icons-material/Analytics";
+import { translations } from "../translations";
 
 const drawerWidth = 240;
 
@@ -34,12 +33,17 @@ export default function DrawerComponent({
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [isClosing, setIsClosing] = React.useState(false);
 
-  const [menuTrigger, setMenuTrigger] = React.useState<HTMLElement | null>(null)
-  const menuOpen = Boolean(menuTrigger)
-  //open menu
-  const openMenu = (event:React.MouseEvent<HTMLElement>) => {setMenuTrigger(event.currentTarget)}
-  //close menu
-  const closeMenu = () => setMenuTrigger(null)
+  const [lang, setLang] = React.useState<"en" | "tet">("en")
+const t = translations[lang]
+
+  const [menuTrigger, setMenuTrigger] = React.useState<HTMLElement | null>(null);
+  const menuOpen = Boolean(menuTrigger);
+
+  const openMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setMenuTrigger(event.currentTarget);
+  };
+
+  const closeMenu = () => setMenuTrigger(null);
 
   const handleDrawerClose = () => {
     setIsClosing(true);
@@ -56,14 +60,19 @@ export default function DrawerComponent({
     }
   };
 
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
-  //for when user logs out, remove token and role
   const handleLogout = () => {
-    localStorage.removeItem("admin_token")
-    localStorage.removeItem("admin_role")
-    navigate("/admin-login")
-  }
+    localStorage.removeItem("admin_token");
+    localStorage.removeItem("admin_role");
+    navigate("/admin-login");
+  };
+
+  const changeLang = (newLang: "en" | "tet") => {
+    localStorage.setItem("lang", newLang);
+    setLang(newLang);
+    window.location.reload();
+  };
 
   const drawer = (
     <div>
@@ -75,50 +84,46 @@ export default function DrawerComponent({
       >
         <img src={Logo} alt="Logo" className="h-10 w-auto object-contain" />
       </Toolbar>
+
       <Divider />
+
+      <Box sx={{ display: "flex", justifyContent: "center", gap: 1, p: 2 }}>
+        <button onClick={() => changeLang("en")}>EN</button>
+        <button onClick={() => changeLang("tet")}>TET</button>
+      </Box>
+
       <List>
-        <ListComponent url="/" text="Dashboard" icon={<HomeIcon />} />
-        <ListComponent url="/species" text="Species" icon={<ParkIcon />} />
-        <ListComponent url="/Media" text="Media" icon={<FilterIcon />} />
-        <ListComponent url="/Audit" text="Audit" icon={<VerifiedUserIcon />} />
-        <ListComponent url="/Users" text="Users" icon={<GroupIcon />} />
-        <ListComponent url="/Analytics" text="Analytics" icon={<AnalyticsIcon />} />
+        <ListComponent url="/" text={t.dashboard} icon={<HomeIcon />} />
+        <ListComponent url="/species" text={t.species} icon={<ParkIcon />} />
+        <ListComponent url="/Media" text={t.media} icon={<FilterIcon />} />
+        <ListComponent url="/Audit" text={t.audit} icon={<VerifiedUserIcon />} />
+        <ListComponent url="/Users" text={t.users} icon={<GroupIcon />} />
+        <ListComponent url="/Analytics" text={t.analytics} icon={<AnalyticsIcon />} />
       </List>
 
       <Divider />
+
       <List>
         <ListItemButton onClick={handleLogout}>
           <ListItemIcon>
             <VerifiedUserIcon />
           </ListItemIcon>
-          <ListItemText primary="Logout" />
+          <ListItemText primary={t.logout} />
         </ListItemButton>
       </List>
-      {/* <Divider />
-      <List>
-        {["All mail", "Trash", "Spam"].map((text, index) => (
-          <ListItem key={index} disablePadding>
-            <ListItemButton>
-              <ListItemIcon>
-              </ListItemIcon>
-              <ListItemText primary={text} />
-            </ListItemButton>
-          </ListItem>
-        ))}
-      </List> */}
     </div>
   );
 
   return (
     <Box sx={{ display: "flex" }}>
       <CssBaseline />
+
       <AppBar
         position="fixed"
         sx={{
           width: { sm: `calc(100% - ${drawerWidth}px)` },
           ml: { sm: `${drawerWidth}px` },
           backgroundColor: "white",
-          //shadow remove
           boxShadow: "none",
           borderBottom: "1px solid #e0e0e0",
         }}
@@ -133,12 +138,14 @@ export default function DrawerComponent({
           >
             <MenuIcon />
           </IconButton>
+
           <div className="flex flex-1 items-center justify-end gap-4">
-            <IconButton onClick={openMenu} sx={{color: "black"}}>
-              <AccountCircleIcon sx={{fontSize: 36}} />
+            <IconButton onClick={openMenu} sx={{ color: "black" }}>
+              <AccountCircleIcon sx={{ fontSize: 36 }} />
             </IconButton>
+
             <Menu
-            anchorEl={menuTrigger}
+              anchorEl={menuTrigger}
               open={menuOpen}
               onClose={closeMenu}
               anchorOrigin={{
@@ -152,17 +159,17 @@ export default function DrawerComponent({
             >
               <MenuItem
                 onClick={() => {
-                  closeMenu()
-                  handleLogout()
+                  closeMenu();
+                  handleLogout();
                 }}
               >
-                Logout
+                {t.logout}
               </MenuItem>
             </Menu>
-
           </div>
         </Toolbar>
       </AppBar>
+
       <Box
         component="nav"
         sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
@@ -182,12 +189,13 @@ export default function DrawerComponent({
           }}
           slotProps={{
             root: {
-              keepMounted: true, // Better open performance on mobile.
+              keepMounted: true,
             },
           }}
         >
           {drawer}
         </Drawer>
+
         <Drawer
           variant="permanent"
           sx={{
@@ -202,17 +210,8 @@ export default function DrawerComponent({
           {drawer}
         </Drawer>
       </Box>
-      <Box
-        className="w-full"
-        component="main"
-        sx={
-          {
-            //   flexGrow: 1,
-            //   p: 3,
-            //   width: { sm: `calc(100% - ${drawerWidth}px)` },
-          }
-        }
-      >
+
+      <Box className="w-full" component="main">
         <Toolbar />
         {children}
       </Box>
@@ -230,6 +229,7 @@ export function ListComponent({
   icon: React.ReactNode;
 }) {
   const active = window.location.hash;
+
   return (
     <ListItemButton
       component={Link}
