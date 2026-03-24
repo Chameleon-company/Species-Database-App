@@ -47,7 +47,7 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          args: --file=requirements.txt
+          args: --file=requirements.txt --org=fbd7b7eb-23e2-443e-bd4d-cc08b4a918aa --project-name=SPECIES-DATABASE-APP
 
       - name: Run TruffleHog for secrets scanning
         uses: trufflesecurity/trufflehog@main
