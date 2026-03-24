@@ -74,13 +74,13 @@ const t = translations[lang];
         if (!formData.scientificName) {
             setError(t.scientificNameEmpty)
             return
-        } else if (!formData.commonName) {
+        } if (!formData.commonName) {
             setError(t.commonNameEmpty)
             return
-        } else if (!formData.leafType) {
+        } if (!formData.leafType) {
             setError(t.leafTypeEmpty)
             return
-        } else if (!formData.fruitType) {
+        } if (!formData.fruitType) {
             setError(t.fruitTypeEmpty)
             return
         }
@@ -304,6 +304,11 @@ const t = translations[lang];
                         onBlur={() => markTouched('scientificName')}
                         required
                         error={touched.scientificName && !formData.scientificName}
+                        helperText={
+                            touched.scientificName && !formData.scientificName
+                                ? t.scientificNameEmpty
+                                : ""
+                        }
                     />
 
                     <TextField
@@ -314,6 +319,11 @@ const t = translations[lang];
                         onBlur={() => markTouched('commonName')}
                         required
                         error={touched.commonName && !formData.commonName}
+                        helperText={
+                            touched.commonName && !formData.commonName
+                                ? t.commonNameEmpty
+                                : ""
+                        }
                     />
                 </Box>
 
@@ -326,6 +336,11 @@ const t = translations[lang];
                         onBlur={() => markTouched('leafType')}
                         required
                         error={touched.leafType && !formData.leafType}
+                        helperText={
+                            touched.leafType && !formData.leafType
+                                ? t.leafTypeEmpty
+                                : ""
+                        }
                     />
 
                     <TextField
@@ -336,6 +351,11 @@ const t = translations[lang];
                         onBlur={() => markTouched('fruitType')}
                         required
                         error={touched.fruitType && !formData.fruitType}
+                        helperText={
+                            touched.fruitType && !formData.fruitType
+                                ? t.fruitTypeEmpty
+                                : ""
+                        }
                     />
                 </Box>
             </Box>
@@ -471,6 +491,11 @@ const t = translations[lang];
                             onBlur={() => markTouched('commonNameTetum')}
                             required
                             error={touched.commonNameTetum && !formDataTetum.commonNameTetum}
+                            helperText={
+                                touched.commonNameTetum && !formDataTetum.commonNameTetum
+                                    ? t.commonNameEmpty
+                                    : ""
+                            }
                         />
                     </Box>
 
@@ -483,6 +508,11 @@ const t = translations[lang];
                             onBlur={() => markTouched('leafTypeTetum')}
                             required
                             error={touched.leafTypeTetum && !formDataTetum.leafTypeTetum}
+                            helperText={
+                                touched.leafTypeTetum && !formDataTetum.leafTypeTetum
+                                    ? t.leafTypeEmpty
+                                    : ""
+                            }
                         />
 
                         <TextField
@@ -493,6 +523,11 @@ const t = translations[lang];
                             onBlur={() => markTouched('fruitTypeTetum')}
                             required
                             error={touched.fruitTypeTetum && !formDataTetum.fruitTypeTetum}
+                            helperText={
+                                touched.fruitTypeTetum && !formDataTetum.fruitTypeTetum
+                                    ? t.fruitTypeEmpty
+                                    : ""
+                            }
                         />
                     </Box>
 

@@ -28,6 +28,7 @@ export default function AdminLoginForm() {
 
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
+  const [touched, setTouched] = useState<{ name?: boolean; password?: boolean }>({})
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -176,16 +177,30 @@ export default function AdminLoginForm() {
             fullWidth
             value={name}
             onChange={(e) => setName(e.target.value)}
+            onBlur={() => setTouched((prev) => ({ ...prev, name: true }))}
             sx={{ mb: 2 }}
+            error={touched.name && !name}
+            helperText={
+                touched.name && !name
+                    ? t.nameRequired
+                    : ""
+            }
           />
 
           <TextField
-            label={t.password}
-            type="password"
-            fullWidth
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            sx={{ mb: 3 }}
+          label={t.password}
+          type="password"
+          fullWidth
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          onBlur={() => setTouched((prev) => ({ ...prev, password: true }))}
+          sx={{ mb: 3 }}
+          error={touched.password && !password}
+          helperText={
+              touched.password && !password
+                  ? t.passwordRequired
+                  : ""
+          }
           />
 
           <Button
