@@ -82,17 +82,29 @@ def get_bundle():
     #getting english species
     en_resp = supabase.table("species_en").select("*").execute()
     if en_resp.data is None:
-        return jsonify({"error": "couldnt load species_en"}), 500
+                return jsonify({
+            "error": "sync failed",
+            "reason":"Fail to fetch the data from the species_en",
+            "details":en_resp.error.message if en_resp.error else None
+            }), 500
 
     #get tetum species
     tet_resp = supabase.table("species_tet").select("*").execute()
     if tet_resp.data is None:
-        return jsonify({"error": "couldnt load species_tet"}), 500
+                return jsonify({
+            "error": "sync failed",
+            "reason":"Fail to fetch the data from the species_tet",
+            "details":tet_resp.error.message if tet_resp.error else None
+            }), 500
 
     #get media entries
     media_resp = supabase.table("media").select("*").execute()
     if media_resp.data is None:
-        return jsonify({"error": "couldnt load media"}), 500
+       return jsonify({
+            "error": "sync failed",
+            "reason":"Fail to fetch the data from the media",
+            "details":media_resp.error.message if media_resp.error else None
+            }), 500
 
     #retrunign it all as one bundle
     return jsonify({
