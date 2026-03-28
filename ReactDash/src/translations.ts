@@ -152,6 +152,9 @@ export const translations = {
       users: "Users",
       analytics: "Analytics",
       logout: "Logout",
+      passwordRequired: "Password is required",
+
+
     },
   
     tet: {
@@ -302,5 +305,6 @@ export const translations = {
       users: "Utilizador",
       analytics: "Analítika",
       logout: "Sai",
+      passwordRequired: "Password presiza",
     },
   };
