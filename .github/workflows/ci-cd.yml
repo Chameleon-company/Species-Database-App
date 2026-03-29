@@ -2,9 +2,9 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build-and-test:
@@ -28,12 +28,12 @@ jobs:
       - name: Build app
         run: npm run build
 
-        name: Run Snyk test
+      # ✅ FIX: Proper separate step
+      - name: Run Snyk test
         run: snyk test --org=fbd7b7eb-23e2-443e-bd4d-cc08b4a918aa
         env:
-            SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
-  # OPTIONAL: Only needed if you want auto-deploy when main is updated
   deploy:
     needs: build-and-test
     runs-on: ubuntu-latest
