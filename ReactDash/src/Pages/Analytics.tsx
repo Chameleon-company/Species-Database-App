@@ -17,6 +17,17 @@ import ImageIcon from "@mui/icons-material/Image";
 import { adminFetch } from "../utils/adminFetch";
 import { translations } from "../translations";
 
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  CartesianGrid,
+  ResponsiveContainer,
+} from "recharts";
+
 type Overview = {
   total_users: number;
   active_users: number;
@@ -67,6 +78,24 @@ export default function Analytics() {
     );
   }
 
+  // Demo chart data for time-based analytics
+  // Existing cards and user activity still use real backend data
+  const activeUsersTrend = [
+    { date: "Mon", users: 10 },
+    { date: "Tue", users: 11 },
+    { date: "Wed", users: 9 },
+    { date: "Thu", users: 13 },
+    { date: "Fri", users: 14 },
+  ];
+
+  const loginFrequencyTrend = [
+    { date: "Mon", logins: 2 },
+    { date: "Tue", logins: 4 },
+    { date: "Wed", logins: 1 },
+    { date: "Thu", logins: 3 },
+    { date: "Fri", logins: 5 },
+  ];
+
   return (
     <Box p={5}>
       {/* Language buttons */}
@@ -92,12 +121,86 @@ export default function Analytics() {
         gap={3}
         mb={6}
       >
-        <StatCard icon={<PeopleIcon />} label={t.totalUsers} value={overview?.total_users} />
-        <StatCard icon={<CheckCircleIcon />} label={t.activeUsers} value={overview?.active_users} />
-        <StatCard icon={<LoginIcon />} label={t.totalLogins} value={overview?.total_logins} />
-        <StatCard icon={<TimerIcon />} label={t.avgSession} value={overview?.average_session_duration} />
-        <StatCard icon={<SpaIcon />} label={t.totalSpecies} value={overview?.total_species} />
-        <StatCard icon={<ImageIcon />} label={t.speciesWithMedia} value={overview?.species_with_media} />
+        <StatCard
+          icon={<PeopleIcon />}
+          label={t.totalUsers}
+          value={overview?.total_users}
+        />
+        <StatCard
+          icon={<CheckCircleIcon />}
+          label={t.activeUsers}
+          value={overview?.active_users}
+        />
+        <StatCard
+          icon={<LoginIcon />}
+          label={t.totalLogins}
+          value={overview?.total_logins}
+        />
+        <StatCard
+          icon={<TimerIcon />}
+          label={t.avgSession}
+          value={overview?.average_session_duration}
+        />
+        <StatCard
+          icon={<SpaIcon />}
+          label={t.totalSpecies}
+          value={overview?.total_species}
+        />
+        <StatCard
+          icon={<ImageIcon />}
+          label={t.speciesWithMedia}
+          value={overview?.species_with_media}
+        />
+      </Box>
+
+      {/* CHARTS */}
+      <Box
+        display="grid"
+        gridTemplateColumns="repeat(auto-fit, minmax(320px, 1fr))"
+        gap={3}
+        mb={6}
+      >
+        <Card elevation={4}>
+          <CardContent>
+            <Typography variant="h6" align="center" gutterBottom>
+              Active Users Over Time
+            </Typography>
+
+            <Box sx={{ width: "100%", height: 300 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={activeUsersTrend}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="users" stroke="#4CAF50" />
+                </LineChart>
+              </ResponsiveContainer>
+            </Box>
+          </CardContent>
+        </Card>
+
+        <Card elevation={4}>
+          <CardContent>
+            <Typography variant="h6" align="center" gutterBottom>
+              Login Frequency
+            </Typography>
+
+            <Box sx={{ width: "100%", height: 300 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={loginFrequencyTrend}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="logins" stroke="#1976d2" />
+                </LineChart>
+              </ResponsiveContainer>
+            </Box>
+          </CardContent>
+        </Card>
       </Box>
 
       <Divider sx={{ mb: 4, borderColor: "white" }} />
@@ -122,8 +225,12 @@ export default function Analytics() {
 
               <Divider sx={{ my: 1 }} />
 
-              <Typography>{t.logins}: {user.login_count}</Typography>
-              <Typography>{t.totalDuration}: {user.total_duration} min</Typography>
+              <Typography>
+                {t.logins}: {user.login_count}
+              </Typography>
+              <Typography>
+                {t.totalDuration}: {user.total_duration} min
+              </Typography>
               <Typography>
                 {t.avgDuration}: {user.average_duration.toFixed(1)} min
               </Typography>
