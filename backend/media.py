@@ -224,3 +224,193 @@ def register_media_routes(app, supabase):
             "status": "deleted",
             "message": "Media removed"
         }), 200
+
+
+    ##### SEED GERMINATION VIDEOS #####
+
+    @app.post("/api/species/<int:species_id>/videos")
+    def add_species_video(species_id):
+        """
+        registers a video url for a species seed germination section
+        videos live in google drive / s3, we just store the link
+        """
+
+        #admin only
+        admin_id, err = get_admin_user(supabase)
+        if err:
+            return jsonify({"error": err[0]}), err[1]
+
+        data = request.get_json(silent=True)
+        if not data:
+            return jsonify({"error": "missing JSON body"}), 400
+
+        download_link = data.get("download_link")
+        if not download_link:
+            return jsonify({"error": "download_link is required"}), 400
+
+        #streaming link defaults to same as download if not given
+        streaming_link = data.get("streaming_link", download_link)
+        alt_text = data.get("alt_text", "")
+
+        #make sure species actually exists first
+        species_resp = (
+            supabase.table("species_en")
+            .select("species_id, scientific_name")
+            .eq("species_id", species_id)
+            .limit(1)
+            .execute()
+        )
+        if not species_resp.data:
+            return jsonify({"error": f"species {species_id} not found"}), 404
+
+        species_name = species_resp.data[0]["scientific_name"]
+
+        #dont register same video twice for same species
+        duplicate = (
+            supabase.table("media")
+            .select("media_id")
+            .eq("species_id", species_id)
+            .eq("media_type", "video")
+            .eq("download_link", download_link)
+            .limit(1)
+            .execute()
+        )
+        if duplicate.data:
+            return jsonify({"error": "video already registered for this species"}), 409
+
+        res = (
+            supabase.table("media")
+            .insert({
+                "species_id": species_id,
+                "species_name": species_name,
+                "media_type": "video",
+                "download_link": download_link,
+                "streaming_link": streaming_link,
+                "alt_text": alt_text
+            })
+            .execute()
+        )
+
+        media_id = res.data[0]["media_id"]
+        log_change(supabase, "media", media_id, "CREATE")
+
+        return jsonify({
+            "status": "success",
+            "message": "video registered",
+            "media_id": media_id
+        }), 201
+
+
+    @app.get("/api/species/<int:species_id>/videos")
+    def get_species_videos(species_id):
+        """
+        returns all videos for a species
+        no auth needed - used by the user app to show seed germination videos
+        returns empty list if species has no videos yet
+        """
+
+        #check species exists
+        species_resp = (
+            supabase.table("species_en")
+            .select("species_id")
+            .eq("species_id", species_id)
+            .limit(1)
+            .execute()
+        )
+        if not species_resp.data:
+            return jsonify({"error": f"species {species_id} not found"}), 404
+
+        videos = (
+            supabase.table("media")
+            .select("media_id, species_id, species_name, download_link, streaming_link, alt_text")
+            .eq("species_id", species_id)
+            .eq("media_type", "video")
+            .order("media_id", desc=False)
+            .execute()
+        )
+
+        return jsonify({
+            "species_id": species_id,
+            "videos": videos.data
+        }), 200
+
+
+    @app.put("/api/media/videos/<int:media_id>")
+    def update_species_video(media_id):
+        """
+        updates an existing video record - download link, streaming link or alt text
+        """
+
+        #admin only
+        admin_id, err = get_admin_user(supabase)
+        if err:
+            return jsonify({"error": err[0]}), err[1]
+
+        #make sure its actually a video record
+        existing = (
+            supabase.table("media")
+            .select("media_id, media_type")
+            .eq("media_id", media_id)
+            .limit(1)
+            .execute()
+        )
+        if not existing.data:
+            return jsonify({"error": "video not found"}), 404
+        if existing.data[0]["media_type"] != "video":
+            return jsonify({"error": "media record is not a video"}), 400
+
+        data = request.get_json(silent=True)
+        if not data:
+            return jsonify({"error": "missing JSON body"}), 400
+
+        update_fields = {}
+        if "download_link" in data:
+            update_fields["download_link"] = data["download_link"]
+            #keep streaming link in sync unless caller overrides separately
+            update_fields["streaming_link"] = data["download_link"]
+        if "streaming_link" in data:
+            update_fields["streaming_link"] = data["streaming_link"]
+        if "alt_text" in data:
+            update_fields["alt_text"] = data["alt_text"]
+
+        if not update_fields:
+            return jsonify({"error": "no fields to update"}), 400
+
+        supabase.table("media").update(update_fields).eq("media_id", media_id).execute()
+        log_change(supabase, "media", media_id, "UPDATE")
+
+        return jsonify({"status": "updated"}), 200
+
+
+    @app.delete("/api/media/videos/<int:media_id>")
+    def delete_species_video(media_id):
+        """
+        deletes a video record from the db
+        doesnt remove the actual file from storage, just the metadata
+        """
+
+        #admin only
+        admin_id, err = get_admin_user(supabase)
+        if err:
+            return jsonify({"error": err[0]}), err[1]
+
+        #make sure its a video before deleting
+        existing = (
+            supabase.table("media")
+            .select("media_id, media_type")
+            .eq("media_id", media_id)
+            .limit(1)
+            .execute()
+        )
+        if not existing.data:
+            return jsonify({"error": "video not found"}), 404
+        if existing.data[0]["media_type"] != "video":
+            return jsonify({"error": "media record is not a video"}), 400
+
+        supabase.table("media").delete().eq("media_id", media_id).execute()
+        log_change(supabase, "media", media_id, "DELETE")
+
+        return jsonify({
+            "status": "deleted",
+            "message": "video record removed"
+        }), 200
