@@ -340,3 +340,57 @@ def register_auth_routes(app, supabase):
             "access_token": token,
             "expires_in": 2400
         }), 200
+
+    @app.post("/api/auth/admin-logout")
+    def admin_logout():
+        """
+        admin logout endpoint
+        - requires a valid admin token in the Authorization header
+        - revokes the current admin session
+        - prevents that token being used again
+        """
+
+        # Get the admin token from the Authorization header
+        token = request.headers.get("Authorization")
+
+        # If no token is provided reject the request
+        if not token:
+            return jsonify({"error": "missing admin token"}), 401
+
+        # Check token is in admin_sessions table
+        sess_resp = (
+            supabase.table("admin_sessions")
+            .select("user_id, revoked, expires_at")
+            .eq("access_token", token)
+            .limit(1)
+            .execute()
+        )
+
+        # If no matching session is found = token invalid
+        if not sess_resp.data:
+            return jsonify({"error": "invalid token"}), 401
+
+        # Extract the first matching session row
+        session = sess_resp.data[0]
+
+        # Check if token is already revoked, if yes admin already logged out
+        if session["revoked"]:
+            return jsonify({"error": "session already revoked"}), 401
+
+        # Check if token has expired
+        expires_at = datetime.fromisoformat(session["expires_at"])
+        #Compare current time (UTC) with expiry time
+        if datetime.now(timezone.utc) > expires_at:
+            return jsonify({"error": "token expired"}), 401
+
+        # Revoke the session
+        (
+            supabase.table("admin_sessions")
+            .update({"revoked": True})
+            .eq("access_token", token)
+            .execute()
+        )
+        # Return success response to frontend
+        return jsonify({
+            "message": "admin logout successful"
+            }), 200
