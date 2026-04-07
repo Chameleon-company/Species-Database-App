@@ -4,6 +4,7 @@ import requests
 import json
 from googletrans import Translator
 from dotenv import load_dotenv
+import time
 
 load_dotenv()
 
@@ -29,10 +30,19 @@ async def translate_to_tetum(text):
     if not text or text.strip() == "":
         return ""
     try:
-        result = translator.translate(text, dest='id')
-        return result.text
-    except Exception:
-        return text
+        result = await translator.translate(text, dest="tet")
+        translated = result.text
+
+        if translated.strip().lower() == text.strip().lower():
+            retry_result = await translator.translate(text, dest="tet")
+            return retry_result.text
+
+        return translated
+
+    except Exception as e:
+        print("Translation failed:", e)
+        return ""
+
 
 def normalize(col):
     return col.strip().lower().replace(" ", "_")
@@ -95,6 +105,8 @@ async def process_file(file_path: str, translate: bool = True):
                     row_data[col] = row_raw[col]  
                 else:
                     row_data[col] = await translate_to_tetum(row_raw[col])
+                time.sleep(0.2)
+
         else:
             row_data = row_raw
         

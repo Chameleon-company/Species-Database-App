@@ -3,7 +3,8 @@ venv/
 .venv/
 __pycache__/
 .env
-
+backend/.sonar/
 node_modules/
 *.tsbuildinfo
 testData.xlsx
+.DS_Store
