@@ -1,0 +1,442 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testng-results ignored="0" total="19" passed="14" failed="5" skipped="0">
+  <reporter-output>
+  </reporter-output>
+  <suite started-at="2026-01-19T18:24:15 AEDT" name="Default suite" finished-at="2026-01-19T18:24:40 AEDT" duration-ms="25340">
+    <groups>
+      <group name="cucumber">
+        <method signature="AbstractTestNGCucumberTests.runScenario(io.cucumber.testng.PickleWrapper,io.cucumber.testng.FeatureWrapper)[pri:0, instance:runners.TestRunner@77888435]" name="runScenario" class="io.cucumber.testng.AbstractTestNGCucumberTests"/>
+      </group> <!-- cucumber -->
+    </groups>
+    <test started-at="2026-01-19T18:24:15 AEDT" name="Default test" finished-at="2026-01-19T18:24:40 AEDT" duration-ms="25340">
+      <class name="runners.TestRunner">
+        <test-method is-config="true" signature="setUpClass(org.testng.ITestContext)[pri:0, instance:runners.TestRunner@77888435]" started-at="2026-01-19T18:24:15 AEDT" name="setUpClass" finished-at="2026-01-19T18:24:15 AEDT" duration-ms="554" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[org.testng.TestRunner@6723610b]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setUpClass -->
+        <test-method signature="runScenario(io.cucumber.testng.PickleWrapper,io.cucumber.testng.FeatureWrapper)[pri:0, instance:runners.TestRunner@77888435]" started-at="2026-01-19T18:24:15 AEDT" name="runScenario" description="Runs Cucumber Scenarios" data-provider="scenarios" finished-at="2026-01-19T18:24:29 AEDT" duration-ms="13173" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA["Default A-Z order and All selected"]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA["Home page plant listing and filters"]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- runScenario -->
+        <test-method signature="runScenario(io.cucumber.testng.PickleWrapper,io.cucumber.testng.FeatureWrapper)[pri:0, instance:runners.TestRunner@77888435]" started-at="2026-01-19T18:24:29 AEDT" name="runScenario" description="Runs Cucumber Scenarios" data-provider="scenarios" finished-at="2026-01-19T18:24:31 AEDT" duration-ms="2522" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA["Sort plants Z-A"]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA["Home page plant listing and filters"]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- runScenario -->
+        <test-method signature="runScenario(io.cucumber.testng.PickleWrapper,io.cucumber.testng.FeatureWrapper)[pri:0, instance:runners.TestRunner@77888435]" started-at="2026-01-19T18:24:31 AEDT" name="runScenario" description="Runs Cucumber Scenarios" data-provider="scenarios" finished-at="2026-01-19T18:24:32 AEDT" duration-ms="798" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA["Leaf Type - Simple"]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA["Home page plant listing and filters"]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- runScenario -->
+        <test-method signature="runScenario(io.cucumber.testng.PickleWrapper,io.cucumber.testng.FeatureWrapper)[pri:0, instance:runners.TestRunner@77888435]" started-at="2026-01-19T18:24:32 AEDT" name="runScenario" description="Runs Cucumber Scenarios" data-provider="scenarios" finished-at="2026-01-19T18:24:33 AEDT" duration-ms="841" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA["Leaf Type - Single"]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA["Home page plant listing and filters"]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- runScenario -->
+        <test-method signature="runScenario(io.cucumber.testng.PickleWrapper,io.cucumber.testng.FeatureWrapper)[pri:0, instance:runners.TestRunner@77888435]" started-at="2026-01-19T18:24:33 AEDT" name="runScenario" description="Runs Cucumber Scenarios" data-provider="scenarios" finished-at="2026-01-19T18:24:33 AEDT" duration-ms="566" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA["Leaf Type - Double"]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA["Home page plant listing and filters"]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- runScenario -->
+        <test-method signature="runScenario(io.cucumber.testng.PickleWrapper,io.cucumber.testng.FeatureWrapper)[pri:0, instance:runners.TestRunner@77888435]" started-at="2026-01-19T18:24:33 AEDT" name="runScenario" description="Runs Cucumber Scenarios" data-provider="scenarios" finished-at="2026-01-19T18:24:34 AEDT" duration-ms="665" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA["Leaf Type - Triple"]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA["Home page plant listing and filters"]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- runScenario -->
+        <test-method signature="runScenario(io.cucumber.testng.PickleWrapper,io.cucumber.testng.FeatureWrapper)[pri:0, instance:runners.TestRunner@77888435]" started-at="2026-01-19T18:24:34 AEDT" name="runScenario" description="Runs Cucumber Scenarios" data-provider="scenarios" finished-at="2026-01-19T18:24:35 AEDT" duration-ms="510" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA["Leaf Type - Palmately Compound"]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA["Home page plant listing and filters"]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- runScenario -->
+        <test-method signature="runScenario(io.cucumber.testng.PickleWrapper,io.cucumber.testng.FeatureWrapper)[pri:0, instance:runners.TestRunner@77888435]" started-at="2026-01-19T18:24:35 AEDT" name="runScenario" description="Runs Cucumber Scenarios" data-provider="scenarios" finished-at="2026-01-19T18:24:36 AEDT" duration-ms="928" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA["Fruit Type - Drupe"]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA["Home page plant listing and filters"]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- runScenario -->
+        <test-method signature="runScenario(io.cucumber.testng.PickleWrapper,io.cucumber.testng.FeatureWrapper)[pri:0, instance:runners.TestRunner@77888435]" started-at="2026-01-19T18:24:36 AEDT" name="runScenario" description="Runs Cucumber Scenarios" data-provider="scenarios" finished-at="2026-01-19T18:24:36 AEDT" duration-ms="622" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA["Fruit Type - Capsule"]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA["Home page plant listing and filters"]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- runScenario -->
+        <test-method signature="runScenario(io.cucumber.testng.PickleWrapper,io.cucumber.testng.FeatureWrapper)[pri:0, instance:runners.TestRunner@77888435]" started-at="2026-01-19T18:24:36 AEDT" name="runScenario" description="Runs Cucumber Scenarios" data-provider="scenarios" finished-at="2026-01-19T18:24:37 AEDT" duration-ms="684" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA["Fruit Type - Follicle"]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA["Home page plant listing and filters"]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- runScenario -->
+        <test-method signature="runScenario(io.cucumber.testng.PickleWrapper,io.cucumber.testng.FeatureWrapper)[pri:0, instance:runners.TestRunner@77888435]" started-at="2026-01-19T18:24:37 AEDT" name="runScenario" description="Runs Cucumber Scenarios" data-provider="scenarios" finished-at="2026-01-19T18:24:37 AEDT" duration-ms="510" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA["Fruit Type - Pod"]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA["Home page plant listing and filters"]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- runScenario -->
+        <test-method signature="runScenario(io.cucumber.testng.PickleWrapper,io.cucumber.testng.FeatureWrapper)[pri:0, instance:runners.TestRunner@77888435]" started-at="2026-01-19T18:24:37 AEDT" name="runScenario" description="Runs Cucumber Scenarios" data-provider="scenarios" finished-at="2026-01-19T18:24:38 AEDT" duration-ms="803" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA["Open species details"]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA["Home page plant listing and filters"]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- runScenario -->
+        <test-method signature="runScenario(io.cucumber.testng.PickleWrapper,io.cucumber.testng.FeatureWrapper)[pri:0, instance:runners.TestRunner@77888435]" started-at="2026-01-19T18:24:38 AEDT" name="runScenario" description="Runs Cucumber Scenarios" data-provider="scenarios" finished-at="2026-01-19T18:24:39 AEDT" duration-ms="478" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA["Default language selection on launch"]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA["Language selection screen"]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- runScenario -->
+        <test-method signature="runScenario(io.cucumber.testng.PickleWrapper,io.cucumber.testng.FeatureWrapper)[pri:0, instance:runners.TestRunner@77888435]" started-at="2026-01-19T18:24:39 AEDT" name="runScenario" description="Runs Cucumber Scenarios" data-provider="scenarios" finished-at="2026-01-19T18:24:39 AEDT" duration-ms="87" status="FAIL">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA["Change language from ENGLISH AU to Tetum"]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA["Language selection screen"]]>
+              </value>
+            </param>
+          </params>
+          <exception class="io.cucumber.testng.UndefinedStepException">
+            <message>
+              <![CDATA[The step 'the user selects "Tetum" from All Languages' is undefined.
+You can implement this step using the snippet(s) below:
+
+@When("the user selects {string} from All Languages")
+public void the_user_selects_from_all_languages(String string) {
+    // Write code here that turns the phrase above into concrete actions
+    throw new io.cucumber.java.PendingException();
+}
+]]>
+            </message>
+            <full-stacktrace>
+              <![CDATA[io.cucumber.testng.UndefinedStepException: The step 'the user selects "Tetum" from All Languages' is undefined.
+You can implement this step using the snippet(s) below:
+
+@When("the user selects {string} from All Languages")
+public void the_user_selects_from_all_languages(String string) {
+    // Write code here that turns the phrase above into concrete actions
+    throw new io.cucumber.java.PendingException();
+}
+
+at io.cucumber.core.runtime.TestCaseResultObserver.assertTestCasePassed(TestCaseResultObserver.java:69)
+at io.cucumber.testng.TestCaseResultObserver.assertTestCasePassed(TestCaseResultObserver.java:23)
+at io.cucumber.testng.TestNGCucumberRunner.lambda$runScenario$1(TestNGCucumberRunner.java:133)
+at io.cucumber.core.runtime.CucumberExecutionContext.lambda$runTestCase$5(CucumberExecutionContext.java:137)
+at io.cucumber.core.runtime.RethrowingThrowableCollector.executeAndThrow(RethrowingThrowableCollector.java:23)
+at io.cucumber.core.runtime.CucumberExecutionContext.runTestCase(CucumberExecutionContext.java:137)
+at io.cucumber.testng.TestNGCucumberRunner.runScenario(TestNGCucumberRunner.java:129)
+at io.cucumber.testng.AbstractTestNGCucumberTests.runScenario(AbstractTestNGCucumberTests.java:35)
+at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+at org.testng.internal.invokers.MethodInvocationHelper.invokeMethod(MethodInvocationHelper.java:139)
+at org.testng.internal.invokers.TestInvoker.invokeMethod(TestInvoker.java:664)
+at org.testng.internal.invokers.TestInvoker.invokeTestMethod(TestInvoker.java:228)
+at org.testng.internal.invokers.MethodRunner.runInSequence(MethodRunner.java:63)
+at org.testng.internal.invokers.TestInvoker$MethodInvocationAgent.invoke(TestInvoker.java:961)
+at org.testng.internal.invokers.TestInvoker.invokeTestMethods(TestInvoker.java:201)
+at org.testng.internal.invokers.TestMethodWorker.invokeTestMethods(TestMethodWorker.java:148)
+at org.testng.internal.invokers.TestMethodWorker.run(TestMethodWorker.java:128)
+at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+at org.testng.TestRunner.privateRun(TestRunner.java:819)
+at org.testng.TestRunner.run(TestRunner.java:619)
+at org.testng.SuiteRunner.runTest(SuiteRunner.java:443)
+at org.testng.SuiteRunner.runSequentially(SuiteRunner.java:437)
+at org.testng.SuiteRunner.privateRun(SuiteRunner.java:397)
+at org.testng.SuiteRunner.run(SuiteRunner.java:336)
+at org.testng.SuiteRunnerWorker.runSuite(SuiteRunnerWorker.java:52)
+at org.testng.SuiteRunnerWorker.run(SuiteRunnerWorker.java:95)
+at org.testng.TestNG.runSuitesSequentially(TestNG.java:1301)
+at org.testng.TestNG.runSuitesLocally(TestNG.java:1228)
+at org.testng.TestNG.runSuites(TestNG.java:1134)
+at org.testng.TestNG.run(TestNG.java:1101)
+at org.testng.remote.AbstractRemoteTestNG.run(AbstractRemoteTestNG.java:115)
+at org.testng.remote.RemoteTestNG.initAndRun(RemoteTestNG.java:293)
+at org.testng.remote.RemoteTestNG.main(RemoteTestNG.java:91)
+]]>
+            </full-stacktrace>
+          </exception> <!-- io.cucumber.testng.UndefinedStepException -->
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- runScenario -->
+        <test-method signature="runScenario(io.cucumber.testng.PickleWrapper,io.cucumber.testng.FeatureWrapper)[pri:0, instance:runners.TestRunner@77888435]" started-at="2026-01-19T18:24:39 AEDT" name="runScenario" description="Runs Cucumber Scenarios" data-provider="scenarios" finished-at="2026-01-19T18:24:39 AEDT" duration-ms="532" status="FAIL">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA["Navigate to registration page"]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA["Login and registration"]]>
+              </value>
+            </param>
+          </params>
+          <exception class="java.lang.AssertionError">
+            <message>
+              <![CDATA[Sign In is not interactable in current UI implementation]]>
+            </message>
+            <full-stacktrace>
+              <![CDATA[java.lang.AssertionError: Sign In is not interactable in current UI implementation
+at org.testng.Assert.fail(Assert.java:111)
+at stepdefinitions.LoginSteps.the_user_clicks_on(LoginSteps.java:33)
+at ✽.the user clicks on "Sign In"(file:///Users/tarunkaushik/selenium-workspace/Species_App/src/test/resources/features/login.feature:12)
+]]>
+            </full-stacktrace>
+          </exception> <!-- java.lang.AssertionError -->
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- runScenario -->
+        <test-method signature="runScenario(io.cucumber.testng.PickleWrapper,io.cucumber.testng.FeatureWrapper)[pri:0, instance:runners.TestRunner@77888435]" started-at="2026-01-19T18:24:39 AEDT" name="runScenario" description="Runs Cucumber Scenarios" data-provider="scenarios" finished-at="2026-01-19T18:24:40 AEDT" duration-ms="380" status="FAIL">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA["Email validation error"]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA["Login and registration"]]>
+              </value>
+            </param>
+          </params>
+          <exception class="java.lang.AssertionError">
+            <message>
+              <![CDATA[Email flow not implemented yet]]>
+            </message>
+            <full-stacktrace>
+              <![CDATA[java.lang.AssertionError: Email flow not implemented yet
+at org.testng.Assert.fail(Assert.java:111)
+at stepdefinitions.LoginSteps.the_user_clicks_on_without_entering_email(LoginSteps.java:39)
+at ✽.the user clicks on "Continue with Email" without entering email(file:///Users/tarunkaushik/selenium-workspace/Species_App/src/test/resources/features/login.feature:16)
+]]>
+            </full-stacktrace>
+          </exception> <!-- java.lang.AssertionError -->
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- runScenario -->
+        <test-method signature="runScenario(io.cucumber.testng.PickleWrapper,io.cucumber.testng.FeatureWrapper)[pri:0, instance:runners.TestRunner@77888435]" started-at="2026-01-19T18:24:40 AEDT" name="runScenario" description="Runs Cucumber Scenarios" data-provider="scenarios" finished-at="2026-01-19T18:24:40 AEDT" duration-ms="112" status="FAIL">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA["Email input reveals password field"]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA["Login and registration"]]>
+              </value>
+            </param>
+          </params>
+          <exception class="java.lang.AssertionError">
+            <message>
+              <![CDATA[Email input not implemented yet]]>
+            </message>
+            <full-stacktrace>
+              <![CDATA[java.lang.AssertionError: Email input not implemented yet
+at org.testng.Assert.fail(Assert.java:111)
+at stepdefinitions.LoginSteps.the_user_enters_email(LoginSteps.java:44)
+at ✽.the user enters email(file:///Users/tarunkaushik/selenium-workspace/Species_App/src/test/resources/features/login.feature:20)
+]]>
+            </full-stacktrace>
+          </exception> <!-- java.lang.AssertionError -->
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- runScenario -->
+        <test-method signature="runScenario(io.cucumber.testng.PickleWrapper,io.cucumber.testng.FeatureWrapper)[pri:0, instance:runners.TestRunner@77888435]" started-at="2026-01-19T18:24:40 AEDT" name="runScenario" description="Runs Cucumber Scenarios" data-provider="scenarios" finished-at="2026-01-19T18:24:40 AEDT" duration-ms="111" status="FAIL">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA["Sign up with Google"]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA["Login and registration"]]>
+              </value>
+            </param>
+          </params>
+          <exception class="java.lang.AssertionError">
+            <message>
+              <![CDATA[Sign Up With Google is not interactable in current UI implementation]]>
+            </message>
+            <full-stacktrace>
+              <![CDATA[java.lang.AssertionError: Sign Up With Google is not interactable in current UI implementation
+at org.testng.Assert.fail(Assert.java:111)
+at stepdefinitions.LoginSteps.the_user_clicks_on(LoginSteps.java:33)
+at ✽.the user clicks on "Sign Up With Google"(file:///Users/tarunkaushik/selenium-workspace/Species_App/src/test/resources/features/login.feature:25)
+]]>
+            </full-stacktrace>
+          </exception> <!-- java.lang.AssertionError -->
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- runScenario -->
+        <test-method signature="runScenario(io.cucumber.testng.PickleWrapper,io.cucumber.testng.FeatureWrapper)[pri:0, instance:runners.TestRunner@77888435]" started-at="2026-01-19T18:24:40 AEDT" name="runScenario" description="Runs Cucumber Scenarios" data-provider="scenarios" finished-at="2026-01-19T18:24:40 AEDT" duration-ms="311" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA["Continue as guest"]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA["Login and registration"]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- runScenario -->
+        <test-method is-config="true" signature="tearDownClass()[pri:0, instance:runners.TestRunner@77888435]" started-at="2026-01-19T18:24:40 AEDT" name="tearDownClass" finished-at="2026-01-19T18:24:40 AEDT" duration-ms="32" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- tearDownClass -->
+      </class> <!-- runners.TestRunner -->
+    </test> <!-- Default test -->
+  </suite> <!-- Default suite -->
+</testng-results>

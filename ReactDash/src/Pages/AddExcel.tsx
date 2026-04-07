@@ -1,40 +1,89 @@
-import { useState, useRef } from "react";
-import TheDrawer from "../Components/drawer";
+import React, { useState, useRef, type DragEvent } from "react";
+import {
+  Upload,
+  FileSpreadsheet,
+  CheckCircle2,
+  AlertCircle,
+  X,
+} from "lucide-react";
+import { adminFetch } from "../utils/adminFetch";
+import { translations } from "../translations";
 
-export function AddExcel() {
-  const [file, setFile] = useState<File | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+interface UploadedFile {
+  file: File;
+  status: "uploading" | "success" | "error";
+  message?: string;
+}
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
+export default function AddExcel() {
+  const API_URL = import.meta.env.VITE_API_BASE;
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFile(e.target.files?.[0] ?? null);
-    setMessage("");
-    setError("");
+  const [lang, setLang] = useState<"en" | "tet">(
+    (localStorage.getItem("lang") as "en" | "tet") || "en"
+  );
+  const t = translations[lang];
+
+  const changeLang = (newLang: "en" | "tet") => {
+    localStorage.setItem("lang", newLang);
+    setLang(newLang);
   };
 
-  const handleButtonClick = () => {
-    if (!file) {
-      fileInputRef.current?.click();
-    } else {
-      handleUpload();
+  const [dragActive, setDragActive] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState<UploadedFile | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleDrag = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
     }
   };
 
-  const handleUpload = async () => {
-    if (!file) return;
+  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      handleFile(e.target.files[0]);
+    }
+  };
+
+  const handleFile = async (file: File) => {
+    const validExtensions = [".xlsx", ".xls"];
+    const fileExtension = file.name
+      .substring(file.name.lastIndexOf("."))
+      .toLowerCase();
+
+    if (!validExtensions.includes(fileExtension)) {
+      setUploadedFile({
+        file,
+        status: "error",
+        message: t.onlyExcelAllowed,
+      });
+      return;
+    }
 
     const formData = new FormData();
     formData.append("file", file);
 
-    setLoading(true);
-    setMessage("");
-    setError("");
-
     try {
-      const response = await fetch("http://127.0.0.1:5000/upload-species", {
+      setUploadedFile({
+        file,
+        status: "uploading",
+        message: t.processingFile,
+      });
+
+      const response = await adminFetch(`${API_URL}/upload-species`, {
         method: "POST",
         body: formData,
       });
@@ -42,97 +91,107 @@ export function AddExcel() {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || "Upload failed");
+        throw new Error(result.error || t.uploadFailed);
       }
 
-      setMessage(`✅ Upload successful! ${result.rows_inserted ?? ""}`);
-      setFile(null);
-    } catch (err) {
-      setError(
-        "❌ Upload failed. Please check the file format. Error: " + { err }
-      );
-    } finally {
-      setLoading(false);
+      setUploadedFile({
+        file,
+        status: "success",
+        message: t.uploadSuccess,
+      });
+    } catch (err: any) {
+      setUploadedFile({
+        file,
+        status: "error",
+        message: err?.message || t.uploadFailed,
+      });
+    }
+  };
+
+  const onButtonClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const removeFile = () => {
+    setUploadedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
 
   return (
     <>
-      <TheDrawer />
-      <h1 style={{ marginBottom: "16px" }}>Upload Species Excel</h1>
-      <div
-        style={{
-          minHeight: "calc(100vh - 64px)",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        <div
-          style={{
-            width: "100%",
-            maxWidth: "520px",
-            padding: "40px",
-            textAlign: "center",
-            borderRadius: "12px",
-            backgroundColor: "#f9fafb",
-            boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
-          }}
-        >
-          <p style={{ color: "#555", lineHeight: "1.6", marginBottom: "32px" }}>
-            Please upload an <strong>.xlsx</strong> file containing plant
-            species data.
-            <br />
-            The file must follow the predefined column format.
-            <br />
-            <br />
-            <em>Only Excel (.xlsx) files are supported.</em>
+      <div className="flex justify-between mb-4 items-center">
+        <h2 className="text-3xl font-bold">{t.addExcel}</h2>
+
+        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          <button onClick={() => changeLang("en")}>EN</button>
+          <button onClick={() => changeLang("tet")}>TET</button>
+        </div>
+      </div>
+
+      <div className="w-full mx-auto p-5">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold mb-3">
+            {t.uploadTitle}
+          </h1>
+          <p className="text-gray-600">
+            {t.uploadDescription}
           </p>
+        </div>
 
-          {/* Hidden file input */}
-          <input
-            type="file"
-            accept=".xlsx"
-            ref={fileInputRef}
-            style={{ display: "none" }}
-            onChange={handleFileChange}
-          />
-
-          <button
-            onClick={handleButtonClick}
-            disabled={loading}
-            style={{
-              padding: "14px 36px",
-              fontSize: "16px",
-              fontWeight: 600,
-              borderRadius: "8px",
-              border: "none",
-              cursor: loading ? "not-allowed" : "pointer",
-              backgroundColor: "#2563eb",
-              color: "#ffffff",
-              boxShadow: "0 6px 16px rgba(37,99,235,0.35)",
-              transition: "all 0.2s ease",
-            }}
+        <div className="bg-white rounded-3xl p-8 shadow">
+          <div
+            className={`border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer ${
+              dragActive ? "border-blue-600 bg-blue-50" : "border-gray-300"
+            }`}
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+            onClick={onButtonClick}
           >
-            {loading
-              ? "Uploading..."
-              : file
-              ? "Upload Excel File"
-              : "Choose Excel File"}
-          </button>
+            <Upload className="mx-auto mb-4" />
 
-          {file && (
-            <div style={{ marginTop: "16px", color: "#333" }}>
-              Selected file: <strong>{file.name}</strong>
+            <div className="text-lg font-semibold">
+              {dragActive ? t.dropFile : t.uploadSpecies}
             </div>
-          )}
 
-          {message && (
-            <div style={{ marginTop: "24px", color: "green" }}>{message}</div>
-          )}
+            <p className="text-gray-600 mb-4">
+              {t.dragOrClick}
+            </p>
 
-          {error && (
-            <div style={{ marginTop: "24px", color: "red" }}>{error}</div>
+            <button type="button">
+              {t.chooseFile}
+            </button>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              accept=".xlsx,.xls"
+              onChange={handleChange}
+            />
+          </div>
+
+          {uploadedFile && (
+            <div className="mt-6">
+              <div>{uploadedFile.file.name}</div>
+
+              {uploadedFile.status === "uploading" && (
+                <div>{t.uploading}</div>
+              )}
+
+              {uploadedFile.status === "success" && (
+                <div>{t.success}</div>
+              )}
+
+              {uploadedFile.status === "error" && (
+                <div>{t.error}: {uploadedFile.message}</div>
+              )}
+
+              <button onClick={removeFile}>{t.remove}</button>
+            </div>
           )}
         </div>
       </div>

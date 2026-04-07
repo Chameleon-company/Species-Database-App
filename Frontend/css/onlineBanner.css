@@ -1,0 +1,30 @@
+.banner {
+  position: sticky;
+  top: 50px;
+  right: 0px;
+  background-color: #27c861;
+  color: white;
+  padding: 0.8rem 1.2rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  justify-content: space-between;
+  font-weight: 600;
+  font-size: 1rem;
+  z-index: 1000;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  opacity: 1;
+  display: flex;
+}
+
+.banner.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.close-banner {
+  background: rgba(246, 251, 0, 0.838);
+  border: none;
+  border-radius: 20px;
+  margin-left: 10px;
+  font-size: 0.6rem;
+  cursor: pointer;
+}

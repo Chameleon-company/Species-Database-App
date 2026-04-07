@@ -23,10 +23,13 @@ def require_role(supabase, allowed_roles):
     """
 
     #user id from request header sent from frontend
-    user_id = request.headers.get("auth-user-id", type=int)
+    user_id = request.headers.get("auth-user-id")
 
-    if not user_id:
-        return False, ("missing user id", 401)
+    if user_id:
+        try:
+            user_id = int(user_id)
+        except ValueError:
+            return False, ("invalid user id", 401)
     
     #getting user from supabase
     resp =(
@@ -150,6 +153,11 @@ def register_auth_routes(app, supabase):
         
         user = resp.data[0]
 
+        if not user.get("password_hash"):
+            return jsonify({
+                "error": "This account doesnt support password login. Try using google."
+            }), 401
+
         #admin can disable users... applies when device is online
         if not user["is_active"]:
             return jsonify({"error": "account disabled"}), 403
@@ -214,7 +222,7 @@ def register_auth_routes(app, supabase):
     @app.post("/api/auth/admin-login")
     def admin_login():
         """
-        admin login using email and password
+        admin login using email and password for google
         short lived access token
         """
 
@@ -222,16 +230,16 @@ def register_auth_routes(app, supabase):
         if not data:
             return jsonify({"error": "missing request body"}), 400
         
-        email = data.get("email")
+        name = data.get("name")
         password = data.get("password")
 
-        if not email or not password:
+        if not name or not password:
             return jsonify({"error": "missing fields"}), 400
         
         resp = (
             supabase.table("users")
             .select("user_id, password_hash, role, is_active")
-            .eq("name", email)
+            .eq("name", name)
             .execute()
         )
 
@@ -246,6 +254,12 @@ def register_auth_routes(app, supabase):
         if not user["is_active"]:
             return jsonify({"error": "account disabled"}), 403
         
+        #guard
+        if not user.get("password_hash"):
+            return jsonify({
+                "error": "this account does not support password login. try using google"
+            }), 401
+
         #comparing inputted password with stored hash
         if not bcrypt.checkpw(
             password.encode("utf-8"),

@@ -1,8 +1,6 @@
-import TheDrawer from '../Components/drawer'
-import MainTableSelect from '../mainTableSelect'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { TextField } from '@mui/material'
 import Alert from '@mui/material/Alert'
 import type { Species } from '../mainTableSelect'
@@ -11,96 +9,77 @@ import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogContentText from '@mui/material/DialogContentText'
 import DialogTitle from '@mui/material/DialogTitle'
-import {supabase, supabaseTetum} from '../supabaseClient'
+import axios from 'axios'
+import { useParams } from "react-router-dom";
+import { adminFetch } from '../utils/adminFetch'
+import { translations } from '../translations'
 
-
-
-
-
-
+const API_URL = import.meta.env.VITE_API_URL
+const API_BASE = import.meta.env.VITE_API_BASE
 
 const textFieldBaseSx = {
     '& .MuiInputBase-input': { color: 'white' },
     '& .MuiInputLabel-root': { color: 'white' },
 }
 
-const requiredFieldSx = {
-    ...textFieldBaseSx,
-    '& .MuiFormHelperText-root': { color: 'red' },
-    marginRight: 8
+const formContainerSx = {
+    width: '100%',
+    paddingX: 0
 }
 
-const requiredFieldSxNoMargin = {
-    ...textFieldBaseSx,
-    '& .MuiFormHelperText-root': { color: 'red' }
-}
-
-const multilineFieldSx = {
-    ...textFieldBaseSx,
-}
-
-const formContainerSx = { 
-    width: '100%', 
-    paddingX: 0 
-}
-
-const fieldRowSx = { 
-    marginTop: 2 
-}
-
-const containerBoxSx = { 
-    marginTop: 2, 
-    width: '30%', 
-    paddingX: 0, 
-    marginX: 'auto' 
-}
-
-const multilineRowSx = { 
-    display: 'flex', 
-    gap: 1, 
-    marginTop: 3, 
-    marginBottom: 3, 
-    maxWidth: '70%', 
+const containerBoxSx = {
+    marginTop: 2,
+    width: '30%',
+    paddingX: 0,
     marginX: 'auto'
 }
 
-const errorContainerSx = { 
-    display: 'flex', 
-    justifyContent: 'center', 
-    alignItems: 'center', 
+const errorContainerSx = {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 2
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
+const bigFieldSx = {
+    '& .MuiInputBase-input': {
+        fontSize: '1.1rem',
+    },
+    '& .MuiInputLabel-root': {
+        fontSize: '1rem',
+    },
+    '& .MuiFormHelperText-root': {
+        fontSize: '0.9rem',
+        color: 'red',
+    },
+}
 
 export function EditEntry() {
-    if (!supabase || !supabaseTetum) {
-        return <div>ERROR! Database connection failed!</div>
-    }
+    const { id } = useParams<{ id: string }>()
+
+    const [lang, setLang] = useState<"en" | "tet">(
+        (localStorage.getItem("lang") as "en" | "tet") || "en"
+    )
+    const t = translations[lang]
 
     const [error, setError] = useState('')
-    
+    const [uploadError, setUploadError] = useState('')
     const [loading, setLoading] = useState(false)
-
+    const [deleteLoading, setDeleteLoading] = useState(false)
     const [status, setStatus] = useState('')
-
     const [rowSelected, setRowSelected] = useState(false)
-    
-
     const [ID, setID] = useState(-1)
 
-    const [resetKey, setResetKey] = useState(0)
+    const [, setResetKey] = useState(0)
+    const [translated, setTranslated] = useState(false)
+    const [translateLoading, setTranslateLoading] = useState(false)
+
+    const [speciesTet, setSpeciesTet] = useState<Species[]>([])
+    const [touched, setTouched] = useState<Record<string, boolean>>({})
+
+    const markTouched = (name: string) => {
+        setTouched(prev => ({ ...prev, [name]: true }))
+    }
 
     const [formData, setFormData] = useState({
         scientificName: '',
@@ -113,9 +92,28 @@ export function EditEntry() {
         phenology: '',
         seedGermination: '',
         pests: ''
-    }) 
+    })
 
+    const [formDataTetum, setFormDataTetum] = useState({
+        scientificNameTetum: '',
+        commonNameTetum: '',
+        leafTypeTetum: '',
+        fruitTypeTetum: '',
+        etymologyTetum: '',
+        habitatTetum: '',
+        identificationCharacteristicsTetum: '',
+        phenologyTetum: '',
+        seedGerminationTetum: '',
+        pestsTetum: ''
+    })
+
+    const [, setTetumRowError] = useState(false)
     const [open, setOpen] = useState(false)
+
+    const changeLang = (newLang: "en" | "tet") => {
+        localStorage.setItem("lang", newLang)
+        setLang(newLang)
+    }
 
     const handleClickOpen = () => {
         setOpen(true)
@@ -126,40 +124,27 @@ export function EditEntry() {
     }
 
     const handleConfirmDelete = async () => {
-        setOpen(false) 
-        await handleSubmitDelete() 
+        setOpen(false)
+        await handleSubmitDelete()
     }
 
     const handleSubmitDelete = async () => {
-        setLoading(true)
+        setDeleteLoading(true)
         setStatus('')
         setError('')
 
         try {
-            const { error } = await supabase!
-                .from('species_en')
-                .delete()
-                .eq('species_id', ID)
+            const res = await adminFetch(`${import.meta.env.VITE_API_URL}/species/${ID}`, {
+                method: 'DELETE',
+            })
 
-            if (error) {
-                console.error('========== SUPABASE ERROR DETAILS ==========')
-                console.error('Error object:', error)
-                console.error('Error code:', error.code)
-                console.error('Error details:', error.details)
-                console.error('Error hint:', error.hint)
-                console.error('Full error JSON:', JSON.stringify(error, null, 2))
-                console.error('===========================================')
-                
-                let errorMsg = `Error Code: ${error.code}\n`
-                errorMsg += `Message: ${error.message}\n`
-                if (error.details) errorMsg += `Details: ${error.details}\n`
-                if (error.hint) errorMsg += `Hint: ${error.hint}`
-                
-                throw new Error(errorMsg)
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}))
+                throw new Error(err.error || t.failedToDeleteSpecies)
             }
 
             setResetKey(prev => prev + 1)
-            setStatus('Species deleted successfully!')
+            setStatus(t.speciesDeletedSuccessfully)
             setError('')
             setRowSelected(false)
             setID(-1)
@@ -178,140 +163,206 @@ export function EditEntry() {
             })
         }
         catch (error) {
-            setStatus(`Error: ${(error as Error).message}`)
+            setError(`Error: ${(error as Error).message}`)
         }
         finally {
-            setLoading(false)
+            setDeleteLoading(false)
         }
     }
 
-
-
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.target
-    console.log('handleChange called:', name, value)
-    
-    setFormData(prev => {
-        console.log('Previous state:', prev)
-        return {
+        const { name, value } = event.target
+
+        setFormData(prev => ({
             ...prev,
             [name]: value
+        }))
+    }
+
+    const handleChangeTetum = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = event.target
+
+        setFormDataTetum(prev => ({
+            ...prev,
+            [name]: value
+        }))
+    }
+
+    const resetTet = () => {
+        setFormDataTetum({
+            scientificNameTetum: '',
+            commonNameTetum: '',
+            leafTypeTetum: '',
+            fruitTypeTetum: '',
+            etymologyTetum: '',
+            habitatTetum: '',
+            identificationCharacteristicsTetum: '',
+            phenologyTetum: '',
+            seedGerminationTetum: '',
+            pestsTetum: ''
+        })
+    }
+
+    const handleTranslate = async () => {
+        resetTet()
+        setTranslated(false)
+        setError('')
+        setTranslateLoading(true)
+
+        let hasError = false
+
+        if (!formData.scientificName) {
+            setError(t.scientificNameEmpty)
+            hasError = true
+        } else if (!formData.commonName) {
+            setError(t.commonNameEmpty)
+            hasError = true
+        } else if (!formData.leafType) {
+            setError(t.leafTypeEmpty)
+            hasError = true
+        } else if (!formData.fruitType) {
+            setError(t.fruitTypeEmpty)
+            hasError = true
         }
-    })
-}
+
+        if (hasError) {
+            setTranslateLoading(false)
+            return
+        }
+
+        const tempEtymology = formData.etymology === "" ? "-" : formData.etymology
+        const tempHabitat = formData.habitat === "" ? "-" : formData.habitat
+        const tempIdent = formData.identificationCharacteristics === "" ? "-" : formData.identificationCharacteristics
+        const tempPhenology = formData.phenology === "" ? "-" : formData.phenology
+        const tempSeed = formData.seedGermination === "" ? "-" : formData.seedGermination
+        const tempPest = formData.pests === "" ? "-" : formData.pests
+
+        const textArray = [
+            formData.scientificName,
+            formData.commonName,
+            formData.leafType,
+            formData.fruitType,
+            tempEtymology,
+            tempHabitat,
+            tempIdent,
+            tempPhenology,
+            tempSeed,
+            tempPest
+        ]
+
+        try {
+            const response = await axios.post(`${API_BASE}/translate`, { text: textArray })
+            const translatedText = response.data
+
+            if (translatedText[4] === "-") translatedText[4] = ""
+            if (translatedText[5] === "-") translatedText[5] = ""
+            if (translatedText[6] === "-") translatedText[6] = ""
+            if (translatedText[7] === "-") translatedText[7] = ""
+            if (translatedText[8] === "-") translatedText[8] = ""
+            if (translatedText[9] === "-") translatedText[9] = ""
+
+            setFormDataTetum({
+                scientificNameTetum: formData.scientificName,
+                commonNameTetum: translatedText[1],
+                leafTypeTetum: translatedText[2],
+                fruitTypeTetum: translatedText[3],
+                etymologyTetum: translatedText[4],
+                habitatTetum: translatedText[5],
+                identificationCharacteristicsTetum: translatedText[6],
+                phenologyTetum: translatedText[7],
+                seedGerminationTetum: translatedText[8],
+                pestsTetum: translatedText[9]
+            })
+            setTranslated(true)
+        }
+        catch (err) {
+            console.error('Translation error:', err)
+            setError(t.uploadFailed)
+        }
+        finally {
+            setTranslateLoading(false)
+        }
+    }
 
     const handleSubmit = async () => {
-
         const requiredFields = [
-            { value: formData.scientificName, name: 'Scientific Name' },
-            { value: formData.commonName, name: 'Common Name' },
-            { value: formData.leafType, name: 'Leaf Type' },
-            { value: formData.fruitType, name: 'Fruit Type' }
+            { value: formData.scientificName, name: t.scientificName },
+            { value: formData.commonName, name: t.commonName },
+            { value: formData.leafType, name: t.leafType },
+            { value: formData.fruitType, name: t.fruitType },
+            { value: formDataTetum.commonNameTetum, name: t.commonName },
+            { value: formDataTetum.leafTypeTetum, name: t.leafType },
+            { value: formDataTetum.fruitTypeTetum, name: t.fruitType }
         ]
 
         const emptyField = requiredFields.find(field => !field.value)
 
         if (emptyField) {
-            setError(`${emptyField.name} cannot be empty!`)
+            setUploadError(`${emptyField.name} ${t.cannotBeEmpty}`)
             return
         }
 
         setLoading(true)
         setStatus('')
         setError('')
+        setUploadError('')
 
         try {
-            const { error } = await supabase!
-                .from('species_en')
-                .update([
-                    { 
-                        scientific_name: formData.scientificName,
-                        common_name: formData.commonName ,
-                        etymology: formData.etymology,
-                        habitat: formData.habitat,
-                        identification_character: formData.identificationCharacteristics,
-                        leaf_type: formData.leafType,
-                        fruit_type: formData.fruitType,
-                        phenology: formData.phenology,
-                        seed_germination: formData.seedGermination,
-                        pest: formData.pests 
-                    }
-                ])
-                .eq('species_id', ID)
-                .select()
+            const res = await adminFetch(`${import.meta.env.VITE_API_URL}/species/${ID}`, {
+                method: 'PUT',
+                body: JSON.stringify({
+                    scientific_name: formData.scientificName,
+                    common_name: formData.commonName,
+                    etymology: formData.etymology,
+                    habitat: formData.habitat,
+                    identification_character: formData.identificationCharacteristics,
+                    leaf_type: formData.leafType,
+                    fruit_type: formData.fruitType,
+                    phenology: formData.phenology,
+                    seed_germination: formData.seedGermination,
+                    pest: formData.pests,
 
-            if (error) {
-                console.error('========== SUPABASE ERROR DETAILS ==========')
-                console.error('Error object:', error)
-                console.error('Error code:', error.code)
-                console.error('Error details:', error.details)
-                console.error('Error hint:', error.hint)
-                console.error('Full error JSON:', JSON.stringify(error, null, 2))
-                console.error('===========================================')
-                
-                let errorMsg = `Error Code: ${error.code}\n`
-                errorMsg += `Message: ${error.message}\n`
-                if (error.details) errorMsg += `Details: ${error.details}\n`
-                if (error.hint) errorMsg += `Hint: ${error.hint}`
-                
-                throw new Error(errorMsg)
-            }
-
-            setResetKey(prev => prev + 1)
-            setStatus('Species added successfully!')
-            setError('')
-            setRowSelected(false)
-            setID(-1)
-
-            setFormData({
-                scientificName: '',
-                commonName: '',
-                leafType: '',
-                fruitType: '',
-                etymology: '',
-                habitat: '',
-                identificationCharacteristics: '',
-                phenology: '',
-                seedGermination: '',
-                pests: ''
+                    scientific_name_tetum: formDataTetum.scientificNameTetum,
+                    common_name_tetum: formDataTetum.commonNameTetum,
+                    etymology_tetum: formDataTetum.etymologyTetum,
+                    habitat_tetum: formDataTetum.habitatTetum,
+                    identification_character_tetum: formDataTetum.identificationCharacteristicsTetum,
+                    leaf_type_tetum: formDataTetum.leafTypeTetum,
+                    fruit_type_tetum: formDataTetum.fruitTypeTetum,
+                    phenology_tetum: formDataTetum.phenologyTetum,
+                    seed_germination_tetum: formDataTetum.seedGerminationTetum,
+                    pest_tetum: formDataTetum.pestsTetum
+                })
             })
 
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}))
+                setUploadError(err.error || t.databaseUploadFailed)
+                throw new Error(err.error || 'Update failed')
+            }
 
+            await res.json()
+            setResetKey(prev => prev + 1)
+            setStatus('Species updated successfully!')
+            setRowSelected(false)
         }
-
-
         catch (error) {
-            setStatus(`Error: ${(error as Error).message}`)
+            setUploadError(`Error: ${(error as Error).message}`)
         }
-
         finally {
             setLoading(false)
         }
     }
 
-
-
-    
-
-    const handleRowSelect = (rowData: Species | null) => {
+    const handleRowSelect = async (rowData: Species | null) => {
         setStatus('')
-        console.log(rowData)
-        if (rowData) {
-            setID(rowData.species_id)
-            setFormData({
-                scientificName: rowData.scientific_name || '',
-                commonName: rowData.common_name || '',
-                leafType: rowData.leaf_type || '',
-                fruitType: rowData.fruit_type || '',
-                etymology: rowData.etymology || '',
-                habitat: rowData.habitat || '',
-                identificationCharacteristics: rowData.identification_character || '',
-                phenology: rowData.phenology || '',
-                seedGermination: rowData.seed_germination || '',
-                pests: rowData.pest || ''
-                })
-                setRowSelected(true)
-        } else {
+        setError('')
+        setTranslated(false)
+
+        if (!rowData) {
+            setRowSelected(false)
+            setID(-1)
+
             setFormData({
                 scientificName: '',
                 commonName: '',
@@ -324,18 +375,99 @@ export function EditEntry() {
                 seedGermination: '',
                 pests: ''
             })
-            setRowSelected(false)
-            setID(-1)
+            resetTet()
+            return
+        }
+
+        const rowID = rowData.species_id
+        setID(rowID)
+
+        setFormData({
+            scientificName: rowData.scientific_name || '',
+            commonName: rowData.common_name || '',
+            leafType: rowData.leaf_type || '',
+            fruitType: rowData.fruit_type || '',
+            etymology: rowData.etymology || '',
+            habitat: rowData.habitat || '',
+            identificationCharacteristics: rowData.identification_character || '',
+            phenology: rowData.phenology || '',
+            seedGermination: rowData.seed_germination || '',
+            pests: rowData.pest || ''
+        })
+        setRowSelected(true)
+
+        try {
+            const tetumRow = speciesTet.find(r => r.species_id === rowID)
+
+            if (!tetumRow) {
+                setTetumRowError(true)
+                resetTet()
+                setError('')
+                return
+            }
+
+            setFormDataTetum({
+                scientificNameTetum: tetumRow.scientific_name || '',
+                commonNameTetum: tetumRow.common_name || '',
+                leafTypeTetum: tetumRow.leaf_type || '',
+                fruitTypeTetum: tetumRow.fruit_type || '',
+                etymologyTetum: tetumRow.etymology || '',
+                habitatTetum: tetumRow.habitat || '',
+                identificationCharacteristicsTetum: tetumRow.identification_character || '',
+                phenologyTetum: tetumRow.phenology || '',
+                seedGerminationTetum: tetumRow.seed_germination || '',
+                pestsTetum: tetumRow.pest || ''
+            })
+
+            setTetumRowError(false)
+            setError('')
+        }
+        catch {
+            resetTet()
+            setTetumRowError(true)
+            setError("Error loading Tetum row.")
         }
     }
 
+    useEffect(() => {
+        async function loadSpecies() {
+            if (!id) return
+
+            try {
+                const bundRes = await adminFetch(`${API_URL}/bundle`)
+                if (!bundRes.ok) throw new Error("failed to load bundle")
+
+                const bundle = await bundRes.json()
+                const tetList = bundle.species_tet ?? []
+
+                const res = await adminFetch(`${API_URL}/species/${id}`)
+                if (!res.ok) throw new Error(`failed to load species`)
+
+                const species = await res.json()
+
+                setSpeciesTet(tetList)
+                handleRowSelect(species)
+            }
+            catch (err) {
+                console.error("failed loading species for editing", err)
+                setError("Failed to load species")
+            }
+        }
+
+        loadSpecies()
+    }, [id])
 
     return (
         <>
-            <div><TheDrawer></TheDrawer></div>
-            <h1>Edit Entry</h1>
-            <h4>Select Entry to edit</h4>
-            <div><MainTableSelect key={resetKey} onRowSelect={handleRowSelect}></MainTableSelect></div>
+            <div className="flex justify-between mb-4 items-center">
+                <h2 className="text-3xl font-bold">{t.editExistingEntry}</h2>
+
+                <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                    <button onClick={() => changeLang("en")}>EN</button>
+                    <button onClick={() => changeLang("tet")}>TET</button>
+                </div>
+            </div>
+
             <Box sx={containerBoxSx}>
                 {status && (
                     <Alert severity="success">
@@ -343,181 +475,367 @@ export function EditEntry() {
                     </Alert>
                 )}
             </Box>
-            
 
-
-            
+            <Box sx={errorContainerSx}>
+                {error && (
+                    <Alert severity="error">
+                        {error}
+                    </Alert>
+                )}
+            </Box>
 
             {rowSelected && (
                 <Box sx={formContainerSx}>
+                    <h2 style={{ fontSize: '1.75rem' }}>English Entry</h2>
 
-                    <h4>Edit fields below:</h4>
-                    <Box>   
+                    <Box display="flex" gap={2} mb={2} justifyContent="center">
                         <TextField
-                            name="scientificName" 
-                            label="Scientific Name"
-                            helperText="Required"
+                            sx={{ ...bigFieldSx, maxWidth: 280 }}
+                            name="scientificName"
+                            label={t.scientificName}
                             value={formData.scientificName}
                             onChange={handleChange}
-                            sx={requiredFieldSx}
-                            />
+                            onBlur={() => markTouched('scientificName')}
+                            required
+                            error={touched.scientificName && !formData.scientificName}
+                            helperText={
+                                touched.scientificName && !formData.scientificName
+                                    ? t.scientificNameEmpty
+                                    : ""
+                            }
+                        />
 
-                            <TextField
+                        <TextField
+                            sx={{ ...bigFieldSx, maxWidth: 280 }}
                             name="commonName"
-                            label="Common Name"
-                            helperText="Required"
+                            label={t.commonName}
                             value={formData.commonName}
                             onChange={handleChange}
-                            sx={requiredFieldSxNoMargin}
-                            />
-
-                    
+                            onBlur={() => markTouched('commonName')}
+                            required
+                            error={touched.commonName && !formData.commonName}
+                            helperText={
+                                touched.commonName && !formData.commonName
+                                    ? t.commonNameEmpty
+                                    : ""
+                            }
+                        />
                     </Box>
 
-                    <Box sx={fieldRowSx}>   
+                    <Box display="flex" gap={2} mb={2} justifyContent="center">
                         <TextField
+                            sx={{ ...bigFieldSx, maxWidth: 280 }}
                             name="leafType"
-                            label="Leaf Type"
-                            helperText="Required"
+                            label={t.leafType}
                             value={formData.leafType}
                             onChange={handleChange}
-                            sx={requiredFieldSx}
-                            />
+                            onBlur={() => markTouched('leafType')}
+                            required
+                            error={touched.leafType && !formData.leafType}
+                            helperText={
+                                touched.leafType && !formData.leafType
+                                    ? t.leafTypeEmpty
+                                    : ""
+                            }
+                        />
 
-                            <TextField
+                        <TextField
+                            sx={{ ...bigFieldSx, maxWidth: 280 }}
                             name="fruitType"
-                            label="Fruit Type"
-                            helperText="Required"
+                            label={t.fruitType}
                             value={formData.fruitType}
                             onChange={handleChange}
-                            sx={requiredFieldSxNoMargin}
-                            />
-
-                    
+                            onBlur={() => markTouched('fruitType')}
+                            required
+                            error={touched.fruitType && !formData.fruitType}
+                            helperText={
+                                touched.fruitType && !formData.fruitType
+                                    ? t.fruitTypeEmpty
+                                    : ""
+                            }
+                        />
                     </Box>
 
-                    <div><h5>Optional:</h5></div>
-
-                    <Box sx={multilineRowSx}>
-                        <TextField 
-                            fullWidth 
-                            label="Etymology" 
+                    <Box display="flex" gap={2} mb={2}>
+                        <TextField
+                            fullWidth
+                            label={t.etymology}
                             name="etymology"
                             multiline
                             rows={4}
                             value={formData.etymology}
                             onChange={handleChange}
-                            sx={multilineFieldSx}
+                            sx={bigFieldSx}
                         />
 
-                        <TextField 
-                            fullWidth 
-                            label="Habitat" 
+                        <TextField
+                            fullWidth
+                            label={t.habitat}
                             name="habitat"
                             multiline
                             rows={4}
                             value={formData.habitat}
                             onChange={handleChange}
-                            sx={multilineFieldSx}
+                            sx={bigFieldSx}
                         />
                     </Box>
 
-
-                    <Box sx={multilineRowSx}>
-                        <TextField fullWidth 
-                            label="Identification Characteristics" 
+                    <Box display="flex" gap={2} mb={2}>
+                        <TextField
+                            fullWidth
+                            label={t.identificationCharacteristics}
                             name="identificationCharacteristics"
                             multiline
                             rows={4}
                             value={formData.identificationCharacteristics}
                             onChange={handleChange}
-                            sx={multilineFieldSx}
+                            sx={bigFieldSx}
                         />
 
-                        <TextField fullWidth 
-                            label="Phenology" 
+                        <TextField
+                            fullWidth
+                            label={t.phenology}
                             name="phenology"
                             multiline
                             rows={4}
                             value={formData.phenology}
                             onChange={handleChange}
-                            sx={multilineFieldSx}
+                            sx={bigFieldSx}
                         />
                     </Box>
 
-
-                    <Box sx={multilineRowSx}>
-                        <TextField fullWidth 
-                            label="Seed Germination" 
+                    <Box display="flex" gap={2} mb={2}>
+                        <TextField
+                            fullWidth
+                            label={t.seedGermination}
                             name="seedGermination"
                             multiline
-                            rows={4}
+                            rows={5}
                             value={formData.seedGermination}
                             onChange={handleChange}
-                            sx={multilineFieldSx}
+                            sx={bigFieldSx}
                         />
 
-                        <TextField fullWidth 
-                            label="Pests" 
+                        <TextField
+                            fullWidth
+                            label={t.pest}
                             name="pests"
                             multiline
-                            rows={4}
+                            rows={5}
                             value={formData.pests}
                             onChange={handleChange}
-                            sx={multilineFieldSx}
+                            sx={bigFieldSx}
                         />
                     </Box>
-                    
-                    <Box sx={errorContainerSx}>
-                        {error && (
-                            <Alert severity="error">
-                                {error}
-                            </Alert>
-                        )}
-
-                    </Box>
-
-
 
                     <Box>
-                        <Button variant="contained"
+                        <Button
+                            variant="contained"
+                            onClick={handleTranslate}
+                            disabled={translateLoading}
+                        >
+                            {translateLoading ? 'Translating...' : 'Translate for Tetum Entry'}
+                        </Button>
+                    </Box>
+                </Box>
+            )}
+
+            {rowSelected && (
+                <Box mt={4}>
+                    {translated ? (
+                        <h2 style={{ fontSize: '1.5rem' }}>Translated Tetum Entry</h2>
+                    ) : (
+                        <h2 style={{ fontSize: '1.5rem' }}>Original Tetum Entry</h2>
+                    )}
+
+                    <h3>Please check fields to ensure correct translation:</h3>
+
+                    <Box display="flex" gap={2} mb={2} justifyContent="center">
+                        <TextField
+                            sx={{ ...bigFieldSx, maxWidth: 280 }}
+                            label={t.scientificName}
+                            name="scientificNameTetum"
+                            value={formData.scientificName}
+                            disabled
+                        />
+
+                        <TextField
+                            sx={{ ...bigFieldSx, maxWidth: 280 }}
+                            label={t.commonName}
+                            name="commonNameTetum"
+                            value={formDataTetum.commonNameTetum}
+                            onChange={handleChangeTetum}
+                            onBlur={() => markTouched('commonNameTetum')}
+                            required
+                            error={touched.commonNameTetum && !formDataTetum.commonNameTetum}
+                            helperText={
+                                touched.commonNameTetum && !formDataTetum.commonNameTetum
+                                    ? t.commonNameEmpty
+                                    : ""
+                            }
+                        />
+                    </Box>
+
+                    <Box display="flex" gap={2} mb={2} justifyContent="center">
+                        <TextField
+                            sx={{ ...bigFieldSx, maxWidth: 280 }}
+                            label={t.leafType}
+                            name="leafTypeTetum"
+                            value={formDataTetum.leafTypeTetum}
+                            onChange={handleChangeTetum}
+                            onBlur={() => markTouched('leafTypeTetum')}
+                            required
+                            error={touched.leafTypeTetum && !formDataTetum.leafTypeTetum}
+                            helperText={
+                                touched.leafTypeTetum && !formDataTetum.leafTypeTetum
+                                    ? t.leafTypeEmpty
+                                    : ""
+                            }
+                        />
+
+                        <TextField
+                            sx={{ ...bigFieldSx, maxWidth: 280 }}
+                            label={t.fruitType}
+                            name="fruitTypeTetum"
+                            value={formDataTetum.fruitTypeTetum}
+                            onChange={handleChangeTetum}
+                            onBlur={() => markTouched('fruitTypeTetum')}
+                            required
+                            error={touched.fruitTypeTetum && !formDataTetum.fruitTypeTetum}
+                            helperText={
+                                touched.fruitTypeTetum && !formDataTetum.fruitTypeTetum
+                                    ? t.fruitTypeEmpty
+                                    : ""
+                            }
+                        />
+                    </Box>
+
+                    <div><h5>{t.optional}</h5></div>
+
+                    <Box display="flex" gap={2} mb={2}>
+                        <TextField
+                            fullWidth
+                            label={t.etymology}
+                            name="etymologyTetum"
+                            multiline
+                            rows={4}
+                            value={formDataTetum.etymologyTetum}
+                            onChange={handleChangeTetum}
+                            sx={bigFieldSx}
+                        />
+
+                        <TextField
+                            fullWidth
+                            label={t.habitat}
+                            name="habitatTetum"
+                            multiline
+                            rows={4}
+                            value={formDataTetum.habitatTetum}
+                            onChange={handleChangeTetum}
+                            sx={bigFieldSx}
+                        />
+                    </Box>
+
+                    <Box display="flex" gap={2} mb={2}>
+                        <TextField
+                            fullWidth
+                            label={t.identificationCharacteristics}
+                            name="identificationCharacteristicsTetum"
+                            multiline
+                            rows={4}
+                            value={formDataTetum.identificationCharacteristicsTetum}
+                            onChange={handleChangeTetum}
+                            sx={bigFieldSx}
+                        />
+
+                        <TextField
+                            fullWidth
+                            label={t.phenology}
+                            name="phenologyTetum"
+                            multiline
+                            rows={4}
+                            value={formDataTetum.phenologyTetum}
+                            onChange={handleChangeTetum}
+                            sx={bigFieldSx}
+                        />
+                    </Box>
+
+                    <Box display="flex" gap={2} mb={2}>
+                        <TextField
+                            fullWidth
+                            label={t.seedGermination}
+                            name="seedGerminationTetum"
+                            multiline
+                            rows={4}
+                            value={formDataTetum.seedGerminationTetum}
+                            onChange={handleChangeTetum}
+                            sx={bigFieldSx}
+                        />
+
+                        <TextField
+                            fullWidth
+                            label={t.pest}
+                            name="pestsTetum"
+                            multiline
+                            rows={4}
+                            value={formDataTetum.pestsTetum}
+                            onChange={handleChangeTetum}
+                            sx={bigFieldSx}
+                        />
+                    </Box>
+
+                    <Box sx={errorContainerSx}>
+                        {uploadError && (
+                            <Alert severity="error">
+                                {uploadError}
+                            </Alert>
+                        )}
+                    </Box>
+
+                    <Box>
+                        <Button
+                            variant="contained"
                             onClick={handleSubmit}
+                            disabled={loading || translateLoading}
                         >
                             {loading ? 'Editing...' : 'Push edit'}
                         </Button>
                     </Box>
 
                     <Box sx={{ marginTop: 2 }}>
-                        <Button 
-                            variant="contained" 
+                        <Button
+                            variant="contained"
                             color="error"
                             onClick={handleClickOpen}
+                            disabled={deleteLoading}
                         >
-                            {loading ? 'Editing...' : 'Delete Entry'}
+                            {deleteLoading ? 'Deleting...' : 'Delete Entry'}
                         </Button>
                     </Box>
-
                 </Box>
-
             )}
-            
-            <Dialog open={open} onClose={handleClose} aria-labelledby="alert-dialog-title" aria-describedby="alert-dialog-description">
+
+            <Dialog
+                open={open}
+                onClose={handleClose}
+                aria-labelledby="alert-dialog-title"
+                aria-describedby="alert-dialog-description"
+            >
                 <DialogTitle id="alert-dialog-title">
-                    {"Delete Species Entry?"}
+                    {t.deleteSpeciesEntry}
                 </DialogTitle>
                 <DialogContent>
                     <DialogContentText id="alert-dialog-description">
-                        Are you sure you want to delete "{formData.commonName}"? This action cannot be undone.
+                        {t.deleteConfirmPrefix} "{formData.commonName}"? {t.deleteConfirmSuffix}
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={handleClose}>Cancel</Button>
+                    <Button onClick={handleClose}>{t.cancel}</Button>
                     <Button onClick={handleConfirmDelete} color="error" autoFocus>
-                        Delete
+                        {t.delete}
                     </Button>
                 </DialogActions>
             </Dialog>
-
         </>
     )
 }

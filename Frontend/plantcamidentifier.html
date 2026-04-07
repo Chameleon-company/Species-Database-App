@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Identify Species by Photo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#fff3ff" />
+
+  <style>
+    /* Match existing app look (home.html) */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #9ACD6B;
+      color: #000000;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 1rem 0;
+    }
+
+    .app-shell {
+      background: #ffffff;
+      width: 100%;
+      max-width: 480px;
+      min-height: 600px;
+      margin: 0 auto;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
+      padding: 0;
+      box-sizing: border-box;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .app-header {
+      width: 100%;
+      background-color: #0B5C37;
+      padding: 1.25rem 1.5rem;
+      border-radius: 16px 16px 0 0;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      box-sizing: border-box;
+    }
+
+    .back-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff;
+      color: #0B5C37;
+      text-decoration: none;
+      font-size: 1.3rem;
+      font-weight: 700;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      user-select: none;
+    }
+
+    .back-btn:active {
+      transform: scale(0.98);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+    }
+
+    .header-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #FFFFFF;
+      margin: 0;
+      line-height: 1.2;
+    }
+
+    /* Content */
+    .content {
+      padding: 1.25rem 1.5rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      flex: 1;
+      box-sizing: border-box;
+    }
+
+    /* Camera preview placeholder */
+    .camera-preview {
+      width: 100%;
+      border-radius: 14px;
+      border: 2px dashed #cbd5e1;
+      background: #f1f5f9;
+      aspect-ratio: 4 / 3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .camera-preview-inner {
+      width: 92%;
+      height: 86%;
+      border-radius: 12px;
+      border: 2px solid #e2e8f0;
+      background: repeating-linear-gradient(
+        90deg,
+        rgba(148, 163, 184, 0.20),
+        rgba(148, 163, 184, 0.20) 10px,
+        rgba(148, 163, 184, 0.10) 10px,
+        rgba(148, 163, 184, 0.10) 20px
+      );
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+      font-weight: 600;
+      font-size: 0.95rem;
+      text-align: center;
+      padding: 0 0.75rem;
+      box-sizing: border-box;
+    }
+
+    /* Help text */
+    .helper-text {
+      font-size: 0.95rem;
+      color: #475569;
+      text-align: center;
+      margin: 0.25rem 0 0.25rem;
+      line-height: 1.35;
+    }
+
+    /* Buttons */
+    .actions {
+      margin-top: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .primary-btn {
+      width: 100%;
+      background: #18c43b; /* bright green like mock */
+      color: #0b1f12;
+      border: none;
+      padding: 0.9rem 1rem;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .primary-btn:active {
+      transform: scale(0.99);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+    }
+
+    .secondary-btn {
+      width: 100%;
+      background: #eef2f7;
+      color: #111827;
+      border: 1px solid #e5e7eb;
+      padding: 0.9rem 1rem;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    .secondary-btn:active {
+      transform: scale(0.99);
+      background: #e9eef6;
+    }
+
+    /* Small devices */
+    @media (max-width: 420px) {
+      .app-header {
+        padding: 1rem 1.1rem;
+      }
+      .content {
+        padding: 1rem 1.1rem 1.25rem;
+      }
+      .header-title {
+        font-size: 1.1rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="app-shell">
+    <!-- Header -->
+    <header class="app-header">
+      <!-- Back to home.html (as requested) -->
+      <a class="back-btn" href="home.html" aria-label="Back to Home">←</a>
+      <h1 class="header-title">Identify Species by Photo</h1>
+    </header>
+
+    <!-- Main content -->
+    <section class="content">
+      <!-- Camera preview placeholder -->
+      <div class="camera-preview" aria-label="Camera preview placeholder">
+        <div class="camera-preview-inner">
+          Camera preview will appear here
+        </div>
+      </div>
+
+      <!-- Description -->
+      <p class="helper-text">
+        Ensure leaf is clearly visible. Avoid shadows and blur. Capture one species at a time.
+      </p>
+
+      <!-- Actions (UI only; no functionality yet) -->
+      <div class="actions">
+        <button class="primary-btn" type="button">Take Photo</button>
+        <button class="secondary-btn" type="button">Upload from Gallery</button>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
