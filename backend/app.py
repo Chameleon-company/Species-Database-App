@@ -82,17 +82,29 @@ def get_bundle():
     #getting english species
     en_resp = supabase.table("species_en").select("*").execute()
     if en_resp.data is None:
-        return jsonify({"error": "couldnt load species_en"}), 500
+                return jsonify({
+            "error": "sync failed",
+            "reason":"Fail to fetch the data from the species_en",
+            "details":en_resp.error.message if en_resp.error else None
+            }), 500
 
     #get tetum species
     tet_resp = supabase.table("species_tet").select("*").execute()
     if tet_resp.data is None:
-        return jsonify({"error": "couldnt load species_tet"}), 500
+                return jsonify({
+            "error": "sync failed",
+            "reason":"Fail to fetch the data from the species_tet",
+            "details":tet_resp.error.message if tet_resp.error else None
+            }), 500
 
     #get media entries
     media_resp = supabase.table("media").select("*").execute()
     if media_resp.data is None:
-        return jsonify({"error": "couldnt load media"}), 500
+       return jsonify({
+            "error": "sync failed",
+            "reason":"Fail to fetch the data from the media",
+            "details":media_resp.error.message if media_resp.error else None
+            }), 500
 
     #retrunign it all as one bundle
     return jsonify({
@@ -124,6 +136,16 @@ def get_species_changes():
         .gt("version", since_version)
         .execute()
     )
+
+    # if the changes is none then there is failure in the database query
+    if changes.data is None:
+        return jsonify({
+        "error": "sync_failed",
+        "stage": "changelog_fetch",
+        "message": " changelog data fail to fetch it",
+        "details": str(changes.error.message) if changes.error else None,
+        "since_version": since_version
+    }), 500
 
     #if nothing changes, client must be up to date
     if not changes.data:
@@ -234,7 +256,13 @@ def get_species_incremental():
     )
 
     if species_en.data is None or species_tet.data is None:
-        return jsonify({"error": "failed to fetch incremental species"}), 500
+        return jsonify({
+            "error": "sync failed",
+            "stage":"species_fetch",
+            "message":"failed to get the species from the database",
+            "since_version":since_version
+        }), 500
+        
     deleted_ids = [
         row["entity_id"]
         for row in changes.data
@@ -394,6 +422,14 @@ def create_species():
         e = f"Invalid or missing mandatory field(s). Scientific Name, Common Name, Leaf Type and Fruit type must be a non null string: {', '.join(errors)}"
         return jsonify({"error": str(e)}), 400
 
+# adding duplicate check
+    excisting=supabase.table('species_en')\
+        .select("species_id")\
+        .eq("scientific_name",scientific_name )\
+        .execute()
+    
+    if excisting.data:
+        return jsonify({"error":f"Error the scientific name'{scientific_name}' is already there"}),409
 
     rollback_id = None
 
@@ -679,19 +715,25 @@ def update_species_tet(species_id):
 @app.route("/translate", methods=["POST"])
 def translate():
     print(f"Raw request data: {request.data}")
-    data = request.json
-    texts = data.get('text', [])
     
+    data = request.json
+    if not data:
+        return jsonify({"error":"Invalid"}),400
+    
+    texts = data.get('text', [])
     if not texts:
         return {"error": "No text provided"}, 400
     
-    
     print(f"Received text: '{texts}'")
-    array = asyncio.run(translateMultipleTexts(texts))
-
-    print(f"Translated Text = '{array}")
     
-    return jsonify(array)
+    try:
+        array = asyncio.run(translateMultipleTexts(texts))
+    except Exception as e:
+        return jsonify({"error":"Translation_failed","details":str(e)}),500
+
+    print(f"Translated Text = '{array}'")
+    
+    return jsonify(array),200
 
 # Analytics Endpoints
 @app.route("/analytics/overview", methods=["GET"])
