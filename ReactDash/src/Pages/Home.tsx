@@ -5,10 +5,11 @@ import { useState } from 'react'
 import type { Species } from '../mainTableSelect'
 import Box from '@mui/material/Box'
 import { TextField } from '@mui/material'
-
-
+import { translations } from '../translations'
 
 export function Home() {
+    const [lang, setLang] = useState<"en" | "tet">("en")
+    const t = translations[lang]
 
     const [selectedSpecies, setSelectedSpecies] = useState<Species | null>(null)
     const [selectedSpeciesTetum, setSelectedSpeciesTetum] = useState<Species | null>(null)
@@ -23,34 +24,52 @@ export function Home() {
 
     const formatSpeciesData = (species: Species | null) => {
         if (!species) return ''
-        
+
         return [
-            `ID: ${species.species_id}`,
-            `Scientific Name: ${species.scientific_name}`,
-            `Common Name: ${species.common_name}`,
-            `Leaf Type: ${species.leaf_type}`,
-            `Fruit Type: ${species.fruit_type}`,
-            `Etymology: ${species.etymology || 'N/A'}`,
-            `Habitat: ${species.habitat || 'N/A'}`,
-            `Identification Character: ${species.identification_character || 'N/A'}`,
-            `Phenology: ${species.phenology || 'N/A'}`,
-            `Seed Germination: ${species.seed_germination || 'N/A'}`,
-            `Pests: ${species.pest || 'N/A'}`
+            `${t.id}: ${species.species_id}`,
+            `${t.scientificName}: ${species.scientific_name}`,
+            `${t.commonName}: ${species.common_name}`,
+            `${t.leafType}: ${species.leaf_type}`,
+            `${t.fruitType}: ${species.fruit_type}`,
+            `${t.etymology}: ${species.etymology || t.notAvailable}`,
+            `${t.habitat}: ${species.habitat || t.notAvailable}`,
+            `${t.identificationCharacter}: ${species.identification_character || t.notAvailable}`,
+            `${t.phenology}: ${species.phenology || t.notAvailable}`,
+            `${t.seedGermination}: ${species.seed_germination || t.notAvailable}`,
+            `${t.pest}: ${species.pest || t.notAvailable}`
         ].join('\n\n')
     }
 
     return (
         <>
-            <div><TheDrawer></TheDrawer></div>
-            <h1>Species Database Dashboard</h1>
-            <h2 style={{ marginTop: '20px',  fontSize: '20px' }}>English Database:</h2>
-            <div style={{ marginTop: '20px' }}><MainTableSelect onRowSelect={handleRowSelect}></MainTableSelect></div>
+            <div><TheDrawer /></div>
+
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <h1>{t.speciesDashboard}</h1>
+
+                <div>
+                    <button onClick={() => setLang("en")} style={{ marginRight: "10px" }}>
+                        EN
+                    </button>
+                    <button onClick={() => setLang("tet")}>
+                        TET
+                    </button>
+                </div>
+            </div>
+
+            <h2 style={{ marginTop: '20px', fontSize: '20px' }}>
+                {t.englishDatabase}
+            </h2>
+
+            <div style={{ marginTop: '20px' }}>
+                <MainTableSelect onRowSelect={handleRowSelect} lang={lang} />
+            </div>
 
             {selectedSpecies && (
                 <Box sx={{ marginTop: 3, maxWidth: '70%', marginX: 'auto' }}>
                     <TextField
                         fullWidth
-                        label="Species Details"
+                        label={t.speciesDetails}
                         multiline
                         rows={12}
                         value={formatSpeciesData(selectedSpecies)}
@@ -62,14 +81,19 @@ export function Home() {
                 </Box>
             )}
 
-            <h2 style={{ marginTop: '20px',  fontSize: '20px'}}>Tetum Database:</h2>
-            <div style={{ marginTop: '20px' }}><MainTableSelectTetum onRowSelect={handleRowSelectTetum}></MainTableSelectTetum></div>
+            <h2 style={{ marginTop: '20px', fontSize: '20px' }}>
+                {t.tetumDatabase}
+            </h2>
+
+            <div style={{ marginTop: '20px' }}>
+                <MainTableSelectTetum onRowSelect={handleRowSelectTetum} lang={lang} />
+            </div>
 
             {selectedSpeciesTetum && (
                 <Box sx={{ marginTop: 3, maxWidth: '70%', marginX: 'auto' }}>
                     <TextField
                         fullWidth
-                        label="Species Details"
+                        label={t.speciesDetails}
                         multiline
                         rows={12}
                         value={formatSpeciesData(selectedSpeciesTetum)}
@@ -80,11 +104,6 @@ export function Home() {
                     />
                 </Box>
             )}
-
-
-
-
-            
         </>
     )
 }
