@@ -21,11 +21,11 @@ import Logo from "../assets/logo-color.png";
 const DRAWER_WIDTH = 220;
 
 const NAV_ITEMS = [
-  { url: "/",          label: "Dashboard", Icon: HomeIcon },
-  { url: "/species",   label: "Species",   Icon: ParkIcon },
-  { url: "/Media",     label: "Media",     Icon: FilterIcon },
-  { url: "/Audit",     label: "Audit",     Icon: VerifiedUserIcon },
-  { url: "/Users",     label: "Users",     Icon: GroupIcon },
+  { url: "/", label: "Dashboard", Icon: HomeIcon },
+  { url: "/species", label: "Species", Icon: ParkIcon },
+  { url: "/Media", label: "Media", Icon: FilterIcon },
+  { url: "/Audit", label: "Audit", Icon: VerifiedUserIcon },
+  { url: "/Users", label: "Users", Icon: GroupIcon },
   { url: "/Analytics", label: "Analytics", Icon: AnalyticsIcon },
 ];
 
@@ -428,10 +428,10 @@ export default function DrawerComponent({ children }: { children: React.ReactNod
       {/* ── Top bar ── */}
       <div style={styles.topBar}>
         {/* Mobile hamburger */}
-        <button
+        <div
           style={{
             ...styles.mobileMenuBtn,
-            display: undefined, // shown always, hidden via sx on IconButton below
+            display: undefined,
           }}
           onClick={handleDrawerToggle}
           aria-label="open drawer"
@@ -442,7 +442,7 @@ export default function DrawerComponent({ children }: { children: React.ReactNod
           >
             {mobileOpen ? <CloseIcon fontSize="small" /> : <MenuIcon fontSize="small" />}
           </IconButton>
-        </button>
+        </div>
 
         <AccountMenu onLogout={handleLogout} />
       </div>

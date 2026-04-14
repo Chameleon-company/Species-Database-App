@@ -216,6 +216,8 @@ export default function SpeciesPage() {
 
   useEffect(() => { fetchSpecies(); }, []);
 
+  const t = translations.en;
+
   const columns: GridColDef[] = [
     { field: "id", headerName: "ID", width: 70 },
     { field: "common_name", headerName: "Species Name", width: 160 },
