@@ -7,6 +7,7 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import TableLayout from "../Components/TableLayout";
 import { adminFetch } from "../utils/adminFetch";
+import { translations } from "../translations";
 
 const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -227,7 +228,7 @@ export default function SpeciesPage() {
     { field: "habitat", headerName: "Habitat", width: 160 },
     {
       field: "actions",
-      headerName: "Actions",
+      headerName: t.actions,
       sortable: false,
       width: 120,
       renderCell: (params: GridRenderCellParams) => (

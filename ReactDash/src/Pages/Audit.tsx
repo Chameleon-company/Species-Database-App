@@ -1,6 +1,11 @@
 import { useState } from "react";
+import {
+  Box,
+  Typography,
+  Button,
+} from "@mui/material";
 import { adminFetch } from "../utils/adminFetch";
-
+import { translations } from "../translations";
 
 type AuditApiResponse = {
   status: "success" | "error";
@@ -9,6 +14,9 @@ type AuditApiResponse = {
 };
 
 export default function Audit() {
+  const [lang, setLang] = useState<"en" | "tet">("en");
+  const t = translations[lang];
+
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<AuditApiResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -32,15 +40,35 @@ export default function Audit() {
       const data = (await res.json()) as AuditApiResponse;
       setResult(data);
     } catch (e: any) {
-      setResult({ status: "error", error: e?.message ?? "Unknown error" });
+      setResult({ status: "error", error: e?.message ?? t.unknownError });
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div style={{ padding: 24 }}>
-      <h1>Audit Report</h1>
+    <Box p={5}>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        mb={4}
+        flexWrap="wrap"
+        gap={2}
+      >
+        <Typography
+          variant="h4"
+          fontWeight="bold"
+          sx={{ fontSize: { xs: "1.8rem", md: "2.5rem" } }}
+        >
+          {t.auditReport}
+        </Typography>
+
+        <Box display="flex" gap={1.5}>
+    <button onClick={() => setLang("en")}>EN</button>
+    <button onClick={() => setLang("tet")}>TET</button>
+  </Box>
+</Box>
 
       <input
         type="file"
@@ -48,33 +76,36 @@ export default function Audit() {
         onChange={(e) => setFile(e.target.files?.[0] ?? null)}
       />
 
-      <button
+      <Button
+        variant="contained"
         onClick={runAudit}
         disabled={!file || loading}
-        style={{ marginLeft: 10 }}
+        sx={{ ml: 1.5 }}
       >
-        {loading ? "Running..." : "Run Audit"}
-      </button>
+        {loading ? t.running : t.runAudit}
+      </Button>
 
-      {/* Error */}
       {result?.status === "error" && (
-        <p style={{ marginTop: 16, color: "salmon" }}>
-          Error: {result.error}
-        </p>
+        <Typography sx={{ mt: 2, color: "salmon" }}>
+          {t.error}: {result.error}
+        </Typography>
       )}
 
-      {/* Success */}
       {result?.status === "success" && result.report && (
-        <div style={{ marginTop: 24 }}>
-          <h3>Summary</h3>
+        <Box mt={3}>
+          <Typography variant="h6" mb={1}>
+            {t.summary}
+          </Typography>
           <ul>
-            <li>Total rows: {result.report.rows}</li>
-            <li>Empty rows: {result.report.empty_rows}</li>
-            <li>Total missing values: {result.report.total_missing_values}</li>
-            <li>Blockers: {result.report.has_blockers ? "Yes" : "No"}</li>
+            <li>{t.totalRows}: {result.report.rows}</li>
+            <li>{t.emptyRows}: {result.report.empty_rows}</li>
+            <li>{t.totalMissingValues}: {result.report.total_missing_values}</li>
+            <li>{t.blockers}: {result.report.has_blockers ? t.yes : t.no}</li>
           </ul>
 
-          <h3>Missing values by column</h3>
+          <Typography variant="h6" mt={3} mb={1}>
+            {t.missingValuesByColumn}
+          </Typography>
           <ul>
             {Object.entries(result.report.missing_values_by_column)
               .filter(([, v]: any) => v > 0)
@@ -85,7 +116,9 @@ export default function Audit() {
               ))}
           </ul>
 
-          <h3>Duplicate scientific names</h3>
+          <Typography variant="h6" mt={3} mb={1}>
+            {t.duplicateScientificNames}
+          </Typography>
           {result.report.duplicates_count > 0 ? (
             <ul>
               {result.report.duplicate_scientific_names.map((n: string) => (
@@ -93,10 +126,12 @@ export default function Audit() {
               ))}
             </ul>
           ) : (
-            <p>No duplicate scientific names</p>
+            <Typography>{t.noDuplicateScientificNames}</Typography>
           )}
 
-          <h3>Invalid leaf types</h3>
+          <Typography variant="h6" mt={3} mb={1}>
+            {t.invalidLeafTypes}
+          </Typography>
           {result.report.leaf_type_invalid_values.length > 0 ? (
             <ul>
               {result.report.leaf_type_invalid_values.map((v: string) => (
@@ -104,10 +139,12 @@ export default function Audit() {
               ))}
             </ul>
           ) : (
-            <p>No invalid leaf type</p>
+            <Typography>{t.noInvalidLeafType}</Typography>
           )}
 
-          <h3>Invalid fruit types</h3>
+          <Typography variant="h6" mt={3} mb={1}>
+            {t.invalidFruitTypes}
+          </Typography>
           {result.report.fruit_type_invalid_values.length > 0 ? (
             <ul>
               {result.report.fruit_type_invalid_values.map((v: string) => (
@@ -115,11 +152,11 @@ export default function Audit() {
               ))}
             </ul>
           ) : (
-            <p>No invalid fruit type</p>
+            <Typography>{t.noInvalidFruitType}</Typography>
           )}
 
           <details style={{ marginTop: 16 }}>
-            <summary>Show raw JSON</summary>
+            <summary>{t.showRawJson}</summary>
             <pre
               style={{
                 whiteSpace: "pre-wrap",
@@ -131,8 +168,8 @@ export default function Audit() {
               {JSON.stringify(result.report, null, 2)}
             </pre>
           </details>
-        </div>
+        </Box>
       )}
-    </div>
+    </Box>
   );
 }

@@ -17,13 +17,14 @@
     "@mui/x-data-grid": "^8.20.0",
     "@supabase/supabase-js": "^2.86.0",
     "@tailwindcss/vite": "^4.1.18",
-    "axios": "^1.13.2",
+    "axios": "^1.13.5",
     "bcryptjs": "^3.0.3",
     "install": "^0.13.0",
     "lucide-react": "^0.563.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.9.6",
+    "recharts": "^3.8.1",
     "tailwindcss": "^4.1.18"
   },
   "devDependencies": {
@@ -37,7 +38,7 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
-    "supabase": "^2.67.2",
+    "supabase": "^2.81.2",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.4",
     "vite": "^7.2.4"
