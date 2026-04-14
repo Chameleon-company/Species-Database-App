@@ -1,49 +1,79 @@
-<!--log in page-->
+<!-- Login page -->
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
   <meta charset="UTF-8" />
-  <title>Species Database - Splash</title>
+  <title>Sign In — Species Database</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Sign in to Species Database — identify plant species instantly using your smartphone." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="css/login.css" />
 </head>
 
-<body style="display:none;">
+<body>
   <div class="app-shell">
     <div class="app-container">
-      <img src="Assets/Images/Camouflage18/image.png" alt="Species Database Logo" class="logo-img" />
-      <div class="title">SPECIES DATABASE</div>
-      <div class="subtitle">
-        Identify plant species instantly using your smartphone.
-        Scan, explore and save your favourite discoveries.
-      </div>
 
+      <!-- Logo -->
+      <img src="Assets/Images/Camouflage18/image.png" alt="Species Database Logo" class="logo-img" />
+
+      <!-- Heading -->
+      <h1 class="title">Species Database</h1>
+      <p class="subtitle">
+        Identify plant species instantly using your smartphone.<br />
+        Scan, explore and save your favourite discoveries.
+      </p>
+
+      <!-- Login form -->
       <div class="email-group">
-        <label class="email-label">Username</label>
-        <input type="text" class="email-input" placeholder="" id="usernameInput" required />
-        <label class="email-label">Password</label>
-        <input type="password" class="email-input" id="passwordInput" required />
-        <div class="error-text" id="loginError"></div>
-        <button class="btn email-btn" id="emailContinueBtn">
-          Sign in
+        <label class="email-label" for="usernameInput">Username</label>
+        <input
+          type="text"
+          class="email-input"
+          placeholder="Enter your username"
+          id="usernameInput"
+          autocomplete="username"
+          required
+        />
+
+        <label class="email-label" for="passwordInput">Password</label>
+        <input
+          type="password"
+          class="email-input"
+          placeholder="Enter your password"
+          id="passwordInput"
+          autocomplete="current-password"
+          required
+        />
+
+        <div class="error-text" id="loginError" role="alert"></div>
+
+        <button class="btn email-btn" id="emailContinueBtn" type="button">
+          Sign In
+        </button>
+
+        <button class="btn btn-secondary" id="guestBtn" type="button">
+          Continue as Guest
         </button>
       </div>
 
+      <!-- Admin footer -->
       <div class="footer">
         Admin?
         <a href="login-admin.html">Go to admin login</a>
       </div>
+
     </div>
   </div>
-  
-<script src="scripts/config.js"></script>
-<script src="js/login.js"></script>
-<script src="scripts/db.js"></script>
-<script src="scripts/dataService.js"></script>
-<script src="scripts/sync.js"></script>
-<script src="scripts/sw-register.js"></script>
 
+  <script src="scripts/config.js"></script>
+  <script src="js/login.js"></script>
+  <script src="scripts/db.js"></script>
+  <script src="scripts/dataService.js"></script>
+  <script src="scripts/sync.js"></script>
+  <script src="scripts/sw-register.js"></script>
 </body>
 
 </html>
