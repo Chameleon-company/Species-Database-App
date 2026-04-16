@@ -8,10 +8,11 @@
 const API_CONFIG = {
   // Base URL of the backend API server
   // Automatically detects development vs production environment
-  // baseUrl: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  //   ? 'http://127.0.0.1:5000'  // Development (local Flask server)
-  //   : "https://species-database-app.onrender.com",   // Production (update this to your production URL if different)
-  baseUrl: "https://species-database-app.onrender.com",
+  baseUrl:
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1'
+      ? 'http://127.0.0.1:5000'
+      : 'https://species-database-app.onrender.com',
 
   // API endpoint paths (relative to baseUrl)
   endpoints: {
