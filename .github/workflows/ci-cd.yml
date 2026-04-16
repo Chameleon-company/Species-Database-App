@@ -1,17 +1,18 @@
-name: CI/CD Pipeline
+name: CI Pipeline
 
 on:
+  workflow_dispatch:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
-  build-and-test:
+  validate-repo:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Node.js
@@ -28,7 +29,11 @@ jobs:
       - name: Build app
         run: npm run build
 
-  # OPTIONAL: Only needed if you want auto-deploy when main is updated
+     - name: Run Snyk test
+        run: snyk test --org=fbd7b7eb-23e2-443e-bd4d-cc08b4a918aa
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
   deploy:
     needs: build-and-test
     runs-on: ubuntu-latest
