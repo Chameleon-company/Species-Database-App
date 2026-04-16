@@ -1,4 +1,0 @@
-CORS_ORIGINS=https://species-database-app-123.onrender.com,https://species-database-app-1.onrender.com,https://localhost,http://localhost:5173,http://localhost:3000
-GOOGLE_CLIENT_ID=1052574621817-njpilvbmv49riq322c9vdi02pibcbbvg.apps.googleusercontent.com
-SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wcGNuZ3RraHl3eHNhemVxcWV0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2ODQ2NzEyMCwiZXhwIjoyMDg0MDQzMTIwfQ.caNnLEeHgymxfc4PgCW_qGps_kphFWdlsT34BL5CQBc
-SUPABASE_URL=https://oppcngtkhywxsazeqqet.supabase.co
