@@ -1,26 +1,26 @@
 /**
  * IndexedDB Database Module
- * 
+ *
  * Manages local IndexedDB storage for species data, media metadata, and sync status.
  * Provides methods for storing, retrieving, and managing species data.
- * 
+ *
  * Database: 'species_db'
  * Stores:
- *   - 'species' (keyPath: 'id') 
+ *   - 'species' (keyPath: 'id')
  *        Unified store for all species.
  *        Primary key 'id' is a COMPOSITE value: `${species_id}_${language}`
  *        Example: "1_en", "1_tet"
  *        Each language version becomes a separate row, but they share numeric species_id.
  *   - 'media' (keyPath: 'media_id') - Media metadata with species_id index
  *   - 'sync_metadata' (keyPath: 'key') - Sync tracking metadata
- * 
+ *
  * Indexes on 'species' store:
  *   - common_name
  *   - habitat
  *   - leaf_type
  *   - fruit_type
  *   - language
- * 
+ *
  * Dependencies: None (standalone module)
  */
 
@@ -51,23 +51,23 @@ class SpeciesDB {
 
       request.onsuccess = () => {
         this.db = request.result;
-        
+
         // Handle database close event
         this.db.onclose = () => {
           this.db = null;
         };
-        
+
         resolve(this.db);
       };
 
       request.onupgradeneeded = (event) => {
         const db = event.target.result;
         const transaction = event.target.transaction;
-        
+
         // Create 'species' object store with keyPath: 'id'
         if (!db.objectStoreNames.contains('species')) {
           const speciesStore = db.createObjectStore('species', { keyPath: 'id' });
-          
+
           // Create indexes on species store
           speciesStore.createIndex('common_name', 'common_name', { unique: false });
           speciesStore.createIndex('habitat', 'habitat', { unique: false });
@@ -171,9 +171,9 @@ class SpeciesDB {
     return new Promise((resolve, reject) => {
       const transaction = db.transaction(['sync_metadata'], 'readwrite');
       const store = transaction.objectStore('sync_metadata');
-      
+
       const timestamp = data.last_sync || new Date().toISOString();
-      
+
       const metadataEntry = {
         key: 'sync_status',
         value: {
@@ -209,7 +209,7 @@ class SpeciesDB {
     return new Promise((resolve, reject) => {
       const transaction = db.transaction(['species'], 'readonly');
       const store = transaction.objectStore('species');
-      
+
       let request;
       if (language) {
         const index = store.index('language');
@@ -259,7 +259,7 @@ class SpeciesDB {
         // Clear only specific language
         const index = store.index('language');
         const request = index.openCursor(IDBKeyRange.only(language));
-        
+
         request.onsuccess = (event) => {
           const cursor = event.target.result;
           if (cursor) {
@@ -269,7 +269,7 @@ class SpeciesDB {
             resolve();
           }
         };
-        
+
         request.onerror = () => {
           console.error('Error clearing species:', request.error);
           reject(new Error(`Failed to clear species: ${request.error}`));
@@ -277,11 +277,11 @@ class SpeciesDB {
       } else {
         // Clear all species
         const clearRequest = store.clear();
-        
+
         clearRequest.onsuccess = () => {
           resolve();
         };
-        
+
         clearRequest.onerror = () => {
           console.error('Error clearing species:', clearRequest.error);
           reject(new Error(`Failed to clear species: ${clearRequest.error}`));
@@ -352,7 +352,7 @@ class SpeciesDB {
           hasError = true;
           errorMessage = `Failed to store species ${species.id}: ${request.error}`;
           completed++;
-          
+
           // If transaction aborted, reject immediately
           if (request.error && request.error.name === 'AbortError') {
             reject(new Error(errorMessage));
@@ -507,6 +507,82 @@ class SpeciesDB {
       throw new Error('Storage quota exceeded. Please free up space on your device.');
     }
     throw error;
+  }
+
+  /**
+   * Get species by ID and language
+   * @param {number|string} speciesId - The species ID
+   * @param {string} language - Language code ('en' or 'tet')
+   * @returns {Promise<Object|null>}
+   */
+  async getSpeciesById(speciesId, language = 'en') {
+    const db = await this.init();
+    const compositeKey = `${speciesId}_${language}`;
+
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(['species'], 'readonly');
+      const store = transaction.objectStore('species');
+      const request = store.get(compositeKey);
+
+      request.onsuccess = () => {
+        resolve(request.result || null);
+      };
+
+      request.onerror = () => {
+        console.error('Error getting species:', request.error);
+        reject(new Error(`Failed to get species: ${request.error}`));
+      };
+    });
+  }
+
+  /**
+   * Get all species for a specific language
+   * @param {string} language - Language code ('en' or 'tet')
+   * @returns {Promise<Array>}
+   */
+  async getAllSpecies(language = 'en') {
+    const db = await this.init();
+
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(['species'], 'readonly');
+      const store = transaction.objectStore('species');
+      const index = store.index('language');
+      const request = index.getAll(IDBKeyRange.only(language));
+
+      request.onsuccess = () => {
+        resolve(request.result || []);
+      };
+
+      request.onerror = () => {
+        console.error('Error getting all species:', request.error);
+        reject(new Error(`Failed to get species: ${request.error}`));
+      };
+    });
+  }
+
+  /**
+   * Get media metadata by species ID
+   * @param {number|string} speciesId - The species ID
+   * @returns {Promise<Array>}
+   */
+  async getMediaBySpeciesId(speciesId) {
+    const db = await this.init();
+
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(['media'], 'readonly');
+      const store = transaction.objectStore('media');
+      const index = store.index('species_id');
+      const request = index.getAll(IDBKeyRange.only(Number(speciesId)));
+
+      request.onsuccess = () => {
+        resolve(request.result || []);
+      };
+
+      request.onerror = () => {
+        console.error('Error getting media:', request.error);
+        reject(new Error(`Failed to get media: ${request.error}`));
+      };
+    });
   }
 }
 

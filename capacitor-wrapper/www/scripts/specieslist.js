@@ -23,8 +23,8 @@ async function renderSpecies(data) {
     const scientific = species.scientific_name ?? "";
     const common = species.common_name ?? "";
 
-    const thumb = await dataService.getThumbnail(species.species_id)
-
+    const thumb = await dataService.getThumbnail(species.species_id);
+    const hasVideo = await dataService.hasVideo(species.species_id);
 
     html += `
       <div class="species-item" onclick="goToDetail('${id}')">
@@ -33,10 +33,17 @@ async function renderSpecies(data) {
         ? `<img src="${thumb}" alt="${scientific}" class="species-card-img">`
         : ``
       }  
-      
+      <div class="species-content">
         <div class="species-text">
           <h3 class="species-name">${scientific}</h3>
           <p class="common-name-species">${common}</p>
+        </div>
+        
+          ${
+            hasVideo
+            ? `<img src="Assets/icons/videoCloudIcon.png" class="species-card-video-available" alt="video">`
+            : ``
+          }
         </div>
       </div>
     `;
