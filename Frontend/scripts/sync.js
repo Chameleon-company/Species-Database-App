@@ -64,6 +64,10 @@ class SyncManager {
 
     // Authentication token storage
     this.authToken = null;
+
+    // Fallback behavior: if local API is unreachable, switch once to deployed API.
+    this.remoteFallbackBaseUrl = 'https://species-database-app.onrender.com';
+    this.hasSwitchedBaseUrl = false;
   }
 
   /**
@@ -251,6 +255,9 @@ class SyncManager {
         if (error.message.includes('timeout')) {
           throw new Error('Network timeout - please check your connection');
         }
+        if (this.trySwitchToRemoteFallback(error)) {
+          return await this.performInitialSync();
+        }
         throw new Error(`Network error: ${error.message}`);
       }
 
@@ -346,6 +353,9 @@ class SyncManager {
         if (error.message.includes('timeout')) {
           throw new Error('Network timeout - please check your connection');
         }
+        if (this.trySwitchToRemoteFallback(error)) {
+          return await this.performIncrementalSync();
+        }
         throw new Error(`Network error: ${error.message}`);
       }
 
@@ -392,6 +402,9 @@ class SyncManager {
       } catch (error) {
         if (error.message.includes('timeout')) {
           throw new Error('Network timeout - please check your connection');
+        }
+        if (this.trySwitchToRemoteFallback(error)) {
+          return await this.performIncrementalSync();
         }
         throw new Error(`Network error: ${error.message}`);
       }
@@ -677,6 +690,43 @@ class SyncManager {
    */
   sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Switch to deployed API when local API is unreachable.
+   * @param {Error} error - Fetch error
+   * @returns {boolean} True if fallback URL was applied
+   * @private
+   */
+  trySwitchToRemoteFallback(error) {
+    if (this.hasSwitchedBaseUrl) {
+      return false;
+    }
+
+    const currentBase = this.apiConfig?.baseUrl || '';
+    const isLocalBase =
+      currentBase.includes('127.0.0.1') ||
+      currentBase.includes('localhost');
+
+    if (!isLocalBase) {
+      return false;
+    }
+
+    const message = (error?.message || '').toLowerCase();
+    const looksLikeConnectivityFailure =
+      message.includes('failed to fetch') ||
+      message.includes('network error') ||
+      message.includes('err_connection_refused');
+
+    if (!looksLikeConnectivityFailure) {
+      return false;
+    }
+
+    this.apiConfig.baseUrl = this.remoteFallbackBaseUrl;
+    this.hasSwitchedBaseUrl = true;
+    this.reportProgress('Local API unavailable. Switching to cloud sync...');
+    console.warn(`[Sync] Local API unreachable (${currentBase}). Falling back to ${this.remoteFallbackBaseUrl}`);
+    return true;
   }
 
   /**
