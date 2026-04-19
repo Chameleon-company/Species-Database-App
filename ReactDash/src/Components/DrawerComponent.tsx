@@ -17,6 +17,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 
 import Logo from "../assets/logo-color.png";
+import { clearAdminSession } from "../utils/adminSession";
 
 const DRAWER_WIDTH = 220;
 
@@ -346,8 +347,7 @@ function SidebarContent({
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("admin_token");
-    localStorage.removeItem("admin_role");
+    clearAdminSession();
     navigate("/admin-login");
   };
 
@@ -416,8 +416,7 @@ export default function DrawerComponent({ children }: { children: React.ReactNod
   const handleDrawerToggle = () => { if (!isClosing) setMobileOpen(!mobileOpen); };
 
   const handleLogout = () => {
-    localStorage.removeItem("admin_token");
-    localStorage.removeItem("admin_role");
+    clearAdminSession();
     navigate("/admin-login");
   };
 

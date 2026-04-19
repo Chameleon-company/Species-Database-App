@@ -43,6 +43,7 @@ const t = translations[lang];
         leafType: '',
         fruitType: '',
         etymology: '',
+        definition: '',
         habitat: '',
         identificationCharacteristics: '',
         phenology: '',
@@ -56,6 +57,7 @@ const t = translations[lang];
         leafTypeTetum: '',
         fruitTypeTetum: '',
         etymologyTetum: '',
+        definitionTetum: '',
         habitatTetum: '',
         identificationCharacteristicsTetum: '',
         phenologyTetum: '',
@@ -129,6 +131,7 @@ const t = translations[lang];
                 leafTypeTetum: translatedText[2],
                 fruitTypeTetum: translatedText[3],
                 etymologyTetum: translatedText[4],
+                definitionTetum: '',
                 habitatTetum: translatedText[5],
                 identificationCharacteristicsTetum: translatedText[6],
                 phenologyTetum: translatedText[7],
@@ -163,6 +166,7 @@ const t = translations[lang];
             leafTypeTetum: '',
             fruitTypeTetum: '',
             etymologyTetum: '',
+            definitionTetum: '',
             habitatTetum: '',
             identificationCharacteristicsTetum: '',
             phenologyTetum: '',
@@ -189,6 +193,7 @@ const t = translations[lang];
             leafType: '',
             fruitType: '',
             etymology: '',
+            definition: '',
             habitat: '',
             identificationCharacteristics: '',
             phenology: '',
@@ -229,6 +234,7 @@ const t = translations[lang];
                     scientific_name: formData.scientificName,
                     common_name: formData.commonName,
                     etymology: formData.etymology,
+                    definition: formData.definition,
                     habitat: formData.habitat,
                     identification_character: formData.identificationCharacteristics,
                     leaf_type: formData.leafType,
@@ -240,6 +246,7 @@ const t = translations[lang];
                     scientific_name_tetum: formDataTetum.scientificNameTetum,
                     common_name_tetum: formDataTetum.commonNameTetum,
                     etymology_tetum: formDataTetum.etymologyTetum,
+                    definition_tetum: formDataTetum.definitionTetum,
                     habitat_tetum: formDataTetum.habitatTetum,
                     identification_character_tetum: formDataTetum.identificationCharacteristicsTetum,
                     leaf_type_tetum: formDataTetum.leafTypeTetum,
@@ -363,6 +370,19 @@ const t = translations[lang];
             </Box>
 
             <Box sx={{ maxWidth: 1000, marginX: 'auto' }}>
+                <Box display="flex" gap={2} mb={2}>
+                    <TextField
+                        fullWidth
+                        multiline
+                        rows={3}
+                        value={formData.definition}
+                        onChange={handleChange('definition')}
+                        slotProps={{ htmlInput: { maxLength: maxEnglishChar } }}
+                        sx={bigFieldSx}
+                        label={t.definition}
+                    />
+                </Box>
+
                 <Box display="flex" gap={2} mb={2}>
                     <TextField
                         fullWidth
@@ -534,6 +554,19 @@ const t = translations[lang];
                     </Box>
 
                     <Box sx={{ maxWidth: 1000, marginX: 'auto' }}>
+                        <Box display="flex" gap={2} mb={2}>
+                            <TextField
+                                fullWidth
+                                multiline
+                                rows={3}
+                                label={t.definition}
+                                value={formDataTetum.definitionTetum}
+                                onChange={handleChangeTetum('definitionTetum')}
+                                slotProps={{ htmlInput: { maxLength: maxTetumChar } }}
+                                sx={bigFieldSx}
+                            />
+                        </Box>
+
                         <Box display="flex" gap={2} mb={2}>
                             <TextField
                                 fullWidth

@@ -9,6 +9,7 @@ type Species = {
   scientific_name: string
   common_name: string
   etymology: string
+  definition?: string
   habitat: string
   identification_character: string
   leaf_type: string

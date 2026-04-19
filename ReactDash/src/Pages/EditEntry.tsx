@@ -87,6 +87,7 @@ export function EditEntry() {
         leafType: '',
         fruitType: '',
         etymology: '',
+        definition: '',
         habitat: '',
         identificationCharacteristics: '',
         phenology: '',
@@ -100,6 +101,7 @@ export function EditEntry() {
         leafTypeTetum: '',
         fruitTypeTetum: '',
         etymologyTetum: '',
+        definitionTetum: '',
         habitatTetum: '',
         identificationCharacteristicsTetum: '',
         phenologyTetum: '',
@@ -155,6 +157,7 @@ export function EditEntry() {
                 leafType: '',
                 fruitType: '',
                 etymology: '',
+                definition: '',
                 habitat: '',
                 identificationCharacteristics: '',
                 phenology: '',
@@ -195,6 +198,7 @@ export function EditEntry() {
             leafTypeTetum: '',
             fruitTypeTetum: '',
             etymologyTetum: '',
+            definitionTetum: '',
             habitatTetum: '',
             identificationCharacteristicsTetum: '',
             phenologyTetum: '',
@@ -261,7 +265,7 @@ export function EditEntry() {
             if (translatedText[8] === "-") translatedText[8] = ""
             if (translatedText[9] === "-") translatedText[9] = ""
 
-            setFormDataTetum({
+            setFormDataTetum(prev => ({
                 scientificNameTetum: formData.scientificName,
                 commonNameTetum: translatedText[1],
                 leafTypeTetum: translatedText[2],
@@ -271,8 +275,9 @@ export function EditEntry() {
                 identificationCharacteristicsTetum: translatedText[6],
                 phenologyTetum: translatedText[7],
                 seedGerminationTetum: translatedText[8],
-                pestsTetum: translatedText[9]
-            })
+                pestsTetum: translatedText[9],
+                definitionTetum: prev.definitionTetum
+            }))
             setTranslated(true)
         }
         catch (err) {
@@ -314,6 +319,7 @@ export function EditEntry() {
                     scientific_name: formData.scientificName,
                     common_name: formData.commonName,
                     etymology: formData.etymology,
+                    definition: formData.definition,
                     habitat: formData.habitat,
                     identification_character: formData.identificationCharacteristics,
                     leaf_type: formData.leafType,
@@ -325,6 +331,7 @@ export function EditEntry() {
                     scientific_name_tetum: formDataTetum.scientificNameTetum,
                     common_name_tetum: formDataTetum.commonNameTetum,
                     etymology_tetum: formDataTetum.etymologyTetum,
+                    definition_tetum: formDataTetum.definitionTetum,
                     habitat_tetum: formDataTetum.habitatTetum,
                     identification_character_tetum: formDataTetum.identificationCharacteristicsTetum,
                     leaf_type_tetum: formDataTetum.leafTypeTetum,
@@ -369,6 +376,7 @@ export function EditEntry() {
                 leafType: '',
                 fruitType: '',
                 etymology: '',
+                definition: '',
                 habitat: '',
                 identificationCharacteristics: '',
                 phenology: '',
@@ -388,6 +396,7 @@ export function EditEntry() {
             leafType: rowData.leaf_type || '',
             fruitType: rowData.fruit_type || '',
             etymology: rowData.etymology || '',
+            definition: rowData.definition || '',
             habitat: rowData.habitat || '',
             identificationCharacteristics: rowData.identification_character || '',
             phenology: rowData.phenology || '',
@@ -412,6 +421,7 @@ export function EditEntry() {
                 leafTypeTetum: tetumRow.leaf_type || '',
                 fruitTypeTetum: tetumRow.fruit_type || '',
                 etymologyTetum: tetumRow.etymology || '',
+                definitionTetum: tetumRow.definition || '',
                 habitatTetum: tetumRow.habitat || '',
                 identificationCharacteristicsTetum: tetumRow.identification_character || '',
                 phenologyTetum: tetumRow.phenology || '',
@@ -553,6 +563,19 @@ export function EditEntry() {
                                     ? t.fruitTypeEmpty
                                     : ""
                             }
+                        />
+                    </Box>
+
+                    <Box display="flex" gap={2} mb={2}>
+                        <TextField
+                            fullWidth
+                            label={t.definition}
+                            name="definition"
+                            multiline
+                            rows={3}
+                            value={formData.definition}
+                            onChange={handleChange}
+                            sx={bigFieldSx}
                         />
                     </Box>
 
@@ -711,6 +734,19 @@ export function EditEntry() {
                     </Box>
 
                     <div><h5>{t.optional}</h5></div>
+
+                    <Box display="flex" gap={2} mb={2}>
+                        <TextField
+                            fullWidth
+                            label={t.definition}
+                            name="definitionTetum"
+                            multiline
+                            rows={3}
+                            value={formDataTetum.definitionTetum}
+                            onChange={handleChangeTetum}
+                            sx={bigFieldSx}
+                        />
+                    </Box>
 
                     <Box display="flex" gap={2} mb={2}>
                         <TextField
