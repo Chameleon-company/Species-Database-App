@@ -10,6 +10,7 @@ import ImageIcon from "@mui/icons-material/Image";
 import VideocamIcon from "@mui/icons-material/Videocam";
 import SearchIcon from "@mui/icons-material/Search";
 import { adminFetch } from "../utils/adminFetch";
+import { translations } from "../translations";
 import {
   Dialog,
   DialogTitle,
@@ -114,7 +115,6 @@ function ThumbCell({ url, type }: { url: string; type: string }) {
           (e.currentTarget as HTMLImageElement).style.boxShadow = "none";
         }}
       />
-      {/* Lightbox */}
       {previewing && (
         <div
           onClick={() => setPreviewing(false)}
@@ -268,7 +268,17 @@ export default function MediaManager() {
   const [search, setSearch] = useState("");
   const [addHovered, setAddHovered] = useState(false);
 
-  // delete dialog state
+  const [lang, setLang] = useState<"en" | "tet">(
+    (localStorage.getItem("lang") as "en" | "tet") || "en"
+  );
+  const t = (key: string) =>
+    (translations as any)[key]?.[lang] || key;
+
+  const changeLang = (newLang: "en" | "tet") => {
+    localStorage.setItem("lang", newLang);
+    setLang(newLang);
+  };
+
   const [deleteTarget, setDeleteTarget] = useState<Media | null>(null);
 
   const API_URL = import.meta.env.VITE_API_BASE;
@@ -296,7 +306,7 @@ export default function MediaManager() {
     setError(null);
     try {
       const res = await adminFetch(`${API_URL}/upload-media`, {});
-      if (!res.ok) throw new Error("Failed to load media");
+      if (!res.ok) throw new Error(t("failedToLoadMedia"));
       const data = await res.json();
       setMedia(Array.isArray(data) ? data : []);
     } catch (err: any) {
@@ -322,7 +332,7 @@ export default function MediaManager() {
 
   const saveMedia = async (row: Media) => {
     if (!row.species_name || !row.media_type || !row.download_link) {
-      setError("Species name, type and URL are required");
+      setError(t("mediaRequiredFields"));
       return row;
     }
     const isNew = row.media_id < 0;
@@ -339,8 +349,8 @@ export default function MediaManager() {
       if (!res.ok) {
         const err = await res.json();
         if (res.status === 409)
-          throw new Error("This media link is already registered");
-        throw new Error(err.error || "Upload failed");
+          throw new Error(t("mediaLinkAlreadyRegistered"));
+        throw new Error(err.error || t("uploadFailed"));
       }
       await fetchMedia();
     } catch (err: any) {
@@ -365,7 +375,7 @@ export default function MediaManager() {
       );
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || "Delete failed");
+        throw new Error(err.error || t("deleteFailed"));
       }
       await fetchMedia();
     } catch (err: any) {
@@ -378,7 +388,7 @@ export default function MediaManager() {
   const columns: GridColDef[] = [
     {
       field: "preview",
-      headerName: "Preview",
+      headerName: t("media"),
       width: 80,
       sortable: false,
       renderCell: (params: GridRenderCellParams) => (
@@ -392,14 +402,14 @@ export default function MediaManager() {
     },
     {
       field: "media_id",
-      headerName: "ID",
+      headerName: t("id"),
       width: 70,
       valueGetter: (_value: any, row: Media) =>
-        row.media_id < 0 ? "New" : row.media_id,
+        row.media_id < 0 ? t("new") : row.media_id,
     },
     {
       field: "species_name",
-      headerName: "Species Name",
+      headerName: t("speciesName"),
       width: 200,
       editable: true,
       renderCell: (params: GridRenderCellParams) => (
@@ -416,7 +426,7 @@ export default function MediaManager() {
     },
     {
       field: "media_type",
-      headerName: "Type",
+      headerName: t("type"),
       width: 120,
       editable: true,
       type: "singleSelect",
@@ -430,7 +440,7 @@ export default function MediaManager() {
     },
     {
       field: "download_link",
-      headerName: "Media URL",
+      headerName: t("mediaUrl"),
       flex: 1,
       minWidth: 260,
       editable: true,
@@ -452,7 +462,7 @@ export default function MediaManager() {
     },
     {
       field: "alt_text",
-      headerName: "Alt Text",
+      headerName: t("altText"),
       width: 180,
       editable: true,
       renderCell: (params: GridRenderCellParams) => (
@@ -479,7 +489,6 @@ export default function MediaManager() {
     <div
       style={{
         padding: "28px 36px",
-
         backgroundColor: "#f7fbf2",
         fontFamily: "'DM Sans', sans-serif",
       }}
@@ -514,7 +523,7 @@ export default function MediaManager() {
               letterSpacing: "-0.02em",
             }}
           >
-            Media
+            {t("mediaManagement")}
           </h1>
           <p
             style={{
@@ -524,37 +533,88 @@ export default function MediaManager() {
               fontWeight: 400,
             }}
           >
-            {media.length} items · {imageCount} images · {videoCount} videos
+            {media.length} items · {imageCount} {t("image").toLowerCase()}s · {videoCount} {t("video").toLowerCase()}s
           </p>
         </div>
 
-        <button
-          onClick={addMedia}
-          onMouseEnter={() => setAddHovered(true)}
-          onMouseLeave={() => setAddHovered(false)}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 7,
-            padding: "9px 18px",
-            borderRadius: 10,
-            border: "none",
-            backgroundColor: addHovered ? "#245508" : "#2d6a0a",
-            color: "#ffffff",
-            fontSize: 13,
-            fontWeight: 600,
-            fontFamily: "inherit",
-            cursor: "pointer",
-            boxShadow: addHovered
-              ? "0 4px 14px rgba(45,106,10,0.35)"
-              : "0 2px 8px rgba(45,106,10,0.2)",
-            transform: addHovered ? "translateY(-1px)" : "translateY(0)",
-            transition: "all 0.15s",
-          }}
-        >
-          <AddIcon sx={{ fontSize: 17 }} />
-          Add Media
-        </button>
+        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: 4,
+              background: "#eef7e6",
+              border: "1px solid #d0eab8",
+              borderRadius: 10,
+              padding: 4,
+            }}
+          >
+            <button
+              onClick={() => changeLang("en")}
+              style={{
+                padding: "8px 22px",
+                border: "none",
+                borderRadius: 7,
+                fontSize: 13,
+                fontWeight: 600,
+                fontFamily: "'DM Sans', sans-serif",
+                cursor: "pointer",
+                transition: "all 0.18s",
+                color: lang === "en" ? "#2d6a0a" : "#7a9464",
+                background: lang === "en" ? "#ffffff" : "transparent",
+                boxShadow: lang === "en" ? "0 1px 6px rgba(45,106,10,0.12)" : "none",
+              }}
+            >
+              🌿 {t("english")}
+            </button>
+
+            <button
+              onClick={() => changeLang("tet")}
+              style={{
+                padding: "8px 22px",
+                border: "none",
+                borderRadius: 7,
+                fontSize: 13,
+                fontWeight: 600,
+                fontFamily: "'DM Sans', sans-serif",
+                cursor: "pointer",
+                transition: "all 0.18s",
+                color: lang === "tet" ? "#2d6a0a" : "#7a9464",
+                background: lang === "tet" ? "#ffffff" : "transparent",
+                boxShadow: lang === "tet" ? "0 1px 6px rgba(45,106,10,0.12)" : "none",
+              }}
+            >
+              🌏 {t("tetum")}
+            </button>
+          </div>
+
+          <button
+            onClick={addMedia}
+            onMouseEnter={() => setAddHovered(true)}
+            onMouseLeave={() => setAddHovered(false)}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 7,
+              padding: "9px 18px",
+              borderRadius: 10,
+              border: "none",
+              backgroundColor: addHovered ? "#245508" : "#2d6a0a",
+              color: "#ffffff",
+              fontSize: 13,
+              fontWeight: 600,
+              fontFamily: "inherit",
+              cursor: "pointer",
+              boxShadow: addHovered
+                ? "0 4px 14px rgba(45,106,10,0.35)"
+                : "0 2px 8px rgba(45,106,10,0.2)",
+              transform: addHovered ? "translateY(-1px)" : "translateY(0)",
+              transition: "all 0.15s",
+            }}
+          >
+            <AddIcon sx={{ fontSize: 17 }} />
+            {t("addMedia")}
+          </button>
+        </div>
       </div>
 
       {/* ── Search ── */}
@@ -575,7 +635,7 @@ export default function MediaManager() {
         <SearchIcon sx={{ fontSize: 18, color: "#86b85a" }} />
         <input
           type="text"
-          placeholder="Search species, type, alt text…"
+          placeholder={`${t("search")} ${t("species").toLowerCase()}, ${t("type").toLowerCase()}, ${t("altText").toLowerCase()}...`}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           style={{

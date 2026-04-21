@@ -3,12 +3,17 @@ import MainTableSelect from "../mainTableSelect";
 import MainTableSelectTetum from "../mainTableSelectTetum";
 import { useState } from "react";
 import type { Species } from "../mainTableSelect";
+import { translations } from "../translations";
 
-export function Home() {
-  const [selectedSpecies, setSelectedSpecies] = useState<Species | null>(null);
-  const [selectedSpeciesTetum, setSelectedSpeciesTetum] =
-    useState<Species | null>(null);
-  const [activeTab, setActiveTab] = useState<"english" | "tetum">("english");
+  export function Home() {
+    const [selectedSpecies, setSelectedSpecies] = useState<Species | null>(null);
+    const [selectedSpeciesTetum, setSelectedSpeciesTetum] =
+      useState<Species | null>(null);
+    const [activeTab, setActiveTab] = useState<"english" | "tetum">("english");
+  
+    const lang = activeTab === "tetum" ? "tet" : "en";
+    const t = (key: string) =>
+      translations[key as keyof typeof translations]?.[lang] || key;
 
   const handleRowSelect = (rowData: Species | null) =>
     setSelectedSpecies(rowData);
@@ -29,13 +34,13 @@ export function Home() {
     { key: "pest", label: "Pests", icon: "🐛" },
   ];
 
-  const renderDetailPanel = (species: Species | null) => {
+   const renderDetailPanel = (species: Species | null) => {
     if (!species) return null;
     return (
       <div className="detail-panel">
         <div className="detail-header">
           <div className="detail-title-row">
-            <span className="detail-badge">Selected Species</span>
+            <span className="detail-badge">{t("selectedSpecies")}</span>
             <h3 className="detail-sci-name">{species.scientific_name}</h3>
             <span className="detail-common">{species.common_name}</span>
           </div>
@@ -323,65 +328,64 @@ export function Home() {
                     .section { padding: 20px 16px 0; }
                     .page-title { font-size: 22px; }
                 }
-            `}</style>
+                        `}</style>
 
-      <TheDrawer />
+<TheDrawer />
+<div className="home-root">
+  <div className="page-header">
+    <div>
+      <div className="header-accent" />
+      <h1 className="page-title">{t("dashboardTitle")}</h1>
+      <p className="page-subtitle">{t("dashboardSubtitle")}</p>
+    </div>
 
-      <div className="home-root">
-        {/* ── Page header ── */}
-        <div className="page-header">
-          <div>
-            <div className="header-accent" />
-            <h1 className="page-title">Species Database Dashboard</h1>
-            <p className="page-subtitle">
-              Browse and manage the English &amp; Tetum species records
-            </p>
-          </div>
+    <div className="tab-bar">
+      <button
+        className={`tab-btn ${activeTab === "english" ? "active" : ""}`}
+        onClick={() => {
+          setActiveTab("english");
+          localStorage.setItem("lang", "en");
+        }}
+      >
+        🌿 english
+      </button>
+      <button
+        className={`tab-btn ${activeTab === "tetum" ? "active" : ""}`}
+        onClick={() => {
+          setActiveTab("tetum");
+          localStorage.setItem("lang", "tet");
+        }}
+      >
+        🌏 tetum
+      </button>
+    </div>
+  </div>
 
-          <div className="tab-bar">
-            <button
-              className={`tab-btn ${activeTab === "english" ? "active" : ""}`}
-              onClick={() => setActiveTab("english")}
-            >
-              🌿 English
-            </button>
-            <button
-              className={`tab-btn ${activeTab === "tetum" ? "active" : ""}`}
-              onClick={() => setActiveTab("tetum")}
-            >
-              🌏 Tetum
-            </button>
-          </div>
-        </div>
-
-        {/* ── English tab ── */}
-        {activeTab === "english" && (
-          <div className="section">
-            <div className="section-label">
-              <span className="section-label-text">English Database</span>
-              <div className="section-label-line" />
-            </div>
-            <div className="table-wrap">
-              <MainTableSelect onRowSelect={handleRowSelect} lang="en" />
-            </div>
-            {renderDetailPanel(selectedSpecies)}
-          </div>
-        )}
-
-        {/* ── Tetum tab ── */}
-        {activeTab === "tetum" && (
-          <div className="section">
-            <div className="section-label">
-              <span className="section-label-text">Tetum Database</span>
-              <div className="section-label-line" />
-            </div>
-            <div className="table-wrap">
-              <MainTableSelectTetum onRowSelect={handleRowSelectTetum} lang="tet" />
-            </div>
-            {renderDetailPanel(selectedSpeciesTetum)}
-          </div>
-        )}
+  {activeTab === "english" && (
+    <div className="section">
+      <div className="section-label">
+        <span className="section-label-text">{t("englishDatabase")}</span>
+        <div className="section-label-line" />
       </div>
-    </>
-  );
+      <div className="table-wrap">
+      <MainTableSelect onRowSelect={handleRowSelect} lang="en" />     
+             </div>
+{/* {renderDetailPanel(selectedSpecies)} */}
+    </div>
+  )}
+
+  {activeTab === "tetum" && (
+    <div className="section">
+      <div className="section-label">
+        <span className="section-label-text">{t("tetumDatabase")}</span>
+        <div className="section-label-line" />
+      </div>
+      <div className="table-wrap">
+      <MainTableSelectTetum onRowSelect={handleRowSelectTetum} lang="tet" />
+            </div>
+{/* {renderDetailPanel(selectedSpeciesTetum)} */}    </div>
+  )}
+</div>
+</>
+);
 }

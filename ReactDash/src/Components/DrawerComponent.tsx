@@ -18,17 +18,15 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 
 import Logo from "../assets/logo-color.png";
 import { clearAdminSession } from "../utils/adminSession";
+import { translations } from "../translations";
 
 const DRAWER_WIDTH = 220;
 
-const NAV_ITEMS = [
-  { url: "/", label: "Dashboard", Icon: HomeIcon },
-  { url: "/species", label: "Species", Icon: ParkIcon },
-  { url: "/Media", label: "Media", Icon: FilterIcon },
-  { url: "/Audit", label: "Audit", Icon: VerifiedUserIcon },
-  { url: "/Users", label: "Users", Icon: GroupIcon },
-  { url: "/Analytics", label: "Analytics", Icon: AnalyticsIcon },
-];
+type TranslationKey = keyof typeof translations;
+type Lang = "en" | "tet";
+
+const getLang = (): Lang =>
+  localStorage.getItem("lang") === "tet" ? "tet" : "en";
 
 /* ─── Styles ──────────────────────────────────────────────────────── */
 const styles: Record<string, React.CSSProperties> = {
@@ -101,7 +99,6 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#9ca3af",
     flexShrink: 0,
   },
-  /* top bar */
   topBar: {
     position: "fixed",
     top: 0,
@@ -129,7 +126,6 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#4b5563",
     marginRight: "auto",
   },
-  /* account dropdown */
   accountWrap: {
     position: "relative",
   },
@@ -208,8 +204,6 @@ function NavItem({
 }) {
   const [hovered, setHovered] = React.useState(false);
 
-  const isHighlighted = active || hovered;
-
   return (
     <Link
       to={url}
@@ -232,7 +226,6 @@ function NavItem({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      {/* left accent bar */}
       <span
         style={{
           position: "absolute",
@@ -248,7 +241,6 @@ function NavItem({
         }}
       />
 
-      {/* icon tile */}
       <span
         style={{
           display: "flex",
@@ -268,7 +260,6 @@ function NavItem({
 
       <span style={{ flex: 1 }}>{label}</span>
 
-      {/* active dot */}
       {active && (
         <span
           style={{
@@ -285,7 +276,13 @@ function NavItem({
 }
 
 /* ─── Account Dropdown ────────────────────────────────────────────── */
-function AccountMenu({ onLogout }: { onLogout: () => void }) {
+function AccountMenu({
+  onLogout,
+  t,
+}: {
+  onLogout: () => void;
+  t: (key: TranslationKey) => string;
+}) {
   const [open, setOpen] = React.useState(false);
   const ref = React.useRef<HTMLDivElement>(null);
 
@@ -317,10 +314,13 @@ function AccountMenu({ onLogout }: { onLogout: () => void }) {
             style={styles.dropdownLogout}
             onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#fef2f2")}
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-            onClick={() => { setOpen(false); onLogout(); }}
+            onClick={() => {
+              setOpen(false);
+              onLogout();
+            }}
           >
             <LogoutIcon sx={{ fontSize: 16 }} />
-            Logout
+            {t("logout")}
           </button>
         </div>
       )}
@@ -336,10 +336,39 @@ function SidebarContent({
 }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const [lang, setLang] = React.useState<Lang>(getLang());
+
+  React.useEffect(() => {
+    const syncLang = () => setLang(getLang());
+    window.addEventListener("storage", syncLang);
+    window.addEventListener("languageChanged", syncLang as EventListener);
+    return () => {
+      window.removeEventListener("storage", syncLang);
+      window.removeEventListener("languageChanged", syncLang as EventListener);
+    };
+  }, []);
+
+  const t = React.useCallback(
+    (key: TranslationKey) => translations[key][lang],
+    [lang]
+  );
+
+  const navItems = React.useMemo(
+    () => [
+      { url: "/", label: t("dashboard"), Icon: HomeIcon },
+      { url: "/species", label: t("species"), Icon: ParkIcon },
+      { url: "/Media", label: t("media"), Icon: FilterIcon },
+      { url: "/Audit", label: t("audit"), Icon: VerifiedUserIcon },
+      { url: "/Users", label: t("users"), Icon: GroupIcon },
+      { url: "/Analytics", label: t("analytics"), Icon: AnalyticsIcon },
+    ],
+    [t]
+  );
 
   const isActive = (url: string) => {
-    if (url === "/")
+    if (url === "/") {
       return location.pathname === "/" || location.hash === "#/";
+    }
     return (
       location.pathname.toLowerCase().includes(url.toLowerCase()) ||
       location.hash.toLowerCase().includes(url.toLowerCase())
@@ -355,17 +384,14 @@ function SidebarContent({
 
   return (
     <div style={styles.sidebar}>
-      {/* Logo */}
       <div style={styles.logoArea}>
         <img src={Logo} alt="FINI Logo" style={styles.logo} />
       </div>
 
-      {/* Section label */}
       <div style={styles.sectionLabel}>Main Menu</div>
 
-      {/* Nav */}
       <nav style={styles.nav}>
-        {NAV_ITEMS.map(({ url, label, Icon }) => (
+        {navItems.map(({ url, label, Icon }) => (
           <NavItem
             key={url}
             url={url}
@@ -377,10 +403,8 @@ function SidebarContent({
         ))}
       </nav>
 
-      {/* Divider */}
       <hr style={styles.divider} />
 
-      {/* Logout */}
       <button
         style={{
           ...styles.logoutBtn,
@@ -399,21 +423,48 @@ function SidebarContent({
         >
           <LogoutIcon sx={{ fontSize: 18 }} />
         </span>
-        Logout
+        {t("logout")}
       </button>
     </div>
   );
 }
 
 /* ─── Main Component ──────────────────────────────────────────────── */
-export default function DrawerComponent({ children }: { children: React.ReactNode }) {
+export default function DrawerComponent({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [isClosing, setIsClosing] = React.useState(false);
+  const [lang, setLang] = React.useState<Lang>(getLang());
   const navigate = useNavigate();
 
-  const handleDrawerClose = () => { setIsClosing(true); setMobileOpen(false); };
+  React.useEffect(() => {
+    const syncLang = () => setLang(getLang());
+    window.addEventListener("storage", syncLang);
+    window.addEventListener("languageChanged", syncLang as EventListener);
+    return () => {
+      window.removeEventListener("storage", syncLang);
+      window.removeEventListener("languageChanged", syncLang as EventListener);
+    };
+  }, []);
+
+  const t = React.useCallback(
+    (key: TranslationKey) => translations[key][lang],
+    [lang]
+  );
+
+  const handleDrawerClose = () => {
+    setIsClosing(true);
+    setMobileOpen(false);
+  };
+
   const handleDrawerTransitionEnd = () => setIsClosing(false);
-  const handleDrawerToggle = () => { if (!isClosing) setMobileOpen(!mobileOpen); };
+
+  const handleDrawerToggle = () => {
+    if (!isClosing) setMobileOpen(!mobileOpen);
+  };
 
   const handleLogout = () => {
     clearAdminSession();
@@ -424,9 +475,7 @@ export default function DrawerComponent({ children }: { children: React.ReactNod
     <Box sx={{ display: "flex" }}>
       <CssBaseline />
 
-      {/* ── Top bar ── */}
       <div style={styles.topBar}>
-        {/* Mobile hamburger */}
         <div
           style={{
             ...styles.mobileMenuBtn,
@@ -443,15 +492,13 @@ export default function DrawerComponent({ children }: { children: React.ReactNod
           </IconButton>
         </div>
 
-        <AccountMenu onLogout={handleLogout} />
+        <AccountMenu onLogout={handleLogout} t={t} />
       </div>
 
-      {/* ── Sidebar ── */}
       <Box
         component="nav"
         sx={{ width: { sm: DRAWER_WIDTH }, flexShrink: { sm: 0 } }}
       >
-        {/* Mobile */}
         <Drawer
           variant="temporary"
           open={mobileOpen}
@@ -470,7 +517,6 @@ export default function DrawerComponent({ children }: { children: React.ReactNod
           <SidebarContent onNavClick={() => setMobileOpen(false)} />
         </Drawer>
 
-        {/* Desktop */}
         <Drawer
           variant="permanent"
           sx={{
@@ -487,13 +533,12 @@ export default function DrawerComponent({ children }: { children: React.ReactNod
         </Drawer>
       </Box>
 
-      {/* ── Page content ── */}
       <Box
         component="main"
         sx={{
           flexGrow: 1,
           width: { sm: `calc(100% - ${DRAWER_WIDTH}px)` },
-          pt: "56px", // top bar offset
+          pt: "56px",
         }}
       >
         {children}
@@ -514,6 +559,7 @@ export function ListComponent({
 }) {
   const active =
     window.location.hash.toLowerCase() === `#${url.toLowerCase()}`;
+
   return (
     <Link
       to={url}

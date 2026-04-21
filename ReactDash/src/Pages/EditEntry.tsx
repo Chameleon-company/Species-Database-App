@@ -60,7 +60,8 @@ export function EditEntry() {
     const [lang, setLang] = useState<"en" | "tet">(
         (localStorage.getItem("lang") as "en" | "tet") || "en"
     )
-    const t = translations[lang]
+    const t = (key: string) =>
+        translations[key as keyof typeof translations]?.[lang] || key
 
     const [error, setError] = useState('')
     const [uploadError, setUploadError] = useState('')
@@ -142,11 +143,11 @@ export function EditEntry() {
 
             if (!res.ok) {
                 const err = await res.json().catch(() => ({}))
-                throw new Error(err.error || t.failedToDeleteSpecies)
+                throw new Error(err.error || t("failedToDeleteSpecies"))
             }
 
             setResetKey(prev => prev + 1)
-            setStatus(t.speciesDeletedSuccessfully)
+            setStatus(t("speciesDeletedSuccessfully"))
             setError('')
             setRowSelected(false)
             setID(-1)
@@ -216,16 +217,16 @@ export function EditEntry() {
         let hasError = false
 
         if (!formData.scientificName) {
-            setError(t.scientificNameEmpty)
+            setError(t("scientificNameEmpty"))
             hasError = true
         } else if (!formData.commonName) {
-            setError(t.commonNameEmpty)
+            setError(t("commonNameEmpty"))
             hasError = true
         } else if (!formData.leafType) {
-            setError(t.leafTypeEmpty)
+            setError(t("leafTypeEmpty"))
             hasError = true
         } else if (!formData.fruitType) {
-            setError(t.fruitTypeEmpty)
+            setError(t("fruitTypeEmpty"))
             hasError = true
         }
 
@@ -282,7 +283,7 @@ export function EditEntry() {
         }
         catch (err) {
             console.error('Translation error:', err)
-            setError(t.uploadFailed)
+            setError(t("uploadFailed"))
         }
         finally {
             setTranslateLoading(false)
@@ -291,19 +292,19 @@ export function EditEntry() {
 
     const handleSubmit = async () => {
         const requiredFields = [
-            { value: formData.scientificName, name: t.scientificName },
-            { value: formData.commonName, name: t.commonName },
-            { value: formData.leafType, name: t.leafType },
-            { value: formData.fruitType, name: t.fruitType },
-            { value: formDataTetum.commonNameTetum, name: t.commonName },
-            { value: formDataTetum.leafTypeTetum, name: t.leafType },
-            { value: formDataTetum.fruitTypeTetum, name: t.fruitType }
+            { value: formData.scientificName, name: t("scientificName") },
+{ value: formData.commonName, name: t("commonName") },
+{ value: formData.leafType, name: t("leafType") },
+{ value: formData.fruitType, name: t("fruitType") },
+{ value: formDataTetum.commonNameTetum, name: t("commonName") },
+{ value: formDataTetum.leafTypeTetum, name: t("leafType") },
+{ value: formDataTetum.fruitTypeTetum, name: t("fruitType") }
         ]
 
         const emptyField = requiredFields.find(field => !field.value)
 
         if (emptyField) {
-            setUploadError(`${emptyField.name} ${t.cannotBeEmpty}`)
+            setUploadError(`${emptyField.name} ${t("cannotBeEmpty")}`)
             return
         }
 
@@ -344,7 +345,7 @@ export function EditEntry() {
 
             if (!res.ok) {
                 const err = await res.json().catch(() => ({}))
-                setUploadError(err.error || t.databaseUploadFailed)
+                setUploadError(err.error || t("databaseUploadFailed"))
                 throw new Error(err.error || 'Update failed')
             }
 
@@ -470,7 +471,7 @@ export function EditEntry() {
     return (
         <>
             <div className="flex justify-between mb-4 items-center">
-                <h2 className="text-3xl font-bold">{t.editExistingEntry}</h2>
+            <h2 className="text-3xl font-bold">{t("editExistingEntry")}</h2>
 
                 <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                     <button onClick={() => changeLang("en")}>EN</button>
@@ -496,13 +497,13 @@ export function EditEntry() {
 
             {rowSelected && (
                 <Box sx={formContainerSx}>
-                    <h2 style={{ fontSize: '1.75rem' }}>English Entry</h2>
+                    <h2 style={{ fontSize: '1.75rem' }}>{t("english")} Entry</h2>
 
                     <Box display="flex" gap={2} mb={2} justifyContent="center">
                         <TextField
                             sx={{ ...bigFieldSx, maxWidth: 280 }}
                             name="scientificName"
-                            label={t.scientificName}
+                            label={t("scientificName")}
                             value={formData.scientificName}
                             onChange={handleChange}
                             onBlur={() => markTouched('scientificName')}
@@ -510,7 +511,7 @@ export function EditEntry() {
                             error={touched.scientificName && !formData.scientificName}
                             helperText={
                                 touched.scientificName && !formData.scientificName
-                                    ? t.scientificNameEmpty
+                                ? t("scientificNameEmpty")
                                     : ""
                             }
                         />
@@ -518,7 +519,7 @@ export function EditEntry() {
                         <TextField
                             sx={{ ...bigFieldSx, maxWidth: 280 }}
                             name="commonName"
-                            label={t.commonName}
+                            label={t("commonName")}
                             value={formData.commonName}
                             onChange={handleChange}
                             onBlur={() => markTouched('commonName')}
@@ -526,7 +527,7 @@ export function EditEntry() {
                             error={touched.commonName && !formData.commonName}
                             helperText={
                                 touched.commonName && !formData.commonName
-                                    ? t.commonNameEmpty
+                                ? t("commonNameEmpty")
                                     : ""
                             }
                         />
@@ -536,7 +537,7 @@ export function EditEntry() {
                         <TextField
                             sx={{ ...bigFieldSx, maxWidth: 280 }}
                             name="leafType"
-                            label={t.leafType}
+                            label={t("leafType")}
                             value={formData.leafType}
                             onChange={handleChange}
                             onBlur={() => markTouched('leafType')}
@@ -544,7 +545,7 @@ export function EditEntry() {
                             error={touched.leafType && !formData.leafType}
                             helperText={
                                 touched.leafType && !formData.leafType
-                                    ? t.leafTypeEmpty
+                                ? t("leafTypeEmpty")
                                     : ""
                             }
                         />
@@ -552,7 +553,7 @@ export function EditEntry() {
                         <TextField
                             sx={{ ...bigFieldSx, maxWidth: 280 }}
                             name="fruitType"
-                            label={t.fruitType}
+                            label={t("fruitType")}
                             value={formData.fruitType}
                             onChange={handleChange}
                             onBlur={() => markTouched('fruitType')}
@@ -560,7 +561,7 @@ export function EditEntry() {
                             error={touched.fruitType && !formData.fruitType}
                             helperText={
                                 touched.fruitType && !formData.fruitType
-                                    ? t.fruitTypeEmpty
+                                ? t("fruitTypeEmpty")
                                     : ""
                             }
                         />
@@ -569,7 +570,7 @@ export function EditEntry() {
                     <Box display="flex" gap={2} mb={2}>
                         <TextField
                             fullWidth
-                            label={t.definition}
+                            label={t("definition")}
                             name="definition"
                             multiline
                             rows={3}
@@ -582,7 +583,7 @@ export function EditEntry() {
                     <Box display="flex" gap={2} mb={2}>
                         <TextField
                             fullWidth
-                            label={t.etymology}
+                            label={t("etymology")}
                             name="etymology"
                             multiline
                             rows={4}
@@ -593,7 +594,7 @@ export function EditEntry() {
 
                         <TextField
                             fullWidth
-                            label={t.habitat}
+                            label={t("habitat")}
                             name="habitat"
                             multiline
                             rows={4}
@@ -606,7 +607,7 @@ export function EditEntry() {
                     <Box display="flex" gap={2} mb={2}>
                         <TextField
                             fullWidth
-                            label={t.identificationCharacteristics}
+                            label={t("identificationCharacteristics")}
                             name="identificationCharacteristics"
                             multiline
                             rows={4}
@@ -617,7 +618,7 @@ export function EditEntry() {
 
                         <TextField
                             fullWidth
-                            label={t.phenology}
+                            label={t("phenology")}
                             name="phenology"
                             multiline
                             rows={4}
@@ -630,7 +631,7 @@ export function EditEntry() {
                     <Box display="flex" gap={2} mb={2}>
                         <TextField
                             fullWidth
-                            label={t.seedGermination}
+                            label={t("seedGermination")}
                             name="seedGermination"
                             multiline
                             rows={5}
@@ -641,7 +642,7 @@ export function EditEntry() {
 
                         <TextField
                             fullWidth
-                            label={t.pest}
+                            label={t("pest")}
                             name="pests"
                             multiline
                             rows={5}
@@ -657,7 +658,7 @@ export function EditEntry() {
                             onClick={handleTranslate}
                             disabled={translateLoading}
                         >
-                            {translateLoading ? 'Translating...' : 'Translate for Tetum Entry'}
+                            {translateLoading ? t("loading") : t("translateToTetum")}
                         </Button>
                     </Box>
                 </Box>
@@ -676,7 +677,7 @@ export function EditEntry() {
                     <Box display="flex" gap={2} mb={2} justifyContent="center">
                         <TextField
                             sx={{ ...bigFieldSx, maxWidth: 280 }}
-                            label={t.scientificName}
+                            label={t("scientificName")}
                             name="scientificNameTetum"
                             value={formData.scientificName}
                             disabled
@@ -684,7 +685,7 @@ export function EditEntry() {
 
                         <TextField
                             sx={{ ...bigFieldSx, maxWidth: 280 }}
-                            label={t.commonName}
+                            label={t("commonName")}
                             name="commonNameTetum"
                             value={formDataTetum.commonNameTetum}
                             onChange={handleChangeTetum}
@@ -693,7 +694,7 @@ export function EditEntry() {
                             error={touched.commonNameTetum && !formDataTetum.commonNameTetum}
                             helperText={
                                 touched.commonNameTetum && !formDataTetum.commonNameTetum
-                                    ? t.commonNameEmpty
+                                ? t("commonNameEmpty")
                                     : ""
                             }
                         />
@@ -702,7 +703,7 @@ export function EditEntry() {
                     <Box display="flex" gap={2} mb={2} justifyContent="center">
                         <TextField
                             sx={{ ...bigFieldSx, maxWidth: 280 }}
-                            label={t.leafType}
+                            label={t("leafType")}
                             name="leafTypeTetum"
                             value={formDataTetum.leafTypeTetum}
                             onChange={handleChangeTetum}
@@ -711,14 +712,14 @@ export function EditEntry() {
                             error={touched.leafTypeTetum && !formDataTetum.leafTypeTetum}
                             helperText={
                                 touched.leafTypeTetum && !formDataTetum.leafTypeTetum
-                                    ? t.leafTypeEmpty
+                                ? t("leafTypeEmpty")
                                     : ""
                             }
                         />
 
                         <TextField
                             sx={{ ...bigFieldSx, maxWidth: 280 }}
-                            label={t.fruitType}
+                            label={t("fruitType")}
                             name="fruitTypeTetum"
                             value={formDataTetum.fruitTypeTetum}
                             onChange={handleChangeTetum}
@@ -727,18 +728,18 @@ export function EditEntry() {
                             error={touched.fruitTypeTetum && !formDataTetum.fruitTypeTetum}
                             helperText={
                                 touched.fruitTypeTetum && !formDataTetum.fruitTypeTetum
-                                    ? t.fruitTypeEmpty
+                                ? t("fruitTypeEmpty")
                                     : ""
                             }
                         />
                     </Box>
 
-                    <div><h5>{t.optional}</h5></div>
+                    <div><h5>{t("optional")}</h5></div>
 
                     <Box display="flex" gap={2} mb={2}>
                         <TextField
                             fullWidth
-                            label={t.definition}
+                            label={t("definition")}
                             name="definitionTetum"
                             multiline
                             rows={3}
@@ -751,7 +752,7 @@ export function EditEntry() {
                     <Box display="flex" gap={2} mb={2}>
                         <TextField
                             fullWidth
-                            label={t.etymology}
+                            label={t("etymology")}
                             name="etymologyTetum"
                             multiline
                             rows={4}
@@ -762,7 +763,7 @@ export function EditEntry() {
 
                         <TextField
                             fullWidth
-                            label={t.habitat}
+                            label={t("habitat")}
                             name="habitatTetum"
                             multiline
                             rows={4}
@@ -775,7 +776,7 @@ export function EditEntry() {
                     <Box display="flex" gap={2} mb={2}>
                         <TextField
                             fullWidth
-                            label={t.identificationCharacteristics}
+                            label={t("identificationCharacteristics")}
                             name="identificationCharacteristicsTetum"
                             multiline
                             rows={4}
@@ -786,7 +787,7 @@ export function EditEntry() {
 
                         <TextField
                             fullWidth
-                            label={t.phenology}
+                            label={t("phenology")}
                             name="phenologyTetum"
                             multiline
                             rows={4}
@@ -799,7 +800,7 @@ export function EditEntry() {
                     <Box display="flex" gap={2} mb={2}>
                         <TextField
                             fullWidth
-                            label={t.seedGermination}
+                            label={t("seedGermination")}
                             name="seedGerminationTetum"
                             multiline
                             rows={4}
@@ -810,7 +811,7 @@ export function EditEntry() {
 
                         <TextField
                             fullWidth
-                            label={t.pest}
+                            label={t("pest")}
                             name="pestsTetum"
                             multiline
                             rows={4}
@@ -858,17 +859,17 @@ export function EditEntry() {
                 aria-describedby="alert-dialog-description"
             >
                 <DialogTitle id="alert-dialog-title">
-                    {t.deleteSpeciesEntry}
+                {t("deleteSpeciesEntry")}
                 </DialogTitle>
                 <DialogContent>
                     <DialogContentText id="alert-dialog-description">
-                        {t.deleteConfirmPrefix} "{formData.commonName}"? {t.deleteConfirmSuffix}
+                    {t("deleteConfirmPrefix")} "{formData.commonName}"? {t("deleteConfirmSuffix")}
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={handleClose}>{t.cancel}</Button>
+                <Button onClick={handleClose}>{t("cancel")}</Button>
                     <Button onClick={handleConfirmDelete} color="error" autoFocus>
-                        {t.delete}
+                    {t("delete")}
                     </Button>
                 </DialogActions>
             </Dialog>

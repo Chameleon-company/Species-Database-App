@@ -27,21 +27,22 @@ interface MainTableProps {
 const paginationModel = { page: 0, pageSize: 10 }
 
 export default function MainTableSelectTetum({ onRowSelect, lang }: MainTableProps) {
-  const t = translations[lang]
+  const t = (key: string) =>
+    translations[key as keyof typeof translations]?.[lang] || key
   const [species, setSpecies] = useState<Species[]>([])
 
   const columns: GridColDef[] = [
-    { field: 'species_id', headerName: t.id, width: 50 },
-    { field: 'scientific_name', headerName: t.scientificName, width: 200 },
-    { field: 'common_name', headerName: t.commonName, width: 150 },
-    { field: 'etymology', headerName: t.etymology, width: 150 },
-    { field: 'habitat', headerName: t.habitat, width: 130 },
-    { field: 'identification_character', headerName: t.identificationCharacter, width: 150 },
-    { field: 'leaf_type', headerName: t.leafType, width: 120 },
-    { field: 'fruit_type', headerName: t.fruitType, width: 120 },
-    { field: 'phenology', headerName: t.phenology, width: 120 },
-    { field: 'seed_germination', headerName: t.seedGermination, width: 150 },
-    { field: 'pest', headerName: t.pest, width: 130 },
+    { field: 'species_id', headerName: t("id"), width: 50 },
+    { field: 'scientific_name', headerName: t("scientificName"), width: 200 },
+    { field: 'common_name', headerName: t("commonName"), width: 150 },
+    { field: 'etymology', headerName: t("etymology"), width: 150 },
+    { field: 'habitat', headerName: t("habitat"), width: 130 },
+    { field: 'identification_character', headerName: t("identificationCharacter"), width: 150 },
+    { field: 'leaf_type', headerName: t("leafType"), width: 120 },
+    { field: 'fruit_type', headerName: t("fruitType"), width: 120 },
+    { field: 'phenology', headerName: t("phenology"), width: 120 },
+    { field: 'seed_germination', headerName: t("seedGermination"), width: 150 },
+    { field: 'pest', headerName: t("pest"), width: 130 },
   ]
 
   useEffect(() => {

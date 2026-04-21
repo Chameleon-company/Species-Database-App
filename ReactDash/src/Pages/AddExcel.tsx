@@ -21,7 +21,8 @@ export default function AddExcel() {
   const [lang, setLang] = useState<"en" | "tet">(
     (localStorage.getItem("lang") as "en" | "tet") || "en"
   );
-  const t = translations[lang];
+  const t = (key: string) =>
+    (translations as any)[key]?.[lang] || key;
 
   const changeLang = (newLang: "en" | "tet") => {
     localStorage.setItem("lang", newLang);
@@ -68,7 +69,7 @@ export default function AddExcel() {
       setUploadedFile({
         file,
         status: "error",
-        message: t.onlyExcelAllowed,
+        message: t("onlyExcelAllowed"),
       });
       return;
     }
@@ -80,7 +81,7 @@ export default function AddExcel() {
       setUploadedFile({
         file,
         status: "uploading",
-        message: t.processingFile,
+        message: t("processingFile"),
       });
 
       const response = await adminFetch(`${API_URL}/upload-species`, {
@@ -91,19 +92,19 @@ export default function AddExcel() {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || t.uploadFailed);
+        throw new Error(result.error || t("uploadFailed"));
       }
 
       setUploadedFile({
         file,
         status: "success",
-        message: t.uploadSuccess,
+        message: t("uploadSuccess"),
       });
     } catch (err: any) {
       setUploadedFile({
         file,
         status: "error",
-        message: err?.message || t.uploadFailed,
+        message: err?.message || t("uploadFailed"),
       });
     }
   };
@@ -122,7 +123,7 @@ export default function AddExcel() {
   return (
     <>
       <div className="flex justify-between mb-4 items-center">
-        <h2 className="text-3xl font-bold">{t.addExcel}</h2>
+        <h2 className="text-3xl font-bold">{t("addExcel")}</h2>
 
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
           <button onClick={() => changeLang("en")}>EN</button>
@@ -133,10 +134,10 @@ export default function AddExcel() {
       <div className="w-full mx-auto p-5">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-3">
-            {t.uploadTitle}
+            {t("uploadTitle")}
           </h1>
           <p className="text-gray-600">
-            {t.uploadDescription}
+            {t("uploadDescription")}
           </p>
         </div>
 
@@ -154,15 +155,15 @@ export default function AddExcel() {
             <Upload className="mx-auto mb-4" />
 
             <div className="text-lg font-semibold">
-              {dragActive ? t.dropFile : t.uploadSpecies}
+              {dragActive ? t("dropFile") : t("uploadSpecies")}
             </div>
 
             <p className="text-gray-600 mb-4">
-              {t.dragOrClick}
+              {t("dragOrClick")}
             </p>
 
             <button type="button">
-              {t.chooseFile}
+              {t("chooseFile")}
             </button>
 
             <input
@@ -179,18 +180,18 @@ export default function AddExcel() {
               <div>{uploadedFile.file.name}</div>
 
               {uploadedFile.status === "uploading" && (
-                <div>{t.uploading}</div>
+                <div>{t("uploading")}</div>
               )}
 
               {uploadedFile.status === "success" && (
-                <div>{t.success}</div>
+                <div>{t("success")}</div>
               )}
 
               {uploadedFile.status === "error" && (
-                <div>{t.error}: {uploadedFile.message}</div>
+                <div>{t("error")}: {uploadedFile.message}</div>
               )}
 
-              <button onClick={removeFile}>{t.remove}</button>
+              <button onClick={removeFile}>{t("remove")}</button>
             </div>
           )}
         </div>

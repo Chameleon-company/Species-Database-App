@@ -180,10 +180,10 @@ export default function SpeciesPage() {
       );
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "failed to delete species");
+        throw new Error(err.error || t("failedToDeleteSpecies"));
       }
       setRows((prev) => prev.filter((row) => row.species_id !== deleteId));
-      setStatus("Species deleted successfully!");
+      setStatus(t("speciesDeletedSuccessfully"));
     } catch (error) {
       setError(`Error: ${(error as Error).message}`);
     } finally {
@@ -216,27 +216,31 @@ export default function SpeciesPage() {
 
   useEffect(() => { fetchSpecies(); }, []);
 
-  const t = translations.en;
+  const [lang, setLang] = useState<"en" | "tet">(
+    (localStorage.getItem("lang") as "en" | "tet") || "en"
+  );
+  const t = (key: string) =>
+    translations[key as keyof typeof translations]?.[lang] || key;
 
   const columns: GridColDef[] = [
-    { field: "id", headerName: "ID", width: 70 },
-    { field: "common_name", headerName: "Species Name", width: 160 },
-    { field: "scientific_name", headerName: "Scientific Name", width: 180,
+    { field: "id", headerName: t("id"), width: 70 },
+    { field: "common_name", headerName: t("speciesName"), width: 160 },
+    { field: "scientific_name", headerName: t("scientificName"), width: 180,
       renderCell: (params: GridRenderCellParams) => (
         <span style={{ fontStyle: "italic", color: "#374151" }}>{params.value}</span>
       ),
     },
-    { field: "identification_character", headerName: "Identification Char…", width: 200 },
-    { field: "habitat", headerName: "Habitat", width: 160 },
+    { field: "identification_character", headerName: t("identificationCharacter"), width: 200 },
+    { field: "habitat", headerName: t("habitat"), width: 160 },
     {
       field: "actions",
-      headerName: t.actions,
+      headerName: t("actions"),
       sortable: false,
       width: 120,
       renderCell: (params: GridRenderCellParams) => (
         <div style={{ display: "flex", alignItems: "center", gap: 14, height: "100%" }}>
           <Link to={`/edit/${params.id}`} style={{ textDecoration: "none" }}>
-            <CellLink color="#2d6a0a">Edit</CellLink>
+          <CellLink color="#2d6a0a">{t("edit")}</CellLink>
           </Link>
           <CellLink
             color="#dc2626"
@@ -246,7 +250,7 @@ export default function SpeciesPage() {
               setOpen(true);
             }}
           >
-            Delete
+            {t("delete")}
           </CellLink>
         </div>
       ),
@@ -261,28 +265,84 @@ export default function SpeciesPage() {
 
       {/* ── Page header ── */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 16, marginBottom: 24 }}>
-        <div>
-          <div style={{ width: 36, height: 4, borderRadius: 4, background: "linear-gradient(90deg, #2d6a0a, #86b85a)", marginBottom: 8 }} />
-          <h1 style={{ fontSize: 26, fontWeight: 700, color: "#1a2e10", margin: 0, letterSpacing: "-0.02em" }}>
-            Species
-          </h1>
-          <p style={{ fontSize: 13, color: "#7a9464", marginTop: 4, fontWeight: 400 }}>
-            {totalSpecies} species records in the English database
-          </p>
-        </div>
+  <div>
+    <div style={{ width: 36, height: 4, borderRadius: 4, background: "linear-gradient(90deg, #2d6a0a, #86b85a)", marginBottom: 8 }} />
+    <h1 style={{ fontSize: 26, fontWeight: 700, color: "#1a2e10", margin: 0, letterSpacing: "-0.02em" }}>
+      {t("species")}
+    </h1>
+    <p style={{ fontSize: 13, color: "#7a9464", marginTop: 4, fontWeight: 400 }}>
+      {totalSpecies} {t("species")} records in the {t("englishDatabase")}
+    </p>
+  </div>
 
-        {/* Action buttons */}
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <ActionButton href="/Page1" variant="primary">
-            <AddIcon sx={{ fontSize: 17 }} />
-            Add Species
-          </ActionButton>
-          <ActionButton href="/AddExcel" variant="ghost">
-            <UploadFileIcon sx={{ fontSize: 17 }} />
-            Upload Excel
-          </ActionButton>
-        </div>
-      </div>
+  <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+    <div
+      style={{
+        display: "flex",
+        gap: 4,
+        background: "#eef7e6",
+        border: "1px solid #d0eab8",
+        borderRadius: 10,
+        padding: 4,
+      }}
+    >
+      <button
+        onClick={() => {
+          localStorage.setItem("lang", "en");
+          setLang("en");
+        }}
+        style={{
+          padding: "8px 22px",
+          border: "none",
+          borderRadius: 7,
+          fontSize: 13,
+          fontWeight: 600,
+          fontFamily: "'DM Sans', sans-serif",
+          cursor: "pointer",
+          transition: "all 0.18s",
+          color: lang === "en" ? "#2d6a0a" : "#7a9464",
+          background: lang === "en" ? "#ffffff" : "transparent",
+          boxShadow: lang === "en" ? "0 1px 6px rgba(45,106,10,0.12)" : "none",
+        }}
+      >
+        🌿 {t("english")}
+      </button>
+
+      <button
+        onClick={() => {
+          localStorage.setItem("lang", "tet");
+          setLang("tet");
+        }}
+        style={{
+          padding: "8px 22px",
+          border: "none",
+          borderRadius: 7,
+          fontSize: 13,
+          fontWeight: 600,
+          fontFamily: "'DM Sans', sans-serif",
+          cursor: "pointer",
+          transition: "all 0.18s",
+          color: lang === "tet" ? "#2d6a0a" : "#7a9464",
+          background: lang === "tet" ? "#ffffff" : "transparent",
+          boxShadow: lang === "tet" ? "0 1px 6px rgba(45,106,10,0.12)" : "none",
+        }}
+      >
+        🌏 {t("tetum")}
+      </button>
+    </div>
+
+    <ActionButton href="/Page1" variant="primary">
+      <AddIcon sx={{ fontSize: 17 }} />
+      {t("addSpecies")}
+    </ActionButton>
+
+    <ActionButton href="/AddExcel" variant="ghost">
+      <UploadFileIcon sx={{ fontSize: 17 }} />
+      {t("uploadExcel")}
+    </ActionButton>
+  </div>
+</div>
+      
 
       {/* ── Search bar ── */}
       <div style={{
@@ -300,7 +360,7 @@ export default function SpeciesPage() {
         <SearchIcon sx={{ fontSize: 18, color: "#86b85a" }} />
         <input
           type="text"
-          placeholder="Search species, habitat…"
+          placeholder={`${t("search")} ${t("species")}, ${t("habitat")}...`}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           style={{
@@ -349,13 +409,13 @@ export default function SpeciesPage() {
         }}
       >
         <DialogTitle sx={{ fontWeight: 700, fontSize: 17, color: "#1a2e10", pb: 0.5 }}>
-          Delete Species?
+        {t("deleteSpeciesEntry")}
         </DialogTitle>
         <DialogContent>
           <DialogContentText sx={{ fontSize: 14, color: "#4b5563" }}>
-            Are you sure you want to delete{" "}
-            <strong style={{ color: "#1a2e10" }}>{deleteName}</strong>?{" "}
-            This action cannot be undone.
+          {t("deleteConfirmPrefix")}{" "}
+<strong style={{ color: "#1a2e10" }}>{deleteName}</strong>?{" "}
+{t("deleteConfirmSuffix")}
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
@@ -373,7 +433,7 @@ export default function SpeciesPage() {
               cursor: "pointer",
             }}
           >
-            Cancel
+            {t("cancel")}
           </button>
           <button
             onClick={handleConfirmDelete}
@@ -390,7 +450,7 @@ export default function SpeciesPage() {
               boxShadow: "0 2px 8px rgba(220,38,38,0.25)",
             }}
           >
-            Delete
+           {t("delete")}
           </button>
         </DialogActions>
       </Dialog>

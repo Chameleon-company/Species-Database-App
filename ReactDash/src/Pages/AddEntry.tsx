@@ -13,7 +13,8 @@ const API_BASE = import.meta.env.VITE_API_BASE
 export default function Page1() {
     const [lang, setLang] = useState<"en" | "tet">("en");
 
-const t = translations[lang];
+    const t = (key: string) =>
+      translations[key as keyof typeof translations]?.[lang] || key;
 
     const bigFieldSx = {
         '& .MuiInputBase-input': {
@@ -73,16 +74,16 @@ const t = translations[lang];
         setError('')
 
         if (!formData.scientificName) {
-            setError(t.scientificNameEmpty)
+            setError(t("scientificNameEmpty"))
             return
         } if (!formData.commonName) {
-            setError(t.commonNameEmpty)
+            setError(t("commonNameEmpty"))
             return
         } if (!formData.leafType) {
-            setError(t.leafTypeEmpty)
+            setError(t("leafTypeEmpty"))
             return
         } if (!formData.fruitType) {
-            setError(t.fruitTypeEmpty)
+            setError(t("fruitTypeEmpty"))
             return
         }
 
@@ -206,20 +207,20 @@ const t = translations[lang];
 
     const handleSubmit = async () => {
         const requiredFields = [
-            { value: formData.scientificName, name: t.scientificName },
-            { value: formData.commonName, name: t.commonName },
-            { value: formData.leafType, name: t.leafType },
-            { value: formData.fruitType, name: t.fruitType },
-            { value: formDataTetum.scientificNameTetum, name: t.scientificName },
-            { value: formDataTetum.commonNameTetum, name: t.commonName },
-            { value: formDataTetum.leafTypeTetum, name: t.leafType },
-            { value: formDataTetum.fruitTypeTetum, name: t.fruitType }
+            { value: formData.scientificName, name: t("scientificName") },
+{ value: formData.commonName, name: t("commonName") },
+{ value: formData.leafType, name: t("leafType") },
+{ value: formData.fruitType, name: t("fruitType") },
+{ value: formDataTetum.scientificNameTetum, name: t("scientificName") },
+{ value: formDataTetum.commonNameTetum, name: t("commonName") },
+{ value: formDataTetum.leafTypeTetum, name: t("leafType") },
+{ value: formDataTetum.fruitTypeTetum, name: t("fruitType") }
         ]
 
         const emptyField = requiredFields.find(field => !field.value)
 
         if (emptyField) {
-            setError(`${emptyField.name} ${t.cannotBeEmpty}`)
+            setError(`${emptyField.name} ${t("cannotBeEmpty")}`)
             return
         }
 
@@ -269,16 +270,16 @@ const t = translations[lang];
             if (!response.ok) {
                 console.error('UPLOAD FAILED:', response.status, data)
                 setError(
-                    data?.error || data?.message || data?.raw || `${t.uploadFailed} (${response.status})`
+                    data?.error || data?.message || data?.raw || `${t("uploadFailed")} (${response.status})`
                 )
                 return
             }
 
             console.log("success:", data)
-            setStatus(t.uploadSuccessful)
+            setStatus(t("uploadSuccessful"))
         } catch (error) {
             console.error('Error:', error)
-            setError(t.databaseUploadFailed)
+            setError(t("databaseUploadFailed"))
         } finally {
             setLoading(false)
         }
@@ -287,7 +288,7 @@ const t = translations[lang];
     return (
         <Box width="100%">
             <div className="flex justify-between mb-4 items-center">
-                <h2 className="text-3xl font-bold">{t.addSpecies}</h2>
+            <h2 className="text-3xl font-bold">{t("addSpecies")}</h2>
     
                 <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                     <button onClick={() => setLang("en")} style={{ marginRight: "10px" }}>
@@ -303,7 +304,7 @@ const t = translations[lang];
                 <Box display="flex" gap={2} mb={2} justifyContent="center">
                     <TextField
                         sx={{ ...bigFieldSx, maxWidth: 280 }}
-                        label={t.scientificName}
+                        label={t("scientificName")}
                         value={formData.scientificName}
                         onChange={handleChange('scientificName')}
                         onBlur={() => markTouched('scientificName')}
@@ -311,14 +312,14 @@ const t = translations[lang];
                         error={touched.scientificName && !formData.scientificName}
                         helperText={
                             touched.scientificName && !formData.scientificName
-                                ? t.scientificNameEmpty
+                            ? t("scientificNameEmpty")
                                 : ""
                         }
                     />
     
                     <TextField
                         sx={{ ...bigFieldSx, maxWidth: 280 }}
-                        label={t.commonName}
+                        label={t("commonName")}
                         value={formData.commonName}
                         onChange={handleChange('commonName')}
                         onBlur={() => markTouched('commonName')}
@@ -326,7 +327,7 @@ const t = translations[lang];
                         error={touched.commonName && !formData.commonName}
                         helperText={
                             touched.commonName && !formData.commonName
-                                ? t.commonNameEmpty
+                            ? t("commonNameEmpty")
                                 : ""
                         }
                     />
@@ -335,7 +336,7 @@ const t = translations[lang];
                 <Box display="flex" gap={2} mb={2} justifyContent="center">
                     <TextField
                         sx={{ ...bigFieldSx, maxWidth: 280 }}
-                        label={t.leafType}
+                        label={t("leafType")}
                         value={formData.leafType}
                         onChange={handleChange('leafType')}
                         onBlur={() => markTouched('leafType')}
@@ -343,14 +344,14 @@ const t = translations[lang];
                         error={touched.leafType && !formData.leafType}
                         helperText={
                             touched.leafType && !formData.leafType
-                                ? t.leafTypeEmpty
+                            ? t("leafTypeEmpty")
                                 : ""
                         }
                     />
 
                     <TextField
                         sx={{ ...bigFieldSx, maxWidth: 280 }}
-                        label={t.fruitType}
+                        label={t("fruitType")}
                         value={formData.fruitType}
                         onChange={handleChange('fruitType')}
                         onBlur={() => markTouched('fruitType')}
@@ -358,7 +359,7 @@ const t = translations[lang];
                         error={touched.fruitType && !formData.fruitType}
                         helperText={
                             touched.fruitType && !formData.fruitType
-                                ? t.fruitTypeEmpty
+                            ? t("fruitTypeEmpty")
                                 : ""
                         }
                     />
@@ -366,7 +367,7 @@ const t = translations[lang];
             </Box>
 
             <Box sx={{ mt: 4, mb: 2, textAlign: 'center' }}>
-                <h5>{t.optional}</h5>
+            <h5>{t("optional")}</h5>
             </Box>
 
             <Box sx={{ maxWidth: 1000, marginX: 'auto' }}>
@@ -379,7 +380,7 @@ const t = translations[lang];
                         onChange={handleChange('definition')}
                         slotProps={{ htmlInput: { maxLength: maxEnglishChar } }}
                         sx={bigFieldSx}
-                        label={t.definition}
+                        label={t("definition")}
                     />
                 </Box>
 
@@ -392,12 +393,12 @@ const t = translations[lang];
                         onChange={handleChange('etymology')}
                         slotProps={{ htmlInput: { maxLength: maxEnglishChar } }}
                         sx={bigFieldSx}
-                        label={t.etymology}
+                        label={t("etymology")}
                     />
 
                     <TextField
                         fullWidth
-                        label={t.habitat}
+                        label={t("habitat")}
                         multiline
                         rows={4}
                         value={formData.habitat}
@@ -410,7 +411,7 @@ const t = translations[lang];
                 <Box display="flex" gap={2} mb={2}>
                     <TextField
                         fullWidth
-                        label={t.identificationCharacter}
+                        label={t("identificationCharacter")}
                         id="BigText3"
                         multiline
                         rows={4}
@@ -422,7 +423,7 @@ const t = translations[lang];
 
                     <TextField
                         fullWidth
-                        label={t.phenology}
+                        label={t("phenology")}
                         id="BigText4"
                         multiline
                         rows={4}
@@ -436,7 +437,7 @@ const t = translations[lang];
                 <Box display="flex" gap={2} mb={2}>
                     <TextField
                         fullWidth
-                        label={t.seedGermination}
+                        label={t("seedGermination")}
                         id="BigText5"
                         multiline
                         rows={4}
@@ -448,7 +449,7 @@ const t = translations[lang];
 
                     <TextField
                         fullWidth
-                        label={t.pest}
+                        label={t("pest")}
                         id="BigText6"
                         multiline
                         rows={4}
@@ -476,34 +477,34 @@ const t = translations[lang];
 
             <Box>
                 <Button variant="contained" onClick={handleTetumTranslate}>
-                    {t.translateToTetum}
+                {t("translateToTetum")}
                 </Button>
             </Box>
 
             <Box sx={{ marginTop: 2 }}>
                 <Button variant="contained" onClick={handleClear}>
-                    {t.clearEntry}
+                {t("clearEntry")}
                 </Button>
             </Box>
 
             {tetumTranslate && (
                 <Box sx={{ marginTop: 2 }}>
                     <Box sx={{ mt: 4, mb: 2, textAlign: 'center' }}>
-                        <div><h3>{t.tetumTranslation}</h3></div>
-                        <div><h5>{t.reviewTetumText}</h5></div>
+                        <div><h3>{t("tetumTranslation")}</h3></div>
+                        <div><h5>{t("reviewTetumText")}</h5></div>
                     </Box>
 
                     <Box display="flex" gap={2} mb={2} justifyContent="center">
                         <TextField
                             sx={{ ...bigFieldSx, maxWidth: 280 }}
-                            label={t.scientificName}
+                            label={t("scientificName")}
                             value={formData.scientificName}
                             disabled
                         />
 
                         <TextField
                             sx={{ ...bigFieldSx, maxWidth: 280 }}
-                            label={t.commonName}
+                            label={t("commonName")}
                             value={formDataTetum.commonNameTetum}
                             onChange={handleChangeTetum('commonNameTetum')}
                             onBlur={() => markTouched('commonNameTetum')}
@@ -511,7 +512,7 @@ const t = translations[lang];
                             error={touched.commonNameTetum && !formDataTetum.commonNameTetum}
                             helperText={
                                 touched.commonNameTetum && !formDataTetum.commonNameTetum
-                                    ? t.commonNameEmpty
+                                ? t("commonNameEmpty")
                                     : ""
                             }
                         />
@@ -520,7 +521,7 @@ const t = translations[lang];
                     <Box display="flex" gap={2} mb={2} justifyContent="center">
                         <TextField
                             sx={{ ...bigFieldSx, maxWidth: 280 }}
-                            label={t.leafType}
+                            label={t("leafType")}
                             value={formDataTetum.leafTypeTetum}
                             onChange={handleChangeTetum('leafTypeTetum')}
                             onBlur={() => markTouched('leafTypeTetum')}
@@ -528,14 +529,14 @@ const t = translations[lang];
                             error={touched.leafTypeTetum && !formDataTetum.leafTypeTetum}
                             helperText={
                                 touched.leafTypeTetum && !formDataTetum.leafTypeTetum
-                                    ? t.leafTypeEmpty
+                                ? t("leafTypeEmpty")
                                     : ""
                             }
                         />
 
                         <TextField
                             sx={{ ...bigFieldSx, maxWidth: 280 }}
-                            label={t.fruitType}
+                            label={t("fruitType")}
                             value={formDataTetum.fruitTypeTetum}
                             onChange={handleChangeTetum('fruitTypeTetum')}
                             onBlur={() => markTouched('fruitTypeTetum')}
@@ -543,14 +544,14 @@ const t = translations[lang];
                             error={touched.fruitTypeTetum && !formDataTetum.fruitTypeTetum}
                             helperText={
                                 touched.fruitTypeTetum && !formDataTetum.fruitTypeTetum
-                                    ? t.fruitTypeEmpty
+                                ? t("fruitTypeEmpty")
                                     : ""
                             }
                         />
                     </Box>
 
                     <Box sx={{ mt: 4, mb: 2, textAlign: 'center' }}>
-                        <h5>{t.optional}</h5>
+                    <h5>{t("optional")}</h5>
                     </Box>
 
                     <Box sx={{ maxWidth: 1000, marginX: 'auto' }}>
@@ -559,7 +560,7 @@ const t = translations[lang];
                                 fullWidth
                                 multiline
                                 rows={3}
-                                label={t.definition}
+                                label={t("definition")}
                                 value={formDataTetum.definitionTetum}
                                 onChange={handleChangeTetum('definitionTetum')}
                                 slotProps={{ htmlInput: { maxLength: maxTetumChar } }}
@@ -570,7 +571,7 @@ const t = translations[lang];
                         <Box display="flex" gap={2} mb={2}>
                             <TextField
                                 fullWidth
-                                label={t.etymology}
+                                label={t("etymology")}
                                 multiline
                                 rows={4}
                                 value={formDataTetum.etymologyTetum}
@@ -581,7 +582,7 @@ const t = translations[lang];
 
                             <TextField
                                 fullWidth
-                                label={t.habitat}
+                                label={t("habitat")}
                                 multiline
                                 rows={4}
                                 value={formDataTetum.habitatTetum}
@@ -594,7 +595,7 @@ const t = translations[lang];
                         <Box display="flex" gap={2} mb={2}>
                             <TextField
                                 fullWidth
-                                label={t.identificationCharacter}
+                                label={t("identificationCharacter")}
                                 multiline
                                 rows={4}
                                 value={formDataTetum.identificationCharacteristicsTetum}
@@ -605,7 +606,7 @@ const t = translations[lang];
 
                             <TextField
                                 fullWidth
-                                label={t.phenology}
+                                label={t("phenology")}
                                 multiline
                                 rows={4}
                                 value={formDataTetum.phenologyTetum}
@@ -618,7 +619,7 @@ const t = translations[lang];
                         <Box display="flex" gap={2} mb={2}>
                             <TextField
                                 fullWidth
-                                label={t.seedGermination}
+                                label={t("seedGermination")}
                                 multiline
                                 rows={4}
                                 value={formDataTetum.seedGerminationTetum}
@@ -629,7 +630,7 @@ const t = translations[lang];
 
                             <TextField
                                 fullWidth
-                                label={t.pest}
+                                label={t("pest")}
                                 multiline
                                 rows={4}
                                 value={formDataTetum.pestsTetum}
@@ -646,7 +647,7 @@ const t = translations[lang];
                             onClick={handleSubmit}
                             disabled={loading}
                         >
-                            {loading ? t.adding : t.addEntry}
+                            {loading ? t("adding") : t("addEntry")}
                         </Button>
                     </Box>
                 </Box>

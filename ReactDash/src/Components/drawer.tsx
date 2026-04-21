@@ -12,8 +12,10 @@ import { translations } from "../translations";
 
 export default function TheDrawer() {
   const [open, setOpen] = React.useState(false);
-  const [lang, setLang] = React.useState<"en" | "tet">("en");
-  const t = translations[lang];
+  const lang =
+    (localStorage.getItem("lang") as "en" | "tet") || "en";
+  const t = (key: string) =>
+    (translations as any)[key]?.[lang] || key;
 
   const toggleDrawer = (newOpen: boolean) => () => {
     setOpen(newOpen);
@@ -22,8 +24,6 @@ export default function TheDrawer() {
   const DrawerList = (
     <Box sx={{ width: 250 }} role="presentation" onClick={toggleDrawer(false)}>
       <Box sx={{ display: "flex", justifyContent: "center", gap: 1, p: 2 }}>
-        <button onClick={() => setLang("en")}>EN</button>
-        <button onClick={() => setLang("tet")}>TET</button>
       </Box>
 
       <List>
@@ -33,7 +33,7 @@ export default function TheDrawer() {
             to="/"
             onClick={() => setOpen(false)}
           >
-            <ListItemText primary={t.home} />
+            <ListItemText primary={t("home")} />
           </ListItemButton>
         </ListItem>
 
@@ -43,7 +43,7 @@ export default function TheDrawer() {
             to="/Page1"
             onClick={() => setOpen(false)}
           >
-            <ListItemText primary={t.addEntry} />
+            <ListItemText primary={t("addEntry")} />
           </ListItemButton>
         </ListItem>
 
@@ -53,7 +53,7 @@ export default function TheDrawer() {
             to="/EditEntry"
             onClick={() => setOpen(false)}
           >
-            <ListItemText primary={t.editExistingEntry} />
+            <ListItemText primary={t("addEntry")} />
           </ListItemButton>
         </ListItem>
 
@@ -63,7 +63,7 @@ export default function TheDrawer() {
             to="/AddExcel"
             onClick={() => setOpen(false)}
           >
-            <ListItemText primary={t.uploadFromExcel} />
+            <ListItemText primary={t("uploadFromExcel")} />
           </ListItemButton>
         </ListItem>
 
@@ -73,7 +73,7 @@ export default function TheDrawer() {
             to="/Media"
             onClick={() => setOpen(false)}
           >
-            <ListItemText primary={t.media} />
+            <ListItemText primary={t("media")} />
           </ListItemButton>
         </ListItem>
 
@@ -83,7 +83,7 @@ export default function TheDrawer() {
             to="/Users"
             onClick={() => setOpen(false)}
           >
-            <ListItemText primary={t.users} />
+            <ListItemText primary={t("users")} />
           </ListItemButton>
         </ListItem>
 
@@ -93,7 +93,7 @@ export default function TheDrawer() {
             to="/Analytics"
             onClick={() => setOpen(false)}
           >
-            <ListItemText primary={t.analytics} />
+            <ListItemText primary={t("analytics")} />
           </ListItemButton>
         </ListItem>
 
@@ -103,7 +103,7 @@ export default function TheDrawer() {
             to="/Audit"
             onClick={() => setOpen(false)}
           >
-            <ListItemText primary={t.auditFeature} />
+            <ListItemText primary={t("auditFeature")} />
           </ListItemButton>
         </ListItem>
       </List>
