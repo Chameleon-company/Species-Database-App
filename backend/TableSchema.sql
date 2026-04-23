@@ -24,7 +24,8 @@ CREATE TABLE IF NOT EXISTS public.species_en (
     fruit_type VARCHAR(225) NOT NULL,
     phenology VARCHAR(1000),
     seed_germination VARCHAR(2000),
-    pest VARCHAR(2000)
+    pest VARCHAR(2000),
+    definition VARCHAR(2000)
 );
 
 --species data (tet translation)
@@ -39,8 +40,13 @@ CREATE TABLE IF NOT EXISTS public.species_tet (
     fruit_type VARCHAR(225) NOT NULL,
     phenology VARCHAR(1000),
     seed_germination VARCHAR(2000),
-    pest VARCHAR(2000)
+    pest VARCHAR(2000),
+    definition VARCHAR(2000)
 );
+
+-- migration: add definition to existing deployments
+-- ALTER TABLE public.species_en ADD COLUMN IF NOT EXISTS definition VARCHAR(2000);
+-- ALTER TABLE public.species_tet ADD COLUMN IF NOT EXISTS definition VARCHAR(2000);
 
 --changelog used for incremental sync to devices
 CREATE TABLE IF NOT EXISTS public.changelog (
