@@ -258,12 +258,9 @@ def upload_species_file():
     this is an admin only endpoint
     for uploading species data
     """
-    #checking peermissions
-    # admin_id, err = get_admin_user(supabase)
-    # if err:
-    #     return jsonify({"error": err[0]}), err[1]
-
-    #at this point we've confirmed theyre admin
+    admin_id, err = get_admin_user(supabase)
+    if err:
+        return jsonify({"error": err[0]}), err[1]
 
     if "file" not in request.files:
         return jsonify({"error": "No file part"}), 400
