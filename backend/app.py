@@ -356,7 +356,8 @@ def create_species():
     phenology = data['phenology']
     seed_germination = data['seed_germination']
     pest = data['pest']
-    
+    definition = data.get('definition', '')
+
     #Get tetum variables from request
     scientific_name_tetum = data['scientific_name_tetum']
     common_name_tetum = data['common_name_tetum']
@@ -368,6 +369,7 @@ def create_species():
     phenology_tetum = data['phenology_tetum']
     seed_germination_tetum = data['seed_germination_tetum']
     pest_tetum = data['pest_tetum']
+    definition_tetum = data.get('definition_tetum', '')
     
     #Ensure mandatory fields are valid
     errors = []
@@ -410,7 +412,8 @@ def create_species():
             'fruit_type': fruit_type,
             'phenology': phenology,
             'seed_germination': seed_germination,
-            'pest': pest
+            'pest': pest,
+            'definition': definition
         }).execute()
         
         
@@ -433,7 +436,8 @@ def create_species():
             'fruit_type': fruit_type_tetum,
             'phenology': phenology_tetum,
             'seed_germination': seed_germination_tetum,
-            'pest': pest_tetum
+            'pest': pest_tetum,
+            'definition': definition_tetum
         }).execute()
         
         if not data2.data:
@@ -520,7 +524,8 @@ def update_species(species_id):
         "fruit_type",
         "phenology",
         "seed_germination",
-        "pest"
+        "pest",
+        "definition"
     ]
 
     for field in EN_FIELDS:
@@ -528,13 +533,13 @@ def update_species(species_id):
             en_update[field] = data[field]
     if not en_update:
         return jsonify({"error": "no english fields provided"}), 400
-    
+
     # update english row
     supabase.table("species_en")\
         .update(en_update)\
         .eq("species_id", species_id)\
         .execute()
-    
+
     ############# TETUM UPDATE PAYLOAD ##############
     tet_update = {}
     TET_FIELDS = [
@@ -547,7 +552,8 @@ def update_species(species_id):
         "fruit_type",
         "phenology",
         "seed_germination",
-        "pest"
+        "pest",
+        "definition"
     ]
 
     for field in TET_FIELDS:
@@ -613,7 +619,8 @@ def update_species_english(species_id):
         "fruit_type",
         "phenology",
         "seed_germination",
-        "pest"        
+        "pest",
+        "definition"
     ]
 
     for field in ENGLISH_FIELDS:
@@ -655,7 +662,8 @@ def update_species_tet(species_id):
         "fruit_type",
         "phenology",
         "seed_germination",
-        "pest"        
+        "pest",
+        "definition"
     ]
 
     for field in TET_FIELDS:
@@ -664,7 +672,7 @@ def update_species_tet(species_id):
 
     if not tet_update:
         return jsonify({"error": "no tetum fields provided"}), 400
-    
+
     # update tet row
     supabase.table("species_tet")\
         .update(tet_update)\
