@@ -21,7 +21,12 @@
       <header class="app-header">
         <div class="header-top">
           <h1 class="header-title">Baze-dadus Espésie sira</h1>
-          <button class="lang-btn">TET</button>
+          <div class="header-buttons">
+            <button type="button" class="logout-btn" id="pwaLogoutBtn" title="Sai">
+              Sai
+            </button>
+            <button class="lang-btn">TET</button>
+          </div>
         </div>
 
         <div class="search-bar">
@@ -56,6 +61,7 @@
       <script src="scripts/filterCarousel.js"></script>
       <script src="scripts/detectOnline.js" defer></script>
       <script src="scripts/sw-register.js"></script>
+      <script src="scripts/pwa-session.js"></script>
 
       <a class="back-link" href="index.html"></a>
 
@@ -178,6 +184,10 @@
           window.setSpeciesData([])
         }
 
+      });
+
+      document.getElementById("pwaLogoutBtn")?.addEventListener("click", () => {
+        performPwaLogout();
       });
 
       // LANGUAGE HANDLER

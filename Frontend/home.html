@@ -21,6 +21,9 @@
           <h1 class="header-title">Species Database</h1>
           <div class="header-buttons">
             <button class="sync-btn" id="syncBtn" title="Sync Data">🔄</button>
+            <button type="button" class="logout-btn" id="pwaLogoutBtn" title="Log out">
+              Log out
+            </button>
             <button class="lang-btn">EN</button>
           </div>
         </div>
@@ -59,12 +62,6 @@
       <!-- Sync Status Toast -->
       <div class="sync-status" id="syncStatus"></div>
       <style>
-      .header-buttons {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-      }
-
       .sync-btn {
         background: #ffffff;
         border: 1px solid #ddd;
@@ -226,6 +223,7 @@
     <script src="scripts/filterCarousel.js"></script>
     <script src="scripts/detectOnline.js" defer></script>
     <script src="scripts/sw-register.js"></script>
+    <script src="scripts/pwa-session.js"></script>
 
     <script>
       // ====================================
@@ -303,6 +301,10 @@
           syncBtn.classList.remove('syncing');
           syncBtn.title = 'Sync Data';
         }
+      });
+
+      document.getElementById("pwaLogoutBtn")?.addEventListener("click", () => {
+        performPwaLogout();
       });
 
       // Set up sync progress callback

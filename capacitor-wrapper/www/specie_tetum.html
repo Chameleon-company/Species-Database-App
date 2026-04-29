@@ -105,6 +105,30 @@
         justify-content: space-between;
       }
 
+      .species-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+      }
+
+      .species-logout-btn {
+        font-size: 12px;
+        font-weight: 600;
+        padding: 6px 10px;
+        border-radius: 8px;
+        border: 1px solid #c7c7c7;
+        background: #fff;
+        color: #64748b;
+        cursor: pointer;
+      }
+
+      .species-logout-btn:hover {
+        background: #fef2f2;
+        color: #dc2626;
+        border-color: #fecaca;
+      }
+
       .left-arrow-icon {
         width: clamp(28px, 6vw, 34px);
         height: clamp(28px, 6vw, 34px);
@@ -231,7 +255,17 @@
           class="left-arrow-icon go-back"
         />
         <h1 id="plant-common"></h1>
-        <img src="Assets/icons/heart.png" alt="" class="heart-icon" />
+        <div class="species-header-actions">
+          <button
+            type="button"
+            class="species-logout-btn"
+            id="pwaLogoutBtn"
+            title="Sai"
+          >
+            Sai
+          </button>
+          <img src="Assets/icons/heart.png" alt="" class="heart-icon" />
+        </div>
       </div>
       <div>
         <div class="image-layer">
@@ -314,7 +348,8 @@
     <script src="scripts/dataService.js"></script>
     <script src="scripts/sync.js"></script>
     <script src="scripts/detectOnline.js" defer></script>
-    
+    <script src="scripts/pwa-session.js"></script>
+
     <script>
       const PAGE_LANGUAGE = "tet";
       const params = new URLSearchParams(window.location.search);
@@ -452,6 +487,10 @@
       //     document.getElementById("plant-seed").textContent =
       //       species.seed_germination;
       //   }
+
+      document.getElementById("pwaLogoutBtn")?.addEventListener("click", () => {
+        performPwaLogout();
+      });
     </script>
 
   </body>
