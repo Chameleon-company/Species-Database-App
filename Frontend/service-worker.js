@@ -1,28 +1,35 @@
 // service-worker.js - PWA Offline Support
-const CACHE_NAME = "species-app-v1";
-const MEDIA_CACHE = "media-cache-v1";
+const CACHE_NAME = "species-app-v3";
+const MEDIA_CACHE = "media-cache-v3";
 
 const CORE_ASSETS = [
-  "/index.html",
-  "/home.html",
-  "/tetum.html",
-  "/specie.html",
-  "/manifest.json",
-  "/css/layout.css",
-  "/css/responsive.css",
-  "/css/filters.css",
-  "/css/cards.css",
-  "/scripts/config.js",
-  "/scripts/db.js",
-  "/scripts/dataService.js",
-  "/scripts/sync.js",
-  "/scripts/specieslist.js",
-  "/scripts/filterCarousel.js",
+  "./index.html",
+  "./home.html",
+  "./tetum.html",
+  "./specie.html",
+  "./video.html",
+  "./manifest.json",
+  "./css/layout.css",
+  "./css/responsive.css",
+  "./css/filters.css",
+  "./css/cards.css",
+  "./scripts/config.js",
+  "./scripts/db.js",
+  "./scripts/dataService.js",
+  "./scripts/sync.js",
+  "./scripts/specieslist.js",
+  "./scripts/filterCarousel.js",
+  "./scripts/detectOnline.js",
+  "./scripts/sw-register.js",
+  "./js/general.js",
+  "./Assets/icons/leftarrow.png",
+  "./Assets/icons/heart.png",
 ];
 
 // Install - cache core assets
 self.addEventListener("install", (event) => {
-  console.log("[SW] Installing...");
+  console.log("[SW] Installing...",CACHE_NAME);
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then(async (cache) => {
       for (const url of CORE_ASSETS) {
@@ -40,7 +47,7 @@ self.addEventListener("install", (event) => {
 
 // Activate - clean old caches
 self.addEventListener("activate", (event) => {
-  console.log("[SW] Activating...");
+  console.log("[SW] Activating...",CACHE_NAME);
   event.waitUntil(
     Promise.all([
       caches.keys().then((keys) =>
@@ -107,13 +114,41 @@ async function handleAppRequest(request) {
       cache.put(request, response.clone());
     }
     return response;
-  } catch (e) {
-    // if (request.mode === "navigate") {
-    //   return cache.match("/home.html") || cache.match("/index.html");
-    // }
-    return new Response("Offline", { status: 503 });
+  }
+  catch (e) {
+    if (request.mode === "navigate") {
+      //additional fallbacks for home and species pages +video (both can load from cached data) and both must be accessible offline
+      const url = new URL(request.url);
+
+      if (url.pathname.endsWith("/specie.html")) {
+        const fallback = await cache.match("./specie.html");
+        if (fallback) return fallback;
+      }
+
+      if (url.pathname.endsWith("/home.html")) {
+        const fallback = await cache.match("./home.html");
+        if (fallback) return fallback;
+      }
+
+      if (url.pathname.endsWith("/tetum.html")) {
+        const fallback = await cache.match("./tetum.html");
+        if (fallback) return fallback;
+      }
+
+      if (url.pathname.endsWith("/video.html")) {
+        const fallback = await cache.match("./video.html");
+        if (fallback) return fallback;
+      }
+      //If all else fails return to home
+      const fallback = await cache.match("./home.html");
+      if (fallback) return fallback;
+      }
+
+      return new Response("Offline", {status: 503,headers: {"Content-Type": "text/plain"}
+      });
   }
 }
+
 
 //helper for sending from SW toopen app tabs
 async function notifyClients(message) {

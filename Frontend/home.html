@@ -347,6 +347,7 @@
           syncBtn.classList.add('error');
           showSyncStatus('❌ Sync failed: ' + error.message, 3000);
           showSyncBanner("error","Sync failed! Using offline mode",true,5000);
+          setTimeout(() => {showSyncBanner("offline","Offline mode",false);},5000); //need the persistnet offline banner after the error msg
           
           // Remove error state after 3 seconds
           setTimeout(() => {
@@ -389,6 +390,8 @@
       //Shows the sync banner based on state of sync, success/failure of sync and if in 'offline mode'
       function showSyncBanner(type,message,autoHide=false,duration=5000) {
         clearSyncBannerTimeout();
+        console.log("[Banner]",type,message,autoHide,duration); //debug
+
 
         syncBanner.className = `sync-banner ${type}`;
         syncBannerText.textContent = message;
@@ -401,7 +404,13 @@
 
         if (autoHide)
         {
-          syncBannerTimeout = setTimeout(() => {hideSyncBanner();},duration);
+          const currentType = type;
+          //error always followed by offline persistent banner (uses same element, dont hide if another banner directly follows)
+          syncBannerTimeout = setTimeout(() => {
+            if (syncBanner.classList.contains(currentType)) {
+              hideSyncBanner();
+            }
+          }, duration);
         }
       }
 
@@ -416,10 +425,19 @@
           .toLowerCase();
         const language = code === "tet" ? "tet" : "en";
   
-        //If offline, place the permanent offlien banner
+        //If offline, place the permanent offline banner and load cached data
         if (!navigator.onLine)
         {
           showSyncBanner("offline","Offline mode");
+          try {
+            const species = await dataService.getAllSpecies(language);
+            console.log("[Home] Offline load from IndexedDB:",species.length);
+            window.setSpeciesData(species);
+          }
+          catch (err) {
+            console.error("Failed loading offline species:",err);
+            showSyncBanner("error", "No offline data available",true,5000);
+          }
           return;
         }
 
@@ -454,6 +472,7 @@
         {
           console.warn("Offline, using cached data");
           showSyncBanner("error","Sync failed! Using offline mode",true,5000);
+          setTimeout(() => {showSyncBanner("offline","Offline mode",false);},5000); //need the persistnet offline banner after the error msg
         }
       });
 
