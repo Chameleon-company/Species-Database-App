@@ -17,7 +17,8 @@ import CloseIcon from "@mui/icons-material/Close";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 
 import Logo from "../assets/logo-color.png";
-import { clearAdminSession } from "../utils/adminSession";
+import { performAdminLogout } from "../utils/adminSession";
+import { translations } from "../translations";
 
 const DRAWER_WIDTH = 220;
 
@@ -285,7 +286,13 @@ function NavItem({
 }
 
 /* ─── Account Dropdown ────────────────────────────────────────────── */
-function AccountMenu({ onLogout }: { onLogout: () => void }) {
+function AccountMenu({
+  onLogout,
+  logoutLabel,
+}: {
+  onLogout: () => void;
+  logoutLabel: string;
+}) {
   const [open, setOpen] = React.useState(false);
   const ref = React.useRef<HTMLDivElement>(null);
 
@@ -320,7 +327,7 @@ function AccountMenu({ onLogout }: { onLogout: () => void }) {
             onClick={() => { setOpen(false); onLogout(); }}
           >
             <LogoutIcon sx={{ fontSize: 16 }} />
-            Logout
+            {logoutLabel}
           </button>
         </div>
       )}
@@ -331,11 +338,14 @@ function AccountMenu({ onLogout }: { onLogout: () => void }) {
 /* ─── Sidebar Content ─────────────────────────────────────────────── */
 function SidebarContent({
   onNavClick,
+  logoutLabel,
+  onLogout,
 }: {
   onNavClick?: () => void;
+  logoutLabel: string;
+  onLogout: () => void;
 }) {
   const location = useLocation();
-  const navigate = useNavigate();
 
   const isActive = (url: string) => {
     if (url === "/")
@@ -344,11 +354,6 @@ function SidebarContent({
       location.pathname.toLowerCase().includes(url.toLowerCase()) ||
       location.hash.toLowerCase().includes(url.toLowerCase())
     );
-  };
-
-  const handleLogout = () => {
-    clearAdminSession();
-    navigate("/admin-login");
   };
 
   const [logoutHovered, setLogoutHovered] = React.useState(false);
@@ -389,7 +394,8 @@ function SidebarContent({
         }}
         onMouseEnter={() => setLogoutHovered(true)}
         onMouseLeave={() => setLogoutHovered(false)}
-        onClick={handleLogout}
+        onClick={onLogout}
+        aria-label={logoutLabel}
       >
         <span
           style={{
@@ -399,7 +405,7 @@ function SidebarContent({
         >
           <LogoutIcon sx={{ fontSize: 18 }} />
         </span>
-        Logout
+        {logoutLabel}
       </button>
     </div>
   );
@@ -411,14 +417,17 @@ export default function DrawerComponent({ children }: { children: React.ReactNod
   const [isClosing, setIsClosing] = React.useState(false);
   const navigate = useNavigate();
 
+  const rawLang = localStorage.getItem("lang");
+  const lang: keyof typeof translations = rawLang === "tet" ? "tet" : "en";
+  const logoutLabel = translations[lang].logout;
+
   const handleDrawerClose = () => { setIsClosing(true); setMobileOpen(false); };
   const handleDrawerTransitionEnd = () => setIsClosing(false);
   const handleDrawerToggle = () => { if (!isClosing) setMobileOpen(!mobileOpen); };
 
-  const handleLogout = () => {
-    clearAdminSession();
-    navigate("/admin-login");
-  };
+  const handleLogout = React.useCallback(() => {
+    void performAdminLogout().then(() => navigate("/admin-login"));
+  }, [navigate]);
 
   return (
     <Box sx={{ display: "flex" }}>
@@ -443,7 +452,7 @@ export default function DrawerComponent({ children }: { children: React.ReactNod
           </IconButton>
         </button>
 
-        <AccountMenu onLogout={handleLogout} />
+        <AccountMenu onLogout={handleLogout} logoutLabel={logoutLabel} />
       </div>
 
       {/* ── Sidebar ── */}
@@ -467,7 +476,11 @@ export default function DrawerComponent({ children }: { children: React.ReactNod
           }}
           slotProps={{ root: { keepMounted: true } }}
         >
-          <SidebarContent onNavClick={() => setMobileOpen(false)} />
+          <SidebarContent
+            onNavClick={() => setMobileOpen(false)}
+            logoutLabel={logoutLabel}
+            onLogout={handleLogout}
+          />
         </Drawer>
 
         {/* Desktop */}
@@ -483,7 +496,7 @@ export default function DrawerComponent({ children }: { children: React.ReactNod
           }}
           open
         >
-          <SidebarContent />
+          <SidebarContent logoutLabel={logoutLabel} onLogout={handleLogout} />
         </Drawer>
       </Box>
 

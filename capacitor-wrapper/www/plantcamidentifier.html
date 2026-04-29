@@ -50,6 +50,25 @@
       box-sizing: border-box;
     }
 
+    .plantcam-logout {
+      margin-left: auto;
+      flex-shrink: 0;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 0.45rem 0.65rem;
+      border-radius: 10px;
+      border: none;
+      background: #ffffff;
+      color: #64748b;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    }
+
+    .plantcam-logout:hover {
+      background: #fef2f2;
+      color: #dc2626;
+    }
+
     .back-btn {
       width: 40px;
       height: 40px;
@@ -73,6 +92,8 @@
     }
 
     .header-title {
+      flex: 1;
+      min-width: 0;
       font-size: 1.2rem;
       font-weight: 700;
       color: #FFFFFF;
@@ -203,6 +224,9 @@
       <!-- Back to home.html (as requested) -->
       <a class="back-btn" href="home.html" aria-label="Back to Home">←</a>
       <h1 class="header-title">Identify Species by Photo</h1>
+      <button type="button" class="plantcam-logout" id="pwaLogoutBtn" title="Log out">
+        Log out
+      </button>
     </header>
 
     <!-- Main content -->
@@ -226,5 +250,11 @@
       </div>
     </section>
   </main>
+  <script src="scripts/pwa-session.js"></script>
+  <script>
+    document.getElementById("pwaLogoutBtn")?.addEventListener("click", () => {
+      performPwaLogout();
+    });
+  </script>
 </body>
 </html>
