@@ -74,6 +74,7 @@ CREATE TABLE IF NOT EXISTS public.media (
     download_link TEXT NOT NULL,
     streaming_link TEXT,
     alt_text TEXT,
+    storage_version INTEGER DEFAULT 1 NOT NULL,
     CONSTRAINT media_media_type_check
       CHECK (media_type IN ('image','video')),
     CONSTRAINT media_species_id_fkey
@@ -81,6 +82,9 @@ CREATE TABLE IF NOT EXISTS public.media (
       REFERENCES public.species_en(species_id)
       ON DELETE CASCADE
 );
+
+-- migration: add storage_version to existing media table
+-- ALTER TABLE public.media ADD COLUMN IF NOT EXISTS storage_version INTEGER DEFAULT 1 NOT NULL;
 
 --active admin login sessions
 CREATE TABLE IF NOT EXISTS public.admin_sessions (
