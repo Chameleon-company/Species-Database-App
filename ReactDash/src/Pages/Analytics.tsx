@@ -54,7 +54,8 @@ export default function Analytics() {
   const [lang, setLang] = useState<"en" | "tet">(
     (localStorage.getItem("lang") as "en" | "tet") || "en"
   );
-  const t = translations[lang];
+  const t = (key: string) =>
+    (translations as any)[key]?.[lang] || key;
 
   const changeLang = (newLang: "en" | "tet") => {
     localStorage.setItem("lang", newLang);
@@ -106,7 +107,7 @@ export default function Analytics() {
   return (
     <Box p={5}>
       <div className="flex justify-between mb-4 items-center">
-  <h2 className="text-3xl font-bold">{t.analyticsDashboard}</h2>
+  <h2 className="text-3xl font-bold">{t("analyticsDashboard")}</h2>
 
   <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
     <button onClick={() => changeLang("en")}>EN</button>
@@ -114,7 +115,7 @@ export default function Analytics() {
   </div>
 </div>
       <Typography align="center" mb={5}>
-        {t.analyticsDescription}
+      {t("analyticsDescription")}
       </Typography>
 
       {/* OVERVIEW */}
@@ -126,32 +127,32 @@ export default function Analytics() {
       >
         <StatCard
           icon={<PeopleIcon />}
-          label={t.totalUsers}
+          label={t("totalUsers")}
           value={overview?.total_users}
         />
         <StatCard
           icon={<CheckCircleIcon />}
-          label={t.activeUsers}
+          label={t("activeUsers")}
           value={overview?.active_users}
         />
         <StatCard
           icon={<LoginIcon />}
-          label={t.totalLogins}
+          label={t("totalLogins")}
           value={overview?.total_logins}
         />
         <StatCard
           icon={<TimerIcon />}
-          label={t.avgSession}
+          label={t("avgSession")}
           value={overview?.average_session_duration}
         />
         <StatCard
           icon={<SpaIcon />}
-          label={t.totalSpecies}
+          label={t("totalSpecies")}
           value={overview?.total_species}
         />
         <StatCard
           icon={<ImageIcon />}
-          label={t.speciesWithMedia}
+          label={t("speciesWithMedia")}
           value={overview?.species_with_media}
         />
       </Box>
@@ -210,7 +211,7 @@ export default function Analytics() {
 
       {/* USERS */}
       <Typography variant="h5" mb={3}>
-        {t.userActivity}
+      {t("userActivity")}
       </Typography>
 
       <Box
@@ -223,22 +224,22 @@ export default function Analytics() {
             <CardContent>
               <Typography variant="h6">{user.name}</Typography>
               <Typography color="text.secondary">
-                {t.role}: {user.role}
+              {t("role")}: {user.role}
               </Typography>
 
               <Divider sx={{ my: 1 }} />
 
               <Typography>
-                {t.logins}: {user.login_count}
+              {t("logins")}: {user.login_count}
               </Typography>
               <Typography>
-                {t.totalDuration}: {user.total_duration} min
+              {t("totalDuration")}: {user.total_duration} min
               </Typography>
               <Typography>
-                {t.avgDuration}: {user.average_duration.toFixed(1)} min
+              {t("avgDuration")}: {user.average_duration.toFixed(1)} min
               </Typography>
               <Typography>
-                {t.lastLogin}:{" "}
+              {t("lastLogin")}:{" "}
                 {user.last_login
                   ? new Date(user.last_login).toLocaleString()
                   : "—"}
@@ -248,7 +249,7 @@ export default function Analytics() {
                 mt={1}
                 color={user.is_active ? "success.main" : "error.main"}
               >
-                {user.is_active ? t.active : t.inactive}
+                {user.is_active ? t("active") : t("inactive")}
               </Typography>
             </CardContent>
           </Card>

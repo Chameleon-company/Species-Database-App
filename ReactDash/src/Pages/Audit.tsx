@@ -15,7 +15,8 @@ type AuditApiResponse = {
 
 export default function Audit() {
   const [lang, setLang] = useState<"en" | "tet">("en");
-  const t = translations[lang];
+  const t = (key: string) =>
+    (translations as any)[key]?.[lang] || key;
 
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<AuditApiResponse | null>(null);
@@ -40,7 +41,7 @@ export default function Audit() {
       const data = (await res.json()) as AuditApiResponse;
       setResult(data);
     } catch (e: any) {
-      setResult({ status: "error", error: e?.message ?? t.unknownError });
+      setResult({ status: "error", error: e?.message ?? t("unknownError") });
     } finally {
       setLoading(false);
     }
@@ -61,14 +62,14 @@ export default function Audit() {
           fontWeight="bold"
           sx={{ fontSize: { xs: "1.8rem", md: "2.5rem" } }}
         >
-          {t.auditReport}
+          {t("auditReport")}
         </Typography>
 
         <Box display="flex" gap={1.5}>
-    <button onClick={() => setLang("en")}>EN</button>
-    <button onClick={() => setLang("tet")}>TET</button>
-  </Box>
-</Box>
+          <button onClick={() => setLang("en")}>EN</button>
+          <button onClick={() => setLang("tet")}>TET</button>
+        </Box>
+      </Box>
 
       <input
         type="file"
@@ -82,29 +83,29 @@ export default function Audit() {
         disabled={!file || loading}
         sx={{ ml: 1.5 }}
       >
-        {loading ? t.running : t.runAudit}
+        {loading ? t("running") : t("runAudit")}
       </Button>
 
       {result?.status === "error" && (
         <Typography sx={{ mt: 2, color: "salmon" }}>
-          {t.error}: {result.error}
+          {t("error")}: {result.error}
         </Typography>
       )}
 
       {result?.status === "success" && result.report && (
         <Box mt={3}>
           <Typography variant="h6" mb={1}>
-            {t.summary}
+            {t("summary")}
           </Typography>
           <ul>
-            <li>{t.totalRows}: {result.report.rows}</li>
-            <li>{t.emptyRows}: {result.report.empty_rows}</li>
-            <li>{t.totalMissingValues}: {result.report.total_missing_values}</li>
-            <li>{t.blockers}: {result.report.has_blockers ? t.yes : t.no}</li>
+            <li>{t("totalRows")}: {result.report.rows}</li>
+            <li>{t("emptyRows")}: {result.report.empty_rows}</li>
+            <li>{t("totalMissingValues")}: {result.report.total_missing_values}</li>
+            <li>{t("blockers")}: {result.report.has_blockers ? t("yes") : t("no")}</li>
           </ul>
 
           <Typography variant="h6" mt={3} mb={1}>
-            {t.missingValuesByColumn}
+            {t("missingValuesByColumn")}
           </Typography>
           <ul>
             {Object.entries(result.report.missing_values_by_column)
@@ -117,7 +118,7 @@ export default function Audit() {
           </ul>
 
           <Typography variant="h6" mt={3} mb={1}>
-            {t.duplicateScientificNames}
+            {t("duplicateScientificNames")}
           </Typography>
           {result.report.duplicates_count > 0 ? (
             <ul>
@@ -126,11 +127,11 @@ export default function Audit() {
               ))}
             </ul>
           ) : (
-            <Typography>{t.noDuplicateScientificNames}</Typography>
+            <Typography>{t("noDuplicateScientificNames")}</Typography>
           )}
 
           <Typography variant="h6" mt={3} mb={1}>
-            {t.invalidLeafTypes}
+            {t("invalidLeafTypes")}
           </Typography>
           {result.report.leaf_type_invalid_values.length > 0 ? (
             <ul>
@@ -139,11 +140,11 @@ export default function Audit() {
               ))}
             </ul>
           ) : (
-            <Typography>{t.noInvalidLeafType}</Typography>
+            <Typography>{t("noInvalidLeafType")}</Typography>
           )}
 
           <Typography variant="h6" mt={3} mb={1}>
-            {t.invalidFruitTypes}
+            {t("invalidFruitTypes")}
           </Typography>
           {result.report.fruit_type_invalid_values.length > 0 ? (
             <ul>
@@ -152,11 +153,11 @@ export default function Audit() {
               ))}
             </ul>
           ) : (
-            <Typography>{t.noInvalidFruitType}</Typography>
+            <Typography>{t("noInvalidFruitType")}</Typography>
           )}
 
           <details style={{ marginTop: 16 }}>
-            <summary>{t.showRawJson}</summary>
+            <summary>{t("showRawJson")}</summary>
             <pre
               style={{
                 whiteSpace: "pre-wrap",

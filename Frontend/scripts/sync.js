@@ -11,15 +11,14 @@
 
 //send image URLs to the sw for background cachjing
 //after bundle sync and incremental updates
-function sendIMGToSW(images = [])
-{
-  if(!navigator.serviceWorker?.controller) return
+function sendIMGToSW(images = []) {
+  if (!navigator.serviceWorker?.controller) return
 
   const urls = images
-    .map((m)=> m.download_link || m.url)
+    .map((m) => m.download_link || m.url)
     .filter(Boolean)
-  
-  if(!urls.length) return
+
+  if (!urls.length) return
   navigator.serviceWorker.controller.postMessage({
     type: "CACHE_MEDIA",
     urls
@@ -30,11 +29,11 @@ class SyncManager {
   constructor() {
     // Get API config (assumes config.js is loaded)
     this.apiConfig = typeof API_CONFIG !== 'undefined' ? API_CONFIG : {
-    baseUrl:
-      location.hostname === "localhost" ||
-      location.hostname === "127.0.0.1"
-        ? "http://127.0.0.1:5000"
-        : "https://species-database-app.onrender.com",
+      baseUrl:
+        location.hostname === "localhost" ||
+          location.hostname === "127.0.0.1"
+          ? "http://127.0.0.1:5000"
+          : "https://species-database-app.onrender.com",
 
       endpoints: {
         bundle: '/api/bundle',
@@ -83,11 +82,11 @@ class SyncManager {
     const headers = {
       'Content-Type': 'application/json'
     };
-    
+
     if (this.authToken) {
       headers['Authorization'] = `Bearer ${this.authToken}`;
     }
-    
+
     return headers;
   }
 
@@ -242,7 +241,7 @@ class SyncManager {
       // Step 1: Fetch bundle from API
       this.reportProgress('Fetching bundle from server...');
       const bundleUrl = `${this.apiConfig.baseUrl}${this.apiConfig.endpoints.bundle}`;
-      
+
       let response;
       try {
         response = await this.fetchWithTimeout(bundleUrl, {
@@ -337,7 +336,7 @@ class SyncManager {
       // Step 1: Check if updates are available
       this.reportProgress('Checking for updates...');
       const changesUrl = `${this.apiConfig.baseUrl}${this.apiConfig.endpoints.changes}?since_version=${localVersion}`;
-      
+
       let checkResponse;
       try {
         checkResponse = await this.fetchWithTimeout(changesUrl, {
@@ -384,7 +383,7 @@ class SyncManager {
       this.reportProgress(`Syncing ${checkResult.change_count} changes...`);
 
       const incrementalUrl = `${this.apiConfig.baseUrl}${this.apiConfig.endpoints.incremental}?since_version=${localVersion}`;
-      
+
       let response;
       try {
         response = await this.fetchWithTimeout(incrementalUrl, {
@@ -418,8 +417,7 @@ class SyncManager {
       this.reportProgress('Updating changed species...');
       await this.replaceChangedSpecies(changes);
 
-      if(changes.media && Array.isArray(changes.media))
-      {
+      if (changes.media && Array.isArray(changes.media)) {
         sendIMGToSW(changes.media)
       }
 
@@ -514,12 +512,12 @@ class SyncManager {
 
     } catch (error) {
       console.error('Error storing species bundle:', error);
-      
+
       // Handle quota exceeded errors
       if (error.message.includes('quota') || error.message.includes('QuotaExceeded')) {
         throw new Error('Storage quota exceeded - please free up space on your device');
       }
-      
+
       throw new Error(`Failed to store species data: ${error.message}`);
     }
   }
@@ -540,7 +538,7 @@ class SyncManager {
       const metadata = await this.db.getSyncMetadata();
       const currentVersion = metadata?.version || 0;
       const newVersion = changes.latest_version || 0;
-      
+
       if (newVersion <= currentVersion) {
         console.warn(`Version not increasing: current=${currentVersion}, new=${newVersion}`);
       }
@@ -581,12 +579,12 @@ class SyncManager {
 
     } catch (error) {
       console.error('Error replacing changed species:', error);
-      
+
       // Handle quota exceeded errors
       if (error.message.includes('quota') || error.message.includes('QuotaExceeded')) {
         throw new Error('Storage quota exceeded - please free up space on your device');
       }
-      
+
       throw new Error(`Failed to update species data: ${error.message}`);
     }
   }
@@ -631,24 +629,24 @@ class SyncManager {
         return await this.checkAndSync({ forceBundle: options.forceBundle });
       } catch (error) {
         attempt++;
-        
+
         // Don't retry on authentication errors
         if (error.message.includes('Authentication failed')) {
           throw error;
         }
-        
+
         // Don't retry on quota exceeded errors
         if (error.message.includes('quota') || error.message.includes('QuotaExceeded')) {
           throw error;
         }
-        
+
         if (attempt >= maxRetries) {
           throw error;
         }
-        
+
         // Exponential backoff
         delay *= 2;
-        this.reportProgress(`Retry in ${delay/1000}s...`);
+        this.reportProgress(`Retry in ${delay / 1000}s...`);
         await this.sleep(delay);
       }
     }

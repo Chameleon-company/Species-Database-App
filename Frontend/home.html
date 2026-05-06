@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <!-- PWA -->
+    <link rel="icon" href="Assets/icons/heart.png" />
     <link rel="manifest" href="manifest.json" />
     <meta name="theme-color" content="#fff3ff" />
     <link rel="stylesheet" href="css/layout.css" />
@@ -33,6 +34,12 @@
           <input type="text" placeholder="Search species" id="searchInput" />
         </div>
       </header>
+
+      <!-- Sync/Offline Banner -->
+      <div class="sync-banner hidden" id="sync-banner" role="status">
+        <span class="sync-banner-icon" id="sync-banner-icon">🔄</span>
+        <span class="sync-banner-text" id="sync-banner-text">Syncing data...</span>
+      </div>
 
       <!-- Filter Carousel -->
       <div class="filter-carousel-container">
@@ -123,6 +130,47 @@
         from { opacity: 0; transform: translateX(-50%) translateY(20px); }
         to   { opacity: 1; transform: translateX(-50%) translateY(0); }
       }
+
+      /* Styles for syncing banner. Different colours per state (e.g. green for success etc.)*/
+      .sync-banner {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin: 16px 16px 0;
+        padding: 16px 16px;
+        border-radius: 16px;
+        font-size: 20px;
+        border: 1px solid transparent;
+      }
+      /* Remove the banner when it is not needed (doesn't need to have a constant online banner) */
+      .sync-banner.hidden {
+        display: none;
+      }
+
+      .sync-banner.syncing {
+        background: #eef6ff;
+        color: #0b57d0;
+        border-color: #cfe2ff;
+      }
+
+      .sync-banner.online {
+        background: #edf9f0;
+        color: #1f7a38;
+        border-color: #cfe9d6;
+      }
+
+      .sync-banner.offline {
+        background: #fff4e5;
+        color: #9a5b00;
+        border-color: #ffd59e;
+      }
+
+      .sync-banner.error {
+        background: #fdecec;
+        color: #b42318;
+        border-color: #f5c2c7;
+      }
+      
     </style>
 
 
@@ -247,6 +295,7 @@
       syncBtn.addEventListener('click', async () => {
         if (!navigator.onLine) {
           showSyncStatus('offline.. using cached data');
+          showSyncBanner("offline","Offline mode");
           return;
         }
         // Prevent double-click
@@ -257,7 +306,8 @@
         syncBtn.classList.remove('success', 'error');
         syncBtn.title = 'Syncing...';
         showSyncStatus('🔄 Syncing data...', 10000);
-        
+        showSyncBanner("syncing","Syncing data...");
+
         try {
           // Perform sync
           const result = await syncManager.manualSync(true);
@@ -266,6 +316,7 @@
             // Success
             syncBtn.classList.add('success');
             showSyncStatus('✅ Sync complete! Data updated.');
+            showSyncBanner("online","Data updated!",true,5000);
             
             // Reload species data
             const language = (document.querySelector(".lang-btn")?.textContent || "EN").trim().toLowerCase();
@@ -283,6 +334,7 @@
             // Already up to date
             syncBtn.classList.add('success');
             showSyncStatus('ℹ️ Already up to date!');
+            showSyncBanner("online","Already up to date!");
           }
           
           // Remove success state after 2 seconds
@@ -293,7 +345,9 @@
         } catch (error) {
           console.error('Sync failed:', error);
           syncBtn.classList.add('error');
-          showSyncStatus('❌ Sync failed: ' + error.message, 5000);
+          showSyncStatus('❌ Sync failed: ' + error.message, 3000);
+          showSyncBanner("error","Sync failed! Using offline mode",true,5000);
+          setTimeout(() => {showSyncBanner("offline","Offline mode",false);},5000); //need the persistnet offline banner after the error msg
           
           // Remove error state after 3 seconds
           setTimeout(() => {
@@ -312,6 +366,54 @@
         });
       }
 
+      //Sync/state banner helper functions
+      const syncBanner = document.getElementById("sync-banner");
+      const syncBannerIcon = document.getElementById("sync-banner-icon");
+      const syncBannerText = document.getElementById("sync-banner-text");
+
+      let syncBannerTimeout = null;
+
+      //Make sure the offline banner persists
+      function clearSyncBannerTimeout() {
+        if (syncBannerTimeout) {
+          clearTimeout(syncBannerTimeout);
+          syncBannerTimeout = null;
+        }
+      }
+
+      //Hide the banner if it is no longer needed (e.g. success message)
+      function hideSyncBanner() {
+        clearSyncBannerTimeout();
+        syncBanner.className = "sync-banner hidden";
+      }
+
+      //Shows the sync banner based on state of sync, success/failure of sync and if in 'offline mode'
+      function showSyncBanner(type,message,autoHide=false,duration=5000) {
+        clearSyncBannerTimeout();
+        console.log("[Banner]",type,message,autoHide,duration); //debug
+
+
+        syncBanner.className = `sync-banner ${type}`;
+        syncBannerText.textContent = message;
+
+        //Add icon based on state. Left this separate from base message in case there is an issue w/ Tetum tranlsation
+        if (type === "syncing") {syncBannerIcon.textContent = "🔄";}
+        else if (type === "offline") {syncBannerIcon.textContent = "⚠️";}
+        else if (type === "online") {syncBannerIcon.textContent = "✅";}
+        else if (type === "error") {syncBannerIcon.textContent = "❌";}
+
+        if (autoHide)
+        {
+          const currentType = type;
+          //error always followed by offline persistent banner (uses same element, dont hide if another banner directly follows)
+          syncBannerTimeout = setTimeout(() => {
+            if (syncBanner.classList.contains(currentType)) {
+              hideSyncBanner();
+            }
+          }, duration);
+        }
+      }
+
       // ====================================
       // PAGE LOAD HANDLER
       // ====================================
@@ -323,33 +425,56 @@
           .toLowerCase();
         const language = code === "tet" ? "tet" : "en";
   
-  try{
-    // Always load from IndexedDB (offline-safe)
-    const species = await dataService.getAllSpecies(language);
-    console.log("[Home] Loaded species:", species.length);
-    window.setSpeciesData(species);
-  }
-  catch(err)
-  {
-    console.error("Failed loading ccached species:", err)
-  }
+        //If offline, place the permanent offline banner and load cached data
+        if (!navigator.onLine)
+        {
+          showSyncBanner("offline","Offline mode");
+          try {
+            const species = await dataService.getAllSpecies(language);
+            console.log("[Home] Offline load from IndexedDB:",species.length);
+            window.setSpeciesData(species);
+          }
+          catch (err) {
+            console.error("Failed loading offline species:",err);
+            showSyncBanner("error", "No offline data available",true,5000);
+          }
+          return;
+        }
 
-  //background sync
-  try{
+        try
+        {
+          // Always load from IndexedDB (offline-safe)
+          const species = await dataService.getAllSpecies(language);
+          console.log("[Home] Loaded species:", species.length);
+          window.setSpeciesData(species);
+          showSyncBanner("syncing","Initial sync in progress...");
+        }
+        catch(err)
+        {
+          console.error("Failed loading cached species:", err);
+        }
 
-    if (typeof syncManager !== "undefined") {
-      const res = await syncManager.checkAndSync({ forceBundle: false });
-      if (res?.synced) {
-        const updatedSpecies = await dataService.getAllSpecies(language);
-        window.setSpeciesData(updatedSpecies);
-      }
-    }
-  }
-  catch(err)
-  {
-    console.warn("Offline, using cached data")
-  }
-});
+        //background sync
+        try{
+
+          if (typeof syncManager !== "undefined")
+          {
+            const res = await syncManager.checkAndSync({ forceBundle: false });
+            if (res?.synced) {
+              const updatedSpecies = await dataService.getAllSpecies(language);
+              window.setSpeciesData(updatedSpecies);
+              showSyncBanner("online","Data up to date",true,5000);
+            }
+            else {showSyncBanner("online","Data already up to date",true,5000);}
+          }
+        }
+        catch(err)
+        {
+          console.warn("Offline, using cached data");
+          showSyncBanner("error","Sync failed! Using offline mode",true,5000);
+          setTimeout(() => {showSyncBanner("offline","Offline mode",false);},5000); //need the persistnet offline banner after the error msg
+        }
+      });
 
       // ====================================
       // LANGUAGE HANDLER

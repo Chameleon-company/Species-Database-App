@@ -36,7 +36,8 @@ export default function Users() {
   const [lang, setLang] = useState<"en" | "tet">(
     (localStorage.getItem("lang") as "en" | "tet") || "en"
   );
-  const t = translations[lang];
+  const t = (key: string) =>
+    (translations as any)[key]?.[lang] || key;
 
   const changeLang = (newLang: "en" | "tet") => {
     localStorage.setItem("lang", newLang);
@@ -77,7 +78,7 @@ export default function Users() {
       setRows(data);
     } catch (e) {
       const errorMsg =
-        e instanceof Error ? e.message : t.networkErrorFetchingUsers;
+      e instanceof Error ? e.message : t("networkErrorFetchingUsers");
       showSnackbar(errorMsg, "error");
       console.error("Failed to fetch users:", e);
     } finally {
@@ -121,17 +122,17 @@ export default function Users() {
     const isNew = numericId < 0;
 
     if (!user.name?.trim()) {
-      showSnackbar(t.nameRequired, "error");
+      showSnackbar(t("nameRequired"), "error");
       return;
     }
 
     if (!user.role?.trim()) {
-      showSnackbar(t.roleRequired, "error");
+      showSnackbar(t("roleRequired"), "error");
       return;
     }
 
     if (isNew && user.auth_provider === "local" && !user.password?.trim()) {
-      showSnackbar(t.passwordRequiredForNewLocalUsers, "error");
+      showSnackbar(t("passwordRequiredForNewLocalUsers"), "error");
       return;
     }
 
@@ -162,13 +163,13 @@ export default function Users() {
       }
 
       showSnackbar(
-        isNew ? t.userCreatedSuccessfully : t.userUpdatedSuccessfully,
+        isNew ? t("userCreatedSuccessfully") : t("userUpdatedSuccessfully"),
         "success"
       );
 
       await fetchUsers();
     } catch (e) {
-      const errorMsg = e instanceof Error ? e.message : t.failedToSaveUser;
+      const errorMsg = e instanceof Error ? e.message : t("failedToSaveUser");
       showSnackbar(errorMsg, "error");
       console.error("Save error:", e);
     } finally {
@@ -190,7 +191,7 @@ export default function Users() {
     if (!user) return;
 
     const confirmed = window.confirm(
-      `${t.areYouSureDeleteUser} "${user.name}"?`
+      `${t("areYouSureDeleteUser")} "${user.name}"?`
     );
 
     if (!confirmed) return;
@@ -207,9 +208,9 @@ export default function Users() {
       }
 
       setRows((prev) => prev.filter((r) => r.user_id !== numericId));
-      showSnackbar(t.userDeletedSuccessfully, "success");
+      showSnackbar(t("userDeletedSuccessfully"), "success");
     } catch (e) {
-      const errorMsg = e instanceof Error ? e.message : t.failedToDeleteUser;
+      const errorMsg = e instanceof Error ? e.message : t("failedToDeleteUser");
       showSnackbar(errorMsg, "error");
       console.error("Delete error:", e);
     } finally {
@@ -243,25 +244,25 @@ export default function Users() {
   const columns: GridColDef[] = [
     {
       field: "user_id",
-      headerName: t.id,
+      headerName: t("id"),
       width: 80,
-      valueGetter: (params) => (params < 0 ? t.new : params),
+      valueGetter: (params) => (params < 0 ? t("new") : params),
     },
     {
       field: "name",
-      headerName: t.name,
+      headerName: t("name"),
       width: 200,
       editable: true,
     },
     {
       field: "role",
-      headerName: t.role,
+      headerName: t("role"),
       width: 150,
       editable: true,
     },
     {
       field: "password",
-      headerName: t.password,
+      headerName: t("password"),
       width: 180,
       editable: true,
       renderCell: (params) => {
@@ -277,24 +278,24 @@ export default function Users() {
     },
     {
       field: "is_active",
-      headerName: t.active,
+      headerName: t("active"),
       type: "boolean",
       width: 100,
       editable: true,
     },
     {
       field: "auth_provider",
-      headerName: t.auth,
+      headerName: t("auth"),
       width: 140,
       type: "singleSelect",
       valueOptions: ["local", "google"],
       editable: true,
       valueFormatter: (value) =>
-        value === "google" ? t.google : t.local,
+        value === "google" ? t("google") : t("local"),
     },
     {
       field: "created_at",
-      headerName: t.created,
+      headerName: t("created"),
       width: 180,
       valueGetter: (params) => {
         if (!params) return "";
@@ -305,7 +306,7 @@ export default function Users() {
     {
       field: "actions",
       type: "actions",
-      headerName: t.actions,
+      headerName: t("actions"),
       width: 120,
       getActions: ({ id }) => {
         const isEditing = rowModesModel[id]?.mode === GridRowModes.Edit;
@@ -314,13 +315,13 @@ export default function Users() {
           return [
             <GridActionsCellItem
               icon={<SaveIcon />}
-              label={t.save}
+              label={t("save")}
               onClick={() => handleSave(id)}
               disabled={loading}
             />,
             <GridActionsCellItem
               icon={<CancelIcon />}
-              label={t.cancel}
+              label={t("cancel")}
               onClick={() => handleCancel(id)}
               disabled={loading}
             />,
@@ -330,13 +331,13 @@ export default function Users() {
         return [
           <GridActionsCellItem
             icon={<EditIcon />}
-            label={t.edit}
+            label={t("edit")}
             onClick={() => handleEdit(id)}
             disabled={loading}
           />,
           <GridActionsCellItem
             icon={<DeleteIcon />}
-            label={t.delete}
+            label={t("delete")}
             onClick={() => handleDelete(id)}
             disabled={loading}
           />,
@@ -354,7 +355,7 @@ export default function Users() {
         mb={2}
       >
         <h2 className="text-3xl font-bold" style={{ margin: 0 }}>
-          {t.userManagement}
+        {t("userManagement")}
         </h2>
 
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
@@ -369,7 +370,7 @@ export default function Users() {
             onClick={handleAdd}
             disabled={loading}
           >
-            {t.createUser}
+            {t("createUser")}
           </Button>
         </div>
       </Stack>
