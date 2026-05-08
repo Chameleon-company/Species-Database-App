@@ -9,6 +9,8 @@ from flask import request, jsonify
 from datetime import datetime, timezone
 from changelog import log_change, get_next_version
 from auth_authz import register_auth_routes, require_role, get_admin_user
+from urllib.parse import urlparse
+import requests
 
 
 def register_media_routes(app, supabase):
@@ -16,6 +18,37 @@ def register_media_routes(app, supabase):
     attach all media related routes to main flask app
     """
 
+    ALLOWED_MEDIA_TYPES = ["image", "video"]
+
+    #Adding validation
+    def validate_media_url(url, media_type):
+        try:
+            # check the URL format
+            parsed = urlparse(url)
+            if not parsed.scheme or not parsed.netloc:
+                return False, "Invalid URL format"
+
+            # check if the URL works
+            response = requests.head(url, timeout=5)
+
+            if response.status_code != 200:
+                return False, "The URL is not reachable"
+
+            # check the type of the content
+            content_type = response.headers.get("Content-Type", "")
+
+            if media_type == "image" and not content_type.startswith("image/"):
+                return False, "URL is not an image"
+
+            if media_type == "video" and not content_type.startswith("video/"):
+                return False, "URL is not a video"
+
+            return True, None
+
+        except:
+            return False, "URL error checking"
+
+    
     @app.post("/upload-media")
     def register_media():
         """
@@ -48,6 +81,15 @@ def register_media_routes(app, supabase):
             return jsonify({
                 "error": "species_id, media_type and download_link are required"
             }), 400
+
+        # Validating the media type
+        if media_type not in ALLOWED_MEDIA_TYPES:
+            return jsonify({"error": "The media type is invalid"}), 400
+
+        # Validating URL
+        is_valid, error = validate_media_url(download_link, media_type)
+        if not is_valid:
+            return jsonify({"error": error}), 400
         
 
         #speciesid from species name
