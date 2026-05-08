@@ -951,5 +951,26 @@ def get_next_version():
 
     return (res.data[0]["version"] + 1) if res.data else 1
 
+@app.get("/health")
+def health_check():
+    try:
+        supabase.table("species_en") \
+            .select("species_id") \
+            .limit(1) \
+            .execute()
+
+        return jsonify({
+            "status": "healthy",
+            "database": "connected"
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "status": "unhealthy",
+            "database": "disconnected",
+            "error": str(e)
+        }), 500
+  
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
