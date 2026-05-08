@@ -1,11 +1,5 @@
 import React, { useState, useRef, type DragEvent } from "react";
-import {
-  Upload,
-  FileSpreadsheet,
-  CheckCircle2,
-  AlertCircle,
-  X,
-} from "lucide-react";
+import { Upload } from "lucide-react";
 import { adminFetch } from "../utils/adminFetch";
 import { translations } from "../translations";
 

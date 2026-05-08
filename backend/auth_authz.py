@@ -6,6 +6,7 @@ from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 import secrets
 from datetime import datetime, timedelta, timezone
+from postgrest.exceptions import APIError
 
 """
 IMPORTANT AUTH NOTES!!
@@ -158,6 +159,29 @@ def log_event(supabase, event_type, user_id, session_id=None, ip=None, ua=None, 
         "user_agent": ua,
         "details": details
     }).execute()
+
+def create_admin_session(supabase, session_data):
+    try:
+        return supabase.table("admin_sessions").insert(session_data).execute()
+    except APIError as exc:
+        error = getattr(exc, "args", [{}])[0]
+        if not isinstance(error, dict) or error.get("code") != "23505":
+            raise
+        if "admin_sessions_pkey" not in str(error.get("message", "")):
+            raise
+
+        latest = (
+            supabase.table("admin_sessions")
+            .select("session_id")
+            .order("session_id", desc=True)
+            .limit(1)
+            .execute()
+        )
+        next_session_id = (latest.data[0]["session_id"] + 1) if latest.data else 1
+        return supabase.table("admin_sessions").insert({
+            **session_data,
+            "session_id": next_session_id,
+        }).execute()
 
 def log_analytics(supabase, event_type, user_id, ip=None):
     supabase.table("analytics").insert({
@@ -316,7 +340,7 @@ def register_auth_routes(app, supabase):
             password.encode("utf-8"),
             user["password_hash"].encode("utf-8")
         ):
-            log_event(supabase, "failed_login", user["user_id"], ip_address=request.remote_addr, user_agent=request.headers.get("User-Agent"))
+            log_event(supabase, "failed_login", user["user_id"], ip=request.remote_addr, ua=request.headers.get("User-Agent"))
             return jsonify({"error": "credentials invalid"}), 401
         
         # Revoke existing sessions
@@ -328,7 +352,7 @@ def register_auth_routes(app, supabase):
         ip = request.remote_addr
         ua = request.headers.get("User-Agent")
 
-        sess_resp = supabase.table("admin_sessions").insert({
+        sess_resp = create_admin_session(supabase, {
             "user_id": user["user_id"],
             "access_token": token,
             "expires_at": access_expiry(),
@@ -337,7 +361,7 @@ def register_auth_routes(app, supabase):
             "refresh_expires_at": refresh_expiry(),
             "ip_address": ip,
             "user_agent": ua
-        }).execute()
+        })
 
         session_id = sess_resp.data[0]["session_id"] if sess_resp.data else None
 
@@ -406,7 +430,7 @@ def register_auth_routes(app, supabase):
         ip = request.remote_addr
         ua = request.headers.get("User-Agent")
 
-        sess_resp = supabase.table("admin_sessions").insert({
+        sess_resp = create_admin_session(supabase, {
             "user_id": user["user_id"],
             "access_token": token,
             "expires_at": access_expiry(),
@@ -415,7 +439,7 @@ def register_auth_routes(app, supabase):
             "refresh_expires_at": refresh_expiry(),
             "ip_address": ip,
             "user_agent": ua
-        }).execute()
+        })
 
         session_id = sess_resp.data[0]["session_id"] if sess_resp.data else None
 
@@ -508,7 +532,7 @@ def register_auth_routes(app, supabase):
 
         session = None
         for s in sess_resp.data:
-            if bcrypt.checkpw(refresh_token.encode(), s["refresh_token_hash"].encode()):
+            if s.get("refresh_token_hash") and bcrypt.checkpw(refresh_token.encode(), s["refresh_token_hash"].encode()):
                 session = s
                 break
 

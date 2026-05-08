@@ -29,9 +29,8 @@ type Media = {
 
 /* ─── Image thumbnail cell ──────────────────────────────────────── */
 function ThumbCell({ url, type }: { url: string; type: string }) {
-  const [err, setErr] = useState(false);
+  const [, setErr] = useState(false);
   const [previewing, setPreviewing] = useState(false);
-  const [lang, setLang] = useState(localStorage.getItem("lang") || "en");
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   useEffect(() => {
     if (url) {

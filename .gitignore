@@ -6,5 +6,6 @@ __pycache__/
 backend/.sonar/
 node_modules/
 *.tsbuildinfo
+*-server*.log
 testData.xlsx
 .DS_Store

@@ -760,7 +760,7 @@ def analytics_overview():
 
         total_logins = analytics_res.count or 0
 
-        durations = [a["duration"] for a in analytics_res.data]
+        durations = [a.get("duration") or 0 for a in analytics_res.data]
         avg_duration = round(
             sum(durations) / len(durations), 2
         ) if durations else 0
@@ -805,7 +805,7 @@ def analytics_users():
             records = analytics_by_user.get(uid, [])
 
             login_count = len(records)
-            total_duration = sum(r["duration"] for r in records)
+            total_duration = sum(r.get("duration") or 0 for r in records)
             average_duration = (
                 round(total_duration / login_count, 2)
                 if login_count > 0 else 0
