@@ -10,6 +10,7 @@ import ImageIcon from "@mui/icons-material/Image";
 import VideocamIcon from "@mui/icons-material/Videocam";
 import SearchIcon from "@mui/icons-material/Search";
 import { adminFetch } from "../utils/adminFetch";
+import { useHardwareBack } from "../capacitor/useHardwareBack";
 import {
   Dialog,
   DialogTitle,
@@ -353,6 +354,12 @@ export default function MediaManager() {
 
   const handleDeleteClick = (row: Media) => setDeleteTarget(row);
   const handleDeleteClose = () => setDeleteTarget(null);
+
+  useHardwareBack(() => {
+    if (!deleteTarget) return false;
+    handleDeleteClose();
+    return true;
+  });
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
     setDeleteTarget(null);

@@ -19,6 +19,7 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import Logo from "../assets/logo-color.png";
 import { performAdminLogout } from "../utils/adminSession";
 import { translations } from "../translations";
+import { useHardwareBack } from "../capacitor/useHardwareBack";
 
 const DRAWER_WIDTH = 220;
 
@@ -416,6 +417,17 @@ export default function DrawerComponent({ children }: { children: React.ReactNod
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [isClosing, setIsClosing] = React.useState(false);
   const navigate = useNavigate();
+  const mobileOpenRef = React.useRef(mobileOpen);
+  React.useEffect(() => {
+    mobileOpenRef.current = mobileOpen;
+  }, [mobileOpen]);
+
+  useHardwareBack(() => {
+    if (!mobileOpenRef.current) return false;
+    setIsClosing(true);
+    setMobileOpen(false);
+    return true;
+  });
 
   const rawLang = localStorage.getItem("lang");
   const lang: keyof typeof translations = rawLang === "tet" ? "tet" : "en";

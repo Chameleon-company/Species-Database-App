@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import TableLayout from "../Components/TableLayout";
 import { adminFetch } from "../utils/adminFetch";
 import { translations } from "../translations";
+import { useHardwareBack } from "../capacitor/useHardwareBack";
 
 const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -131,6 +132,10 @@ function CellLink({
 
 /* ─── Main Page ──────────────────────────────────────────────────── */
 export default function SpeciesPage() {
+  const rawLang = localStorage.getItem("lang");
+  const lang: keyof typeof translations = rawLang === "tet" ? "tet" : "en";
+  const t = translations[lang];
+
   const [rows, setRows] = useState<SpeciesRow[]>([]);
   const [filteredRows, setFilteredRows] = useState<SpeciesRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -163,6 +168,12 @@ export default function SpeciesPage() {
     setDeleteId(null);
     setDeleteName(null);
   };
+
+  useHardwareBack(() => {
+    if (!open) return false;
+    handleClose();
+    return true;
+  });
 
   const handleConfirmDelete = async () => {
     setOpen(false);
