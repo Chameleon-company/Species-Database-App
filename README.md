@@ -1,288 +1,304 @@
 # Rai Matak Species Guide
-### English–Tetum Bilingual Field Application
-*Offline • Bilingual • Reforestation Support*
 
----
+English-Tetum bilingual field application for offline species guidance and Rai Matak reforestation support.
 
 ## Project Overview
 
-The **Rai Matak Species Guide** is a dedicated mobile application developed to support the field staff, botanists, and community partners involved in the Rai Matak reforestation efforts.
+The Rai Matak Species Guide supports field staff, botanists, and community partners working in Timor-Leste. The app provides offline access to species identification data, ecological notes, photos, and learning resources.
 
-Designed specifically for the challenging remote environments of Timor-Leste, the app's core value is its complete **offline functionality**. It ensures that critical species identification, ecological data, and learning resources are accessible exactly when and where they are needed, regardless of internet connectivity.
+The repository includes:
 
----
+- A Flask backend API in `backend`
+- A React admin dashboard in `ReactDash`
+- A static field-user frontend in `Frontend`
+- A Capacitor Android wrapper in `capacitor-wrapper`
 
-## Developer Onboarding
+## Recommended Setup with Docker
 
-1. Copy `.env.example` to `.env` and fill the Supabase and Google values.
-2. Run the installer for your OS:
-   - Linux: `npm run install:linux`
-   - macOS: `npm run install:macos`
-   - Windows 11: `npm run install:windows11`
-3. Start the Docker environment: `npm run dev`
+Use this path when joining the project for the first time. Docker starts the backend and the admin dashboard together.
 
-Local services:
+### 1. Install Prerequisites
+
+Install these before running project commands:
+
+- Git
+- Docker Desktop, or Docker Engine with Docker Compose v2
+- Node.js 22 or newer, including npm
+
+Windows 11:
+
+1. Install Git for Windows.
+2. Install Docker Desktop.
+3. Install Node.js 22 LTS or newer.
+4. Open Docker Desktop and wait until the engine is running.
+5. Open PowerShell from the repository root.
+
+macOS:
+
+1. Install Git.
+2. Install Docker Desktop for Mac.
+3. Install Node.js 22 LTS or newer.
+4. Open Docker Desktop and wait until it is running.
+5. Open Terminal from the repository root.
+
+Linux:
+
+1. Install Git.
+2. Install Docker Engine with Docker Compose v2, or Docker Desktop for Linux.
+3. Install Node.js 22 LTS or newer.
+4. Confirm Docker is running:
+
+   ```bash
+   docker compose version
+   ```
+
+5. Open a terminal from the repository root.
+
+### 2. Clone the Repository
+
+```bash
+git clone https://github.com/Chameleon-company/Species-Database-App.git
+cd Species-Database-App
+git checkout DevSecOps
+```
+
+### 3. Create the Environment File
+
+The app needs Supabase and Google configuration values. Ask the project owner for the correct values before starting the app.
+
+Create `.env` from the template:
+
+```bash
+cp .env.example .env
+```
+
+Windows PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Fill these values in `.env`:
+
+```bash
+SUPABASE_URL=
+SUPABASE_KEY=
+GOOGLE_CLIENT_ID=
+VITE_SUPABASE_URL=
+VITE_SUPABASE_PUBLISHABLE_KEY=
+VITE_SUPABASE_URL_TETUM=
+VITE_SUPABASE_PUBLISHABLE_KEY_TETUM=
+VITE_GOOGLE_CLIENT_ID=
+```
+
+Keep these default local values unless your ports change:
+
+```bash
+CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+VITE_API_BASE=http://localhost:5000
+VITE_API_URL=http://localhost:5000/api
+```
+
+Do not commit `.env`.
+
+### 4. Start the App
+
+From the repository root:
+
+```bash
+npm run dev
+```
+
+This builds and starts:
 
 - Admin dashboard: `http://localhost:5173`
 - Backend API: `http://localhost:5000`
 
-Common commands:
+Leave the terminal open while the app is running.
 
-- `npm run dev:admin` starts the Vite admin dashboard.
-- `npm run dev:backend` starts the Flask backend.
-- `npm run build` builds the admin dashboard.
-- `npm run lint` runs admin dashboard linting.
-- `npm run docker:down` stops the Docker environment.
+### 5. Check That It Works
 
----
+Check container status:
 
-## Rai Matak
-
-*Rai Matak* translates to **"Green Land"** or **"Lush Earth"** in Tetum, reflecting the program's vital mission to restore Timor-Leste's natural biodiversity and forest cover.
-
----
-
-## Key Features
-
-This application is built to be robust, intuitive, and highly functional in the field:
-
-- **Bilingual Support (English & Tetum):**
-  All content, navigation, and species descriptions are available in both English and Tetum, ensuring accessibility for all staff.
-
-- **100% Offline Access:**
-  Once the app is downloaded, all species data, photos, and identification keys are stored locally. No internet connection is required for day-to-day operation.
-
-- **Species Identification:**
-  Detailed profiles for native and important endemic tree species relevant to the Rai Matak program.
-
-- **Rich Data Fields:**
-  Each species profile includes:
-  - Common and scientific names
-  - Tetum names (*Naran Tetum*)
-  - Detailed photographs (leaves, bark, fruit, flowers)
-  - Ecological notes (habitat, elevation, soil type)
-  - Propagation and management advice
-
-- **Intuitive Search and Filtering:**
-  Quickly locate species by name, characteristic, or habitat type.
-
----
-
-## Admin Authentication and Session Security
-
-The application includes a secure Admin authentication system with advanced session management features designed to protect administrative access.
-
-### Architecture Overview
-
-- **Single Active Session Policy:** Each Admin user can have only one active session at a time. New logins automatically revoke previous sessions.
-- **Token-Based Authentication:** Admins use short-lived access tokens (40 minutes) and longer-lived refresh tokens (7 days) for secure, stateless authentication.
-- **Refresh Token Rotation:** Refresh tokens are rotated on each use to prevent reuse attacks.
-- **Session Revocation:** Sessions are immediately invalidated on logout, expiry, or replacement.
-- **Audit Logging:** All authentication events are logged to both the audit history and analytics systems.
-
-### Authentication Flow
-
-1. **Login:** Admin provides credentials (password or Google OAuth).
-2. **Session Creation:** System revokes any existing active sessions, generates access/refresh tokens, stores hashed refresh token.
-3. **Token Usage:** Access tokens are sent in Authorization header for API requests.
-4. **Refresh:** When access token expires, use refresh token to obtain new tokens.
-5. **Logout:** Revokes current session and refresh token.
-
-### Session Metadata
-
-Each Admin session tracks:
-- Admin user ID
-- Session ID
-- Access token issue/expiry timestamps
-- Refresh token issue/expiry timestamps
-- Last activity timestamp
-- IP address
-- User agent
-- Session status (active/revoked)
-- Revocation reason (logout/expired/new_login/refresh_expired)
-- Event type (login/logout/refresh/expiry/failed_login/session_replacement/refresh_expired)
-
-### Authentication Events
-
-Events logged include:
-- **admin_login:** Successful login
-- **admin_logout:** User logout
-- **admin_refresh:** Token refresh
-- **admin_failed_login:** Failed login attempt
-- **expiry:** Session expired
-- **session_replacement:** Previous session revoked due to new login
-- **refresh_expired:** Refresh token expired
-
-### API Endpoints
-
-- `POST /api/auth/admin-login` - Password login
-- `POST /api/auth/google-admin` - Google OAuth login
-- `POST /api/auth/admin-logout` - Logout
-- `POST /api/auth/admin-refresh` - Refresh tokens
-- `GET /api/admin/session-audit` - View session audit history
-
-### Security Controls
-
-- Refresh tokens stored as bcrypt hashes (not plaintext)
-- Tokens never logged in full
-- IP and User-Agent tracking for security monitoring
-- Automatic session expiry and revocation
-- Failed login logging for anomaly detection
-
-### Configuration
-
-- Access token expiry: 40 minutes
-- Refresh token expiry: 7 days
-- Hashing: bcrypt with salt
-- Database: PostgreSQL via Supabase
-
-### Test Procedure
-
-1. Login as Admin user
-2. Verify single session enforcement (login from another device revokes first)
-3. Test token refresh before expiry
-4. Attempt access with expired/revoked tokens
-5. Check audit logs for all events
-6. Verify analytics integration
-
----
-
-## Security & CI/CD
-
-This project implements automated security scanning to ensure code quality and dependency safety:
-
-- **Security Scanning:** Uses SNYK for vulnerability detection in Python dependencies, along with Safety checks and npm audit for Node.js packages.
-- **Secrets Scanning:** TruffleHog is used to detect potential secrets in the codebase.
-- **CI Pipeline:** Security scans run automatically on pushes and pull requests to the `master` and `DevSecOps` branches, or can be triggered manually.
-- **Vulnerability Reporting:** See [SECURITY.md](SECURITY.md) for information on reporting security vulnerabilities.
-
----
-
-## Setup & Running
-
-The project has three components that need to be set up and run separately. Follow the steps below for each.
-
----
-
-### 1. Backend
-
-The backend is a Python Flask server. Follow these steps to set it up from scratch.
-
-**Step 1: Navigate to the backend folder**
 ```bash
-cd /[userfolder]/backend
-
-# Example:
-# cd "/Users/antonymathiyalan/Desktop/Species-Database-App/backend"
+docker compose ps
 ```
 
-**Step 2: Remove any old virtual environments**
+The backend should show as `healthy`.
+
+Check the backend API:
+
 ```bash
-rm -rf venv .venv
+curl http://localhost:5000/api/bundle
 ```
 
-**Step 3: Create a new virtual environment**
-```bash
-python3 -m venv venv
+Open the admin dashboard:
+
+```text
+http://localhost:5173
 ```
 
-**Step 4: Activate the virtual environment**
+The setup is working when the dashboard opens and `/api/bundle` returns JSON.
+
+### 6. Stop the App
+
 ```bash
-source venv/bin/activate
+npm run docker:down
 ```
 
-**Step 5: Confirm you are using the correct Python (Important)**
+## Common Commands
+
 ```bash
-which python
-python -c "import sys; print(sys.executable)"
+npm run dev           # Build and start Docker containers
+npm run docker:down   # Stop Docker containers
+npm run docker:logs   # Follow container logs
+npm run docker:build  # Build Docker images only
+npm run build         # Build the React admin dashboard
+npm run lint          # Run React admin linting
 ```
 
-**Step 6: Upgrade pip and install dependencies**
+## Optional Local Development
+
+Use this path only when you need to run services outside Docker.
+
+### 1. Install Local Prerequisites
+
+Install:
+
+- Node.js 22 or newer
+- npm
+- Python 3.12 or newer
+
+### 2. Run the OS Install Script
+
+From the repository root, run the command for your OS:
+
 ```bash
-python -m pip install --upgrade pip
-python -m pip install -r ../requirements.txt
-python -m pip install flask-cors
+npm run install:linux
+npm run install:macos
+npm run install:windows11
 ```
 
-**Step 7: Navigate into the backend sub-folder (where app.py lives)**
+The script installs Node dependencies, creates `backend/venv`, installs Python requirements, and creates `.env` from `.env.example` if it does not exist.
+
+### 3. Start Local Services
+
+Start the backend:
+
 ```bash
-cd backend
+npm run dev:backend
 ```
 
-**Step 8: Run the backend server**
+Start the admin dashboard in another terminal:
+
 ```bash
-python app.py
+npm run dev:admin
 ```
 
----
+Local URLs:
 
-### 2. Frontend (Admin)
+- Admin dashboard: `http://localhost:5173`
+- Backend API: `http://localhost:5000`
 
-The Admin frontend is a React dashboard. Run the following commands from the project root or the `ReactDash` folder.
+## Static Field-User Frontend
+
+The field-user frontend is the static HTML app in `Frontend`.
+
+Prerequisite:
+
+- Visual Studio Code with the Live Server extension
+
+Procedure:
+
+1. Open the repository folder in Visual Studio Code.
+2. Open `Frontend/index.html`.
+3. Use Live Server to open the page in a browser.
+
+## Android App
+
+The Android project is managed through Capacitor in `capacitor-wrapper`.
+
+### 1. Install Prerequisites
+
+Install:
+
+- Android Studio
+- Android SDK through Android Studio
+- Node.js 22 or newer
+- Project dependencies through one of the OS install scripts
+
+### 2. Open the Android Project
 
 ```bash
-cd ReactDash
-npm install
-npm run dev
-```
-
----
-
-### 3. Frontend (User)
-
-The User frontend is an HTML-based application that can be run in two ways:
-
-#### Option A — Quick Preview with VS Code Live Server
-
-1. Install the **Go Live** extension in Visual Studio Code.
-2. Open the project folder in VS Code.
-3. Right-click the main HTML file and select **Open with Live Server**.
-
----
-
-#### Option B — Run on Android via Capacitor & Android Studio
-
-**Make Sure you have latest Android Studio**
-To build and run the app as an APK on a real device or emulator, follow these steps:
-
-**Step 1: Install dependencies**
-```bash
-npm install
-```
-
-**Step 2: Install Capacitor dependencies** *(if not already installed)*
-```bash
-npm install @capacitor/core @capacitor/android
-```
-
-**Step 3: Initialize Capacitor** *(first time only)*
-```bash
-npx cap init
-```
-> Enter your **App Name** and **App ID** (e.g. `com.raimatak.app`) when prompted.
-
-**Step 4: Build the web assets**
-```bash
-npm run build
-```
-
-**Step 5: Sync web assets to the Android project**
-```bash
+cd capacitor-wrapper
 npx cap sync android
-```
-
-**Step 6: Open the project in Android Studio**
-```bash
 npx cap open android
 ```
 
-**Step 7: Run the app from Android Studio**
-1. Wait for Gradle to finish syncing.
-2. Select a connected device or an emulator from the device dropdown.
-3. Click the green **Run** button (or press `Shift + F10`) to build and deploy the APK.
+### 3. Run from Android Studio
 
-> **Tip:** Every time you update your web code, repeat **Steps 3 and 5** (build + sync) before running again in Android Studio.
+1. Wait for Gradle sync to finish.
+2. Select a connected Android device or emulator.
+3. Run the app from Android Studio.
+
+Repeat `npx cap sync android` after changing static frontend files.
+
+## Key Features
+
+- Bilingual English and Tetum content
+- Offline field access
+- Species search and filtering
+- Species profiles with photos and ecological notes
+- Admin tools for species data, media, audit history, analytics, and users
+
+## Admin Authentication and Session Security
+
+The admin system supports:
+
+- Single active session per admin user
+- Short-lived access tokens and refresh tokens
+- Refresh token rotation
+- Session revocation on logout, expiry, or replacement
+- Audit logging for authentication events
+
+Main authentication endpoints:
+
+- `POST /api/auth/admin-login`
+- `POST /api/auth/google-admin`
+- `POST /api/auth/admin-logout`
+- `POST /api/auth/admin-refresh`
+- `GET /api/admin/session-audit`
+
+## Security and CI/CD
+
+The project includes security scanning for dependencies and secrets. See `SECURITY.md` for vulnerability reporting guidance.
+
+## Troubleshooting
+
+Docker is not running:
+
+1. Open Docker Desktop.
+2. Wait until the engine is running.
+3. Run `docker compose ps` again.
+
+Port already in use:
+
+1. Stop any existing service using ports `5000` or `5173`.
+2. Run `npm run docker:down`.
+3. Run `npm run dev` again.
+
+Environment values missing:
+
+1. Confirm `.env` exists in the repository root.
+2. Confirm all Supabase and Google values are filled.
+3. Restart Docker with `npm run docker:down` and `npm run dev`.
+
+Admin dashboard opens but data does not load:
+
+1. Check backend status with `docker compose ps`.
+2. Check logs with `npm run docker:logs`.
+3. Confirm `VITE_API_BASE` and `VITE_API_URL` point to `http://localhost:5000`.
 
 ---
 
-*Rai Matak Species Guide • Timor-Leste Reforestation Program*
+*Rai Matak Species Guide | Timor-Leste Reforestation Program*
