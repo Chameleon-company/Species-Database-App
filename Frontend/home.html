@@ -25,14 +25,6 @@
             <button class="lang-btn">EN</button>
           </div>
         </div>
-
-        <div class="search-bar">
-          <span class="search-icon">
-            <img src="Assets/icons/search.svg" alt="Search" />
-          </span>
-
-          <input type="text" placeholder="Search species" id="searchInput" />
-        </div>
       </header>
 
       <!-- Sync/Offline Banner -->
@@ -55,6 +47,19 @@
         </div>
       </div>
 
+      <div class="view-toolbar" aria-label="Species view toggle">
+        <button class="view-btn active" id="listViewBtn" type="button" aria-label="List view" title="List view">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 6.5h16v2H4v-2Zm0 5.25h16v2H4v-2Zm0 5.25h16v2H4v-2Z" />
+          </svg>
+        </button>
+        <button class="view-btn" id="gridViewBtn" type="button" aria-label="Grid view" title="Grid view">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 4h7v7H4V4Zm9 0h7v7h-7V4ZM4 13h7v7H4v-7Zm9 0h7v7h-7v-7Z" />
+          </svg>
+        </button>
+      </div>
+
       <div class="container" id="species-list"></div>
 
       <a class="back-link" href="index.html"></a>
@@ -63,6 +68,15 @@
 
 
     </main>
+      <div class="bottom-search-dock" aria-label="Search species">
+        <div class="search-bar search-bar--sticky">
+          <span class="search-icon">
+            <img src="Assets/icons/search.svg" alt="Search" />
+          </span>
+
+          <input type="text" placeholder="Search species" id="searchInput" />
+        </div>
+      </div>
       <!-- Sync Status Toast -->
       <div class="sync-status" id="syncStatus"></div>
       <style>
@@ -70,6 +84,47 @@
         display: flex;
         gap: 8px;
         align-items: center;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+
+      .view-btn {
+        width: 40px;
+        height: 40px;
+        border: none;
+        background: #ffffff;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        color: #0b5c37;
+        box-shadow: 0 1px 5px rgba(15, 23, 42, 0.08);
+      }
+
+      .view-btn.active {
+        background: #0b5c37;
+        color: #ffffff;
+        transform: translateY(-1px);
+      }
+
+      .view-toolbar {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px;
+        margin: 0 1.5rem 0.5rem;
+        border-radius: 14px;
+        background: #edf9f0;
+        border: 1px solid #cfe9d6;
+        width: fit-content;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+      }
+
+      .view-btn svg {
+        width: 18px;
+        height: 18px;
+        fill: currentColor;
       }
 
       .sync-btn {
@@ -109,7 +164,7 @@
 
       .sync-status {
         position: fixed;
-        bottom: 20px;
+        bottom: 88px;
         left: 50%;
         transform: translateX(-50%);
         background: #333;
@@ -169,6 +224,25 @@
         background: #fdecec;
         color: #b42318;
         border-color: #f5c2c7;
+      }
+
+      .bottom-search-dock {
+        position: fixed;
+        left: 16px;
+        right: 16px;
+        bottom: calc(16px + env(safe-area-inset-bottom));
+        width: auto;
+        max-width: 480px;
+        margin: 0 auto;
+        padding: 0;
+        box-sizing: border-box;
+        z-index: 1001;
+      }
+
+      .bottom-search-dock .search-bar--sticky {
+        border-radius: 999px;
+        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.16);
+        border: 1px solid rgba(11, 92, 55, 0.08);
       }
       
     </style>
@@ -781,12 +855,38 @@
         filterOverlay.style.display = "none";
       });
 
+      const speciesListContainer = document.getElementById("species-list");
+      const listViewBtn = document.getElementById("listViewBtn");
+      const gridViewBtn = document.getElementById("gridViewBtn");
+
+      function setSpeciesView(view) {
+        if (!speciesListContainer) return;
+
+        const isGrid = view === "grid";
+        speciesListContainer.classList.toggle("grid-view", isGrid);
+        speciesListContainer.classList.toggle("list-view", !isGrid);
+        localStorage.setItem("species_view", view);
+
+        if (listViewBtn && gridViewBtn) {
+          listViewBtn.classList.toggle("active", !isGrid);
+          gridViewBtn.classList.toggle("active", isGrid);
+        }
+      }
+
+      window.setSpeciesView = setSpeciesView;
+
+      listViewBtn?.addEventListener("click", () => setSpeciesView("list"));
+      gridViewBtn?.addEventListener("click", () => setSpeciesView("grid"));
+
       // Initialize: Set "All" button as active by default when page loads
       document.addEventListener("DOMContentLoaded", () => {
         const allButton = document.querySelector('[data-filter="all"]');
         if (allButton) {
           allButton.classList.add("active");
         }
+
+        const savedView = localStorage.getItem("species_view") === "grid" ? "grid" : "list";
+        setSpeciesView(savedView);
       });
 
       let originalOrder = null;

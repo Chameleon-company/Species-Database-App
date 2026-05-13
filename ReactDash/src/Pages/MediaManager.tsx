@@ -11,6 +11,7 @@ import VideocamIcon from "@mui/icons-material/Videocam";
 import SearchIcon from "@mui/icons-material/Search";
 import { adminFetch } from "../utils/adminFetch";
 import { translations } from "../translations";
+import { useNavigate } from "react-router-dom";
 import {
   Dialog,
   DialogTitle,
@@ -298,6 +299,7 @@ function DeleteDialog({
 
 /* ─── Main component ────────────────────────────────────────────── */
 export default function MediaManager() {
+  const navigate = useNavigate();
   const [lang, setLang] = useState<"en" | "tet">(
     (localStorage.getItem("lang") as "en" | "tet") || "en"
   );
@@ -658,6 +660,28 @@ export default function MediaManager() {
       <AddIcon sx={{ fontSize: 17 }} />
       {t("addMedia")}
     </button>
+
+      <button
+        onClick={() => navigate("/bulk-media-upload")}
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 7,
+          padding: "9px 18px",
+          borderRadius: 10,
+          border: "1px solid #cfe2b5",
+          backgroundColor: "#ffffff",
+          color: "#2d6a0a",
+          fontSize: 13,
+          fontWeight: 600,
+          fontFamily: "inherit",
+          cursor: "pointer",
+          boxShadow: "0 2px 8px rgba(45,106,10,0.08)",
+          transition: "all 0.15s",
+        }}
+      >
+        {t("bulkMediaUpload")}
+      </button>
   </div>
 </div>
 
