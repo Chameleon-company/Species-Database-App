@@ -971,6 +971,25 @@ def log_time(response):
 
     return response
 
+@app.get("/api/species/search")
+def search_species():
+
+    q = request.args.get("q", "")
+
+    if not q:
+        return jsonify({"error": "query is needed"}), 400
+
+    response = (
+        supabase.table("species_en")
+        .select("species_id, common_name, scientific_name")
+        .or_(
+            f"common_name.ilike.*{q}*,scientific_name.ilike.*{q}*"
+        )
+        .execute()
+    )
+
+    return jsonify(response.data)
+
 
 @app.get("/health")
 def health_check():
