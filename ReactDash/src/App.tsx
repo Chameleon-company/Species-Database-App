@@ -3,11 +3,13 @@ import { Home } from "./Pages/Home";
 import Page1 from "./Pages/AddEntry";
 import { EditEntry } from "./Pages/EditEntry";
 import { HashRouter as Router, Routes, Route } from "react-router-dom";
+import { CapacitorBackNavigation } from "./capacitor/CapacitorBackNavigation";
 import UsersPage from "./Pages/Users";
 import Analytics from "./Pages/Analytics";
 import Audit from "./Pages/Audit";
 import AdminLoginForm from "./Pages/AdminLoginForm";
 import AdminLayout from "./Components/AdminLayout";
+import { GuestOnlyRoute } from "./Components/ProtectedAdmin";
 import MediaManager from "./Pages/MediaManager";
 import SpeciesPage from "./Pages/Species";
 import AddExcel from "./Pages/AddExcel";
@@ -15,10 +17,18 @@ import AddExcel from "./Pages/AddExcel";
 function App() {
   return (
     <Router>
+      <CapacitorBackNavigation />
       <Routes>
         {/*PUBLIC ROUTE */}
 
-        <Route path="/admin-login" element={<AdminLoginForm />} />
+        <Route
+          path="/admin-login"
+          element={
+            <GuestOnlyRoute>
+              <AdminLoginForm />
+            </GuestOnlyRoute>
+          }
+        />
 
         {/*ADMIN */}
         <Route

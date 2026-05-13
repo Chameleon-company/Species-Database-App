@@ -280,7 +280,7 @@ def register_auth_routes(app, supabase):
             "access_token": token,
             "expires_in": 2400
         }), 200
-    
+
     @app.post("/api/auth/google-admin")
     def google_admin_login():
         """
@@ -340,3 +340,16 @@ def register_auth_routes(app, supabase):
             "access_token": token,
             "expires_in": 2400
         }), 200
+
+    @app.post("/api/auth/admin-logout")
+    def admin_logout():
+        """
+        Revoke the current admin session (same Authorization token as other admin routes).
+        Idempotent: missing or unknown tokens still return 200 so clients can clear local state.
+        """
+        token = request.headers.get("Authorization")
+        if token:
+            supabase.table("admin_sessions").update({"revoked": True}).eq(
+                "access_token", token
+            ).execute()
+        return jsonify({"ok": True}), 200
