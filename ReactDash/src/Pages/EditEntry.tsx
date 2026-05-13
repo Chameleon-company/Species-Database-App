@@ -13,6 +13,7 @@ import axios from 'axios'
 import { useParams } from "react-router-dom";
 import { adminFetch } from '../utils/adminFetch'
 import { translations } from '../translations'
+import { useHardwareBack } from '../capacitor/useHardwareBack'
 
 const API_URL = import.meta.env.VITE_API_URL
 const API_BASE = import.meta.env.VITE_API_BASE
@@ -124,6 +125,12 @@ export function EditEntry() {
     const handleClose = () => {
         setOpen(false)
     }
+
+    useHardwareBack(() => {
+        if (!open) return false
+        handleClose()
+        return true
+    })
 
     const handleConfirmDelete = async () => {
         setOpen(false)

@@ -84,6 +84,7 @@ export async function syncBundle(options = {}) {
       media_type: m.media_type || "image",
       download_link: m.download_link || m.media_url || m.url || "",
       alt_text: m.alt_text || "",
+      storage_version: m.storage_version || 1,
     };
     
     await dbPut("media", mediaItem);
