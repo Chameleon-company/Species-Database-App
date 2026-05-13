@@ -362,7 +362,7 @@ export function Home() {
               <div className="section-label-line" />
             </div>
             <div className="table-wrap">
-              <MainTableSelect onRowSelect={handleRowSelect} />
+              <MainTableSelect onRowSelect={handleRowSelect} lang="en" />
             </div>
             {renderDetailPanel(selectedSpecies)}
           </div>
@@ -376,7 +376,7 @@ export function Home() {
               <div className="section-label-line" />
             </div>
             <div className="table-wrap">
-              <MainTableSelectTetum onRowSelect={handleRowSelectTetum} />
+              <MainTableSelectTetum onRowSelect={handleRowSelectTetum} lang="tet" />
             </div>
             {renderDetailPanel(selectedSpeciesTetum)}
           </div>
