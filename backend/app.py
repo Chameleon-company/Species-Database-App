@@ -718,10 +718,9 @@ def analytics_overview():
 
         total_logins = analytics_res.count or 0
 
-        durations = [a["duration"] for a in analytics_res.data]
-        avg_duration = round(
-            sum(durations) / len(durations), 2
-        ) if durations else 0
+        # filter out None durations and ensure numeric values
+        durations = [d for d in (a.get("duration") for a in analytics_res.data) if isinstance(d, (int, float))]
+        avg_duration = round(sum(durations) / len(durations), 2) if durations else 0
 
         total_species = species_res.count or 0
         species_with_media = len(set(m["species_id"] for m in media_res.data))
@@ -763,13 +762,15 @@ def analytics_users():
             records = analytics_by_user.get(uid, [])
 
             login_count = len(records)
-            total_duration = sum(r["duration"] for r in records)
+            # compute durations only from numeric entries (skip None)
+            durations_user = [d for d in (r.get("duration") for r in records) if isinstance(d, (int, float))]
+            total_duration = sum(durations_user)
             average_duration = (
-                round(total_duration / login_count, 2)
-                if login_count > 0 else 0
+                round(total_duration / len(durations_user), 2)
+                if durations_user else 0
             )
             last_login = (
-                max(r["login_time"] for r in records)
+                max(r["login_time"] for r in records if r.get("login_time") is not None)
                 if records else None
             )
 

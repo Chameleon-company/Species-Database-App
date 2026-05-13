@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="NONE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="f7d5a405-8eda-4d28-b27c-d548809ff33c" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/../Frontend/scripts/sync.js" beforeDir="false" afterPath="$PROJECT_DIR$/../Frontend/scripts/sync.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/www/css/cards.css" beforeDir="false" afterPath="$PROJECT_DIR$/www/css/cards.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/www/css/filters.css" beforeDir="false" afterPath="$PROJECT_DIR$/www/css/filters.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/www/css/login.css" beforeDir="false" afterPath="$PROJECT_DIR$/www/css/login.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/www/home.html" beforeDir="false" afterPath="$PROJECT_DIR$/www/home.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/www/js/login.js" beforeDir="false" afterPath="$PROJECT_DIR$/www/js/login.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/www/language.html" beforeDir="false" afterPath="$PROJECT_DIR$/www/language.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/www/login-admin.html" beforeDir="false" afterPath="$PROJECT_DIR$/www/login-admin.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/www/login.html" beforeDir="false" afterPath="$PROJECT_DIR$/www/login.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/www/login_tetum.html" beforeDir="false" afterPath="$PROJECT_DIR$/www/login_tetum.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/www/manifest.json" beforeDir="false" afterPath="$PROJECT_DIR$/www/manifest.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/www/scripts/bundleSync.js" beforeDir="false" afterPath="$PROJECT_DIR$/www/scripts/bundleSync.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/www/scripts/config.js" beforeDir="false" afterPath="$PROJECT_DIR$/www/scripts/config.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/www/scripts/dataService.js" beforeDir="false" afterPath="$PROJECT_DIR$/www/scripts/dataService.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/www/scripts/db.js" beforeDir="false" afterPath="$PROJECT_DIR$/www/scripts/db.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/www/scripts/specieslist.js" beforeDir="false" afterPath="$PROJECT_DIR$/www/scripts/specieslist.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/www/scripts/sw-register.js" beforeDir="false" afterPath="$PROJECT_DIR$/www/scripts/sw-register.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/www/scripts/sync.js" beforeDir="false" afterPath="$PROJECT_DIR$/www/scripts/sync.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/www/specie.html" beforeDir="false" afterPath="$PROJECT_DIR$/www/specie.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/www/tutorial.html" beforeDir="false" afterPath="$PROJECT_DIR$/www/tutorial.html" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "slimpotatoboy"
+  }
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/slimpotatoboy/Species-Database-App.git",
+    "accountId": "f32a643d-9fbd-4a6e-b769-173f18415365"
+  }
+}]]></component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 4
+}]]></component>
+  <component name="ProjectId" id="3CR7PwcohcFxzJtTX4WXy1srFuW" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "dart.analysis.tool.window.visible": "false",
+    "git-widget-placeholder": "master",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "/Users/edwinmhzn/Downloads/DDrive/Deakin University/2026 T1/SIT782 Team Project B/Species-Database-App/capacitor-wrapper",
+    "settings.editor.selected.configurable": "AndroidSdkUpdater",
+    "show.migrate.to.gradle.popup": "false"
+  }
+}]]></component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="f7d5a405-8eda-4d28-b27c-d548809ff33c" name="Changes" comment="" />
+      <created>1776336507886</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1776336507886</updated>
+    </task>
+    <servers />
+  </component>
+</project>

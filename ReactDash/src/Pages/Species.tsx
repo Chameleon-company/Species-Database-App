@@ -213,7 +213,7 @@ export default function SpeciesPage() {
         throw new Error(err.error || err.detail || res.statusText);
       }
       const data = await res.json();
-      const mainData = data.species_en.map((item: any) => ({
+      const mainData = data.species_en.map((item: Partial<SpeciesRow> & { species_id: number }) => ({
         id: item.species_id,
         ...item,
       }));
@@ -227,7 +227,7 @@ export default function SpeciesPage() {
 
   useEffect(() => { fetchSpecies(); }, []);
 
-  const t = translations.en;
+  // use `t` from selected `lang` above
 
   const columns: GridColDef[] = [
     { field: "id", headerName: "ID", width: 70 },
