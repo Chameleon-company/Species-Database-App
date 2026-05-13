@@ -14,6 +14,7 @@ from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 import bcrypt
 from auth_authz import register_auth_routes, require_role, get_admin_user
+import time
 load_dotenv(override=True)
 print("CORS_ORIGINS =", os.getenv("CORS_ORIGINS"))
 
@@ -950,6 +951,26 @@ def get_next_version():
         .execute()
 
     return (res.data[0]["version"] + 1) if res.data else 1
+
+
+@app.before_request
+def start_timer():
+    request.start_time = time.time()
+
+@app.after_request
+def log_time(response):
+
+    duration = time.time() - request.start_time
+
+    print(
+        f"{request.method} "
+        f"{request.path} "
+        f"{response.status_code} "
+        f"{duration:.2f}s"
+    )
+
+    return response
+
 
 @app.get("/health")
 def health_check():
