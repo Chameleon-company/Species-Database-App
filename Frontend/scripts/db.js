@@ -27,7 +27,7 @@
 class SpeciesDB {
   constructor() {
     this.dbName = 'species_db';
-    this.dbVersion = 5; //Increment if schema (stores/indexes) changes 
+    this.dbVersion = 7; //Increment if schema (stores/indexes) changes 
     this.db = null;
   }
 
@@ -115,6 +115,12 @@ class SpeciesDB {
         if (!db.objectStoreNames.contains('image_blobs')) {
           const imageStore = db.createObjectStore('image_blobs',{keyPath: 'url'});
           imageStore.createIndex('species_id','species_id',{unique: false});
+        }
+
+        //video_blobs store for local saving of videos (save as object and then load locally)
+        if (!db.objectStoreNames.contains('video_blobs')) {
+          const videoStore = db.createObjectStore('video_blobs',{keyPath: 'url'});
+          videoStore.createIndex('species_id','species_id',{unique: false});
         }
 
         console.log('IndexedDB schema initialized: species_db v' + this.dbVersion);
