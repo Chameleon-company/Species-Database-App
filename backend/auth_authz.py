@@ -69,7 +69,7 @@ def get_admin_user(supabase):
     
     sess_resp = (
         supabase.table("admin_sessions")
-        .select("session_id, user_id, expires_at, revoked, ip_address, user_agent")
+        .select("session_id, user_id, expires_at, revoked, revocation_reason, ip_address, user_agent")
         .eq("access_token", token)
         .execute()
     )
@@ -80,6 +80,8 @@ def get_admin_user(supabase):
     session = sess_resp.data[0]
 
     if session["revoked"]:
+        if session.get("revocation_reason") == "new_login":
+            return None, ("admin session has ended because this account logged in elsewhere", 401)
         return None, ("token revoked", 401)
     
     expires_at = datetime.fromisoformat(session["expires_at"])
@@ -115,7 +117,7 @@ def get_admin_user(supabase):
     
     return session["user_id"], None
 
-########## TASK 4
+
 def log_auth_event(supabase, user_id, event_type):
     try:
         supabase.table("analytics").insert({
@@ -126,7 +128,7 @@ def log_auth_event(supabase, user_id, event_type):
     except Exception as e:
         print(f"Auth event logging failed: {e}")
 
-######### TASK 4
+
 def handle_expired_admin_session(supabase, token, user_id):
     log_auth_event(supabase, user_id, "SESSION_EXPIRED")
     (
@@ -192,6 +194,36 @@ def log_analytics(supabase, event_type, user_id, ip=None):
         "event_type": event_type
     }).execute()
 
+def revoke_existing_admin_sessions(supabase, user_id, ip=None, ua=None):
+    # Task 5 Enforce single active admin session
+    #Before a new admin session is created, revoke any existing active session for the same admin user
+    existing_sessions = (
+        supabase.table("admin_sessions")
+        .select("session_id")
+        .eq("user_id", user_id)
+        .eq("revoked", False)
+        .execute()
+    )
+    (
+        supabase.table("admin_sessions")
+        .update({
+            "revoked": True,
+            "revocation_reason": "new_login"
+            })
+        .eq("user_id", user_id)
+        .eq("revoked", False)
+        .execute()
+    )
+    for session in existing_sessions.data or []:
+        log_event(
+            supabase,
+            "session_revoked_new_login",
+            user_id,
+            session.get("session_id"),
+            ip,
+            ua,
+            "Session was revoked because this admin account was logged in elsewhere"
+            )
 
 #### REGISTERING AUTH ROUTES ####
 def register_auth_routes(app, supabase):
@@ -343,14 +375,14 @@ def register_auth_routes(app, supabase):
             log_event(supabase, "failed_login", user["user_id"], ip=request.remote_addr, ua=request.headers.get("User-Agent"))
             return jsonify({"error": "credentials invalid"}), 401
         
-        # Revoke existing sessions
-        supabase.table("admin_sessions").update({"revoked": True, "revocation_reason": "new_login"}).eq("user_id", user["user_id"]).eq("revoked", False).execute()
-        
         token = generate_token()
         refresh_token = generate_token()
         refresh_hash = hash_refresh_token(refresh_token)
         ip = request.remote_addr
         ua = request.headers.get("User-Agent")
+
+        # Revoke existing admin session so only the newest login remains active
+        revoke_existing_admin_sessions(supabase, user["user_id"], ip, ua)
 
         sess_resp = create_admin_session(supabase, {
             "user_id": user["user_id"],
@@ -421,14 +453,15 @@ def register_auth_routes(app, supabase):
         if user["role"] != "admin":
             return jsonify({"error": "not an admin account"}), 403
         
-        # Revoke existing sessions
-        supabase.table("admin_sessions").update({"revoked": True, "revocation_reason": "new_login"}).eq("user_id", user["user_id"]).eq("revoked", False).execute()
-        
         token = generate_token()
         refresh_token = generate_token()
         refresh_hash = hash_refresh_token(refresh_token)
         ip = request.remote_addr
         ua = request.headers.get("User-Agent")
+
+        # Revoke existing admin sessions so only the newest login remains active
+        revoke_existing_admin_sessions(supabase, user["user_id"], ip, ua)
+
 
         sess_resp = create_admin_session(supabase, {
             "user_id": user["user_id"],
@@ -472,7 +505,7 @@ def register_auth_routes(app, supabase):
         # Check token is in admin_sessions table
         sess_resp = (
             supabase.table("admin_sessions")
-            .select("session_id, user_id, revoked, expires_at, ip_address, user_agent")
+            .select("session_id, user_id, revoked, revocation_reason, expires_at, ip_address, user_agent")
             .eq("access_token", token)
             .limit(1)
             .execute()
@@ -487,6 +520,11 @@ def register_auth_routes(app, supabase):
 
         # Check if token is already revoked, if yes admin already logged out
         if session["revoked"]:
+            if session.get("revocation_reason") == "new_login":
+                return jsonify({
+                    "error": "admin session has ended because this account logged in elsewhere",
+                    "code": "ADMIN_SESSION_REVOKED_NEW_LOGIN"
+                    }), 401
             return jsonify({"error": "session already revoked"}), 401
 
         # Check if token has expired
