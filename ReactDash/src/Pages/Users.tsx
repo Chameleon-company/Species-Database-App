@@ -13,6 +13,9 @@ import SaveIcon from "@mui/icons-material/Save";
 import CancelIcon from "@mui/icons-material/Close";
 import { adminFetch } from "../utils/adminFetch";
 import { translations } from "../translations";
+import LanguageToggle from "../Components/LanguageToggle";
+import { useLanguage } from "../LanguageContext";
+
 
 const API_BASE = import.meta.env.VITE_API_URL;
 
@@ -33,9 +36,8 @@ interface SnackbarState {
 }
 
 export default function Users() {
-  const [lang, setLang] = useState<"en" | "tet">(
-    (localStorage.getItem("lang") as "en" | "tet") || "en"
-  );
+  const { lang, setLang } = useLanguage();
+
   const t = (key: string) =>
     (translations as any)[key]?.[lang] || key;
 
@@ -347,56 +349,112 @@ export default function Users() {
   ];
 
   return (
-    <div style={{ height: "100%", width: "100%" }}>
+    <div
+      style={{
+        padding: "28px 36px",
+        backgroundColor: "#f7fbf2",
+        fontFamily: "'DM Sans', sans-serif",
+        minHeight: "100vh",
+      }}
+    >
       <Stack
         direction="row"
         justifyContent="space-between"
         alignItems="center"
-        mb={2}
+        mb={3}
+        flexWrap="wrap"
+        gap={2}
       >
-        <h2 className="text-3xl font-bold" style={{ margin: 0 }}>
-        {t("userManagement")}
-        </h2>
-
-        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          <button onClick={() => changeLang("en")} style={{ marginRight: "10px" }}>
-            EN
-          </button>
-          <button onClick={() => changeLang("tet")}>TET</button>
-
+        <div>
+          <div
+            style={{
+              width: 36,
+              height: 4,
+              borderRadius: 4,
+              background: "linear-gradient(90deg,#2d6a0a,#86b85a)",
+              marginBottom: 8,
+            }}
+          />
+  
+          <h2 className="text-3xl font-bold" style={{ margin: 0, color: "#1a2e10" }}>
+            {t("userManagement")}
+          </h2>
+        </div>
+  
+        <Stack direction="row" spacing={2} alignItems="center">  
           <Button
             variant="contained"
             startIcon={<AddIcon />}
             onClick={handleAdd}
             disabled={loading}
+            sx={{
+              backgroundColor: "#2d6a0a",
+              borderRadius: 2,
+              fontWeight: 600,
+              "&:hover": { backgroundColor: "#245508" },
+            }}
           >
             {t("createUser")}
           </Button>
-        </div>
+        </Stack>
       </Stack>
-
-      <DataGrid
-        rows={rows}
-        columns={columns}
-        getRowId={(row) => row.user_id}
-        editMode="row"
-        rowModesModel={rowModesModel}
-        onRowModesModelChange={setRowModesModel}
-        processRowUpdate={processRowUpdate}
-        loading={loading}
-        pageSizeOptions={[10, 20, 50]}
-        initialState={{
-          pagination: { paginationModel: { pageSize: 10 } },
+  
+      <div
+        style={{
+          backgroundColor: "#ffffff",
+          border: "1px solid #d8edbd",
+          borderRadius: 16,
+          overflow: "hidden",
+          boxShadow: "0 2px 12px rgba(45,106,10,0.07)",
         }}
-        sx={{
-          backgroundColor: "#fff",
-          "& .MuiDataGrid-row--editing": {
-            backgroundColor: "#f5f5f5",
-          },
-        }}
-        disableRowSelectionOnClick
-      />
-
+      >
+        <DataGrid
+          rows={rows}
+          columns={columns}
+          getRowId={(row) => row.user_id}
+          editMode="row"
+          rowModesModel={rowModesModel}
+          onRowModesModelChange={setRowModesModel}
+          processRowUpdate={processRowUpdate}
+          loading={loading}
+          pageSizeOptions={[10, 20, 50]}
+          initialState={{
+            pagination: { paginationModel: { pageSize: 10 } },
+          }}
+          sx={{
+            border: "none",
+            backgroundColor: "#fff",
+            fontFamily: "'DM Sans', sans-serif",
+            "& .MuiDataGrid-columnHeaders": {
+              backgroundColor: "#eef6e6",
+              borderBottom: "1px solid #d8edbd",
+            },
+            "& .MuiDataGrid-columnHeaderTitle": {
+              fontWeight: 700,
+              fontSize: 11,
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              color: "#3d5a2a",
+            },
+            "& .MuiDataGrid-row:hover": {
+              backgroundColor: "#f7fbf2",
+            },
+            "& .MuiDataGrid-row--editing": {
+              backgroundColor: "#f5f5f5",
+            },
+            "& .MuiDataGrid-cell": {
+              borderBottom: "1px solid #f0f9e8",
+              fontSize: 13,
+            },
+            "& .MuiDataGrid-footerContainer": {
+              backgroundColor: "#eef6e6",
+              borderTop: "1px solid #d8edbd",
+            },
+          }}
+          disableRowSelectionOnClick
+        />
+      </div>
+  
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}

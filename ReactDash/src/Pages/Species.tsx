@@ -8,6 +8,9 @@ import { useEffect, useState } from "react";
 import TableLayout from "../Components/TableLayout";
 import { adminFetch } from "../utils/adminFetch";
 import { translations } from "../translations";
+import LanguageToggle from "../Components/LanguageToggle";
+import { useLanguage } from "../LanguageContext";
+
 
 const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -216,9 +219,7 @@ export default function SpeciesPage() {
 
   useEffect(() => { fetchSpecies(); }, []);
 
-  const [lang, setLang] = useState<"en" | "tet">(
-    (localStorage.getItem("lang") as "en" | "tet") || "en"
-  );
+  const { lang, setLang } = useLanguage();
   const t = (key: string) =>
     translations[key as keyof typeof translations]?.[lang] || key;
 
@@ -286,49 +287,7 @@ export default function SpeciesPage() {
         padding: 4,
       }}
     >
-      <button
-        onClick={() => {
-          localStorage.setItem("lang", "en");
-          setLang("en");
-        }}
-        style={{
-          padding: "8px 22px",
-          border: "none",
-          borderRadius: 7,
-          fontSize: 13,
-          fontWeight: 600,
-          fontFamily: "'DM Sans', sans-serif",
-          cursor: "pointer",
-          transition: "all 0.18s",
-          color: lang === "en" ? "#2d6a0a" : "#7a9464",
-          background: lang === "en" ? "#ffffff" : "transparent",
-          boxShadow: lang === "en" ? "0 1px 6px rgba(45,106,10,0.12)" : "none",
-        }}
-      >
-        🌿 {t("english")}
-      </button>
-
-      <button
-        onClick={() => {
-          localStorage.setItem("lang", "tet");
-          setLang("tet");
-        }}
-        style={{
-          padding: "8px 22px",
-          border: "none",
-          borderRadius: 7,
-          fontSize: 13,
-          fontWeight: 600,
-          fontFamily: "'DM Sans', sans-serif",
-          cursor: "pointer",
-          transition: "all 0.18s",
-          color: lang === "tet" ? "#2d6a0a" : "#7a9464",
-          background: lang === "tet" ? "#ffffff" : "transparent",
-          boxShadow: lang === "tet" ? "0 1px 6px rgba(45,106,10,0.12)" : "none",
-        }}
-      >
-        🌏 {t("tetum")}
-      </button>
+      
     </div>
 
     <ActionButton href="/Page1" variant="primary">

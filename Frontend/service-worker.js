@@ -1,6 +1,6 @@
 // service-worker.js - PWA Offline Support
-const CACHE_NAME = "species-app-v5";
-const MEDIA_CACHE = "media-cache-v5";
+const CACHE_NAME = "species-app-v7";
+const MEDIA_CACHE = "media-cache-v7";
 
 const CORE_ASSETS = [
   "./index.html",
@@ -17,6 +17,8 @@ const CORE_ASSETS = [
   "./scripts/db.js",
   "./scripts/dataService.js",
   "./scripts/imageCache.js",
+  "./scripts/videoCache.js",
+  "./scripts/video.js",
   "./scripts/sync.js",
   "./scripts/specieslist.js",
   "./scripts/filterCarousel.js",
@@ -25,7 +27,9 @@ const CORE_ASSETS = [
   "./js/general.js",
   "./Assets/icons/leftarrow.png",
   "./Assets/icons/heart.png",
+  "./Assets/icons/placeholderImageOffline.png",
   "./Assets/icons/videoCloudIcon.png",
+  "./Assets/icons/videoCachedIcon.png",
 ];
 
 // Install - cache core assets

@@ -6,12 +6,14 @@ import Alert from '@mui/material/Alert'
 import axios from 'axios'
 import { adminFetch } from '../utils/adminFetch'
 import { translations } from '../translations'
+import LanguageToggle from "../Components/LanguageToggle";
+import { useLanguage } from "../LanguageContext";
 
 const API_URL = import.meta.env.VITE_API_URL
 const API_BASE = import.meta.env.VITE_API_BASE
 
 export default function Page1() {
-    const [lang, setLang] = useState<"en" | "tet">("en");
+    const { lang, setLang } = useLanguage();
 
     const t = (key: string) =>
       translations[key as keyof typeof translations]?.[lang] || key;
@@ -286,372 +288,425 @@ export default function Page1() {
     }
 
     return (
-        <Box width="100%">
-            <div className="flex justify-between mb-4 items-center">
-            <h2 className="text-3xl font-bold">{t("addSpecies")}</h2>
-    
-                <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                    <button onClick={() => setLang("en")} style={{ marginRight: "10px" }}>
-                        EN
-                    </button>
-                    <button onClick={() => setLang("tet")}>
-                        TET
-                    </button>
-                </div>
-            </div>
-    
-            <Box width="100%" maxWidth={900} mx="auto" mt={3} px={2}>
-                <Box display="flex" gap={2} mb={2} justifyContent="center">
-                    <TextField
-                        sx={{ ...bigFieldSx, maxWidth: 280 }}
-                        label={t("scientificName")}
-                        value={formData.scientificName}
-                        onChange={handleChange('scientificName')}
-                        onBlur={() => markTouched('scientificName')}
-                        required
-                        error={touched.scientificName && !formData.scientificName}
-                        helperText={
-                            touched.scientificName && !formData.scientificName
-                            ? t("scientificNameEmpty")
-                                : ""
-                        }
-                    />
-    
-                    <TextField
-                        sx={{ ...bigFieldSx, maxWidth: 280 }}
-                        label={t("commonName")}
-                        value={formData.commonName}
-                        onChange={handleChange('commonName')}
-                        onBlur={() => markTouched('commonName')}
-                        required
-                        error={touched.commonName && !formData.commonName}
-                        helperText={
-                            touched.commonName && !formData.commonName
-                            ? t("commonNameEmpty")
-                                : ""
-                        }
-                    />
-                </Box>
-    
-                <Box display="flex" gap={2} mb={2} justifyContent="center">
-                    <TextField
-                        sx={{ ...bigFieldSx, maxWidth: 280 }}
-                        label={t("leafType")}
-                        value={formData.leafType}
-                        onChange={handleChange('leafType')}
-                        onBlur={() => markTouched('leafType')}
-                        required
-                        error={touched.leafType && !formData.leafType}
-                        helperText={
-                            touched.leafType && !formData.leafType
-                            ? t("leafTypeEmpty")
-                                : ""
-                        }
-                    />
-
-                    <TextField
-                        sx={{ ...bigFieldSx, maxWidth: 280 }}
-                        label={t("fruitType")}
-                        value={formData.fruitType}
-                        onChange={handleChange('fruitType')}
-                        onBlur={() => markTouched('fruitType')}
-                        required
-                        error={touched.fruitType && !formData.fruitType}
-                        helperText={
-                            touched.fruitType && !formData.fruitType
-                            ? t("fruitTypeEmpty")
-                                : ""
-                        }
-                    />
-                </Box>
-            </Box>
-
-            <Box sx={{ mt: 4, mb: 2, textAlign: 'center' }}>
-            <h5>{t("optional")}</h5>
-            </Box>
-
-            <Box sx={{ maxWidth: 1000, marginX: 'auto' }}>
-                <Box display="flex" gap={2} mb={2}>
-                    <TextField
-                        fullWidth
-                        multiline
-                        rows={3}
-                        value={formData.definition}
-                        onChange={handleChange('definition')}
-                        slotProps={{ htmlInput: { maxLength: maxEnglishChar } }}
-                        sx={bigFieldSx}
-                        label={t("definition")}
-                    />
-                </Box>
-
-                <Box display="flex" gap={2} mb={2}>
-                    <TextField
-                        fullWidth
-                        multiline
-                        rows={4}
-                        value={formData.etymology}
-                        onChange={handleChange('etymology')}
-                        slotProps={{ htmlInput: { maxLength: maxEnglishChar } }}
-                        sx={bigFieldSx}
-                        label={t("etymology")}
-                    />
-
-                    <TextField
-                        fullWidth
-                        label={t("habitat")}
-                        multiline
-                        rows={4}
-                        value={formData.habitat}
-                        onChange={handleChange('habitat')}
-                        slotProps={{ htmlInput: { maxLength: maxEnglishChar } }}
-                        sx={bigFieldSx}
-                    />
-                </Box>
-
-                <Box display="flex" gap={2} mb={2}>
-                    <TextField
-                        fullWidth
-                        label={t("identificationCharacter")}
-                        id="BigText3"
-                        multiline
-                        rows={4}
-                        value={formData.identificationCharacteristics}
-                        onChange={handleChange('identificationCharacteristics')}
-                        slotProps={{ htmlInput: { maxLength: maxEnglishChar } }}
-                        sx={bigFieldSx}
-                    />
-
-                    <TextField
-                        fullWidth
-                        label={t("phenology")}
-                        id="BigText4"
-                        multiline
-                        rows={4}
-                        value={formData.phenology}
-                        onChange={handleChange('phenology')}
-                        slotProps={{ htmlInput: { maxLength: maxEnglishChar } }}
-                        sx={bigFieldSx}
-                    />
-                </Box>
-
-                <Box display="flex" gap={2} mb={2}>
-                    <TextField
-                        fullWidth
-                        label={t("seedGermination")}
-                        id="BigText5"
-                        multiline
-                        rows={4}
-                        value={formData.seedGermination}
-                        onChange={handleChange('seedGermination')}
-                        slotProps={{ htmlInput: { maxLength: maxEnglishChar } }}
-                        sx={bigFieldSx}
-                    />
-
-                    <TextField
-                        fullWidth
-                        label={t("pest")}
-                        id="BigText6"
-                        multiline
-                        rows={4}
-                        value={formData.pests}
-                        onChange={handleChange('pests')}
-                        slotProps={{ htmlInput: { maxLength: maxEnglishChar } }}
-                        sx={bigFieldSx}
-                    />
-                </Box>
-            </Box>
-
-            <Box display="flex" justifyContent="center" alignItems="center" mb={3}>
-                {status && (
-                    <Alert severity="success">
-                        {status}
-                    </Alert>
-                )}
-
-                {error && (
-                    <Alert severity="error">
-                        {error}
-                    </Alert>
-                )}
-            </Box>
-
+        <Box
+          sx={{
+            p: "28px 36px",
+            backgroundColor: "#f7fbf2",
+            fontFamily: "'DM Sans', sans-serif",
+            minHeight: "100vh",
+          }}
+        >
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            mb={4}
+            flexWrap="wrap"
+            gap={2}
+          >
             <Box>
-                <Button variant="contained" onClick={handleTetumTranslate}>
+              <Box
+                sx={{
+                  width: 36,
+                  height: 4,
+                  borderRadius: 4,
+                  background: "linear-gradient(90deg,#2d6a0a,#86b85a)",
+                  mb: 1,
+                }}
+              />
+      
+              <h2 className="text-3xl font-bold" style={{ margin: 0, color: "#1a2e10" }}>
+                {t("addSpecies")}
+              </h2>
+            </Box>
+      
+            <LanguageToggle />
+          </Box>
+      
+          <Box
+            sx={{
+              backgroundColor: "#ffffff",
+              border: "1px solid #d8edbd",
+              borderRadius: 3,
+              p: 3,
+              boxShadow: "0 2px 12px rgba(45,106,10,0.07)",
+            }}
+          >
+            <Box width="100%" maxWidth={900} mx="auto" mt={3} px={2}>
+              <Box display="flex" gap={2} mb={2} justifyContent="center">
+                <TextField
+                  sx={{ ...bigFieldSx, maxWidth: 280 }}
+                  label={t("scientificName")}
+                  value={formData.scientificName}
+                  onChange={handleChange("scientificName")}
+                  onBlur={() => markTouched("scientificName")}
+                  required
+                  error={touched.scientificName && !formData.scientificName}
+                  helperText={
+                    touched.scientificName && !formData.scientificName
+                      ? t("scientificNameEmpty")
+                      : ""
+                  }
+                />
+      
+                <TextField
+                  sx={{ ...bigFieldSx, maxWidth: 280 }}
+                  label={t("commonName")}
+                  value={formData.commonName}
+                  onChange={handleChange("commonName")}
+                  onBlur={() => markTouched("commonName")}
+                  required
+                  error={touched.commonName && !formData.commonName}
+                  helperText={
+                    touched.commonName && !formData.commonName
+                      ? t("commonNameEmpty")
+                      : ""
+                  }
+                />
+              </Box>
+      
+              <Box display="flex" gap={2} mb={2} justifyContent="center">
+                <TextField
+                  sx={{ ...bigFieldSx, maxWidth: 280 }}
+                  label={t("leafType")}
+                  value={formData.leafType}
+                  onChange={handleChange("leafType")}
+                  onBlur={() => markTouched("leafType")}
+                  required
+                  error={touched.leafType && !formData.leafType}
+                  helperText={
+                    touched.leafType && !formData.leafType ? t("leafTypeEmpty") : ""
+                  }
+                />
+      
+                <TextField
+                  sx={{ ...bigFieldSx, maxWidth: 280 }}
+                  label={t("fruitType")}
+                  value={formData.fruitType}
+                  onChange={handleChange("fruitType")}
+                  onBlur={() => markTouched("fruitType")}
+                  required
+                  error={touched.fruitType && !formData.fruitType}
+                  helperText={
+                    touched.fruitType && !formData.fruitType ? t("fruitTypeEmpty") : ""
+                  }
+                />
+              </Box>
+            </Box>
+      
+            <Box sx={{ mt: 4, mb: 2, textAlign: "center" }}>
+              <h5>{t("optional")}</h5>
+            </Box>
+      
+            <Box sx={{ maxWidth: 1000, marginX: "auto" }}>
+              <Box display="flex" gap={2} mb={2}>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={3}
+                  value={formData.definition}
+                  onChange={handleChange("definition")}
+                  slotProps={{ htmlInput: { maxLength: maxEnglishChar } }}
+                  sx={bigFieldSx}
+                  label={t("definition")}
+                />
+              </Box>
+      
+              <Box display="flex" gap={2} mb={2}>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={4}
+                  value={formData.etymology}
+                  onChange={handleChange("etymology")}
+                  slotProps={{ htmlInput: { maxLength: maxEnglishChar } }}
+                  sx={bigFieldSx}
+                  label={t("etymology")}
+                />
+      
+                <TextField
+                  fullWidth
+                  label={t("habitat")}
+                  multiline
+                  rows={4}
+                  value={formData.habitat}
+                  onChange={handleChange("habitat")}
+                  slotProps={{ htmlInput: { maxLength: maxEnglishChar } }}
+                  sx={bigFieldSx}
+                />
+              </Box>
+      
+              <Box display="flex" gap={2} mb={2}>
+                <TextField
+                  fullWidth
+                  label={t("identificationCharacter")}
+                  id="BigText3"
+                  multiline
+                  rows={4}
+                  value={formData.identificationCharacteristics}
+                  onChange={handleChange("identificationCharacteristics")}
+                  slotProps={{ htmlInput: { maxLength: maxEnglishChar } }}
+                  sx={bigFieldSx}
+                />
+      
+                <TextField
+                  fullWidth
+                  label={t("phenology")}
+                  id="BigText4"
+                  multiline
+                  rows={4}
+                  value={formData.phenology}
+                  onChange={handleChange("phenology")}
+                  slotProps={{ htmlInput: { maxLength: maxEnglishChar } }}
+                  sx={bigFieldSx}
+                />
+              </Box>
+      
+              <Box display="flex" gap={2} mb={2}>
+                <TextField
+                  fullWidth
+                  label={t("seedGermination")}
+                  id="BigText5"
+                  multiline
+                  rows={4}
+                  value={formData.seedGermination}
+                  onChange={handleChange("seedGermination")}
+                  slotProps={{ htmlInput: { maxLength: maxEnglishChar } }}
+                  sx={bigFieldSx}
+                />
+      
+                <TextField
+                  fullWidth
+                  label={t("pest")}
+                  id="BigText6"
+                  multiline
+                  rows={4}
+                  value={formData.pests}
+                  onChange={handleChange("pests")}
+                  slotProps={{ htmlInput: { maxLength: maxEnglishChar } }}
+                  sx={bigFieldSx}
+                />
+              </Box>
+            </Box>
+      
+            <Box display="flex" justifyContent="center" alignItems="center" mb={3}>
+              {status && <Alert severity="success">{status}</Alert>}
+              {error && <Alert severity="error">{error}</Alert>}
+            </Box>
+      
+            <Box display="flex" justifyContent="center" gap={2} flexWrap="wrap">
+              <Button
+                variant="contained"
+                onClick={handleTetumTranslate}
+                sx={{
+                  backgroundColor: "#2d6a0a",
+                  borderRadius: 2,
+                  fontWeight: 600,
+                  "&:hover": { backgroundColor: "#245508" },
+                }}
+              >
                 {t("translateToTetum")}
-                </Button>
-            </Box>
-
-            <Box sx={{ marginTop: 2 }}>
-                <Button variant="contained" onClick={handleClear}>
+              </Button>
+      
+              <Button
+                variant="contained"
+                onClick={handleClear}
+                sx={{
+                  backgroundColor: "#2d6a0a",
+                  borderRadius: 2,
+                  fontWeight: 600,
+                  "&:hover": { backgroundColor: "#245508" },
+                }}
+              >
                 {t("clearEntry")}
-                </Button>
+              </Button>
             </Box>
-
-            {tetumTranslate && (
-                <Box sx={{ marginTop: 2 }}>
-                    <Box sx={{ mt: 4, mb: 2, textAlign: 'center' }}>
-                        <div><h3>{t("tetumTranslation")}</h3></div>
-                        <div><h5>{t("reviewTetumText")}</h5></div>
-                    </Box>
-
-                    <Box display="flex" gap={2} mb={2} justifyContent="center">
-                        <TextField
-                            sx={{ ...bigFieldSx, maxWidth: 280 }}
-                            label={t("scientificName")}
-                            value={formData.scientificName}
-                            disabled
-                        />
-
-                        <TextField
-                            sx={{ ...bigFieldSx, maxWidth: 280 }}
-                            label={t("commonName")}
-                            value={formDataTetum.commonNameTetum}
-                            onChange={handleChangeTetum('commonNameTetum')}
-                            onBlur={() => markTouched('commonNameTetum')}
-                            required
-                            error={touched.commonNameTetum && !formDataTetum.commonNameTetum}
-                            helperText={
-                                touched.commonNameTetum && !formDataTetum.commonNameTetum
-                                ? t("commonNameEmpty")
-                                    : ""
-                            }
-                        />
-                    </Box>
-
-                    <Box display="flex" gap={2} mb={2} justifyContent="center">
-                        <TextField
-                            sx={{ ...bigFieldSx, maxWidth: 280 }}
-                            label={t("leafType")}
-                            value={formDataTetum.leafTypeTetum}
-                            onChange={handleChangeTetum('leafTypeTetum')}
-                            onBlur={() => markTouched('leafTypeTetum')}
-                            required
-                            error={touched.leafTypeTetum && !formDataTetum.leafTypeTetum}
-                            helperText={
-                                touched.leafTypeTetum && !formDataTetum.leafTypeTetum
-                                ? t("leafTypeEmpty")
-                                    : ""
-                            }
-                        />
-
-                        <TextField
-                            sx={{ ...bigFieldSx, maxWidth: 280 }}
-                            label={t("fruitType")}
-                            value={formDataTetum.fruitTypeTetum}
-                            onChange={handleChangeTetum('fruitTypeTetum')}
-                            onBlur={() => markTouched('fruitTypeTetum')}
-                            required
-                            error={touched.fruitTypeTetum && !formDataTetum.fruitTypeTetum}
-                            helperText={
-                                touched.fruitTypeTetum && !formDataTetum.fruitTypeTetum
-                                ? t("fruitTypeEmpty")
-                                    : ""
-                            }
-                        />
-                    </Box>
-
-                    <Box sx={{ mt: 4, mb: 2, textAlign: 'center' }}>
-                    <h5>{t("optional")}</h5>
-                    </Box>
-
-                    <Box sx={{ maxWidth: 1000, marginX: 'auto' }}>
-                        <Box display="flex" gap={2} mb={2}>
-                            <TextField
-                                fullWidth
-                                multiline
-                                rows={3}
-                                label={t("definition")}
-                                value={formDataTetum.definitionTetum}
-                                onChange={handleChangeTetum('definitionTetum')}
-                                slotProps={{ htmlInput: { maxLength: maxTetumChar } }}
-                                sx={bigFieldSx}
-                            />
-                        </Box>
-
-                        <Box display="flex" gap={2} mb={2}>
-                            <TextField
-                                fullWidth
-                                label={t("etymology")}
-                                multiline
-                                rows={4}
-                                value={formDataTetum.etymologyTetum}
-                                onChange={handleChangeTetum('etymologyTetum')}
-                                slotProps={{ htmlInput: { maxLength: maxTetumChar } }}
-                                sx={bigFieldSx}
-                            />
-
-                            <TextField
-                                fullWidth
-                                label={t("habitat")}
-                                multiline
-                                rows={4}
-                                value={formDataTetum.habitatTetum}
-                                onChange={handleChangeTetum('habitatTetum')}
-                                slotProps={{ htmlInput: { maxLength: maxTetumChar } }}
-                                sx={bigFieldSx}
-                            />
-                        </Box>
-
-                        <Box display="flex" gap={2} mb={2}>
-                            <TextField
-                                fullWidth
-                                label={t("identificationCharacter")}
-                                multiline
-                                rows={4}
-                                value={formDataTetum.identificationCharacteristicsTetum}
-                                onChange={handleChangeTetum('identificationCharacteristicsTetum')}
-                                slotProps={{ htmlInput: { maxLength: maxTetumChar } }}
-                                sx={bigFieldSx}
-                            />
-
-                            <TextField
-                                fullWidth
-                                label={t("phenology")}
-                                multiline
-                                rows={4}
-                                value={formDataTetum.phenologyTetum}
-                                onChange={handleChangeTetum('phenologyTetum')}
-                                slotProps={{ htmlInput: { maxLength: maxTetumChar } }}
-                                sx={bigFieldSx}
-                            />
-                        </Box>
-
-                        <Box display="flex" gap={2} mb={2}>
-                            <TextField
-                                fullWidth
-                                label={t("seedGermination")}
-                                multiline
-                                rows={4}
-                                value={formDataTetum.seedGerminationTetum}
-                                onChange={handleChangeTetum('seedGerminationTetum')}
-                                slotProps={{ htmlInput: { maxLength: maxTetumChar } }}
-                                sx={bigFieldSx}
-                            />
-
-                            <TextField
-                                fullWidth
-                                label={t("pest")}
-                                multiline
-                                rows={4}
-                                value={formDataTetum.pestsTetum}
-                                onChange={handleChangeTetum('pestsTetum')}
-                                slotProps={{ htmlInput: { maxLength: maxTetumChar } }}
-                                sx={bigFieldSx}
-                            />
-                        </Box>
-                    </Box>
-
-                    <Box sx={{ marginTop: 2 }}>
-                        <Button
-                            variant="contained"
-                            onClick={handleSubmit}
-                            disabled={loading}
-                        >
-                            {loading ? t("adding") : t("addEntry")}
-                        </Button>
-                    </Box>
+          </Box>
+      
+          {tetumTranslate && (
+            <Box
+              sx={{
+                mt: 3,
+                backgroundColor: "#ffffff",
+                border: "1px solid #d8edbd",
+                borderRadius: 3,
+                p: 3,
+                boxShadow: "0 2px 12px rgba(45,106,10,0.07)",
+              }}
+            >
+              <Box sx={{ mt: 1, mb: 3, textAlign: "center" }}>
+                <h3 style={{ color: "#1a2e10", marginBottom: 4 }}>
+                  {t("tetumTranslation")}
+                </h3>
+                <h5 style={{ color: "#7a9464", margin: 0 }}>
+                  {t("reviewTetumText")}
+                </h5>
+              </Box>
+      
+              <Box display="flex" gap={2} mb={2} justifyContent="center">
+                <TextField
+                  sx={{ ...bigFieldSx, maxWidth: 280 }}
+                  label={t("scientificName")}
+                  value={formData.scientificName}
+                  disabled
+                />
+      
+                <TextField
+                  sx={{ ...bigFieldSx, maxWidth: 280 }}
+                  label={t("commonName")}
+                  value={formDataTetum.commonNameTetum}
+                  onChange={handleChangeTetum("commonNameTetum")}
+                  onBlur={() => markTouched("commonNameTetum")}
+                  required
+                  error={touched.commonNameTetum && !formDataTetum.commonNameTetum}
+                  helperText={
+                    touched.commonNameTetum && !formDataTetum.commonNameTetum
+                      ? t("commonNameEmpty")
+                      : ""
+                  }
+                />
+              </Box>
+      
+              <Box display="flex" gap={2} mb={2} justifyContent="center">
+                <TextField
+                  sx={{ ...bigFieldSx, maxWidth: 280 }}
+                  label={t("leafType")}
+                  value={formDataTetum.leafTypeTetum}
+                  onChange={handleChangeTetum("leafTypeTetum")}
+                  onBlur={() => markTouched("leafTypeTetum")}
+                  required
+                  error={touched.leafTypeTetum && !formDataTetum.leafTypeTetum}
+                  helperText={
+                    touched.leafTypeTetum && !formDataTetum.leafTypeTetum
+                      ? t("leafTypeEmpty")
+                      : ""
+                  }
+                />
+      
+                <TextField
+                  sx={{ ...bigFieldSx, maxWidth: 280 }}
+                  label={t("fruitType")}
+                  value={formDataTetum.fruitTypeTetum}
+                  onChange={handleChangeTetum("fruitTypeTetum")}
+                  onBlur={() => markTouched("fruitTypeTetum")}
+                  required
+                  error={touched.fruitTypeTetum && !formDataTetum.fruitTypeTetum}
+                  helperText={
+                    touched.fruitTypeTetum && !formDataTetum.fruitTypeTetum
+                      ? t("fruitTypeEmpty")
+                      : ""
+                  }
+                />
+              </Box>
+      
+              <Box sx={{ mt: 4, mb: 2, textAlign: "center" }}>
+                <h5>{t("optional")}</h5>
+              </Box>
+      
+              <Box sx={{ maxWidth: 1000, marginX: "auto" }}>
+                <Box display="flex" gap={2} mb={2}>
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={3}
+                    label={t("definition")}
+                    value={formDataTetum.definitionTetum}
+                    onChange={handleChangeTetum("definitionTetum")}
+                    slotProps={{ htmlInput: { maxLength: maxTetumChar } }}
+                    sx={bigFieldSx}
+                  />
                 </Box>
-            )}
+      
+                <Box display="flex" gap={2} mb={2}>
+                  <TextField
+                    fullWidth
+                    label={t("etymology")}
+                    multiline
+                    rows={4}
+                    value={formDataTetum.etymologyTetum}
+                    onChange={handleChangeTetum("etymologyTetum")}
+                    slotProps={{ htmlInput: { maxLength: maxTetumChar } }}
+                    sx={bigFieldSx}
+                  />
+      
+                  <TextField
+                    fullWidth
+                    label={t("habitat")}
+                    multiline
+                    rows={4}
+                    value={formDataTetum.habitatTetum}
+                    onChange={handleChangeTetum("habitatTetum")}
+                    slotProps={{ htmlInput: { maxLength: maxTetumChar } }}
+                    sx={bigFieldSx}
+                  />
+                </Box>
+      
+                <Box display="flex" gap={2} mb={2}>
+                  <TextField
+                    fullWidth
+                    label={t("identificationCharacter")}
+                    multiline
+                    rows={4}
+                    value={formDataTetum.identificationCharacteristicsTetum}
+                    onChange={handleChangeTetum("identificationCharacteristicsTetum")}
+                    slotProps={{ htmlInput: { maxLength: maxTetumChar } }}
+                    sx={bigFieldSx}
+                  />
+      
+                  <TextField
+                    fullWidth
+                    label={t("phenology")}
+                    multiline
+                    rows={4}
+                    value={formDataTetum.phenologyTetum}
+                    onChange={handleChangeTetum("phenologyTetum")}
+                    slotProps={{ htmlInput: { maxLength: maxTetumChar } }}
+                    sx={bigFieldSx}
+                  />
+                </Box>
+      
+                <Box display="flex" gap={2} mb={2}>
+                  <TextField
+                    fullWidth
+                    label={t("seedGermination")}
+                    multiline
+                    rows={4}
+                    value={formDataTetum.seedGerminationTetum}
+                    onChange={handleChangeTetum("seedGerminationTetum")}
+                    slotProps={{ htmlInput: { maxLength: maxTetumChar } }}
+                    sx={bigFieldSx}
+                  />
+      
+                  <TextField
+                    fullWidth
+                    label={t("pest")}
+                    multiline
+                    rows={4}
+                    value={formDataTetum.pestsTetum}
+                    onChange={handleChangeTetum("pestsTetum")}
+                    slotProps={{ htmlInput: { maxLength: maxTetumChar } }}
+                    sx={bigFieldSx}
+                  />
+                </Box>
+              </Box>
+      
+              <Box sx={{ marginTop: 2, textAlign: "center" }}>
+                <Button
+                  variant="contained"
+                  onClick={handleSubmit}
+                  disabled={loading}
+                  sx={{
+                    backgroundColor: "#2d6a0a",
+                    borderRadius: 2,
+                    fontWeight: 600,
+                    "&:hover": { backgroundColor: "#245508" },
+                  }}
+                >
+                  {loading ? t("adding") : t("addEntry")}
+                </Button>
+              </Box>
+            </Box>
+          )}
         </Box>
-    )
-}
+      );
+    }

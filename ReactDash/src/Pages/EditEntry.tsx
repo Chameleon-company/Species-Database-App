@@ -13,6 +13,9 @@ import axios from 'axios'
 import { useParams } from "react-router-dom";
 import { adminFetch } from '../utils/adminFetch'
 import { translations } from '../translations'
+import LanguageToggle from "../Components/LanguageToggle";
+import { useLanguage } from "../LanguageContext";
+
 
 const API_URL = import.meta.env.VITE_API_URL
 const API_BASE = import.meta.env.VITE_API_BASE
@@ -52,9 +55,7 @@ const bigFieldSx = {
 export function EditEntry() {
     const { id } = useParams<{ id: string }>()
 
-    const [lang, setLang] = useState<"en" | "tet">(
-        (localStorage.getItem("lang") as "en" | "tet") || "en"
-    )
+    const { lang, setLang } = useLanguage();
     const t = (key: string) =>
         translations[key as keyof typeof translations]?.[lang] || key
 

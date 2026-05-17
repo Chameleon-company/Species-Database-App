@@ -19,6 +19,7 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import Logo from "../assets/logo-color.png";
 import { clearAdminSession } from "../utils/adminSession";
 import { translations } from "../translations";
+import { useLanguage } from "../LanguageContext";
 
 const DRAWER_WIDTH = 220;
 
@@ -336,17 +337,7 @@ function SidebarContent({
 }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const [lang, setLang] = React.useState<Lang>(getLang());
-
-  React.useEffect(() => {
-    const syncLang = () => setLang(getLang());
-    window.addEventListener("storage", syncLang);
-    window.addEventListener("languageChanged", syncLang as EventListener);
-    return () => {
-      window.removeEventListener("storage", syncLang);
-      window.removeEventListener("languageChanged", syncLang as EventListener);
-    };
-  }, []);
+  const { lang } = useLanguage();
 
   const t = React.useCallback(
     (key: TranslationKey) => translations[key][lang],

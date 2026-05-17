@@ -2,6 +2,8 @@ import React, { useState, useRef, type DragEvent } from "react";
 import { Upload } from "lucide-react";
 import { adminFetch } from "../utils/adminFetch";
 import { translations } from "../translations";
+import LanguageToggle from "../Components/LanguageToggle";
+import { useLanguage } from "../LanguageContext";
 
 interface UploadedFile {
   file: File;
@@ -12,9 +14,7 @@ interface UploadedFile {
 export default function AddExcel() {
   const API_URL = import.meta.env.VITE_API_BASE;
 
-  const [lang, setLang] = useState<"en" | "tet">(
-    (localStorage.getItem("lang") as "en" | "tet") || "en"
-  );
+  const { lang, setLang } = useLanguage();
   const t = (key: string) =>
     (translations as any)[key]?.[lang] || key;
 

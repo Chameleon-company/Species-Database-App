@@ -4,14 +4,17 @@ import MainTableSelectTetum from "../mainTableSelectTetum";
 import { useState } from "react";
 import type { Species } from "../mainTableSelect";
 import { translations } from "../translations";
+import LanguageToggle from "../Components/LanguageToggle";
+import { useLanguage } from "../LanguageContext";
+
 
   export function Home() {
     const [selectedSpecies, setSelectedSpecies] = useState<Species | null>(null);
     const [selectedSpeciesTetum, setSelectedSpeciesTetum] =
       useState<Species | null>(null);
-    const [activeTab, setActiveTab] = useState<"english" | "tetum">("english");
-  
-    const lang = activeTab === "tetum" ? "tet" : "en";
+      const { lang, setLang } = useLanguage();
+
+      const activeTab = lang === "tet" ? "tetum" : "english";
     const t = (key: string) =>
       translations[key as keyof typeof translations]?.[lang] || key;
 
@@ -329,8 +332,9 @@ import { translations } from "../translations";
                     .page-title { font-size: 22px; }
                 }
                         `}</style>
+   
+   <TheDrawer />
 
-<TheDrawer />
 <div className="home-root">
   <div className="page-header">
     <div>
@@ -341,51 +345,47 @@ import { translations } from "../translations";
 
     <div className="tab-bar">
       <button
-        className={`tab-btn ${activeTab === "english" ? "active" : ""}`}
-        onClick={() => {
-          setActiveTab("english");
-          localStorage.setItem("lang", "en");
-        }}
+        className={`tab-btn ${lang === "en" ? "active" : ""}`}
+        onClick={() => setLang("en")}
       >
         🌿 english
       </button>
+
       <button
-        className={`tab-btn ${activeTab === "tetum" ? "active" : ""}`}
-        onClick={() => {
-          setActiveTab("tetum");
-          localStorage.setItem("lang", "tet");
-        }}
+        className={`tab-btn ${lang === "tet" ? "active" : ""}`}
+        onClick={() => setLang("tet")}
       >
         🌏 tetum
       </button>
     </div>
   </div>
 
-  {activeTab === "english" && (
+  {lang === "en" && (
     <div className="section">
       <div className="section-label">
         <span className="section-label-text">{t("englishDatabase")}</span>
         <div className="section-label-line" />
       </div>
+
       <div className="table-wrap">
-      <MainTableSelect onRowSelect={handleRowSelect} lang="en" />     
-             </div>
-{/* {renderDetailPanel(selectedSpecies)} */}
+        <MainTableSelect onRowSelect={handleRowSelect} lang="en" />
+      </div>
     </div>
   )}
 
-  {activeTab === "tetum" && (
+  {lang === "tet" && (
     <div className="section">
       <div className="section-label">
         <span className="section-label-text">{t("tetumDatabase")}</span>
         <div className="section-label-line" />
       </div>
+
       <div className="table-wrap">
-      <MainTableSelectTetum onRowSelect={handleRowSelectTetum} lang="tet" />
-            </div>
-{/* {renderDetailPanel(selectedSpeciesTetum)} */}    </div>
+        <MainTableSelectTetum onRowSelect={handleRowSelectTetum} lang="tet" />
+      </div>
+    </div>
   )}
 </div>
 </>
 );
-}
+ }
