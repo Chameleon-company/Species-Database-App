@@ -24,7 +24,8 @@ CREATE TABLE IF NOT EXISTS public.species_en (
     fruit_type VARCHAR(225) NOT NULL,
     phenology VARCHAR(1000),
     seed_germination VARCHAR(2000),
-    pest VARCHAR(2000)
+    pest VARCHAR(2000),
+    definition VARCHAR(2000)
 );
 
 --species data (tet translation)
@@ -39,8 +40,13 @@ CREATE TABLE IF NOT EXISTS public.species_tet (
     fruit_type VARCHAR(225) NOT NULL,
     phenology VARCHAR(1000),
     seed_germination VARCHAR(2000),
-    pest VARCHAR(2000)
+    pest VARCHAR(2000),
+    definition VARCHAR(2000)
 );
+
+-- migration: add definition to existing deployments
+-- ALTER TABLE public.species_en ADD COLUMN IF NOT EXISTS definition VARCHAR(2000);
+-- ALTER TABLE public.species_tet ADD COLUMN IF NOT EXISTS definition VARCHAR(2000);
 
 --changelog used for incremental sync to devices
 CREATE TABLE IF NOT EXISTS public.changelog (
@@ -75,6 +81,7 @@ CREATE TABLE IF NOT EXISTS public.media (
     download_link TEXT NOT NULL,
     streaming_link TEXT,
     alt_text TEXT,
+    storage_version INTEGER DEFAULT 1 NOT NULL,
     CONSTRAINT media_media_type_check
       CHECK (media_type IN ('image','video')),
     CONSTRAINT media_species_id_fkey
@@ -82,6 +89,9 @@ CREATE TABLE IF NOT EXISTS public.media (
       REFERENCES public.species_en(species_id)
       ON DELETE CASCADE
 );
+
+-- migration: add storage_version to existing media table
+-- ALTER TABLE public.media ADD COLUMN IF NOT EXISTS storage_version INTEGER DEFAULT 1 NOT NULL;
 
 --active admin login sessions
 CREATE TABLE IF NOT EXISTS public.admin_sessions (
