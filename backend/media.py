@@ -92,7 +92,25 @@ def register_media_routes(app, supabase):
             .execute()
         )
 
-        media_id = res.data[0]["media_id"]
+        if getattr(res, "error", None):
+            return jsonify({
+                "error": "failed to create media",
+                "details": res.error.message,
+            }), 500
+
+        if not res.data:
+            return jsonify({
+                "error": "failed to create media",
+                "details": "insert returned no data",
+            }), 500
+
+        media_id = res.data[0].get("media_id")
+        if not media_id:
+            return jsonify({
+                "error": "failed to create media",
+                "details": "missing media_id after insert",
+            }), 500
+
         #for changelog
         log_change(supabase, "media", media_id, "CREATE")
         return jsonify({

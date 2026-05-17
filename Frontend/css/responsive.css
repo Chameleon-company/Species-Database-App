@@ -44,7 +44,7 @@ body{box-sizing:border-box;-webkit-font-smoothing:antialiased;}
 
 /* Smaller devices adjustments */
 @media (max-width:420px){
-  .app-shell{padding:0; border-radius:12px;}
+  .app-shell{padding:0 0 5.75rem; border-radius:12px;}
   .app-title{font-size:1.25rem;}
   .header-title{font-size:1.25rem;}
   .filter-button{padding:0.45rem 0.75rem; font-size:0.8rem;}

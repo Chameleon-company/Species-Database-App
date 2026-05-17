@@ -459,6 +459,61 @@ export const translations = {
     tet: "Jestaun Media",
   },
 
+  bulkMediaUpload: {
+    en: "Bulk Media Upload",
+    tet: "Upload Bulk Media",
+  },
+
+  bulkMediaUploadDescription: {
+    en: "Register multiple images or videos for one species in a single batch.",
+    tet: "Regista imajen ka video barak ba espésie ida iha lote ida deit.",
+  },
+
+  bulkMediaSelectFiles: {
+    en: "Select images or videos",
+    tet: "Hili imajen ka video",
+  },
+
+  bulkMediaUploadHint: {
+    en: "Choose one or more files, then submit to create media entries and return to Media.",
+    tet: "Hili file ida ka barak, depois submete atu kria media no fila ba Media.",
+  },
+
+  bulkMediaSelectedFiles: {
+    en: "Selected files",
+    tet: "File seleksionadu",
+  },
+
+  bulkMediaSubmit: {
+    en: "Upload and return",
+    tet: "Upload no fila",
+  },
+
+  bulkMediaScientificNameRequired: {
+    en: "Scientific name is required",
+    tet: "Naran sientífiku presiza",
+  },
+
+  bulkMediaFilesRequired: {
+    en: "Choose at least one image or video",
+    tet: "Hili pelo menus imajen ka video ida",
+  },
+
+  bulkMediaUploadFailed: {
+    en: "Bulk media upload failed",
+    tet: "Upload bulk media falla",
+  },
+
+  bulkMediaUploading: {
+    en: "Uploading files...",
+    tet: "Upload file sira...",
+  },
+
+  backToMedia: {
+    en: "Back to Media",
+    tet: "Fila ba Media",
+  },
+
   addMedia: {
     en: "Add Media",
     tet: "Aumenta Media",

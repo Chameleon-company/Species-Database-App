@@ -10,6 +10,7 @@ import AdminLoginForm from "./Pages/AdminLoginForm";
 import AdminLayout from "./Components/AdminLayout";
 import { GuestOnlyRoute } from "./Components/ProtectedAdmin";
 import MediaManager from "./Pages/MediaManager";
+import BulkMediaUpload from "./Pages/BulkMediaUpload";
 import SpeciesPage from "./Pages/Species";
 import AddExcel from "./Pages/AddExcel";
 
@@ -123,6 +124,15 @@ function App() {
           element={
             <AdminLayout>
               <MediaManager />
+            </AdminLayout>
+          }
+        />
+
+        <Route
+          path="/bulk-media-upload"
+          element={
+            <AdminLayout>
+              <BulkMediaUpload />
             </AdminLayout>
           }
         />
