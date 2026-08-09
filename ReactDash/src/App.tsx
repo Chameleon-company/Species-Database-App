@@ -8,6 +8,7 @@ import Analytics from "./Pages/Analytics";
 import Audit from "./Pages/Audit";
 import AdminLoginForm from "./Pages/AdminLoginForm";
 import AdminLayout from "./Components/AdminLayout";
+import { GuestOnlyRoute } from "./Components/ProtectedAdmin";
 import MediaManager from "./Pages/MediaManager";
 import SpeciesPage from "./Pages/Species";
 import AddExcel from "./Pages/AddExcel";
@@ -17,15 +18,15 @@ function App() {
     <Router>
       <Routes>
         {/*PUBLIC ROUTE */}
+
         <Route
-          path="/Users"
+          path="/admin-login"
           element={
-              <UsersPage />
-            // <AdminLayout>
-            // </AdminLayout>
+            <GuestOnlyRoute>
+              <AdminLoginForm />
+            </GuestOnlyRoute>
           }
         />
-        <Route path="/admin-login" element={<AdminLoginForm />} />
 
         {/*ADMIN */}
         <Route
@@ -56,6 +57,15 @@ function App() {
         />
 
         <Route
+          path="/Users"
+          element={
+            <AdminLayout>
+              <UsersPage />
+            </AdminLayout>
+          }
+        />
+
+        <Route
           path="/Page1"
           element={
             <AdminLayout>
@@ -80,7 +90,6 @@ function App() {
             </AdminLayout>
           }
         />
-
 
         {/* <Route
           path="/Users"

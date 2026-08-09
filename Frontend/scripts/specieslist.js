@@ -24,13 +24,31 @@ async function renderSpecies(data) {
     const common = species.common_name ?? "";
 
     const thumb = await dataService.getThumbnail(species.species_id);
+
+    //Get video state icon if video exists online or is cached
     const hasVideo = await dataService.hasVideo(species.species_id);
+    let videoIcon = "";
+
+    if (hasVideo) {
+
+      try {
+        const cachedVideo = await getCachedVideoBySpeciesId(species.species_id);
+        const isCached = !!cachedVideo?.blob;
+
+        videoIcon = isCached
+        ? `<img src="Assets/icons/videoCachedIcon.png" class="species-card-video-available" alt="video cached">`
+        : `<img src="Assets/icons/videoCloudIcon.png" class="species-card-video-available" alt="video online">`;
+
+      } catch (err) {console.warn("[SpeciesList] Video cache check failed:", err);}
+      
+    }
+    
 
     html += `
       <div class="species-item" onclick="goToDetail('${id}')">
       ${
         thumb
-        ? `<img src="${thumb}" alt="${scientific}" class="species-card-img">`
+        ? `<img data-thumb="${thumb}" data-species-id="${id}" alt="${scientific}" class="species-card-img cached-thumb">`
         : ``
       }  
       <div class="species-content">
@@ -39,16 +57,18 @@ async function renderSpecies(data) {
           <p class="common-name-species">${common}</p>
         </div>
         
-          ${
-            hasVideo
-            ? `<img src="Assets/icons/videoCloudIcon.png" class="species-card-video-available" alt="video">`
-            : ``
-          }
+          ${videoIcon}
         </div>
       </div>
     `;
   }
-  speciesList.innerHTML = html
+  speciesList.innerHTML = html;
+  document.querySelectorAll(".cached-thumb").forEach((img) => {
+    const url = img.dataset.thumb;
+    const speciesId = img.dataset.speciesId;
+
+    loadImageWithCache(img, url, speciesId);
+  });
 }
 
 

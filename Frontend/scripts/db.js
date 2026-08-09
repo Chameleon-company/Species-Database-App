@@ -27,7 +27,7 @@
 class SpeciesDB {
   constructor() {
     this.dbName = 'species_db';
-    this.dbVersion = 2; // Increment if schema (stores/indexes) changes
+    this.dbVersion = 7; //Increment if schema (stores/indexes) changes 
     this.db = null;
   }
 
@@ -37,8 +37,13 @@ class SpeciesDB {
    * @returns {Promise<IDBDatabase>}
    */
   async init() {
-    if (this.db) {
-      return this.db;
+    //Check for db version -> db version (see above) needs to change each time a new table is added (e.g. local image caching)
+    //this version needs to be changed in service-worker.js too!
+    if (this.db && this.db.version === this.dbVersion) {return this.db;}
+
+    if (this.db && this.db.version < this.dbVersion) {
+      this.db.close();
+      this.db = null;
     }
 
     return new Promise((resolve, reject) => {
@@ -104,6 +109,18 @@ class SpeciesDB {
         // Create 'sync_metadata' object store with keyPath: 'key'
         if (!db.objectStoreNames.contains('sync_metadata')) {
           db.createObjectStore('sync_metadata', { keyPath: 'key' });
+        }
+
+        //image_blobs store for local saving of images (save as object and then load locally)
+        if (!db.objectStoreNames.contains('image_blobs')) {
+          const imageStore = db.createObjectStore('image_blobs',{keyPath: 'url'});
+          imageStore.createIndex('species_id','species_id',{unique: false});
+        }
+
+        //video_blobs store for local saving of videos (save as object and then load locally)
+        if (!db.objectStoreNames.contains('video_blobs')) {
+          const videoStore = db.createObjectStore('video_blobs',{keyPath: 'url'});
+          videoStore.createIndex('species_id','species_id',{unique: false});
         }
 
         console.log('IndexedDB schema initialized: species_db v' + this.dbVersion);

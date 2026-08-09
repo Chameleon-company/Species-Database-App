@@ -268,6 +268,11 @@
       <!-- <h1 id="plant-common"></h1> -->
       <!-- <div id="plant-scientific" class="classification"></div> -->
 
+      <div class="description-block" id="plant-definition-section" hidden>
+        <h3 class="green-h1">Definition</h3>
+        <p id="plant-definition"></p>
+      </div>
+
       <div class="description-block">
         <h3 class="green-h1">Etymology</h3>
         <p id="plant-etymology"></p>
@@ -303,10 +308,11 @@
     </div>
     </main>
 
- <script src="js/general.js"></script>
+    <script src="js/general.js"></script>
     <script src="scripts/config.js"></script>
     <script src="scripts/db.js"></script>
     <script src="scripts/dataService.js"></script>
+    <script src="scripts/imageCache.js"></script>
     <script src="scripts/sync.js"></script>
     <script src="scripts/detectOnline.js" defer></script>
     <script src="scripts/sw-register.js"></script>
@@ -368,6 +374,14 @@
           document.getElementById("plant-seed").textContent =
             species.seed_germination || "";
 
+          const defSection = document.getElementById("plant-definition-section");
+          const defEl = document.getElementById("plant-definition");
+          const defText = (species.definition ?? "").trim();
+          if (defText && defSection && defEl) {
+            defEl.textContent = defText;
+            defSection.hidden = false;
+          }
+
           // get species images from getSpeciesMedia
           const mediaItems = await dataService.getSpeciesMedia(plantID);
 
@@ -389,20 +403,21 @@
 
           if(mediaItems.length > 0)
           {
-            document.getElementById("plant-image").src =
-              mediaItems[0].download_link || "";
+            const mainImage = document.getElementById("plant-image");
+            //load image from cache if available
+            await loadImageWithCache(mainImage,mediaItems[0].download_link,plantID);
           }
           const gallery = document.getElementById("image-gallery");
           gallery.innerHTML = "";
 
           if (mediaItems.length !== 0) {
-            mediaItems.forEach((url) => {
-              const img = document.createElement("img");
-              img.src = url.download_link;
-              img.loading = "lazy";
-
-              gallery.appendChild(img);
-            });
+            mediaItems.forEach(async (url) => {
+            const img = document.createElement("img");
+            img.loading = "lazy";
+            //load image from cache if available
+            await loadImageWithCache(img,url.download_link,plantID);
+            gallery.appendChild(img);
+          });
           }
 
           gallery.addEventListener("click", (e) => {

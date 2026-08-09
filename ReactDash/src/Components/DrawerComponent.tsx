@@ -1,30 +1,426 @@
 import * as React from "react";
-import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import CssBaseline from "@mui/material/CssBaseline";
-import Divider from "@mui/material/Divider";
 import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+
 import HomeIcon from "@mui/icons-material/Home";
 import ParkIcon from "@mui/icons-material/Park";
-import List from "@mui/material/List";
-import GroupIcon from "@mui/icons-material/Group";
-import ListItemButton from "@mui/material/ListItemButton";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import ListItemText from "@mui/material/ListItemText";
-import MenuIcon from "@mui/icons-material/Menu";
-import Toolbar from "@mui/material/Toolbar";
-import { Link, useNavigate } from "react-router-dom";
-import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import FilterIcon from "@mui/icons-material/Filter";
-import Logo from "../assets/logo-color.png";
-import { Menu, MenuItem } from "@mui/material";
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
+import GroupIcon from "@mui/icons-material/Group";
 import AnalyticsIcon from "@mui/icons-material/Analytics";
+import LogoutIcon from "@mui/icons-material/Logout";
+import MenuIcon from "@mui/icons-material/Menu";
+import CloseIcon from "@mui/icons-material/Close";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+
+import Logo from "../assets/logo-color.png";
+import { clearAdminSession } from "../utils/adminSession";
 import { translations } from "../translations";
+import { useLanguage } from "../LanguageContext";
 
-const drawerWidth = 240;
+const DRAWER_WIDTH = 220;
 
+type TranslationKey = keyof typeof translations;
+type Lang = "en" | "tet";
+
+const getLang = (): Lang =>
+  localStorage.getItem("lang") === "tet" ? "tet" : "en";
+
+/* ─── Styles ──────────────────────────────────────────────────────── */
+const styles: Record<string, React.CSSProperties> = {
+  sidebar: {
+    display: "flex",
+    flexDirection: "column",
+    height: "100%",
+    backgroundColor: "#ffffff",
+    fontFamily: "'DM Sans', sans-serif",
+  },
+  logoArea: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "20px 16px",
+    backgroundColor: "#eef6e6",
+    borderBottom: "1px solid #d8edbd",
+  },
+  logo: {
+    height: 40,
+    width: "auto",
+    objectFit: "contain",
+  },
+  sectionLabel: {
+    padding: "20px 20px 8px",
+    fontSize: 10,
+    fontWeight: 700,
+    letterSpacing: "0.12em",
+    textTransform: "uppercase",
+    color: "#86b85a",
+  },
+  nav: {
+    flex: 1,
+    padding: "0 10px",
+    display: "flex",
+    flexDirection: "column",
+    gap: 2,
+  },
+  divider: {
+    margin: "8px 16px",
+    height: 1,
+    backgroundColor: "#e8f5db",
+    border: "none",
+  },
+  logoutBtn: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    padding: "10px 12px",
+    margin: "0 10px 16px",
+    border: "none",
+    borderRadius: 12,
+    background: "transparent",
+    cursor: "pointer",
+    fontSize: 14,
+    fontWeight: 500,
+    color: "#9ca3af",
+    fontFamily: "'DM Sans', sans-serif",
+    transition: "background 0.15s, color 0.15s",
+    width: "calc(100% - 20px)",
+    textAlign: "left",
+  },
+  logoutIcon: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    color: "#9ca3af",
+    flexShrink: 0,
+  },
+  topBar: {
+    position: "fixed",
+    top: 0,
+    right: 0,
+    left: 0,
+    height: 56,
+    backgroundColor: "#ffffff",
+    borderBottom: "1px solid #e8f5db",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    padding: "0 16px",
+    zIndex: 1200,
+    boxSizing: "border-box",
+  },
+  mobileMenuBtn: {
+    background: "transparent",
+    border: "none",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 6,
+    borderRadius: 8,
+    color: "#4b5563",
+    marginRight: "auto",
+  },
+  accountWrap: {
+    position: "relative",
+  },
+  accountBtn: {
+    background: "transparent",
+    border: "none",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 36,
+    height: 36,
+    borderRadius: "50%",
+    color: "#6b7280",
+    transition: "background 0.15s",
+  },
+  dropdown: {
+    position: "absolute",
+    top: 44,
+    right: 0,
+    width: 176,
+    backgroundColor: "#ffffff",
+    border: "1px solid #d8edbd",
+    borderRadius: 14,
+    boxShadow: "0 8px 24px rgba(0,0,0,0.10)",
+    overflow: "hidden",
+    zIndex: 9999,
+  },
+  dropdownHeader: {
+    padding: "12px 16px",
+    borderBottom: "1px solid #f0f9e8",
+  },
+  dropdownHeaderTitle: {
+    fontSize: 12,
+    fontWeight: 600,
+    color: "#2d6a0a",
+    margin: 0,
+  },
+  dropdownHeaderSub: {
+    fontSize: 11,
+    color: "#9ca3af",
+    margin: "2px 0 0",
+  },
+  dropdownLogout: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    width: "100%",
+    padding: "10px 16px",
+    background: "transparent",
+    border: "none",
+    cursor: "pointer",
+    fontSize: 13,
+    color: "#ef4444",
+    fontFamily: "'DM Sans', sans-serif",
+    fontWeight: 500,
+    transition: "background 0.15s",
+    textAlign: "left",
+    boxSizing: "border-box",
+  },
+};
+
+/* ─── Nav Item ────────────────────────────────────────────────────── */
+function NavItem({
+  url,
+  label,
+  Icon,
+  active,
+  onClick,
+}: {
+  url: string;
+  label: string;
+  Icon: React.ElementType;
+  active: boolean;
+  onClick?: () => void;
+}) {
+  const [hovered, setHovered] = React.useState(false);
+
+  return (
+    <Link
+      to={url}
+      onClick={onClick}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        padding: "10px 12px",
+        borderRadius: 12,
+        textDecoration: "none",
+        fontSize: 14,
+        fontWeight: 500,
+        color: active ? "#2d6a0a" : hovered ? "#3d7a14" : "#6b7280",
+        backgroundColor: active ? "#dff0c8" : hovered ? "#f0f9e8" : "transparent",
+        transition: "background 0.15s, color 0.15s",
+        position: "relative",
+        overflow: "hidden",
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <span
+        style={{
+          position: "absolute",
+          left: 0,
+          top: "50%",
+          transform: "translateY(-50%)",
+          width: 3,
+          height: 24,
+          borderRadius: "0 4px 4px 0",
+          backgroundColor: "#4a8f1f",
+          opacity: active ? 1 : hovered ? 0.4 : 0,
+          transition: "opacity 0.15s",
+        }}
+      />
+
+      <span
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 32,
+          height: 32,
+          borderRadius: 8,
+          backgroundColor: active ? "#c2e29a" : hovered ? "#e4f5d0" : "transparent",
+          color: active ? "#2d6a0a" : hovered ? "#3d7a14" : "#9ca3af",
+          flexShrink: 0,
+          transition: "background 0.15s, color 0.15s",
+        }}
+      >
+        <Icon sx={{ fontSize: 18 }} />
+      </span>
+
+      <span style={{ flex: 1 }}>{label}</span>
+
+      {active && (
+        <span
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: "50%",
+            backgroundColor: "#4a8f1f",
+            flexShrink: 0,
+          }}
+        />
+      )}
+    </Link>
+  );
+}
+
+/* ─── Account Dropdown ────────────────────────────────────────────── */
+function AccountMenu({
+  onLogout,
+  t,
+}: {
+  onLogout: () => void;
+  t: (key: TranslationKey) => string;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div ref={ref} style={styles.accountWrap}>
+      <button
+        style={styles.accountBtn}
+        onClick={() => setOpen((v) => !v)}
+        aria-label="Account menu"
+      >
+        <AccountCircleIcon sx={{ fontSize: 28 }} />
+      </button>
+
+      {open && (
+        <div style={styles.dropdown}>
+          <div style={styles.dropdownHeader}>
+          <p style={styles.dropdownHeaderTitle}>{t("admin")}</p>
+          <p style={styles.dropdownHeaderSub}>{t("signedIn")}</p>
+          </div>
+          <button
+            style={styles.dropdownLogout}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#fef2f2")}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+            onClick={() => {
+              setOpen(false);
+              onLogout();
+            }}
+          >
+            <LogoutIcon sx={{ fontSize: 16 }} />
+            {t("logout")}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Sidebar Content ─────────────────────────────────────────────── */
+function SidebarContent({
+  onNavClick,
+}: {
+  onNavClick?: () => void;
+}) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { lang } = useLanguage();
+  
+  const t = React.useCallback(
+    (key: TranslationKey) => translations[key][lang],
+    [lang]
+  );
+
+  const navItems = React.useMemo(
+    () => [
+      { url: "/", label: t("dashboard"), Icon: HomeIcon },
+      { url: "/species", label: t("species"), Icon: ParkIcon },
+      { url: "/Media", label: t("media"), Icon: FilterIcon },
+      { url: "/Audit", label: t("audit"), Icon: VerifiedUserIcon },
+      { url: "/Users", label: t("users"), Icon: GroupIcon },
+      { url: "/Analytics", label: t("analytics"), Icon: AnalyticsIcon },
+    ],
+    [t]
+  );
+
+  const isActive = (url: string) => {
+    if (url === "/") {
+      return location.pathname === "/" || location.hash === "#/";
+    }
+    return (
+      location.pathname.toLowerCase().includes(url.toLowerCase()) ||
+      location.hash.toLowerCase().includes(url.toLowerCase())
+    );
+  };
+
+  const handleLogout = () => {
+    clearAdminSession();
+    navigate("/admin-login");
+  };
+
+  const [logoutHovered, setLogoutHovered] = React.useState(false);
+
+  return (
+    <div style={styles.sidebar}>
+      <div style={styles.logoArea}>
+        <img src={Logo} alt="FINI Logo" style={styles.logo} />
+      </div>
+
+      <div style={styles.sectionLabel}>Main Menu</div>
+
+      <nav style={styles.nav}>
+        {navItems.map(({ url, label, Icon }) => (
+          <NavItem
+            key={url}
+            url={url}
+            label={label}
+            Icon={Icon}
+            active={isActive(url)}
+            onClick={onNavClick}
+          />
+        ))}
+      </nav>
+
+      <hr style={styles.divider} />
+
+      <button
+        style={{
+          ...styles.logoutBtn,
+          backgroundColor: logoutHovered ? "#fef2f2" : "transparent",
+          color: logoutHovered ? "#ef4444" : "#9ca3af",
+        }}
+        onMouseEnter={() => setLogoutHovered(true)}
+        onMouseLeave={() => setLogoutHovered(false)}
+        onClick={handleLogout}
+      >
+        <span
+          style={{
+            ...styles.logoutIcon,
+            color: logoutHovered ? "#ef4444" : "#9ca3af",
+          }}
+        >
+          <LogoutIcon sx={{ fontSize: 18 }} />
+        </span>
+        {t("logout")}
+      </button>
+    </div>
+  );
+}
+
+/* ─── Main Component ──────────────────────────────────────────────── */
 export default function DrawerComponent({
   children,
 }: {
@@ -32,150 +428,67 @@ export default function DrawerComponent({
 }) {
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [isClosing, setIsClosing] = React.useState(false);
+  const [lang, setLang] = React.useState<Lang>(getLang());
+  const navigate = useNavigate();
 
-  const [lang, setLang] = React.useState<"en" | "tet">(
-    (localStorage.getItem("lang") as "en" | "tet") || "en"
-  )
-const t = translations[lang]
+  React.useEffect(() => {
+    const syncLang = () => setLang(getLang());
+    window.addEventListener("storage", syncLang);
+    window.addEventListener("languageChanged", syncLang as EventListener);
+    return () => {
+      window.removeEventListener("storage", syncLang);
+      window.removeEventListener("languageChanged", syncLang as EventListener);
+    };
+  }, []);
 
-  const [menuTrigger, setMenuTrigger] = React.useState<HTMLElement | null>(null);
-  const menuOpen = Boolean(menuTrigger);
-
-  const openMenu = (event: React.MouseEvent<HTMLElement>) => {
-    setMenuTrigger(event.currentTarget);
-  };
-
-  const closeMenu = () => setMenuTrigger(null);
+  const t = React.useCallback(
+    (key: TranslationKey) => translations[key][lang],
+    [lang]
+  );
 
   const handleDrawerClose = () => {
     setIsClosing(true);
     setMobileOpen(false);
   };
 
-  const handleDrawerTransitionEnd = () => {
-    setIsClosing(false);
-  };
+  const handleDrawerTransitionEnd = () => setIsClosing(false);
 
   const handleDrawerToggle = () => {
-    if (!isClosing) {
-      setMobileOpen(!mobileOpen);
-    }
+    if (!isClosing) setMobileOpen(!mobileOpen);
   };
-
-  const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem("admin_token");
-    localStorage.removeItem("admin_role");
+    clearAdminSession();
     navigate("/admin-login");
   };
-
-  const changeLang = (newLang: "en" | "tet") => {
-    localStorage.setItem("lang", newLang);
-    setLang(newLang);
-    window.location.reload();
-  };
-
-  const drawer = (
-    <div>
-      <Toolbar
-        className="flex items-center justify-center p-2"
-        style={{
-          backgroundColor: "#e2ecdd",
-        }}
-      >
-        <img src={Logo} alt="Logo" className="h-10 w-auto object-contain" />
-      </Toolbar>
-
-      <Divider />
-
-      <Box sx={{ display: "flex", justifyContent: "center", gap: 1, p: 2 }}>
-        <button onClick={() => changeLang("en")}>EN</button>
-        <button onClick={() => changeLang("tet")}>TET</button>
-      </Box>
-
-      <List>
-        <ListComponent url="/" text={t.dashboard} icon={<HomeIcon />} />
-        <ListComponent url="/species" text={t.species} icon={<ParkIcon />} />
-        <ListComponent url="/Media" text={t.media} icon={<FilterIcon />} />
-        <ListComponent url="/Audit" text={t.audit} icon={<VerifiedUserIcon />} />
-        <ListComponent url="/Users" text={t.users} icon={<GroupIcon />} />
-        <ListComponent url="/Analytics" text={t.analytics} icon={<AnalyticsIcon />} />
-      </List>
-
-      <Divider />
-
-      <List>
-        <ListItemButton onClick={handleLogout}>
-          <ListItemIcon>
-            <VerifiedUserIcon />
-          </ListItemIcon>
-          <ListItemText primary={t.logout} />
-        </ListItemButton>
-      </List>
-    </div>
-  );
 
   return (
     <Box sx={{ display: "flex" }}>
       <CssBaseline />
 
-      <AppBar
-        position="fixed"
-        sx={{
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-          ml: { sm: `${drawerWidth}px` },
-          backgroundColor: "white",
-          boxShadow: "none",
-          borderBottom: "1px solid #e0e0e0",
-        }}
-      >
-        <Toolbar>
+      <div style={styles.topBar}>
+        <div
+          style={{
+            ...styles.mobileMenuBtn,
+            display: undefined,
+          }}
+          onClick={handleDrawerToggle}
+          aria-label="open drawer"
+        >
           <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { sm: "none" }, color: "black" }}
+            sx={{ display: { sm: "none" }, color: "#4b5563", p: 0 }}
+            disableRipple
           >
-            <MenuIcon />
+            {mobileOpen ? <CloseIcon fontSize="small" /> : <MenuIcon fontSize="small" />}
           </IconButton>
+        </div>
 
-          <div className="flex flex-1 items-center justify-end gap-4">
-            <IconButton onClick={openMenu} sx={{ color: "black" }}>
-              <AccountCircleIcon sx={{ fontSize: 36 }} />
-            </IconButton>
-
-            <Menu
-              anchorEl={menuTrigger}
-              open={menuOpen}
-              onClose={closeMenu}
-              anchorOrigin={{
-                vertical: "bottom",
-                horizontal: "right",
-              }}
-              transformOrigin={{
-                vertical: "top",
-                horizontal: "right",
-              }}
-            >
-              <MenuItem
-                onClick={() => {
-                  closeMenu();
-                  handleLogout();
-                }}
-              >
-                {t.logout}
-              </MenuItem>
-            </Menu>
-          </div>
-        </Toolbar>
-      </AppBar>
+        <AccountMenu onLogout={handleLogout} t={t} />
+      </div>
 
       <Box
         component="nav"
-        sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
-        aria-label="mailbox folders"
+        sx={{ width: { sm: DRAWER_WIDTH }, flexShrink: { sm: 0 } }}
       >
         <Drawer
           variant="temporary"
@@ -185,17 +498,14 @@ const t = translations[lang]
           sx={{
             display: { xs: "block", sm: "none" },
             "& .MuiDrawer-paper": {
-              boxSizing: "border-box",
-              width: drawerWidth,
+              width: DRAWER_WIDTH,
+              border: "none",
+              boxShadow: "4px 0 24px rgba(0,0,0,0.08)",
             },
           }}
-          slotProps={{
-            root: {
-              keepMounted: true,
-            },
-          }}
+          slotProps={{ root: { keepMounted: true } }}
         >
-          {drawer}
+          <SidebarContent onNavClick={() => setMobileOpen(false)} />
         </Drawer>
 
         <Drawer
@@ -203,24 +513,32 @@ const t = translations[lang]
           sx={{
             display: { xs: "none", sm: "block" },
             "& .MuiDrawer-paper": {
-              boxSizing: "border-box",
-              width: drawerWidth,
+              width: DRAWER_WIDTH,
+              border: "none",
+              borderRight: "1px solid #e8f5db",
             },
           }}
           open
         >
-          {drawer}
+          <SidebarContent />
         </Drawer>
       </Box>
 
-      <Box className="w-full" component="main">
-        <Toolbar />
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          width: { sm: `calc(100% - ${DRAWER_WIDTH}px)` },
+          pt: "56px",
+        }}
+      >
         {children}
       </Box>
     </Box>
   );
 }
 
+/* ─── ListComponent (backwards compat) ───────────────────────────── */
 export function ListComponent({
   url,
   text,
@@ -230,20 +548,40 @@ export function ListComponent({
   text: string;
   icon: React.ReactNode;
 }) {
-  const active = window.location.hash;
+  const active =
+    window.location.hash.toLowerCase() === `#${url.toLowerCase()}`;
 
   return (
-    <ListItemButton
-      component={Link}
+    <Link
       to={url}
-      className={
-        active.toLowerCase() == `#${url.toLowerCase()}`
-          ? "!bg-[#d4e4c7] hover:!text-black"
-          : "hover:!text-black"
-      }
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        padding: "10px 12px",
+        borderRadius: 12,
+        textDecoration: "none",
+        fontSize: 14,
+        fontWeight: 500,
+        color: active ? "#2d6a0a" : "#6b7280",
+        backgroundColor: active ? "#dff0c8" : "transparent",
+      }}
     >
-      <ListItemIcon>{icon}</ListItemIcon>
-      <ListItemText primary={text} />
-    </ListItemButton>
+      <span
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 32,
+          height: 32,
+          borderRadius: 8,
+          backgroundColor: active ? "#c2e29a" : "transparent",
+          color: active ? "#2d6a0a" : "#9ca3af",
+        }}
+      >
+        {icon}
+      </span>
+      {text}
+    </Link>
   );
 }

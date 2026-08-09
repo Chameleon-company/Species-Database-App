@@ -13,6 +13,9 @@ import SaveIcon from "@mui/icons-material/Save";
 import CancelIcon from "@mui/icons-material/Close";
 import { adminFetch } from "../utils/adminFetch";
 import { translations } from "../translations";
+import LanguageToggle from "../Components/LanguageToggle";
+import { useLanguage } from "../LanguageContext";
+
 
 const API_BASE = import.meta.env.VITE_API_URL;
 
@@ -33,10 +36,10 @@ interface SnackbarState {
 }
 
 export default function Users() {
-  const [lang, setLang] = useState<"en" | "tet">(
-    (localStorage.getItem("lang") as "en" | "tet") || "en"
-  );
-  const t = translations[lang];
+  const { lang, setLang } = useLanguage();
+
+  const t = (key: string) =>
+    (translations as any)[key]?.[lang] || key;
 
   const changeLang = (newLang: "en" | "tet") => {
     localStorage.setItem("lang", newLang);
@@ -77,7 +80,7 @@ export default function Users() {
       setRows(data);
     } catch (e) {
       const errorMsg =
-        e instanceof Error ? e.message : t.networkErrorFetchingUsers;
+      e instanceof Error ? e.message : t("networkErrorFetchingUsers");
       showSnackbar(errorMsg, "error");
       console.error("Failed to fetch users:", e);
     } finally {
@@ -121,17 +124,17 @@ export default function Users() {
     const isNew = numericId < 0;
 
     if (!user.name?.trim()) {
-      showSnackbar(t.nameRequired, "error");
+      showSnackbar(t("nameRequired"), "error");
       return;
     }
 
     if (!user.role?.trim()) {
-      showSnackbar(t.roleRequired, "error");
+      showSnackbar(t("roleRequired"), "error");
       return;
     }
 
     if (isNew && user.auth_provider === "local" && !user.password?.trim()) {
-      showSnackbar(t.passwordRequiredForNewLocalUsers, "error");
+      showSnackbar(t("passwordRequiredForNewLocalUsers"), "error");
       return;
     }
 
@@ -162,13 +165,13 @@ export default function Users() {
       }
 
       showSnackbar(
-        isNew ? t.userCreatedSuccessfully : t.userUpdatedSuccessfully,
+        isNew ? t("userCreatedSuccessfully") : t("userUpdatedSuccessfully"),
         "success"
       );
 
       await fetchUsers();
     } catch (e) {
-      const errorMsg = e instanceof Error ? e.message : t.failedToSaveUser;
+      const errorMsg = e instanceof Error ? e.message : t("failedToSaveUser");
       showSnackbar(errorMsg, "error");
       console.error("Save error:", e);
     } finally {
@@ -190,7 +193,7 @@ export default function Users() {
     if (!user) return;
 
     const confirmed = window.confirm(
-      `${t.areYouSureDeleteUser} "${user.name}"?`
+      `${t("areYouSureDeleteUser")} "${user.name}"?`
     );
 
     if (!confirmed) return;
@@ -207,9 +210,9 @@ export default function Users() {
       }
 
       setRows((prev) => prev.filter((r) => r.user_id !== numericId));
-      showSnackbar(t.userDeletedSuccessfully, "success");
+      showSnackbar(t("userDeletedSuccessfully"), "success");
     } catch (e) {
-      const errorMsg = e instanceof Error ? e.message : t.failedToDeleteUser;
+      const errorMsg = e instanceof Error ? e.message : t("failedToDeleteUser");
       showSnackbar(errorMsg, "error");
       console.error("Delete error:", e);
     } finally {
@@ -243,25 +246,25 @@ export default function Users() {
   const columns: GridColDef[] = [
     {
       field: "user_id",
-      headerName: t.id,
+      headerName: t("id"),
       width: 80,
-      valueGetter: (params) => (params < 0 ? t.new : params),
+      valueGetter: (params) => (params < 0 ? t("new") : params),
     },
     {
       field: "name",
-      headerName: t.name,
+      headerName: t("name"),
       width: 200,
       editable: true,
     },
     {
       field: "role",
-      headerName: t.role,
+      headerName: t("role"),
       width: 150,
       editable: true,
     },
     {
       field: "password",
-      headerName: t.password,
+      headerName: t("password"),
       width: 180,
       editable: true,
       renderCell: (params) => {
@@ -277,24 +280,24 @@ export default function Users() {
     },
     {
       field: "is_active",
-      headerName: t.active,
+      headerName: t("active"),
       type: "boolean",
       width: 100,
       editable: true,
     },
     {
       field: "auth_provider",
-      headerName: t.auth,
+      headerName: t("auth"),
       width: 140,
       type: "singleSelect",
       valueOptions: ["local", "google"],
       editable: true,
       valueFormatter: (value) =>
-        value === "google" ? t.google : t.local,
+        value === "google" ? t("google") : t("local"),
     },
     {
       field: "created_at",
-      headerName: t.created,
+      headerName: t("created"),
       width: 180,
       valueGetter: (params) => {
         if (!params) return "";
@@ -305,7 +308,7 @@ export default function Users() {
     {
       field: "actions",
       type: "actions",
-      headerName: t.actions,
+      headerName: t("actions"),
       width: 120,
       getActions: ({ id }) => {
         const isEditing = rowModesModel[id]?.mode === GridRowModes.Edit;
@@ -314,13 +317,13 @@ export default function Users() {
           return [
             <GridActionsCellItem
               icon={<SaveIcon />}
-              label={t.save}
+              label={t("save")}
               onClick={() => handleSave(id)}
               disabled={loading}
             />,
             <GridActionsCellItem
               icon={<CancelIcon />}
-              label={t.cancel}
+              label={t("cancel")}
               onClick={() => handleCancel(id)}
               disabled={loading}
             />,
@@ -330,13 +333,13 @@ export default function Users() {
         return [
           <GridActionsCellItem
             icon={<EditIcon />}
-            label={t.edit}
+            label={t("edit")}
             onClick={() => handleEdit(id)}
             disabled={loading}
           />,
           <GridActionsCellItem
             icon={<DeleteIcon />}
-            label={t.delete}
+            label={t("delete")}
             onClick={() => handleDelete(id)}
             disabled={loading}
           />,
@@ -346,56 +349,112 @@ export default function Users() {
   ];
 
   return (
-    <div style={{ height: "100%", width: "100%" }}>
+    <div
+      style={{
+        padding: "28px 36px",
+        backgroundColor: "#f7fbf2",
+        fontFamily: "'DM Sans', sans-serif",
+        minHeight: "100vh",
+      }}
+    >
       <Stack
         direction="row"
         justifyContent="space-between"
         alignItems="center"
-        mb={2}
+        mb={3}
+        flexWrap="wrap"
+        gap={2}
       >
-        <h2 className="text-3xl font-bold" style={{ margin: 0 }}>
-          {t.userManagement}
-        </h2>
-
-        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          <button onClick={() => changeLang("en")} style={{ marginRight: "10px" }}>
-            EN
-          </button>
-          <button onClick={() => changeLang("tet")}>TET</button>
-
+        <div>
+          <div
+            style={{
+              width: 36,
+              height: 4,
+              borderRadius: 4,
+              background: "linear-gradient(90deg,#2d6a0a,#86b85a)",
+              marginBottom: 8,
+            }}
+          />
+  
+          <h2 className="text-3xl font-bold" style={{ margin: 0, color: "#1a2e10" }}>
+            {t("userManagement")}
+          </h2>
+        </div>
+  
+        <Stack direction="row" spacing={2} alignItems="center">  
           <Button
             variant="contained"
             startIcon={<AddIcon />}
             onClick={handleAdd}
             disabled={loading}
+            sx={{
+              backgroundColor: "#2d6a0a",
+              borderRadius: 2,
+              fontWeight: 600,
+              "&:hover": { backgroundColor: "#245508" },
+            }}
           >
-            {t.createUser}
+            {t("createUser")}
           </Button>
-        </div>
+        </Stack>
       </Stack>
-
-      <DataGrid
-        rows={rows}
-        columns={columns}
-        getRowId={(row) => row.user_id}
-        editMode="row"
-        rowModesModel={rowModesModel}
-        onRowModesModelChange={setRowModesModel}
-        processRowUpdate={processRowUpdate}
-        loading={loading}
-        pageSizeOptions={[10, 20, 50]}
-        initialState={{
-          pagination: { paginationModel: { pageSize: 10 } },
+  
+      <div
+        style={{
+          backgroundColor: "#ffffff",
+          border: "1px solid #d8edbd",
+          borderRadius: 16,
+          overflow: "hidden",
+          boxShadow: "0 2px 12px rgba(45,106,10,0.07)",
         }}
-        sx={{
-          backgroundColor: "#fff",
-          "& .MuiDataGrid-row--editing": {
-            backgroundColor: "#f5f5f5",
-          },
-        }}
-        disableRowSelectionOnClick
-      />
-
+      >
+        <DataGrid
+          rows={rows}
+          columns={columns}
+          getRowId={(row) => row.user_id}
+          editMode="row"
+          rowModesModel={rowModesModel}
+          onRowModesModelChange={setRowModesModel}
+          processRowUpdate={processRowUpdate}
+          loading={loading}
+          pageSizeOptions={[10, 20, 50]}
+          initialState={{
+            pagination: { paginationModel: { pageSize: 10 } },
+          }}
+          sx={{
+            border: "none",
+            backgroundColor: "#fff",
+            fontFamily: "'DM Sans', sans-serif",
+            "& .MuiDataGrid-columnHeaders": {
+              backgroundColor: "#eef6e6",
+              borderBottom: "1px solid #d8edbd",
+            },
+            "& .MuiDataGrid-columnHeaderTitle": {
+              fontWeight: 700,
+              fontSize: 11,
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              color: "#3d5a2a",
+            },
+            "& .MuiDataGrid-row:hover": {
+              backgroundColor: "#f7fbf2",
+            },
+            "& .MuiDataGrid-row--editing": {
+              backgroundColor: "#f5f5f5",
+            },
+            "& .MuiDataGrid-cell": {
+              borderBottom: "1px solid #f0f9e8",
+              fontSize: 13,
+            },
+            "& .MuiDataGrid-footerContainer": {
+              backgroundColor: "#eef6e6",
+              borderTop: "1px solid #d8edbd",
+            },
+          }}
+          disableRowSelectionOnClick
+        />
+      </div>
+  
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}

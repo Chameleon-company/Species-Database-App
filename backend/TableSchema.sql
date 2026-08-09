@@ -63,8 +63,9 @@ CREATE TABLE IF NOT EXISTS public.analytics (
     event_id SERIAL PRIMARY KEY,
     user_id INT NOT NULL,
     login_time TIMESTAMP NOT NULL,
-    duration INT NOT NULL,
+    duration INT,
     location VARCHAR(255),
+    event_type VARCHAR(50) DEFAULT 'login',
     CONSTRAINT analytics_user_id_fkey
       FOREIGN KEY (user_id)
       REFERENCES public.users(user_id)
@@ -100,7 +101,33 @@ CREATE TABLE IF NOT EXISTS public.admin_sessions (
     expires_at TIMESTAMPTZ NOT NULL,
     revoked BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT now(),
+    refresh_token_hash TEXT,
+    refresh_expires_at TIMESTAMPTZ,
+    last_activity TIMESTAMPTZ DEFAULT now(),
+    ip_address INET,
+    user_agent TEXT,
+    revocation_reason TEXT,
     CONSTRAINT admin_sessions_user_id_fkey
+      FOREIGN KEY (user_id)
+      REFERENCES public.users(user_id)
+      ON DELETE CASCADE
+);
+
+--admin session audit history
+CREATE TABLE IF NOT EXISTS public.admin_session_audit (
+    audit_id SERIAL PRIMARY KEY,
+    session_id INT,
+    user_id INT NOT NULL,
+    event_type VARCHAR(50) NOT NULL,
+    event_timestamp TIMESTAMPTZ DEFAULT now(),
+    ip_address INET,
+    user_agent TEXT,
+    details JSONB,
+    CONSTRAINT admin_session_audit_session_id_fkey
+      FOREIGN KEY (session_id)
+      REFERENCES public.admin_sessions(session_id)
+      ON DELETE CASCADE,
+    CONSTRAINT admin_session_audit_user_id_fkey
       FOREIGN KEY (user_id)
       REFERENCES public.users(user_id)
       ON DELETE CASCADE

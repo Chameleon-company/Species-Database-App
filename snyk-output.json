@@ -1,0 +1,5 @@
+{
+  "ok": false,
+  "error": "Org georgegkoumas-project=SPECIES-DATABASE-APP was not found or you may not have the correct permissions to access the org. Try re-running with the `--org` flag.",
+  "path": "/workspaces/Species-Database-App"
+}

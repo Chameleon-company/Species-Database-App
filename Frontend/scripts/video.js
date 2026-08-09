@@ -1,8 +1,28 @@
+//Gets a safe URL (dfeinitely from the proper DB) instead of a user-provided value (could be malicious) which trips up GitHub's security check
+function getSafeVideoUrl(rawUrl) {
+    try {
+        const url = new URL(rawUrl);
+
+        const allowedHost = "oppcngtkhywxsazeqqet.supabase.co";
+        const allowedPath = "/storage/v1/object/public/media/videos/";
+
+        if (url.protocol !== "https:") {return null;}
+        if (url.hostname !== allowedHost) {return null;}
+        if (!url.pathname.startsWith(allowedPath)) {return null;}
+        //Make sure its a video file
+        const validVideoFile = /\.(mp4|webm|mov)$/i.test(url.pathname);
+        if (!validVideoFile) {return null;}
+
+        return url.href;
+    } catch {return null;}
+}
+
+
 // ------------------------------
 // CONFIG
 // ------------------------------
 const params = new URLSearchParams(window.location.search)
-const VIDEO_SRC = params.get("media")
+const VIDEO_SRC = getSafeVideoUrl(params.get("media"));
 const speciesId = params.get("species_id")
 
 const STORAGE_KEY = `video_downloaded_species_${speciesId}`
@@ -23,14 +43,183 @@ const downloadStatus = document.getElementById("downloadStatus");
 if(!VIDEO_SRC || !speciesId)
 {
     console.error("missing media URL or species id")
-    downloadStatus.textContent ="Video unavailable"
+    downloadStatus.textContent ="Video Unavailable"
     downloadBtn.disabled = true
     playOverlay?.remove()
 }
 
+
+//Chcek if online -> if not online and video hasnt cached show video is unavailable
+async function checkIfOnline() {
+    try {
+        const response= await fetch(VIDEO_SRC, {method: "HEAD",cache: "no-store"});
+        return response.ok;
+    }
+    catch {return false;}
+}
+
+//Return a video state to update download text, button and video player
+async function videoState() {
+    const cached = await getCachedVideo(VIDEO_SRC);
+    const online = await checkIfOnline();
+
+    console.log("[Video State]", {
+    isCached: !!cached?.blob,
+    online
+    });
+    return {
+        cached,
+        isCached: !!cached?.blob,
+        online
+    };
+}
+
+//Video preview is working by doing autoplay for 1 seconds and then paused.
+async function setupVideoPreview() {
+    if (!videoPrev || !VIDEO_SRC || !speciesId) {return;}
+
+    const state = await videoState();
+    //Disable play if not cached and offline
+    if (!state.isCached && !state.online) {
+        downloadStatus.textContent = "Offline: Video Unavailable";
+        return;
+    }
+
+    videoPrev.src = await loadVideoWithCache(VIDEO_SRC,speciesId);
+    videoPrev.addEventListener("loadeddata", async () => {
+        try {
+            await videoPrev.play();
+            setTimeout(() => {videoPrev.pause();},1000);
+
+        } catch (err) {console.warn("Autoplay blocked", err);}
+    });
+}
+
+setupVideoPreview();
+
+
+// ------------------------------
+// PLAY VIDEO (THUMBNAIL → VIDEO)
+// ------------------------------
+if (playOverlay) {
+    playOverlay.addEventListener("click", async () => {
+        const video = document.createElement("video");
+        
+        const state = await videoState();
+        //Disable play if not cached and offline
+        if (!state.isCached && !state.online) {
+            downloadStatus.textContent = "Offline: Video Unavailable";
+            downloadBtn.textContent = "Offline";
+            downloadBtn.disabled = true;
+            return;
+        }
+
+        //if vid is downloaded, play from local file
+        video.src = await loadVideoWithCache(VIDEO_SRC,speciesId);
+
+        video.controls = true;
+        video.autoplay = true;
+        video.setAttribute("playsinline", "" )
+        video.style.width = "100%";
+        video.style.height = "380px";
+        video.style.objectFit = "cover";
+
+        // Replace thumbnail with video
+        videoContainer.innerHTML = "";
+        videoContainer.appendChild(video);
+    });
+}
+
+//Download the video and save to cache (if not already donwloaded and online) 
+downloadBtn?.addEventListener("click", async () => {
+    //If video is not cached or available
+    if (!VIDEO_SRC || !speciesId) {
+        downloadStatus.textContent = "Video Unavailable";
+        return;
+    }
+    const state = await videoState();
+    //if already cached -> disable
+    if (state.isCached) {
+        downloadStatus.textContent = "Video already downloaded";
+        downloadBtn.textContent = "Downloaded";
+        downloadBtn.disabled = true;
+        return;
+    }
+    //If offlien and not cached (already checked) -> disable
+    if (!state.online) {
+        downloadStatus.textContent = "Offline: Video Unavailable";
+        downloadBtn.textContent = "Offline";
+        downloadBtn.disabled = true;
+        return;
+    }
+
+    //Notify the user video is dling and prevent further preses of dl button
+    downloadStatus.textContent = "Downloading...";
+    downloadBtn.disabled = true;
+    try {
+        const blob = await cacheVideo(VIDEO_SRC,speciesId);
+
+        downloadStatus.textContent = "Video downloaded";
+        downloadBtn.textContent = "Downloaded";
+        downloadBtn.disabled = true;
+        
+        if (videoPrev && blob) {
+            videoPrev.src = URL.createObjectURL(blob);
+            downloadBtn.disabled = true;
+        }
+
+    } catch (err) {
+        console.error("[Video] Download failed:", err);
+        downloadStatus.textContent = "Download failed";
+        downloadBtn.textContent = "Not Downloaded";s
+        downloadBtn.disabled = false;
+    }
+});
+
+// ------------------------------
+// CHECK DOWNLOAD STATE
+// ------------------------------
+
+//Checks various states (in cache, not in cache and offlien) to change message and button behaviour
+async function checkDownloadState() {
+    const cached = await getCachedVideo(VIDEO_SRC);
+    const state = await videoState();
+    //if already cached -> disable
+    if (state.isCached) {
+        downloadStatus.textContent = "Video already downloaded";
+        downloadBtn.textContent = "Downloaded";
+        downloadBtn.disabled = true;
+        return;
+    }
+    //If offlien and not cached (already checked) -> disable
+    if (!state.online) {
+        downloadStatus.textContent = "Offline: Download Unavailable"; //only if offline and not cached
+        downloadBtn.textContent = "Offline";
+        downloadBtn.disabled = true;
+        return;
+    }
+
+    //Online and not cached -> can download
+    downloadStatus.textContent = "Not Downloaded";
+    downloadBtn.textContent = "Download";
+    downloadBtn.disabled = false;
+
+}
+
+checkDownloadState();
+
+
+
+/*******************************************************
+//This is some of the code that is depreciated from previous
+//iteration where the implementation was only partially implemented
+//
+/***************************************************** */
+
 //---------------------------
 // VIDEO PREVIEW THUMBNAIL
 //---------------------------
+/*
 //Video preview is working by doing autoplay for 1 seconds and then paused.
 if (videoPrev) {
         videoPrev.src = VIDEO_SRC;
@@ -47,6 +236,7 @@ if (videoPrev) {
             }
         });
 }
+*/
 
 //---------------------------
 // VIDEO THUMBNAIL USING CANVAS METHOD (NOT WORKING)
@@ -54,38 +244,9 @@ if (videoPrev) {
 //setThumbnail(VIDEO_SRC, thumbnail);
 
 // ------------------------------
-// PLAY VIDEO (THUMBNAIL → VIDEO)
-// ------------------------------
-if (playOverlay) {
-    playOverlay.addEventListener("click", () => {
-        const video = document.createElement("video");
-        //if vid is downloaded, play from local file
-        const isDownloaded = localStorage.getItem(STORAGE_KEY) === "true"
-        if(isDownloaded)
-        {
-            video.src =window.Capacitor.convertFileSrc(
-                Directory.Data + "/" +FILE_NAME
-            )
-        }
-        else {
-            video.src = VIDEO_SRC;
-        }
-        video.controls = true;
-        video.autoplay = true;
-        video.setAttribute("playsinline", "" )
-        video.style.width = "100%";
-        video.style.height = "380px";
-        video.style.objectFit = "cover";
-
-        // Replace thumbnail with video
-        videoContainer.innerHTML = "";
-        videoContainer.appendChild(video);
-    });
-}
-
-// ------------------------------
 // CANVAS THUMBNAIL FOR VIDEO BEFFORE PLAYED (NOT WORKING)
 // ------------------------------
+
 /*
 //This function sets the Thumbnail with the video frame taken from the video
 //But it is not working because it is blocked by the CORS, It needs access to S3 server to allow the permission
@@ -128,25 +289,14 @@ function setThumbnail(videoUrl, thumbnailElement){
 }
 */
 
-// ------------------------------
-// CHECK DOWNLOAD STATE
-// ------------------------------
-function checkDownloadState() {
-    const isDownloaded = localStorage.getItem(STORAGE_KEY);
 
-    if (isDownloaded === "true") {
-        downloadStatus.textContent = "Downloaded";
-        downloadBtn.textContent = "Downloaded";
-        downloadBtn.disabled = true;
-    }
-}
-
-checkDownloadState();
 
 // ------------------------------
 // DOWNLOAD HANDLER
 // ------------------------------
 //downloads vid and saves to real file on device
+
+/*
 downloadBtn?.addEventListener("click", async () => {
     if(!Filesystem)
     {
@@ -189,6 +339,7 @@ downloadBtn?.addEventListener("click", async () => {
         downloadBtn.disabled =false
     }
 })
+*/
 
 //listen for progress adn completion messages from service worker
 //IMPORTANT: UI only says doownloaded adter media_cahce_done

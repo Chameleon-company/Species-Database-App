@@ -1,4 +1,22 @@
 {
+  "name": "species-database-app",
+  "private": true,
+  "scripts": {
+    "install:all": "npm install && npm --prefix ReactDash install && npm --prefix capacitor-wrapper install",
+    "install:linux": "bash scripts/install-linux.sh",
+    "install:macos": "bash scripts/install-macos.sh",
+    "install:windows11": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-windows11.ps1",
+    "dev": "docker compose up --build",
+    "dev:backend": "python backend/app.py",
+    "dev:admin": "npm --prefix ReactDash run dev",
+    "build": "npm --prefix ReactDash run build",
+    "lint": "npm --prefix ReactDash run lint",
+    "preview": "npm --prefix ReactDash run preview",
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f"
+  },
   "devDependencies": {
     "typescript": "^5.9.3"
   },
