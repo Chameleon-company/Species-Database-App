@@ -10,7 +10,50 @@ from datetime import datetime, timezone
 from changelog import log_change, get_next_version
 from auth_authz import register_auth_routes, require_role, get_admin_user
 from urllib.parse import urlparse
+import ipaddress
+import socket
 import requests
+
+
+#the validator below fetches a caller-supplied URL from the server, so the
+#server can be aimed at hosts a caller could not reach themselves. only plain
+#web schemes are allowed, and anything resolving to a private, loopback or
+#link-local address is refused - 169.254.169.254 in particular is the cloud
+#instance metadata service, which hands out credentials.
+ALLOWED_URL_SCHEMES = ("http", "https")
+URL_VALIDATION_TIMEOUT = 5
+
+
+def _is_public_host(hostname):
+    """
+    resolves hostname and returns False if ANY address it maps to is not a
+    public one. checking every result matters: a name can resolve to a public
+    and a private address at once to slip past a single check.
+    """
+    if not hostname:
+        return False
+
+    try:
+        results = socket.getaddrinfo(hostname, None)
+    except socket.gaierror:
+        return False
+
+    for family, _type, _proto, _canon, sockaddr in results:
+        try:
+            ip = ipaddress.ip_address(sockaddr[0])
+        except ValueError:
+            return False
+        if (
+            ip.is_private
+            or ip.is_loopback
+            or ip.is_link_local
+            or ip.is_reserved
+            or ip.is_multicast
+            or ip.is_unspecified
+        ):
+            return False
+
+    return True
 
 
 def register_media_routes(app, supabase):
@@ -28,8 +71,20 @@ def register_media_routes(app, supabase):
             if not parsed.scheme or not parsed.netloc:
                 return False, "Invalid URL format"
 
-            # check if the URL works
-            response = requests.head(url, timeout=5)
+            if parsed.scheme.lower() not in ALLOWED_URL_SCHEMES:
+                return False, "URL must use http or https"
+
+            if not _is_public_host(parsed.hostname):
+                return False, "URL host is not permitted"
+
+            # check if the URL works. redirects are refused rather than
+            # followed, since a public URL can redirect to an internal one
+            # after the host check has already passed.
+            response = requests.head(
+                url,
+                timeout=URL_VALIDATION_TIMEOUT,
+                allow_redirects=False,
+            )
 
             if response.status_code != 200:
                 return False, "The URL is not reachable"
@@ -45,7 +100,7 @@ def register_media_routes(app, supabase):
 
             return True, None
 
-        except:
+        except requests.RequestException:
             return False, "URL error checking"
 
     

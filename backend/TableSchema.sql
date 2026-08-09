@@ -44,9 +44,10 @@ CREATE TABLE IF NOT EXISTS public.species_tet (
     definition VARCHAR(2000)
 );
 
--- migration: add definition to existing deployments
--- ALTER TABLE public.species_en ADD COLUMN IF NOT EXISTS definition VARCHAR(2000);
--- ALTER TABLE public.species_tet ADD COLUMN IF NOT EXISTS definition VARCHAR(2000);
+-- NOTE: species_en.definition / species_tet.definition are added to EXISTING
+-- databases by backend/migrations/001_add_definition_and_storage_version.sql.
+-- This file is the full-schema snapshot for creating a database from scratch;
+-- it is not a change history. See backend/migrations/README.md.
 
 --changelog used for incremental sync to devices
 CREATE TABLE IF NOT EXISTS public.changelog (
@@ -90,8 +91,8 @@ CREATE TABLE IF NOT EXISTS public.media (
       ON DELETE CASCADE
 );
 
--- migration: add storage_version to existing media table
--- ALTER TABLE public.media ADD COLUMN IF NOT EXISTS storage_version INTEGER DEFAULT 1 NOT NULL;
+-- NOTE: media.storage_version is added to EXISTING databases by
+-- backend/migrations/001_add_definition_and_storage_version.sql.
 
 --active admin login sessions
 CREATE TABLE IF NOT EXISTS public.admin_sessions (

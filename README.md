@@ -269,9 +269,44 @@ Main authentication endpoints:
 - `POST /api/auth/admin-refresh`
 - `GET /api/admin/session-audit`
 
+## Backend API Reference
+
+Endpoint-by-endpoint documentation, including which endpoints require an admin session, is in [`backend/docs/API.md`](backend/docs/API.md).
+
+## Database Schema Changes
+
+`backend/TableSchema.sql` is a **snapshot of the full intended schema**, and it's how you create a new database from scratch. It is not a change history, and it can't tell you what state an existing database is in.
+
+Changes to an existing database go in `backend/migrations/` as numbered SQL files, each with a matching rollback. Read [`backend/migrations/README.md`](backend/migrations/README.md) before adding one.
+
+Two rules matter most:
+
+1. **Apply the migration before merging the code that needs it.** New code that reads a column which does not exist yet fails immediately. Reverse the order when rolling back.
+2. **Never edit a migration that has already been applied anywhere.** Supersede it with a new one.
+
+Verify a migration against a throwaway local database before it goes near Supabase:
+
+```bash
+bash backend/migrations/test_migration.sh
+```
+
+This creates its own temporary PostgreSQL cluster, seeds it with the schema currently deployed, applies the migration, checks idempotency and rollback, and cleans up. It never reads `.env` and never connects to Supabase.
+
+## Backend Tests
+
+```bash
+python -m unittest discover -s backend/tests -v
+```
+
+The suite runs fully offline. Supabase is stubbed, so it makes no network calls and can't touch shared data. It covers app startup and route registration, the admin authentication surface, the guard on `POST /upload-species`, and the search-filter and media-URL validation.
+
 ## Security and CI/CD
 
 The project includes security scanning for dependencies and secrets. See `SECURITY.md` for vulnerability reporting guidance.
+
+Known unauthenticated endpoints that should require an admin session are listed under **Known gaps** in [`backend/docs/API.md`](backend/docs/API.md).
+
+> **Working with `.env`:** the Supabase key used by the backend is a `service_role` key, which bypasses row-level security and can run schema changes. Treat any populated Supabase project the team shares as production: never point local tests at it, and never run `ALTER`/`DELETE` against it while developing.
 
 ## Troubleshooting
 

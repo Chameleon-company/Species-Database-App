@@ -1013,20 +1013,48 @@ def log_time(response):
 
     return response
 
+#max rows a single search may return, stops an open query pulling the table
+SEARCH_RESULT_LIMIT = 50
+SEARCH_MAX_QUERY_LEN = 100
+
+
+def _escape_postgrest_value(value):
+    """
+    makes a user string safe to drop into a PostgREST filter.
+
+    in the filter grammar ',' separates OR terms and '.' separates
+    column.operator.value, so an unescaped query can add its own terms and
+    match rows it was never meant to. wrapping the value in double quotes
+    makes PostgREST treat it as a literal; the backslash and double quote
+    inside it have to be escaped first or they close the quoting early.
+    """
+    escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+    return f'"{escaped}"'
+
+
 @app.get("/api/species/search")
 def search_species():
 
-    q = request.args.get("q", "")
+    q = request.args.get("q", "").strip()
 
     if not q:
         return jsonify({"error": "query is needed"}), 400
+
+    if len(q) > SEARCH_MAX_QUERY_LEN:
+        return jsonify({
+            "error": f"query too long (max {SEARCH_MAX_QUERY_LEN} characters)"
+        }), 400
+
+    #quoted so ',' '.' and '*' in the query are data, never filter syntax
+    term = _escape_postgrest_value(f"*{q}*")
 
     response = (
         supabase.table("species_en")
         .select("species_id, common_name, scientific_name")
         .or_(
-            f"common_name.ilike.*{q}*,scientific_name.ilike.*{q}*"
+            f"common_name.ilike.{term},scientific_name.ilike.{term}"
         )
+        .limit(SEARCH_RESULT_LIMIT)
         .execute()
     )
 
@@ -1047,10 +1075,12 @@ def health_check():
         }), 200
 
     except Exception as e:
+        #endpoint is unauthenticated, so the exception text stays in the logs.
+        #it can name the host, database and driver, which is free recon.
+        app.logger.exception("health check failed: %s", e)
         return jsonify({
             "status": "unhealthy",
-            "database": "disconnected",
-            "error": str(e)
+            "database": "disconnected"
         }), 500
   
 
