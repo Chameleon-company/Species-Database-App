@@ -1,7 +1,7 @@
 -- =============================================================================
--- Migration 001 — add species definition fields and media storage versioning
+-- Migration 001: add species definition fields and media storage versioning
 -- =============================================================================
--- Author:   Byron Ehrhardt (s224341683) — Backend Lead
+-- Author:   Byron Ehrhardt (s224341683), Backend Lead
 -- Created:  2026-07-27
 -- Restores: PR #205 (species_en.definition, species_tet.definition)
 --           PR #204 (media.storage_version)
@@ -28,7 +28,7 @@
 
 BEGIN;
 
--- --- PR #205 — bilingual species definition -----------------------------------
+-- --- PR #205: bilingual species definition ------------------------------------
 -- Nullable by design: existing rows have no definition text yet, and the field
 -- is optional content rather than a required attribute.
 -- NOTE: species_en and species_tet are a bilingual pair joined on species_id.
@@ -41,10 +41,10 @@ ALTER TABLE public.species_en
 ALTER TABLE public.species_tet
     ADD COLUMN IF NOT EXISTS definition VARCHAR(2000);
 
--- --- PR #204 — media storage versioning ---------------------------------------
+-- --- PR #204: media storage versioning ----------------------------------------
 -- Drives offline sync: devices re-download a media file only when this counter
 -- changes, instead of re-pulling the whole media set. Existing rows backfill to
--- version 1, which is correct — their current stored file IS the first version.
+-- version 1, which is correct. Their current stored file IS the first version.
 -- NOT NULL + DEFAULT is a metadata-only change in PostgreSQL 11+, so this does
 -- not rewrite the table.
 
@@ -54,7 +54,7 @@ ALTER TABLE public.media
 COMMIT;
 
 -- =============================================================================
--- VERIFICATION — run after applying; all three rows should return 't'
+-- VERIFICATION: run after applying, all three rows should return 't'
 -- =============================================================================
 -- SELECT
 --     to_regclass('public.species_en')  IS NOT NULL

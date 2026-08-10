@@ -1,10 +1,10 @@
 -- =============================================================================
--- ROLLBACK for migration 001 — add definition fields and media storage version
+-- ROLLBACK for migration 001: add definition fields and media storage version
 -- =============================================================================
--- Author:  Byron Ehrhardt (s224341683) — Backend Lead
+-- Author:  Byron Ehrhardt (s224341683), Backend Lead
 -- Created: 2026-07-27
 --
--- ⚠️  DESTRUCTIVE — DATA LOSS
+-- ⚠️  DESTRUCTIVE: DATA LOSS
 --   Dropping these columns permanently deletes every value stored in them:
 --     * all English species definition text
 --     * all Tetum species definition text
@@ -26,7 +26,7 @@
 --
 -- WHEN YOU PROBABLY DON'T NEED THIS
 --   Migration 001 is purely additive. If the code merge is reverted, these
---   columns become harmless unused columns — they cost nothing and break
+--   columns become harmless unused columns that cost nothing and break
 --   nothing. Prefer leaving them in place over dropping real data.
 -- =============================================================================
 
