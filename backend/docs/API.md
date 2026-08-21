@@ -96,6 +96,8 @@ Media URLs supplied to `/upload-media` are validated: the URL must be `http`/`ht
 
 Seed-germination videos for a species. Files live in external storage (Google Drive, S3); only the link and metadata are stored.
 
+`download_link` and `streaming_link` are checked before they are stored: http or https only, and the hostname must resolve entirely to public addresses. A link pointing at loopback, a private range or the cloud metadata service is refused with a 400. No request is made to the URL itself, unlike `/upload-media`, because these are share pages rather than direct video files and would not return a `video/*` content type.
+
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
 | POST | `/api/species/<species_id>/videos` | Admin | Register a video against a species |

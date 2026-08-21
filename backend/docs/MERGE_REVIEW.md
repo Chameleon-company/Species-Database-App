@@ -68,6 +68,15 @@ commits in the history.
   public, redirects refused.
 - **Error disclosure** on `GET /health`, which returned `str(e)` to anyone.
 
+And one of my own, added after the first review pass. The two video endpoints
+are mine, they take `download_link` and `streaming_link` straight from the
+request body, and they were never wired up to the URL checking above, so they
+would happily store an address on the server's own network. Being admin only
+makes that less severe than the search hole, not acceptable. The scheme and
+destination half of `validate_media_url` is now `validate_url_target` and both
+routes call it. The content-type half is deliberately left out, because these
+links are share pages rather than direct video files and would fail it.
+
 Plus the one that is live on `master` right now: `POST /upload-species` is an
 admin-only bulk import with its `get_admin_user` guard commented out. PR #203
 fixed it in April and never landed. `master` has 5 active guards in `app.py`,

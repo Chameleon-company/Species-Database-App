@@ -20,6 +20,7 @@ Run:  python -m unittest discover -s backend/tests -v
 """
 
 import datetime
+import ipaddress
 import os
 import sys
 import types
@@ -195,6 +196,41 @@ FLASK_APP.config["TESTING"] = True
 _FUTURE = (datetime.datetime.now(datetime.timezone.utc)
            + datetime.timedelta(hours=1)).isoformat()
 ADMIN_HEADERS = {"Authorization": "TEST-ADMIN-TOKEN"}
+
+
+# --------------------------------------------------------------------------
+# DNS does not leave this process either
+# --------------------------------------------------------------------------
+# validate_url_target resolves a hostname to decide whether the destination is
+# public. Left alone that quietly makes this suite depend on a network and a
+# working resolver, which is the one thing it promises not to do. So the
+# resolver is a fixed table, and it also lets a test point a URL straight at
+# the metadata service without anyone having to own that name.
+_FAKE_DNS = {
+    "example.org": "93.184.216.34",
+    "example.com": "93.184.216.34",
+    "e.org": "93.184.216.34",
+    "metadata.internal": "169.254.169.254",
+    "router.local": "192.168.0.1",
+}
+
+
+def _fake_getaddrinfo(host, *_a, **_k):
+    #literal addresses pass straight through, because test_merge_readiness
+    #hands _is_public_host raw IPs and expects them judged on their own value.
+    try:
+        ipaddress.ip_address(host)
+    except ValueError:
+        pass
+    else:
+        return [(2, 1, 6, "", (host, 0))]
+
+    if host not in _FAKE_DNS:
+        raise media_module.socket.gaierror(f"host not in test DNS: {host}")
+    return [(2, 1, 6, "", (_FAKE_DNS[host], 0))]
+
+
+media_module.socket.getaddrinfo = _fake_getaddrinfo
 
 
 def _reset(with_species=True):
@@ -393,6 +429,57 @@ class TestErrorPathsDoNotCrash(unittest.TestCase):
         resp = FLASK_APP.test_client().put("/api/media/videos/1",
                                            headers=ADMIN_HEADERS, json={})
         self.assertEqual(resp.status_code, 400)
+
+
+class TestVideoLinkDestination(unittest.TestCase):
+    """
+    The video routes take a URL from an admin and hand it to field clients to
+    fetch later. /upload-media has refused private destinations since the SSRF
+    fix, but these two were written before that validator existed and were
+    still storing whatever they were given, including addresses on the server's
+    own network. Being admin only makes it less severe, not fine.
+    """
+
+    def setUp(self):
+        _reset()
+        self.client = FLASK_APP.test_client()
+
+    def test_download_link_pointing_at_the_metadata_service_is_refused(self):
+        resp = self.client.post(
+            "/api/species/1/videos", headers=ADMIN_HEADERS,
+            json={"download_link": "http://metadata.internal/latest/meta-data/"})
+        self.assertEqual(resp.status_code, 400)
+        self.assertFalse(FAKE.writes_to("media", "insert"),
+                         "media row written despite a refused link")
+
+    def test_private_streaming_link_behind_a_public_download_link_is_refused(self):
+        #the easy version of this check only looks at download_link, which is
+        #the field that is required. streaming_link is the one you would use.
+        resp = self.client.post(
+            "/api/species/1/videos", headers=ADMIN_HEADERS,
+            json={"download_link": "https://example.org/a.mp4",
+                  "streaming_link": "http://router.local/a.mp4"})
+        self.assertEqual(resp.status_code, 400)
+        self.assertFalse(FAKE.writes_to("media", "insert"),
+                         "media row written despite a refused streaming link")
+
+    def test_update_cannot_swap_a_public_link_for_a_private_one(self):
+        self.client.post("/api/species/1/videos", headers=ADMIN_HEADERS,
+                         json={"download_link": "https://example.org/a.mp4"})
+        FAKE.clear()
+        resp = self.client.put("/api/media/videos/1", headers=ADMIN_HEADERS,
+                               json={"download_link": "http://router.local/a.mp4"})
+        self.assertEqual(resp.status_code, 400)
+        self.assertFalse(FAKE.writes_to("media", "update"),
+                         "media row updated despite a refused link")
+
+    def test_ordinary_public_link_still_works(self):
+        resp = self.client.post(
+            "/api/species/1/videos", headers=ADMIN_HEADERS,
+            json={"download_link": "https://example.org/a.mp4",
+                  "alt_text": "clip"})
+        self.assertEqual(resp.status_code, 201)
+        self.assertTrue(FAKE.writes_to("media", "insert"))
 
 
 if __name__ == "__main__":

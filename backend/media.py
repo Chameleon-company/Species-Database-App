@@ -56,6 +56,26 @@ def _is_public_host(hostname):
     return True
 
 
+def validate_url_target(url):
+    """
+    scheme and destination check only, no request is made. the video endpoints
+    store share links rather than direct media files, so they need this half of
+    the checking without the content-type half that validate_media_url adds.
+    """
+    parsed = urlparse(url)
+
+    if not parsed.scheme or not parsed.netloc:
+        return False, "Invalid URL format"
+
+    if parsed.scheme.lower() not in ALLOWED_URL_SCHEMES:
+        return False, "URL must use http or https"
+
+    if not _is_public_host(parsed.hostname):
+        return False, "URL host is not permitted"
+
+    return True, None
+
+
 def register_media_routes(app, supabase):
     """
     attach all media related routes to main flask app
@@ -66,16 +86,10 @@ def register_media_routes(app, supabase):
     #Adding validation
     def validate_media_url(url, media_type):
         try:
-            # check the URL format
-            parsed = urlparse(url)
-            if not parsed.scheme or not parsed.netloc:
-                return False, "Invalid URL format"
-
-            if parsed.scheme.lower() not in ALLOWED_URL_SCHEMES:
-                return False, "URL must use http or https"
-
-            if not _is_public_host(parsed.hostname):
-                return False, "URL host is not permitted"
+            # scheme and destination, shared with the video endpoints
+            is_valid, error = validate_url_target(url)
+            if not is_valid:
+                return False, error
 
             # check if the URL works. redirects are refused rather than
             # followed, since a public URL can redirect to an internal one
@@ -360,6 +374,13 @@ def register_media_routes(app, supabase):
         streaming_link = data.get("streaming_link", download_link)
         alt_text = data.get("alt_text", "")
 
+        #both links are admin supplied and get fetched by clients later, so they
+        #go through the same destination check /upload-media uses.
+        for link in (download_link, streaming_link):
+            is_valid, error = validate_url_target(link)
+            if not is_valid:
+                return jsonify({"error": error}), 400
+
         #make sure species actually exists first
         species_resp = (
             supabase.table("species_en")
@@ -471,6 +492,13 @@ def register_media_routes(app, supabase):
         data = request.get_json(silent=True)
         if not data:
             return jsonify({"error": "missing JSON body"}), 400
+
+        #same destination check as the POST, on whichever links were sent
+        for field in ("download_link", "streaming_link"):
+            if field in data:
+                is_valid, error = validate_url_target(data[field])
+                if not is_valid:
+                    return jsonify({"error": error}), 400
 
         update_fields = {}
         storage_changed = False
