@@ -1293,7 +1293,10 @@ def search_species():
 
 
 @app.get("/health")
-def health_check():
+def basic_health_check():
+    #master added /api/health for the status dashboard while this branch was away.
+    #that one walks every table, this is just a liveness ping. keeping both, but
+    #they cannot share a function name or flask refuses to register the second one.
     try:
         supabase.table("species_en") \
             .select("species_id") \

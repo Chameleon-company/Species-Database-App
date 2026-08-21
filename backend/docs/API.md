@@ -174,6 +174,7 @@ Returns 404 if the species does not exist, and `"videos": []` if it exists but h
 |---|---|---|---|
 | POST | `/translate` | Public | Translate text to Tetum |
 | GET | `/health` | Public | **New.** Liveness and database connectivity |
+| GET | `/api/health` | Public | Per-table status for the admin dashboard. Came from `master`, see [Known gaps](#known-gaps) |
 
 ### `GET /health`
 
@@ -182,6 +183,8 @@ Returns 404 if the species does not exist, and `"videos": []` if it exists but h
 ```
 
 Returns 200 when a trivial query against `species_en` succeeds, and 500 with `{"status": "unhealthy", "database": "disconnected"}` when it doesn't. Failure detail goes to the server log rather than the response, because the endpoint is unauthenticated. `docker compose` uses this for its healthcheck.
+
+Not to be confused with `/api/health`, which `master` added later and which walks every table for the status dashboard. Both routes are live. The handler behind `/health` is `basic_health_check`, renamed during the sync because Flask will not register two view functions under the same name.
 
 ---
 
@@ -220,6 +223,7 @@ Recorded so they are not mistaken for intended behaviour. All of these exist on 
 - **Analytics endpoints are unauthenticated** and disclose per-user activity.
 - **`POST /species` and `POST /audit-species` are unauthenticated.**
 - **`GET /api/auth/user-state` takes `user_id` from the query string** with no authorisation, so any user's state can be polled.
+- **`GET /api/health` is unauthenticated and returns raw exception text** for any table it cannot reach, which can name the host, database and driver. This is the same problem `/health` had before it was fixed on this branch. It came in from `master` with the status dashboard work, so it is left alone here for the same reason as the rows above.
 
 Fixing these means adding `get_admin_user` guards to endpoints owned by several different authors, so it is tracked separately rather than folded into the merge.
 

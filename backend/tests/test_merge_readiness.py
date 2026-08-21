@@ -263,9 +263,12 @@ class TestHealthEndpoint(unittest.TestCase):
         """
         import inspect
 
-        src = inspect.getsource(app_module.health_check)
+        #master's /api/health handler took the health_check name during the sync,
+        #so this has to name the function explicitly or it quietly checks the wrong
+        #route and passes for the wrong reason.
+        src = inspect.getsource(app_module.basic_health_check)
         self.assertNotIn(
-            '"error": str(e)', src,
+            "str(e)", src,
             "/health returns raw exception text to unauthenticated callers",
         )
 
