@@ -4,7 +4,6 @@ import MainTableSelectTetum from "../mainTableSelectTetum";
 import { useState } from "react";
 import type { Species } from "../mainTableSelect";
 import { translations } from "../translations";
-import LanguageToggle from "../Components/LanguageToggle";
 import { useLanguage } from "../LanguageContext";
 
 
@@ -12,7 +11,7 @@ import { useLanguage } from "../LanguageContext";
     const [selectedSpecies, setSelectedSpecies] = useState<Species | null>(null);
     const [selectedSpeciesTetum, setSelectedSpeciesTetum] =
       useState<Species | null>(null);
-      const { lang, setLang } = useLanguage();
+      const { lang } = useLanguage();
 
       const activeTab = lang === "tet" ? "tetum" : "english";
     const t = (key: string) =>
@@ -118,40 +117,6 @@ import { useLanguage } from "../LanguageContext";
                     background: linear-gradient(90deg, var(--green-mid), var(--green-light));
                     border-radius: 4px;
                     margin-bottom: 8px;
-                }
-
-                /* ── Tab switcher ── */
-                .tab-bar {
-                    display: flex;
-                    gap: 4px;
-                    background: var(--green-pale);
-                    border: 1px solid var(--green-border);
-                    border-radius: 10px;
-                    padding: 4px;
-                }
-
-                .tab-btn {
-                    padding: 8px 22px;
-                    border: none;
-                    border-radius: 7px;
-                    font-size: 13px;
-                    font-weight: 600;
-                    font-family: 'DM Sans', sans-serif;
-                    cursor: pointer;
-                    transition: all 0.18s;
-                    color: var(--text-muted);
-                    background: transparent;
-                }
-
-                .tab-btn.active {
-                    background: var(--white);
-                    color: var(--green-dark);
-                    box-shadow: 0 1px 6px rgba(45,106,10,0.12);
-                }
-
-                .tab-btn:not(.active):hover {
-                    color: var(--text-mid);
-                    background: rgba(255,255,255,0.5);
                 }
 
                 /* ── Section wrapper ── */
@@ -341,22 +306,6 @@ import { useLanguage } from "../LanguageContext";
       <div className="header-accent" />
       <h1 className="page-title">{t("dashboardTitle")}</h1>
       <p className="page-subtitle">{t("dashboardSubtitle")}</p>
-    </div>
-
-    <div className="tab-bar">
-      <button
-        className={`tab-btn ${lang === "en" ? "active" : ""}`}
-        onClick={() => setLang("en")}
-      >
-        🌿 english
-      </button>
-
-      <button
-        className={`tab-btn ${lang === "tet" ? "active" : ""}`}
-        onClick={() => setLang("tet")}
-      >
-        🌏 tetum
-      </button>
     </div>
   </div>
 

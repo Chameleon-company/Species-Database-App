@@ -51,10 +51,20 @@ function renderNoResults() {
   const speciesList = document.getElementById("species-list");
   if (!speciesList) return;
 
+  const isTetum = window.location.pathname.includes("tetum.html");
+
+  const title = isTetum
+    ? "La hetan rezultadu"
+    : "No results found";
+
+  const message = isTetum
+    ? "Favor verifika ortografia ka buka fali."
+    : "Try checking your spelling or searching again.";
+
   speciesList.innerHTML = `
     <div style="text-align:center; padding:2rem; color:#475569;">
-      <p style="font-size:1.1rem; font-weight:600;">No results found</p>
-      <p style="font-size:0.9rem;">Try checking your spelling or searching again.</p>
+      <p style="font-size:1.1rem; font-weight:600;">${title}</p>
+      <p style="font-size:0.9rem;">${message}</p>
     </div>
   `;
 }

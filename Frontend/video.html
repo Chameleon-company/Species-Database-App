@@ -121,6 +121,37 @@
             font-size: 0.85rem;
             color: #475569;
         }
+
+        .video-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        }
+
+        .vid-back-btn {
+        width: 42px;
+        height: 42px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        background: white;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+
+        padding: 0;
+        }
+
+      .left-arrow-icon {
+        width: clamp(28px, 6vw, 34px);
+        height: clamp(28px, 6vw, 34px);
+        }
+      .header-spacer {
+        width: 42px;
+        }
+      
     </style>
 
     <link rel="stylesheet" href="css/onlineBanner.css" />
@@ -132,7 +163,13 @@
 
     <!-- Header -->
     <header class="app-header">
-        <h1 class="header-title">Video Playback</h1>
+        <div class="video-header">
+            <button class="vid-back-btn" id="backButton">
+                <img src="Assets/icons/leftarrow.png" alt="Back" class="left-arrow-icon"/>
+            </button>
+            <h1 class="header-title">Video Playback</h1>
+            <div class="header-spacer"></div>
+        </div>
     </header>
 
     <!-- Video Preview -->
@@ -159,9 +196,18 @@
 
     <!-- Metadata -->
     <div class="video-meta">
-        <p><strong>Title:</strong> Tree Identification Guide</p>
-        <p><strong>Duration:</strong> 02:45</p>
-        <p><strong>Size:</strong> <span id="videoSize">24 MB</span></p>
+        <p>
+            <strong>Title:</strong>
+            <span id="videoTitle"></span>
+        </p>
+        <p>
+            <strong>Duration:</strong>
+            <span id="videoDuration">--:--</span>
+        </p>
+        <p>
+            <strong>Size:</strong>
+            <span id="fileSize"></span>
+        </p>
     </div>
 
     <!-- Download -->
@@ -172,6 +218,7 @@
 
 </main>
 
+<script src="scripts/config.js"></script>
 <script src="scripts/db.js"></script>
 <script src="scripts/videoCache.js"></script>
 <script src="scripts/video.js"></script>

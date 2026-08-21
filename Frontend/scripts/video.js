@@ -3,11 +3,21 @@ function getSafeVideoUrl(rawUrl) {
     try {
         const url = new URL(rawUrl);
 
-        const allowedHost = "oppcngtkhywxsazeqqet.supabase.co";
-        const allowedPath = "/storage/v1/object/public/media/videos/";
+        //const allowedHost = "oppcngtkhywxsazeqqet.supabase.co"; -> this is the original DB, if using local DB will not allow access to video
+
+        const allowedHost = API_CONFIG.SUPABASE_HOST;
+
+        if (url.hostname !== allowedHost) {
+            return null;
+        }
+
+        //const validSupabaseHost = /^[a-z0-9]+\.supabase\.co$/i.test(url.hostname); //any similar looking SupaBase DB can be checked (for individual DB testing)
+        //const allowedPath = "/storage/v1/object/public/media/videos/"; //old path before new media uploader
+        const allowedPath = "/storage/v1/object/public/species_videos/"; //Changed to new file path based on media upload pipeline
 
         if (url.protocol !== "https:") {return null;}
         if (url.hostname !== allowedHost) {return null;}
+        //if (!validSupabaseHost) {return null;}
         if (!url.pathname.startsWith(allowedPath)) {return null;}
         //Make sure its a video file
         const validVideoFile = /\.(mp4|webm|mov)$/i.test(url.pathname);
@@ -21,9 +31,11 @@ function getSafeVideoUrl(rawUrl) {
 // ------------------------------
 // CONFIG
 // ------------------------------
-const params = new URLSearchParams(window.location.search)
-const VIDEO_SRC = getSafeVideoUrl(params.get("media"));
-const speciesId = params.get("species_id")
+const params = new URLSearchParams(window.location.search);
+
+const rawVideoUrl = params.get("media");
+const speciesId = params.get("species_id");
+const VIDEO_SRC = getSafeVideoUrl(rawVideoUrl);
 
 const STORAGE_KEY = `video_downloaded_species_${speciesId}`
 const FILE_NAME =`videos/species_${speciesId}.mp4`
@@ -74,19 +86,76 @@ async function videoState() {
     };
 }
 
+//Data to be used on video page (title, video duration, file size)
+//Title of the video
+const title = params.get("title");
+if (title) {document.getElementById("videoTitle").textContent =decodeURIComponent(title);}
+
+//Returned video length is in seconds, format it to mins
+function formatDuration(dur) {
+    const mins = Math.floor(dur / 60);
+    const secs = Math.floor(dur %60);
+    return `${String(mins).padStart(2,"0")}:${String(secs).padStart(2,"0")}`;
+}
+
+//Get video length from video metadata and format to min:sec
+videoPrev.addEventListener("loadedmetadata", () => {
+    document.getElementById("videoDuration").textContent = formatDuration(videoPrev.duration);
+});
+
+//File size needs to be converted to kb/mb
+function formatFileSize(bytes) {
+    if (bytes < 1024 * 1024) {return `${(bytes / 1024).toFixed(1)} KB`;}
+    if (bytes < 1024 * 1024 * 1024) {return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;}
+}
+
+//Check the cached video for file size and format it (don't have permission for online ver in DB)
+//Can update this later on to include online BUT it might require modifying DB schema - not going to disrupt this atm
+async function displayVideoSize() {
+    const videoSizeElement = document.getElementById("fileSize");
+    if (!videoSizeElement || !VIDEO_SRC) {return;}
+
+    try {
+        //Use cached video if available
+        const cachedVideo = await getCachedVideo(VIDEO_SRC);
+
+        if (cachedVideo?.blob instanceof Blob)
+        {
+            videoSizeElement.textContent = formatFileSize(cachedVideo.blob.size);
+            return;
+        }
+        else {videoSizeElement.textContent = "Available on Download"; return;}
+        //unknown if failed for w/e reason
+        videoSizeElement.textContent = "Unknown";
+    } catch (error) {
+        videoSizeElement.textContent = "Unknown";
+        console.warn("Unknown video size:",error);
+    }
+}
+
 //Video preview is working by doing autoplay for 1 seconds and then paused.
 async function setupVideoPreview() {
     if (!videoPrev || !VIDEO_SRC || !speciesId) {return;}
 
     const state = await videoState();
-    //Disable play if not cached and offline
+
+    //placeholder test
+    //state.isCached = false;
+    //state.online = false;
+    //Disable play and download if not cached and offline. Set placeholder icon for unavailable video
     if (!state.isCached && !state.online) {
         downloadStatus.textContent = "Offline: Video Unavailable";
+        downloadBtn.disabled = true
+        videoPrev.poster = "Assets/icons/videoPlaceholder.jpg";
+        playOverlay.style.display = "none";
         return;
     }
 
     videoPrev.src = await loadVideoWithCache(VIDEO_SRC,speciesId);
     videoPrev.addEventListener("loadeddata", async () => {
+        //get duration from metadata
+        document.getElementById("videoDuration").textContent = formatDuration(videoPrev.duration);
+
         try {
             await videoPrev.play();
             setTimeout(() => {videoPrev.pause();},1000);
@@ -96,7 +165,7 @@ async function setupVideoPreview() {
 }
 
 setupVideoPreview();
-
+displayVideoSize();
 
 // ------------------------------
 // PLAY VIDEO (THUMBNAIL → VIDEO)
@@ -166,6 +235,7 @@ downloadBtn?.addEventListener("click", async () => {
         if (videoPrev && blob) {
             videoPrev.src = URL.createObjectURL(blob);
             downloadBtn.disabled = true;
+            await displayVideoSize();
         }
 
     } catch (err) {
@@ -208,6 +278,8 @@ async function checkDownloadState() {
 
 checkDownloadState();
 
+//Back button
+document.getElementById("backButton").addEventListener("click", () => {history.back();});
 
 
 /*******************************************************

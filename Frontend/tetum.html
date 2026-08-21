@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="tet">
   <head>
     <meta charset="UTF-8" />
-    <title>SBA Home</title>
+    <title>Baze-dadus Espésie sira</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <!-- PWA -->
@@ -35,13 +35,13 @@
       <!-- Filter Carousel -->
       <div class="filter-carousel-container">
         <div class="filter-carousel" id="filter-carousel">
-          <button class="filter-button" data-filter="all">Reset</button>
+          <button class="filter-button" data-filter="all">Hamoos</button>
           <button class="filter-button" data-filter="a-z">A--Z</button>
           <button class="filter-button" data-filter="leaf-type">
-            Tipu Daun
+            Tipu ai-tahan
           </button>
           <button class="filter-button" data-filter="fruit-type">
-            Tipu Ai-fuan
+            Tipu ai-fuan
           </button>
         </div>
       </div>
@@ -68,13 +68,13 @@
           class="lang-modal"
           role="dialog"
           aria-modal="true"
-          aria-label="Choose language"
+          aria-label="Hili lian"
         >
-          <button class="close-overlay" id="closeOverlay" aria-label="Close">
+          <button class="close-overlay" id="closeOverlay" aria-label="Taka">
             ✖
           </button>
 
-          <div class="lang-title">You Selected</div>
+          <div class="lang-title">Ita hili ona</div>
 
           <div class="selected-pill" id="selectedPill">
             <div class="flag" id="selectedFlag" aria-hidden="true">🇹🇱</div>
@@ -88,14 +88,14 @@
             </div>
           </div>
 
-          <div class="lang-title" style="margin-top: 18px">All Languages</div>
+          <div class="lang-title" style="margin-top: 18px">Lian hotu-hotu</div>
 
-          <section class="card" aria-label="Language list">
+          <section class="card" aria-label="Lista lian">
             <div
               class="list"
               id="langList"
               role="listbox"
-              aria-label="Languages"
+              aria-label="Lian sira"
             >
               <div
                 class="row"
@@ -232,16 +232,21 @@
 
       // Leaf Type options
       const leafTypeOptions = [
-        "Simples",
-        "Kompostu pinnadu (ida de'it)",
-        "Kompostu pinnadu (duplu)",
-        "Kompostu pinnadu (triplu)",
-        "Kompostu palmadu",
-      ];
-
-      // Fruit Type options
-      const fruitTypeOptions = ["Drupe", "Kapsula", "Folíkulu", "Pod"];
-
+      "Simple",
+      "Kompostu pinnadu (ida de'it)",
+      "Kompostu hanesan pena (rua – double pinnate)",
+      "Kompostu hanesan pena (single pinnate)",
+      "Simples",
+      "Kompostu pinnadu (Duplu)",
+      "Kompostu pinnadu (Ida de'it)",
+    ];
+    const fruitTypeOptions = [
+  "Drupe /ai-fuan ne'ebe iha parte toos ida ne'ebe proteje ninia musan",
+  "Kapsul",
+  "Fuan follicle (fuan ida naruk ne’ebé nakloke husi laran ida hodi fó musan barak)",
+  "Pod (fuan naruk ne’ebé iha musan iha laran)",
+  "Fuan drupe (fuan ida-musan ho koroa se’i iha laran ne’ebé proteje sementes)",
+];
       const filterConfigs = {
         "a-z": {
           title: "Klasifika tuir alfabetu",
@@ -252,7 +257,7 @@
           ],
         },
         "leaf-type": {
-          title: "Tipu ai-funan",
+          title: "Tipu ai-tahan",
           description: "",
           options: leafTypeOptions.map((option) => ({
             label: option,
@@ -261,7 +266,7 @@
           })),
         },
         "fruit-type": {
-          title: "Tipu Ai-fuan",
+          title: "Tipu ai-fuan",
           description: "",
           options: fruitTypeOptions.map((option) => ({
             label: option,
