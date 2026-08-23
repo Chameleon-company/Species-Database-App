@@ -9,3 +9,6 @@ node_modules/
 *-server*.log
 testData.xlsx
 .DS_Store
+.idea/
+.idea/caches/
+**/.idea/deploymentTargetSelector.xml
