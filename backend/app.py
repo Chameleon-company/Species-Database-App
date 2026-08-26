@@ -3,9 +3,15 @@ from werkzeug.utils import secure_filename
 from datetime import datetime
 import tempfile
 import asyncio
+import re
+import requests
+import ipaddress
+import socket
+from urllib.parse import urlparse, urljoin
 from uploader import process_file, translate_to_tetum
 from supabase import create_client, Client
 from flask_cors import CORS
+from flask import render_template
 import os
 from pathlib import Path
 from dotenv import load_dotenv
@@ -19,10 +25,13 @@ print("CORS_ORIGINS =", os.getenv("CORS_ORIGINS"))
 
 
 app = Flask(__name__)
+# "".split(",") returns [''] rather than [], which would otherwise make
+# CORS match against a blank origin - filter those out.
+cors_origins = [o.strip() for o in os.getenv("CORS_ORIGINS", "").split(",") if o.strip()]
 CORS(
     app,
     supports_credentials=True,
-    origins=os.getenv("CORS_ORIGINS", "").split(","),
+    origins=cors_origins,
     allow_headers=["Content-Type", "Authorization"],
     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
 )
@@ -31,9 +40,45 @@ CORS(
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+# Used for the Admin Dashboard link and the /api/health reachability check.
+FRONTEND_URL = cors_origins[0] if cors_origins else None
 
 print("Supabase URL:", SUPABASE_URL)
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+#### GLOBAL ERROR HANDLERS ####
+# Catches ANY unhandled exception from ANY route and returns clean JSON
+# instead of Flask's default HTML error/traceback page.
+@app.errorhandler(Exception)
+def handle_uncaught_exception(e):
+    from werkzeug.exceptions import HTTPException
+
+    # If it's a proper HTTP exception (404, 405, etc.), keep its real status code
+    if isinstance(e, HTTPException):
+        return jsonify({
+            "error": e.description,
+            "type": type(e).__name__
+        }), e.code
+
+    # Log full traceback to terminal for debugging
+    app.logger.exception("Unhandled exception occurred")
+
+    # Anything else (DB errors, bugs, etc.) -> 500 with the exception message
+    return jsonify({
+        "error": str(e),
+        "type": type(e).__name__
+    }), 500
+
+
+@app.errorhandler(404)
+def handle_404(e):
+    return jsonify({"error": "endpoint not found"}), 404
+
+
+@app.errorhandler(405)
+def handle_405(e):
+    return jsonify({"error": "method not allowed"}), 405
+
 
 #register auth and authz routes
 register_auth_routes(app, supabase)
@@ -46,7 +91,193 @@ from media import register_media_routes
 register_media_routes(app, supabase)
 
 
+#startup screen route
+@app.route("/")
+def home():
+       # frontend_url will be None if CORS_ORIGINS is empty - templates/index.html
+       # must check for that and hide/label the Admin Dashboard link accordingly
+       # rather than rendering a broken href="None".
+       return render_template("index.html", frontend_url=FRONTEND_URL)
 
+
+def extract_page_image(html: str):
+    """
+    Looks for a page's 'real' image via Open Graph / Twitter meta tags.
+    Handles content= before or after property=/name= in the tag.
+    """
+    patterns = [
+        r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)["\']',
+        r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+property=["\']og:image["\']',
+        r'<meta[^>]+name=["\']twitter:image["\'][^>]+content=["\']([^"\']+)["\']',
+        r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+name=["\']twitter:image["\']',
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, html, re.IGNORECASE)
+        if match:
+            return match.group(1)
+    return None
+
+
+#### SSRF PREVENTION for /api/resolve-image ####
+# This endpoint fetches an arbitrary, user-supplied URL server-side. Without
+# these checks, someone could point it at localhost, an internal service on
+# the private network, or a cloud metadata endpoint (169.254.169.254) and
+# use the backend as a proxy to reach it.
+
+ALLOWED_URL_SCHEMES = {"http", "https"}
+MAX_IMAGE_URL_REDIRECTS = 5
+
+
+def _is_blocked_ip(ip_str: str) -> bool:
+    """True if this address must never be contacted by the backend."""
+    try:
+        ip = ipaddress.ip_address(ip_str)
+    except ValueError:
+        return True  # unparsable - treat as unsafe
+    return (
+        ip.is_private       # 10/8, 172.16/12, 192.168/16, etc.
+        or ip.is_loopback    # 127.0.0.1, ::1
+        or ip.is_link_local  # 169.254.0.0/16 - covers the cloud metadata IP
+        or ip.is_reserved
+        or ip.is_multicast
+        or ip.is_unspecified
+    )
+
+
+def _hostname_resolves_safely(hostname: str) -> bool:
+    """Resolves every address a hostname maps to and requires ALL of them
+    to be safe (a hostname can round-robin across multiple IPs)."""
+    try:
+        infos = socket.getaddrinfo(hostname, None)
+    except socket.gaierror:
+        return False
+    addrs = {info[4][0] for info in infos}
+    return bool(addrs) and all(not _is_blocked_ip(addr) for addr in addrs)
+
+
+def _is_safe_external_url(url: str) -> bool:
+    """Full check for a URL that's about to be fetched server-side."""
+    parsed = urlparse(url)
+    if parsed.scheme not in ALLOWED_URL_SCHEMES:
+        return False
+    hostname = parsed.hostname
+    if not hostname or hostname.lower() == "localhost":
+        return False
+    return _hostname_resolves_safely(hostname)
+
+
+@app.get("/api/resolve-image")
+def resolve_image():
+    admin_id, err = get_admin_user(supabase)
+    if err:
+        return jsonify({"error": err[0]}), err[1]
+
+    target_url = request.args.get("url")
+    if not target_url:
+        return jsonify({"error": "url query param required"}), 400
+
+    if not _is_safe_external_url(target_url):
+        return jsonify({"error": "url points to a disallowed destination"}), 400
+
+    current_url = target_url
+    try:
+        for _ in range(MAX_IMAGE_URL_REDIRECTS):
+            resp = requests.get(
+                current_url,
+                timeout=6,
+                headers={"User-Agent": "Mozilla/5.0 (compatible; SpeciesDBBot/1.0)"},
+                allow_redirects=False,
+            )
+
+            if resp.is_redirect or resp.status_code in (301, 302, 303, 307, 308):
+                location = resp.headers.get("Location")
+                if not location:
+                    return jsonify({"error": "redirect with no location"}), 502
+                next_url = urljoin(current_url, location)
+                if not _is_safe_external_url(next_url):
+                    return jsonify({"error": "redirect points to a disallowed destination"}), 400
+                current_url = next_url
+                continue
+
+            break
+        else:
+            return jsonify({"error": "too many redirects"}), 502
+    except requests.RequestException as e:
+        return jsonify({"error": f"failed to fetch url: {str(e)}"}), 502
+
+    content_type = resp.headers.get("Content-Type", "")
+
+    # already a direct image file
+    if content_type.startswith("image/"):
+        return jsonify({"resolved_url": current_url}), 200
+
+    # otherwise treat as an HTML page and look for its preview image
+    page_image = extract_page_image(resp.text)
+    if page_image:
+        page_image = urljoin(current_url, page_image)
+        if not _is_safe_external_url(page_image):
+            return jsonify({"error": "extracted image url points to a disallowed destination"}), 400
+        return jsonify({"resolved_url": page_image}), 200
+
+    return jsonify({"error": "could not find an image on this page"}), 404
+
+
+@app.get("/api/health")
+def health_check():
+    """
+    Checks each core table by running a lightweight query against it, plus
+    whether the React frontend dev server is actually reachable.
+    Used by the index.html status dashboard to show what's working / broken.
+    """
+    tables_to_check = [
+        "users",
+        "species_en",
+        "species_tet",
+        "media",
+        "analytics",
+        "changelog",
+        "admin_sessions",
+    ]
+
+    checks = {}
+
+    for table in tables_to_check:
+        try:
+            supabase.table(table).select("*").limit(1).execute()
+            checks[table] = {"status": "ok"}
+        except Exception as e:
+            checks[table] = {"status": "error", "message": str(e)}
+
+    # Frontend check: done server-side (rather than via browser fetch) so
+    # this isn't blocked by CORS - the backend simply tries to reach the
+    # Vite dev server directly over the network.
+    if not FRONTEND_URL:
+        checks["frontend"] = {
+            "status": "error",
+            "message": "No frontend origin available - CORS_ORIGINS is empty",
+        }
+    else:
+        try:
+            resp = requests.get(FRONTEND_URL, timeout=2)
+            if resp.status_code < 500:
+                checks["frontend"] = {"status": "ok"}
+            else:
+                checks["frontend"] = {
+                    "status": "error",
+                    "message": f"Frontend responded with status {resp.status_code}",
+                }
+        except requests.RequestException:
+            checks["frontend"] = {
+                "status": "error",
+                "message": f"Could not reach frontend at {FRONTEND_URL}",
+            }
+
+    overall = "ok" if all(c["status"] == "ok" for c in checks.values()) else "degraded"
+
+    return jsonify({
+        "overall": overall,
+        "checks": checks
+    }), 200
 
 #supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 #supabase_tetum = create_client(SUPABASE_URL_TETUM, SUPABASE_SERVICE_KEY_TETUM)
@@ -835,6 +1066,10 @@ def analytics_users():
 # User Management Endpoints
 @app.route("/api/users", methods=["POST"])
 def create_user():
+    admin_id, err = get_admin_user(supabase)
+    if err:
+        return jsonify({"error": err[0]}), err[1]
+
     # Validate JSON body
     data = request.get_json(silent=True)
     if not data:
@@ -916,6 +1151,10 @@ def create_user():
 
 @app.route("/api/users", methods=["GET"])
 def get_users():
+    admin_id, err = get_admin_user(supabase)
+    if err:
+        return jsonify({"error": err[0]}), err[1]
+
     res = supabase.table("users") \
         .select("user_id, name, role, is_active, created_at") \
         .order("user_id") \
@@ -925,6 +1164,9 @@ def get_users():
 
 @app.route("/api/users/<int:user_id>", methods=["PUT"])
 def update_user(user_id):
+    admin_id, err = get_admin_user(supabase)
+    if err:
+        return jsonify({"error": err[0]}), err[1]
 
     existing = supabase.table("users").select("auth_provider").eq("user_id", user_id).limit(1).execute()
     if not existing.data:
@@ -962,6 +1204,10 @@ def update_user(user_id):
 
 @app.route("/api/users/<int:user_id>", methods=["DELETE"])
 def delete_user(user_id):
+    admin_id, err = get_admin_user(supabase)
+    if err:
+        return jsonify({"error": err[0]}), err[1]
+
     supabase.table("users") \
         .delete() \
         .eq("user_id", user_id) \

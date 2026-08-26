@@ -6,7 +6,6 @@ import Alert from '@mui/material/Alert'
 import axios from 'axios'
 import { adminFetch } from '../utils/adminFetch'
 import { translations } from '../translations'
-import LanguageToggle from "../Components/LanguageToggle";
 import { useLanguage } from "../LanguageContext";
 
 const API_URL = import.meta.env.VITE_API_URL
@@ -319,8 +318,6 @@ export default function Page1() {
                 {t("addSpecies")}
               </h2>
             </Box>
-      
-            <LanguageToggle />
           </Box>
       
           <Box

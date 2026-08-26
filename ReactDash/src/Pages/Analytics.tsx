@@ -68,12 +68,22 @@ function formatLastLogin(lastLogin: string | null): string {
   return new Date(lastLogin).toLocaleString();
 }
 
-function getActivityLabel(user: UserAnalytics): string {
+function getActivityLabel(user: UserAnalytics, t: (key: string) => string): string {
   const loginCount = safeNumber(user.login_count);
 
-  if (loginCount === 0) return "No Activity";
-  if (loginCount < 3) return "Low Activity";
-  return "Active User";
+  if (loginCount === 0) return t("activityInactive");
+  if (loginCount < 3) return t("activityModerate");
+  return t("activityActive");
+}
+
+// Formats a raw stored name (e.g. "JOHN smith") into Title Case ("John Smith")
+function getDisplayName(name: string): string {
+  if (!name) return "";
+  return name
+    .toLowerCase()
+    .split(" ")
+    .map((word) => (word ? word.charAt(0).toUpperCase() + word.slice(1) : word))
+    .join(" ");
 }
 
 export default function Analytics() {
@@ -210,7 +220,37 @@ export default function Analytics() {
         <StatCard icon={<TimerIcon />} label={t("avgSession")} value={overview?.average_session_duration} />
         <StatCard icon={<SpaIcon />} label={t("totalSpecies")} value={overview?.total_species} />
         <StatCard icon={<ImageIcon />} label={t("speciesWithMedia")} value={overview?.species_with_media} />
+        <StatCard icon={<WarningIcon />} label={t("usersWithNoLogins")} value={usersWithNoLogin} />
+        <StatCard icon={<WarningIcon />} label={t("inactiveUsers")} value={inactiveUsers} />
       </Box>
+
+      {mostActiveUser && (
+        <Card
+          elevation={0}
+          sx={{
+            border: "1px solid #d8edbd",
+            borderRadius: 3,
+            boxShadow: "0 2px 12px rgba(45,106,10,0.07)",
+            mb: 4,
+            background: "linear-gradient(135deg, #eef6e6 0%, #ffffff 100%)",
+          }}
+        >
+          <CardContent sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <StarIcon sx={{ color: "#2d6a0a", fontSize: 32 }} />
+            <Box>
+              <Typography variant="caption" sx={{ color: "#7a9464", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                {t("mostActiveUser")}
+              </Typography>
+              <Typography variant="h6" sx={{ color: "#1a2e10", fontWeight: 700 }}>
+                {getDisplayName(mostActiveUser.name)}
+              </Typography>
+              <Typography variant="body2" sx={{ color: "#6b7280" }}>
+                {safeNumber(mostActiveUser.login_count)} {t("logins")}
+              </Typography>
+            </Box>
+          </CardContent>
+        </Card>
+      )}
 
       <Box
         display="grid"
@@ -306,9 +346,15 @@ export default function Analytics() {
           >
             <CardContent>
               <Typography variant="h6" sx={{ color: "#1a2e10", fontWeight: 700 }}>
-                {user.name}
+                {getDisplayName(user.name)}
               </Typography>
 
+              <Chip
+                label={getActivityLabel(user, t)}
+                size="small"
+                sx={{ mt: 0.5, mb: 1, backgroundColor: "#f7eacb", color: "#2d6a0a", fontWeight: 600 }}
+              />
+  
               <Typography color="text.secondary">
                 {t("role")}: {user.role}
               </Typography>

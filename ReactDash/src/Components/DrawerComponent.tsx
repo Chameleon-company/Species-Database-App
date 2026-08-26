@@ -26,9 +26,6 @@ const DRAWER_WIDTH = 220;
 type TranslationKey = keyof typeof translations;
 type Lang = "en" | "tet";
 
-const getLang = (): Lang =>
-  localStorage.getItem("lang") === "tet" ? "tet" : "en";
-
 /* ─── Styles ──────────────────────────────────────────────────────── */
 const styles: Record<string, React.CSSProperties> = {
   sidebar: {
@@ -50,6 +47,31 @@ const styles: Record<string, React.CSSProperties> = {
     height: 40,
     width: "auto",
     objectFit: "contain",
+  },
+  langToggleInner: {
+    display: "flex",
+    backgroundColor: "#f0f9e8",
+    border: "1px solid #d8edbd",
+    borderRadius: 20,
+    padding: 3,
+    gap: 2,
+  },
+  langBtn: {
+    border: "none",
+    backgroundColor: "#ffffff",
+    fontFamily: "'DM Sans', sans-serif",
+    fontSize: 11,
+    fontWeight: 700,
+    letterSpacing: "0.03em",
+    padding: "5px 14px",
+    borderRadius: 16,
+    cursor: "pointer",
+    color: "#5a7a4a",
+    transition: "background-color 0.15s, color 0.15s",
+  },
+  langBtnActive: {
+    backgroundColor: "#2d6a0a",
+    color: "#ffffff",
   },
   sectionLabel: {
     padding: "20px 20px 8px",
@@ -80,13 +102,13 @@ const styles: Record<string, React.CSSProperties> = {
     margin: "0 10px 16px",
     border: "none",
     borderRadius: 12,
-    background: "transparent",
+    backgroundColor: "transparent",
     cursor: "pointer",
     fontSize: 14,
     fontWeight: 500,
     color: "#9ca3af",
     fontFamily: "'DM Sans', sans-serif",
-    transition: "background 0.15s, color 0.15s",
+    transition: "background-color 0.15s, color 0.15s",
     width: "calc(100% - 20px)",
     textAlign: "left",
   },
@@ -116,7 +138,7 @@ const styles: Record<string, React.CSSProperties> = {
     boxSizing: "border-box",
   },
   mobileMenuBtn: {
-    background: "transparent",
+    backgroundColor: "transparent",
     border: "none",
     cursor: "pointer",
     display: "flex",
@@ -131,7 +153,7 @@ const styles: Record<string, React.CSSProperties> = {
     position: "relative",
   },
   accountBtn: {
-    background: "transparent",
+    backgroundColor: "transparent",
     border: "none",
     cursor: "pointer",
     display: "flex",
@@ -141,7 +163,7 @@ const styles: Record<string, React.CSSProperties> = {
     height: 36,
     borderRadius: "50%",
     color: "#6b7280",
-    transition: "background 0.15s",
+    transition: "background-color 0.15s",
   },
   dropdown: {
     position: "absolute",
@@ -176,14 +198,14 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 8,
     width: "100%",
     padding: "10px 16px",
-    background: "transparent",
+    backgroundColor: "transparent",
     border: "none",
     cursor: "pointer",
     fontSize: 13,
     color: "#ef4444",
     fontFamily: "'DM Sans', sans-serif",
     fontWeight: 500,
-    transition: "background 0.15s",
+    transition: "background-color 0.15s",
     textAlign: "left",
     boxSizing: "border-box",
   },
@@ -220,7 +242,7 @@ function NavItem({
         fontWeight: 500,
         color: active ? "#2d6a0a" : hovered ? "#3d7a14" : "#6b7280",
         backgroundColor: active ? "#dff0c8" : hovered ? "#f0f9e8" : "transparent",
-        transition: "background 0.15s, color 0.15s",
+        transition: "background-color 0.15s, color 0.15s",
         position: "relative",
         overflow: "hidden",
       }}
@@ -253,7 +275,7 @@ function NavItem({
           backgroundColor: active ? "#c2e29a" : hovered ? "#e4f5d0" : "transparent",
           color: active ? "#2d6a0a" : hovered ? "#3d7a14" : "#9ca3af",
           flexShrink: 0,
-          transition: "background 0.15s, color 0.15s",
+          transition: "background-color 0.15s, color 0.15s",
         }}
       >
         <Icon sx={{ fontSize: 18 }} />
@@ -273,6 +295,56 @@ function NavItem({
         />
       )}
     </Link>
+  );
+}
+
+/* ─── Language Toggle ─────────────────────────────────────────────── */
+function LangToggle({
+  lang,
+  setLang,
+}: {
+  lang: Lang;
+  setLang: (lang: Lang) => void;
+}) {
+  return (
+    <>
+      <style>{`
+        button.lang-pill-btn {
+          background-color: #ffffff !important;
+          border: none !important;
+        }
+        button.lang-pill-btn.lang-pill-btn-active {
+          background-color: #2d6a0a !important;
+        }
+        button.lang-pill-btn:hover {
+          border-color: transparent !important;
+        }
+      `}</style>
+      <div style={styles.langToggleInner}>
+        <button
+          type="button"
+          className={`lang-pill-btn ${lang === "en" ? "lang-pill-btn-active" : ""}`}
+          style={{
+            ...styles.langBtn,
+            ...(lang === "en" ? styles.langBtnActive : {}),
+          }}
+          onClick={() => setLang("en")}
+        >
+          EN
+        </button>
+        <button
+          type="button"
+          className={`lang-pill-btn ${lang === "tet" ? "lang-pill-btn-active" : ""}`}
+          style={{
+            ...styles.langBtn,
+            ...(lang === "tet" ? styles.langBtnActive : {}),
+          }}
+          onClick={() => setLang("tet")}
+        >
+          TET
+        </button>
+      </div>
+    </>
   );
 }
 
@@ -308,8 +380,8 @@ function AccountMenu({
       {open && (
         <div style={styles.dropdown}>
           <div style={styles.dropdownHeader}>
-          <p style={styles.dropdownHeaderTitle}>{t("admin")}</p>
-          <p style={styles.dropdownHeaderSub}>{t("signedIn")}</p>
+            <p style={styles.dropdownHeaderSub}>{t("signedAs")}</p>
+            <p style={styles.dropdownHeaderSub}>{t("signedIn")}</p>
           </div>
           <button
             style={styles.dropdownLogout}
@@ -379,7 +451,7 @@ function SidebarContent({
         <img src={Logo} alt="FINI Logo" style={styles.logo} />
       </div>
 
-      <div style={styles.sectionLabel}>Main Menu</div>
+      <div style={styles.sectionLabel}>{t("mainMenu")}</div>
 
       <nav style={styles.nav}>
         {navItems.map(({ url, label, Icon }) => (
@@ -428,18 +500,8 @@ export default function DrawerComponent({
 }) {
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [isClosing, setIsClosing] = React.useState(false);
-  const [lang, setLang] = React.useState<Lang>(getLang());
+  const { lang, setLang } = useLanguage();
   const navigate = useNavigate();
-
-  React.useEffect(() => {
-    const syncLang = () => setLang(getLang());
-    window.addEventListener("storage", syncLang);
-    window.addEventListener("languageChanged", syncLang as EventListener);
-    return () => {
-      window.removeEventListener("storage", syncLang);
-      window.removeEventListener("languageChanged", syncLang as EventListener);
-    };
-  }, []);
 
   const t = React.useCallback(
     (key: TranslationKey) => translations[key][lang],
@@ -481,6 +543,10 @@ export default function DrawerComponent({
           >
             {mobileOpen ? <CloseIcon fontSize="small" /> : <MenuIcon fontSize="small" />}
           </IconButton>
+        </div>
+
+        <div style={{ marginRight: 12 }}>
+          <LangToggle lang={lang as Lang} setLang={setLang} />
         </div>
 
         <AccountMenu onLogout={handleLogout} t={t} />
