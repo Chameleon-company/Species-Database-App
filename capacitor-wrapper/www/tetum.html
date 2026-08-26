@@ -52,6 +52,7 @@
       <script src="scripts/db.js"></script>
       <script src="scripts/dataService.js"></script>
       <script src="scripts/sync.js"></script>
+      <script src="scripts/imageCache.js"></script>
       <script src="scripts/specieslist.js"></script>
       <script src="scripts/filterCarousel.js"></script>
       <script src="scripts/detectOnline.js" defer></script>
@@ -278,7 +279,7 @@
           return;
         }
 
-        let filtered = [...loadedSpeciesData];
+        let filtered = [...window.loadedSpeciesData];
 
         // Apply leaf type filter
         if (activeFilters.leafType) {
@@ -416,8 +417,8 @@
             }
 
             // Render all species - check if data is loaded
-            if (loadedSpeciesData && loadedSpeciesData.length > 0) {
-              renderSpecies(loadedSpeciesData);
+            if (window.loadedSpeciesData && window.loadedSpeciesData.length > 0) {
+              renderSpecies(window.loadedSpeciesData);
             } else {
               console.warn("Species data not loaded yet");
             }
@@ -508,7 +509,7 @@
           return;
         }
 
-        const sorted = [...loadedSpeciesData].sort((a, b) => {
+        const sorted = [...window.loadedSpeciesData].sort((a, b) => {
           const nameA = a.scientific_name.toLowerCase();
           const nameB = b.scientific_name.toLowerCase();
 

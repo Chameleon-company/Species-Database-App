@@ -1,30 +1,3 @@
-async function loadSpeciesImages(scientificName) {
-    console.log(scientificName);
-    try{
-        const res = await fetch("/data/images.json");
-        const imagesMap = await res.json();
-
-        const id = scientificName.toLowerCase().replace(/\s+/g,'-');
-        const imageUrls = imagesMap[id] || [];
-
-        const gallery = document.getElementById("image-gallery");
-        gallery.innerHTML = "";
-
-        if(imageUrls.length !== 0){
-            imageUrls.forEach(url => {
-                
-                const img = document.createElement("img");
-                img.loading = "lazy";
-                loadImageWithCache(img,url,id); //Load from cache if possible
-                gallery.appendChild(img);
-            });
-        }
-        console.log(gallery);
-    } catch (e) {
-        console.warn("images.json not available");
-    }
-}
-
 //Save image as blob obejct
 async function saveImageBlob(url,speciesId,blob) {
     const database = await window.db.init();
@@ -124,8 +97,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if(!stored) return;
 
     const species = JSON.parse(stored);
-
-    //loadSpeciesImages(species.scientific_name);
 });
 
 window.saveImageBlob = saveImageBlob;
