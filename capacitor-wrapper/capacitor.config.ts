@@ -1,18 +1,11 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-    appId: '...',
-    appName: '...',
+    appId: 'com.raimatak.speciesdb',
+    appName: 'Species Database App',
     webDir: '../Frontend',
 
-    server: {
-        androidScheme: 'http',
-        cleartext: true
-    },
 
-    android: {
-        allowMixedContent: true
-    }
 };
 
 export default config;
