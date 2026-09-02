@@ -125,7 +125,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const species = JSON.parse(stored);
 
-    loadSpeciesImages(species.scientific_name);
+    //loadSpeciesImages(species.scientific_name);
 });
 
 window.saveImageBlob = saveImageBlob;

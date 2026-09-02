@@ -1066,6 +1066,10 @@ def analytics_users():
 # User Management Endpoints
 @app.route("/api/users", methods=["POST"])
 def create_user():
+    admin_id, err = get_admin_user(supabase)
+    if err:
+        return jsonify({"error": err[0]}), err[1]
+
     # Validate JSON body
     data = request.get_json(silent=True)
     if not data:
@@ -1147,6 +1151,10 @@ def create_user():
 
 @app.route("/api/users", methods=["GET"])
 def get_users():
+    admin_id, err = get_admin_user(supabase)
+    if err:
+        return jsonify({"error": err[0]}), err[1]
+
     res = supabase.table("users") \
         .select("user_id, name, role, is_active, created_at") \
         .order("user_id") \
@@ -1156,6 +1164,9 @@ def get_users():
 
 @app.route("/api/users/<int:user_id>", methods=["PUT"])
 def update_user(user_id):
+    admin_id, err = get_admin_user(supabase)
+    if err:
+        return jsonify({"error": err[0]}), err[1]
 
     existing = supabase.table("users").select("auth_provider").eq("user_id", user_id).limit(1).execute()
     if not existing.data:
@@ -1193,6 +1204,10 @@ def update_user(user_id):
 
 @app.route("/api/users/<int:user_id>", methods=["DELETE"])
 def delete_user(user_id):
+    admin_id, err = get_admin_user(supabase)
+    if err:
+        return jsonify({"error": err[0]}), err[1]
+
     supabase.table("users") \
         .delete() \
         .eq("user_id", user_id) \

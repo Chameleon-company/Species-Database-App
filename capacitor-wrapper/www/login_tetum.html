@@ -1,40 +1,59 @@
-<!--log in page-->
+<!-- Login page -->
 <!DOCTYPE html>
-<html lang="tet">
+<html lang="en">
 
 <head>
   <meta charset="UTF-8" />
-  <title>Baze-dadus Espésie sira - Splash</title>
+  <title>Sign In — Species Database</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description"
+    content="Sign in to Species Database — identify plant species instantly using your smartphone." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="css/login.css" />
 </head>
 
 <body>
   <div class="app-shell">
     <div class="app-container">
+
+      <!-- Logo -->
       <img src="Assets/Images/Camouflage18/image.png" alt="Species Database Logo" class="logo-img" />
-      <div class="title">SPECIES DATABASE</div>
-      <div class="subtitle">
+
+      <!-- Heading -->
+      <h1 class="title">Species Database</h1>
+      <p class="subtitle">
         Identifika espésie ai-horis sira kedas uza ita-boot nia smartphone.
         Halo eskaneamentu, esplora no rai ita-boot nia deskoberta favoritu sira.
-      </div>
+      </p>
 
+      <!-- Login form -->
       <div class="email-group">
-        <label class="email-label">Username (Naran uza atu tama)
-        </label>
-        <input type="text" class="email-input" placeholder="" id="usernameInput" required />
-        <label class="email-label">Password (Kódigu sekretu)</label>
-        <input type="password" class="email-input" id="passwordInput" required />
-        <div class="error-text" id="loginError"></div>
-        <button class="btn email-btn" id="emailContinueBtn">
-          Sign in
+        <label class="email-label" for="usernameInput">Username (Naran uza atu tama)</label>
+        <input type="text" class="email-input" placeholder="Username (Naran uza atu tama)" id="usernameInput"
+          autocomplete="username" required />
+
+        <label class="email-label" for="passwordInput">Password (Kódigu sekretu)</label>
+        <input type="password" class="email-input" placeholder="Password (Kódigu sekretu)" id="passwordInput"
+          autocomplete="current-password" required />
+
+        <div class="error-text" id="loginError" role="alert"></div>
+
+        <button class="btn email-btn" id="emailContinueBtn" type="button">
+          Sign In
+        </button>
+
+        <button class="btn btn-secondary" id="guestBtn" type="button">
+          Continue as Guest
         </button>
       </div>
 
+      <!-- Admin footer -->
       <div class="footer">
         Admin?
         <a href="login-admin.html">Go to admin login</a>
       </div>
+
     </div>
   </div>
 
@@ -44,8 +63,6 @@
   <script src="scripts/dataService.js"></script>
   <script src="scripts/sync.js"></script>
   <script src="scripts/sw-register.js"></script>
-
-
 </body>
 
 </html>
