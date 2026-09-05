@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Species Database API</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f7fbf2;
+            color: #1a2e10;
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 48px 16px;
+        }
+
+        .wrapper {
+            width: 100%;
+            max-width: 560px;
+        }
+
+        .card {
+            background: #ffffff;
+            border: 1px solid #d8edbd;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(45, 106, 10, 0.08);
+            padding: 40px 48px;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .accent-bar {
+            width: 48px;
+            height: 5px;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #2d6a0a, #86b85a);
+            margin: 0 auto 20px;
+        }
+
+        h1 {
+            font-size: 1.9rem;
+            font-weight: 700;
+            color: #1a2e10;
+            margin-bottom: 12px;
+        }
+
+        p {
+            color: #5a7a4a;
+            font-size: 1rem;
+            line-height: 1.5;
+            margin-bottom: 24px;
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #eaf6d8;
+            color: #2d6a0a;
+            padding: 8px 16px;
+            border-radius: 24px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .status .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #2d6a0a;
+        }
+
+        .links {
+            margin-top: 28px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .links a {
+            text-decoration: none;
+            color: #2d6a0a;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: 1px solid #d8edbd;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: background 0.15s ease;
+        }
+
+        .links a:hover {
+            background: #eaf6d8;
+        }
+
+        /* Shown instead of the link when FRONTEND_URL / CORS_ORIGINS isn't
+           configured for this environment, so there's no dead/broken link. */
+        .links .not-configured {
+            display: inline-flex;
+            align-items: center;
+            color: #9ca3af;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: 1px dashed #d8edbd;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: not-allowed;
+        }
+
+        /* ---- Health check panel ---- */
+        .health-card {
+            background: #ffffff;
+            border: 1px solid #d8edbd;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(45, 106, 10, 0.08);
+            padding: 28px 32px;
+        }
+
+        .health-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+        }
+
+        .health-header h2 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #1a2e10;
+        }
+
+        .refresh-btn {
+            background: #eaf6d8;
+            border: 1px solid #d8edbd;
+            color: #2d6a0a;
+            font-weight: 600;
+            font-size: 0.8rem;
+            padding: 6px;
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.15s ease, transform 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .refresh-btn:hover {
+            background: #d8edbd;
+        }
+
+        .refresh-btn:active svg {
+            transform: rotate(180deg);
+        }
+
+        .refresh-btn svg {
+            width: 16px;
+            height: 16px;
+            transition: transform 0.4s ease;
+        }
+
+        .refresh-btn.spinning svg {
+            animation: spin 0.6s linear;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .overall-pill {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 16px;
+            margin-bottom: 16px;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+        }
+
+        .overall-ok {
+            background: #eaf6d8;
+            color: #2d6a0a;
+        }
+
+        .overall-degraded {
+            background: #fde8e8;
+            color: #b42318;
+        }
+
+        .check-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid #eef5e4;
+        }
+
+        .check-row:last-child {
+            border-bottom: none;
+        }
+
+        .check-name {
+            font-weight: 600;
+            font-size: 0.92rem;
+            color: #1a2e10;
+        }
+
+        .check-msg {
+            font-size: 0.78rem;
+            color: #b42318;
+            margin-top: 2px;
+            max-width: 320px;
+            text-align: right;
+            word-break: break-word;
+        }
+
+        .check-pill {
+            flex-shrink: 0;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 16px;
+            text-transform: uppercase;
+        }
+
+        .pill-ok {
+            background: #eaf6d8;
+            color: #2d6a0a;
+        }
+
+        .pill-error {
+            background: #fde8e8;
+            color: #b42318;
+        }
+
+        .loading-text {
+            color: #7a9464;
+            font-size: 0.9rem;
+            text-align: center;
+            padding: 12px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="card">
+            <div class="accent-bar"></div>
+            <h1>Species Database API</h1>
+            <p>This is the backend server for the Species Database App. It provides API endpoints for authentication, analytics, and species data.</p>
+            <div class="status">
+                <span class="dot"></span>
+                Backend is running
+            </div>
+            <div class="links">
+                {% if frontend_url %}
+                <a href="{{ frontend_url }}" target="_blank" rel="noopener">Open Admin Dashboard</a>
+                {% else %}
+                <span class="not-configured" title="CORS_ORIGINS is not set for this environment">Admin Dashboard (not configured)</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="health-card">
+            <div class="health-header">
+                <h2>System Status</h2>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span id="last-checked" style="font-size:0.75rem; color:#7a9464;"></span>
+                    <button class="refresh-btn" onclick="loadHealth(true)" title="Refresh" aria-label="Refresh">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <polyline points="1 20 1 14 7 14"></polyline>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div id="health-content">
+                <div class="loading-text">Checking system status&hellip;</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadHealth(isManual = false) {
+            const container = document.getElementById("health-content");
+            const refreshBtn = document.querySelector(".refresh-btn");
+
+            if (isManual && refreshBtn) {
+                refreshBtn.classList.add("spinning");
+                setTimeout(() => refreshBtn.classList.remove("spinning"), 600);
+            }
+
+            // Only show the "Checking..." wipe on first load or manual refresh click,
+            // not on every silent background auto-refresh (avoids flicker every 10s)
+            if (isManual || !container.dataset.loadedOnce) {
+                container.innerHTML = '<div class="loading-text">Checking system status&hellip;</div>';
+            }
+
+            try {
+                const res = await fetch("/api/health");
+                const data = await res.json();
+
+                const overallClass = data.overall === "ok" ? "overall-ok" : "overall-degraded";
+                const overallLabel = data.overall === "ok" ? "All Systems Operational" : "Issues Detected";
+
+                // Only show rows for checks that failed
+                const failedChecks = Object.entries(data.checks).filter(
+                    ([, check]) => check.status !== "ok"
+                );
+
+                let rowsHtml = "";
+                for (const [name, check] of failedChecks) {
+                    rowsHtml += `
+                        <div class="check-row">
+                            <div>
+                                <div class="check-name">${name}</div>
+                                <div class="check-msg">${escapeHtml(check.message || "Unknown error")}</div>
+                            </div>
+                            <span class="check-pill pill-error">Error</span>
+                        </div>
+                    `;
+                }
+
+                container.innerHTML = `
+                    <span class="overall-pill ${overallClass}">${overallLabel}</span>
+                    ${rowsHtml}
+                `;
+                container.dataset.loadedOnce = "true";
+
+                document.getElementById("last-checked").textContent =
+                    "Last checked: " + new Date().toLocaleTimeString();
+            } catch (err) {
+                container.innerHTML = `
+                    <div class="loading-text" style="color:#b42318;">
+                        Could not reach /api/health &mdash; is the backend running?
+                    </div>
+                `;
+            }
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement("div");
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        loadHealth();
+
+        // Auto-refresh every 10 seconds
+        setInterval(loadHealth, 10000);
+    </script>
+</body>
+</html>

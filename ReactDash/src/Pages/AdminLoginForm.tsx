@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/logo.png";
-
-
+import { translations } from "../translations";
+import { useLanguage } from "../LanguageContext";
 
 type GoogleCredentialResponse = {
   credential: string;
@@ -18,6 +18,10 @@ declare global {
 
 export default function AdminLoginForm() {
   const navigate = useNavigate();
+  const { lang, setLang } = useLanguage();
+
+  const t = (key: string) =>
+    (translations as any)[key]?.[lang] || key;
 
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
@@ -42,7 +46,7 @@ export default function AdminLoginForm() {
         localStorage.setItem("admin_token", data.access_token);
         navigate("/");
       } catch {
-        setError("Google login failed. Please try again.");
+        setError(t("googleLoginFailed"));
       } finally {
         setLoading(false);
       }
@@ -60,6 +64,7 @@ export default function AdminLoginForm() {
       document.getElementById("google-login"),
       { theme: "outline", size: "large", width: "100%" }
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loginAdmin = async () => {
@@ -72,11 +77,12 @@ export default function AdminLoginForm() {
         body: JSON.stringify({ name, password }),
       });
       const result = await response.json();
-      if (!response.ok) throw new Error(result.error || "Admin login failed");
+      if (!response.ok)
+        throw new Error(result.error || t("adminLoginFailed"));
       localStorage.setItem("admin_token", result.access_token);
       navigate("/");
     } catch (err: any) {
-      setError(err.message || "An error occurred. Please try again.");
+      setError(err.message || t("somethingWentWrong"));
     } finally {
       setLoading(false);
     }
@@ -108,6 +114,41 @@ export default function AdminLoginForm() {
           width: 100%;
           overflow: hidden;
           position: relative;
+        }
+
+        /* Language toggle */
+        .lang-toggle {
+          display: flex;
+          justify-content: flex-end;
+          margin-bottom: 16px;
+        }
+
+        .lang-toggle-inner {
+          display: flex;
+          background: rgba(255,255,255,0.6);
+          border: 1px solid rgba(45,106,10,0.25);
+          border-radius: 20px;
+          padding: 3px;
+          gap: 2px;
+        }
+
+        .lang-btn {
+          border: none;
+          background: transparent;
+          font-family: 'DM Sans', sans-serif;
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.03em;
+          padding: 5px 11px;
+          border-radius: 16px;
+          cursor: pointer;
+          color: #5a7a4a;
+          transition: background 0.15s, color 0.15s;
+        }
+
+        .lang-btn.active {
+          background: #2d6a0a;
+          color: #ffffff;
         }
 
         /* Top white section */
@@ -364,11 +405,30 @@ export default function AdminLoginForm() {
             <div className="logo-wrap">
               <img src={logo} alt="FINI logo" />
             </div>
-            <p className="card-title">Authorised Administrators Only</p>
+            <p className="card-title">{t("loginSubtitle")}</p>
           </div>
 
           {/* ── Bottom / Right: form ── */}
           <div className="card-bottom">
+            <div className="lang-toggle">
+              <div className="lang-toggle-inner">
+                <button
+                  type="button"
+                  className={`lang-btn ${lang === "en" ? "active" : ""}`}
+                  onClick={() => setLang("en")}
+                >
+                  EN
+                </button>
+                <button
+                  type="button"
+                  className={`lang-btn ${lang === "tet" ? "active" : ""}`}
+                  onClick={() => setLang("tet")}
+                >
+                  TET
+                </button>
+              </div>
+            </div>
+
             {error && <div className="error-box">{error}</div>}
 
             <form
@@ -383,7 +443,7 @@ export default function AdminLoginForm() {
                   <input
                     className="field-input"
                     type="text"
-                    placeholder="Username"
+                    placeholder={t("username")}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     autoComplete="username"
@@ -397,7 +457,7 @@ export default function AdminLoginForm() {
                   <input
                     className="field-input"
                     type={showPassword ? "text" : "password"}
-                    placeholder="Password"
+                    placeholder={t("password")}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     autoComplete="current-password"
@@ -406,7 +466,7 @@ export default function AdminLoginForm() {
                     type="button"
                     className="field-icon-btn"
                     onClick={() => setShowPassword((v) => !v)}
-                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    aria-label={showPassword ? t("hidePassword") : t("showPassword")}
                   >
                     {showPassword ? (
                       /* Eye-off */
@@ -431,13 +491,13 @@ export default function AdminLoginForm() {
                 className="login-btn"
                 disabled={loading}
               >
-                {loading ? "Logging in…" : "LOGIN"}
+                {loading ? t("loggingIn") : t("login")}
               </button>
 
               {/* OR divider */}
               <div className="or-divider">
                 <div className="or-line" />
-                <span className="or-text">OR</span>
+                <span className="or-text">{t("or")}</span>
                 <div className="or-line" />
               </div>
 
@@ -461,7 +521,7 @@ export default function AdminLoginForm() {
                   <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
                   <path fill="none" d="M0 0h48v48H0z"/>
                 </svg>
-                Sign In With Google
+                {t("signInWithGoogle")}
               </button>
 
               {/* Hidden real Google button */}

@@ -308,8 +308,8 @@
     </div>
     </main>
 
-    <script src="js/general.js"></script>
     <script src="scripts/config.js"></script>
+    <script src="js/general.js"></script>
     <script src="scripts/db.js"></script>
     <script src="scripts/dataService.js"></script>
     <script src="scripts/imageCache.js"></script>
@@ -394,7 +394,7 @@
           if(videoItem && videoItem.download_link)
           {
             videoBtn.addEventListener("click", ()=>{
-              window.location.href =`video.html?media=${encodeURIComponent(videoItem.download_link)}&species_id=${plantID}`;
+              window.location.href =`video.html?media=${encodeURIComponent(videoItem.download_link)}&species_id=${plantID}&title=${encodeURIComponent(species.scientific_name)}`;
             })
           }
           else {

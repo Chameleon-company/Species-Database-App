@@ -43,7 +43,7 @@ export default function TheDrawer() {
             to="/Page1"
             onClick={() => setOpen(false)}
           >
-            <ListItemText primary={t("addEntry")} />
+            <ListItemText primary={t("addSpecies")} />
           </ListItemButton>
         </ListItem>
 
@@ -53,7 +53,7 @@ export default function TheDrawer() {
             to="/EditEntry"
             onClick={() => setOpen(false)}
           >
-            <ListItemText primary={t("addEntry")} />
+            <ListItemText primary={t("editEntry")} />
           </ListItemButton>
         </ListItem>
 

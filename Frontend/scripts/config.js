@@ -14,6 +14,13 @@ const API_CONFIG = {
       ? 'http://127.0.0.1:5000'
       : 'https://species-database-app.onrender.com',
 
+  //Ensure it is from an allowed supabase host (default production DB, enter YOUR DB here)
+  SUPABASE_HOST:
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1'
+      ? 'lhsuizrhakkezafdbfkt.supabase.co' //YOUR SUPABASE DB HERE
+      : 'oppcngtkhywxsazeqqet.supabase.co',
+
   // API endpoint paths (relative to baseUrl)
   endpoints: {
     // Sync endpoints
