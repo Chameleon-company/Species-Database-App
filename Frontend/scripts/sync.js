@@ -13,17 +13,21 @@
 //after bundle sync and incremental updates
 function sendIMGToSW(images = [], timeoutMs = 60000) {
   return new Promise((resolve) => {
-    if (!navigator.serviceWorker?.controller) {
-      resolve({ success: [], failed: [], skipped: true });
-      return;
-    }
-
+    // CHANGED: count urls first, before checking controller —
+    // so if the controller is not ready yet, we know which URLs that is failed
     const urls = images
       .map((m) => m.download_link || m.url)
       .filter(Boolean);
 
     if (!urls.length) {
-      resolve({ success: [], failed: [], skipped: true });
+      resolve({ success: [], failed: [] });
+      return;
+    }
+
+    if (!navigator.serviceWorker?.controller) {
+      // CHANGED
+      console.warn('[Sync] No active service worker controller - media caching skipped');
+      resolve({ success: [], failed: urls, skipped: true });
       return;
     }
 
