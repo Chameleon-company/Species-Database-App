@@ -184,6 +184,20 @@ def _install_stubs():
         gt.Translator = _Translator
         sys.modules["googletrans"] = gt
 
+    _drop_cached_backend_modules()
+
+
+def _drop_cached_backend_modules():
+    #Every test file here installs its own FakeSupabase and then imports `app`.
+    #Python caches that import, so whichever file pytest loads first binds the
+    #Flask app to ITS fake for the entire run, and every later file's _reset()
+    #then fills a fake the app never reads. Dropping the cached backend modules
+    #forces the import below to rebuild against the stubs just installed.
+    for name, module in list(sys.modules.items()):
+        path = getattr(module, "__file__", None)
+        if path and os.path.dirname(os.path.abspath(path)) == BACKEND_DIR:
+            del sys.modules[name]
+
 
 _install_stubs()
 
