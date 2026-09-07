@@ -1,316 +1,488 @@
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+/* ============================================================
+   Species Database — Login Page Styles
+   Premium light-botanical redesign
+   ============================================================ */
 
-    :root {
-      --bg-outer: #02040a;
-      --bg-inner: #ffffff;
-      --card-shadow: 0 0 41px rgba(0, 0, 0, 0.6);
-      --text-main: #f5f5f5;
-      --text-muted: #c4c4c4;
-      --accent: #27c861;
-      --button-bg: #0B5C37;
-      --button-bg-hover: #182134;
-    }
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-    body {
-      min-height: 100vh;
-      background: radial-gradient(circle at top, #0f1a2c, var(--bg-outer));
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-        sans-serif;
-      color: var(--text-main);
-      overflow: hidden;
-    }
+/* ── Reset ── */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
-    .app-shell {
-      width: 100vw;
-      max-width: 480px;
-      padding: 16px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
+/* ── Design Tokens ── */
+:root {
+  --bg-deep: #eef5ee;
+  --bg-mid:  #dceede;
+  --card-bg: #ffffff;
+  --card-border: rgba(39, 168, 74, 0.16);
+  --card-shadow: 0 24px 72px rgba(30, 80, 40, 0.12), 0 0 0 1px rgba(39, 168, 74, 0.10);
 
-    .app-container {
-      width: 100%;
-      max-width: 480px;
-      padding: clamp(24px, 5vw, 40px) clamp(20px, 5vw, 28px) clamp(24px, 5vw, 48px);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      border-radius: 32px;
-      box-shadow: var(--card-shadow);
-      background: var(--bg-inner);
-      box-sizing: border-box;
-      justify-content: center;
-      overflow: hidden;
-      position: relative;
-    }
+  --accent: #1e8a3c;
+  --accent-dim: #166b2e;
+  --accent-glow: rgba(30, 138, 60, 0.16);
 
-    @media (min-height: 800px) {
-      .app-container {
-        padding-top: 72px;
-      }
-    }
+  --text-primary: #111c14;
+  --text-secondary: #3d5c44;
+  --text-muted: #7a9a82;
 
-    .logo-img {
-      width: clamp(140px, 30vw, 260px);
-      height: auto;
-      margin-bottom: 40px;
-    }
+  --input-bg: #f6faf6;
+  --input-border: #c8ddc9;
+  --input-focus-border: var(--accent);
+  --input-focus-glow: 0 0 0 3px rgba(30, 138, 60, 0.15);
 
-    .title {
-      font-size: clamp(24px, 5vw, 30px);
-      font-weight: 700;
-      letter-spacing: 0.14em;
-      text-align: center;
-      text-transform: uppercase;
-      margin-bottom: 18px;
-      opacity: 0;
-      transform: translateY(20px);
-      color: #151515;
-    }
+  --btn-primary-bg: linear-gradient(135deg, #27a84a 0%, #1a7a35 100%);
+  --btn-primary-hover: linear-gradient(135deg, #2fc455 0%, #1e8a3c 100%);
+  --btn-primary-shadow: 0 8px 24px rgba(30, 138, 60, 0.30);
 
-    .subtitle {
-      font-size: clamp(14px, 3.8vw, 18px);
-      text-align: center;
-      line-height: 1.5;
-      color: var(--text-muted);
-      padding: 0 8px;
-      margin-bottom: 18px;
-      opacity: 0;
-      transform: translateY(20px);
-      color: #151515;
-    }
+  --radius-card: 28px;
+  --radius-input: 14px;
+  --radius-btn: 999px;
 
-    .btn {
-      width: 100%;
-      padding: 18px 24px;
-      border-radius: 999px;
-      border: 1px solid #27324a;
-      background: var(--button-bg);
-      color: var(--text-main);
-      font-size: 16px;
-      font-weight: 500;
-      cursor: pointer;
-      outline: none;
-      margin-bottom: 14px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 8px;
-      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
-      transform: translateY(40px);
-      opacity: 0;
-    }
+  --font: 'Inter', system-ui, -apple-system, sans-serif;
+}
 
-    .btn:hover {
-      background: var(--button-bg-hover);
-    }
+/* ── Background ── */
+body {
+  min-height: 100vh;
+  background: linear-gradient(145deg, #e8f5e9 0%, #f0faf1 45%, #dff0e2 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: var(--font);
+  color: var(--text-primary);
+  overflow: hidden;
+  position: relative;
+}
 
-    .btn:active {
-      transform: translateY(42px) scale(0.98);
-    }
+/* Animated gradient orbs */
+body::before,
+body::after {
+  content: '';
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(90px);
+  pointer-events: none;
+  z-index: 0;
+}
 
-    .footer {
-      margin-top: 20px;
-      font-size: 14px;
-      text-align: center;
-      color: var(--text-muted);
-      opacity: 0;
-      transform: translateY(20px);
-      padding-bottom: 8px;
-    }
+body::before {
+  width: 560px;
+  height: 560px;
+  top: -160px;
+  left: -160px;
+  background: radial-gradient(circle, rgba(100, 210, 130, 0.28) 0%, transparent 70%);
+  animation: driftA 18s ease-in-out infinite alternate;
+}
 
-    .footer a {
-      text-decoration: none;
-      font-weight: 700;
-      color: var(--accent);
-      margin-left: 4px;
-    }
+body::after {
+  width: 480px;
+  height: 480px;
+  bottom: -140px;
+  right: -100px;
+  background: radial-gradient(circle, rgba(60, 180, 100, 0.20) 0%, transparent 70%);
+  animation: driftB 22s ease-in-out infinite alternate;
+}
 
-    .footer a:active {
-      opacity: 0.7;
-    }
+@keyframes driftA {
+  from {
+    transform: translate(0, 0) scale(1);
+  }
 
-    /* OR divider */
-    .divider {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin: 18px 0 22px;
-      opacity: 0;
-      transform: translateY(20px);
-    }
+  to {
+    transform: translate(40px, 60px) scale(1.1);
+  }
+}
 
-    .divider::before,
-    .divider::after {
-      content: "";
-      flex: 1;
-      height: 1px;
-      background: #d0d3db;
-    }
+@keyframes driftB {
+  from {
+    transform: translate(0, 0) scale(1);
+  }
 
-    .divider span {
-      font-size: 13px;
-      font-weight: 600;
-      color: #8a8a8a;
-    }
+  to {
+    transform: translate(-40px, -50px) scale(1.08);
+  }
+}
 
-    .section-divider {
-      display: block;
-      width: 100%;
-      height: 1px;
-      border: none;
-      background-color: #d0d3db;
-      border: 0;
-      margin: 28px 0 24px;
-      opacity: 1;
-    }
+/* Subtle grid texture */
+body>.app-shell {
+  position: relative;
+  z-index: 1;
+}
 
-    body.loaded .section-divider {
-      animation: fadeInUpSoft 0.7s ease-out forwards;
-    }
+/* ── Shell & Card ── */
+.app-shell {
+  margin: auto;
+  width: 100%;
+  max-width: 440px;
+  padding: 20px 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
+.app-container {
+  width: 100%;
+  padding: clamp(32px, 6vw, 48px) clamp(24px, 5vw, 36px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
 
-    /* Email section */
-    .email-group {
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      opacity: 0;
-      transform: translateY(20px);
-    }
+  background: var(--card-bg);
+  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--card-shadow);
+  position: relative;
+  overflow: hidden;
+}
 
-    .error-text {
-      color: #d32f2f;
-      font-size: 14px;
-      margin-top: 6px;
-      display: none;
-    }
+/* Top green shimmer line */
+.app-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 15%;
+  right: 15%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  border-radius: 999px;
+  opacity: 0.6;
+}
 
+/* ── Logo ── */
+.logo-img {
+  width: clamp(80px, 22vw, 120px);
+  height: auto;
+  object-fit: contain;
+  margin-bottom: 20px;
+  border-radius: 20px;
+  opacity: 0;
+  transform: translateY(16px) scale(0.92);
+  filter: drop-shadow(0 8px 24px rgba(30, 138, 60, 0.18));
+}
 
+/* ── Title ── */
+.title {
+  font-size: clamp(20px, 5vw, 26px);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-align: center;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  opacity: 0;
+  transform: translateY(14px);
+}
 
-    .email-label {
-      font-size: 14px;
-      font-weight: 600;
-      color: #2b2b2b;
-      margin-left: 8px;
-    }
+/* ── Subtitle ── */
+.subtitle {
+  font-size: clamp(13px, 3.2vw, 15px);
+  text-align: center;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  padding: 0 4px;
+  margin-bottom: 28px;
+  opacity: 0;
+  transform: translateY(14px);
+}
 
-    .email-input {
-      padding: clamp(12px, 2.5vw, 18px);
-      font-size: clamp(14px, 3.5vw, 16px);
-    }
+/* ── Divider ── */
+.divider {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 0 20px;
+  opacity: 0;
+  transform: translateY(14px);
+}
 
-    .email-input:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(39, 200, 97, 0.18);
-    }
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #c8ddc9;
+}
 
-    .btn, .btn.email-btn {
-      padding: clamp(14px, 3vw, 18px);
-      font-size: clamp(14px, 3.5vw, 16px);
-    }
+.divider span {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
 
-    @keyframes fadeInUpSoft {
-      from {
-        opacity: 0;
-        transform: translateY(30px);
-      }
+/* ── Form Group ── */
+.email-group {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  opacity: 0;
+  transform: translateY(14px);
+}
 
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
+/* ── Labels ── */
+.email-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: -4px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
 
-    @keyframes fadeInScale {
-      from {
-        opacity: 0;
-        transform: translateY(30px) scale(0.9);
-      }
+/* ── Inputs ── */
+.email-input {
+  width: 100%;
+  padding: 14px 16px;
+  font-size: 15px;
+  font-family: var(--font);
+  color: var(--text-primary);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-input);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  -webkit-appearance: none;
+}
 
-      to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
-    }
+.email-input::placeholder {
+  color: var(--text-muted);
+}
 
-    body.loaded .logo-img {
-      animation: fadeInScale 0.8s ease-out forwards;
-      animation-delay: 0.1s;
-    }
+.email-input:hover {
+  border-color: #a0c8a4;
+  background: #ffffff;
+}
 
-    body.loaded .title {
-      animation: fadeInUpSoft 0.7s ease-out forwards;
-      animation-delay: 0.35s;
-    }
+.email-input:focus {
+  border-color: var(--input-focus-border);
+  box-shadow: var(--input-focus-glow);
+  background: #f4fdf5;
+}
 
-    body.loaded .subtitle {
-      animation: fadeInUpSoft 0.7s ease-out forwards;
-      animation-delay: 0.55s;
-    }
+/* ── Error Message ── */
+.error-text {
+  color: #c0392b;
+  font-size: 13px;
+  font-weight: 500;
+  background: rgba(220, 53, 69, 0.07);
+  border: 1px solid rgba(220, 53, 69, 0.20);
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: none;
+  margin-top: -4px;
+}
 
-    body.loaded .btn:nth-of-type(1) {
-      animation: fadeInUpSoft 0.7s ease-out forwards;
-      animation-delay: 0.8s;
-    }
+/* ── Buttons — Base ── */
+.btn {
+  width: 100%;
+  padding: 15px 24px;
+  border-radius: var(--radius-btn);
+  border: none;
+  font-family: var(--font);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: 0.02em;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease,
+    background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  opacity: 0;
+  transform: translateY(14px);
+  -webkit-tap-highlight-color: transparent;
+}
 
-    body.loaded .btn:nth-of-type(2) {
-      animation: fadeInUpSoft 0.7s ease-out forwards;
-      animation-delay: 1s;
-    }
+/* ── Primary Button ── */
+.email-btn {
+  background: var(--btn-primary-bg);
+  color: #fff;
+  box-shadow: var(--btn-primary-shadow);
+  margin-top: 4px;
+}
 
-    body.loaded .divider {
-      animation: fadeInUpSoft 0.7s ease-out forwards;
-      animation-delay: 1.12s;
-    }
+.email-btn:hover {
+  background: var(--btn-primary-hover);
+  box-shadow: 0 12px 32px rgba(39, 168, 74, 0.48);
+  transform: translateY(-1px);
+}
 
-    body.loaded .email-group {
-      animation: fadeInUpSoft 0.7s ease-out forwards;
-      animation-delay: 1.18s;
-    }
+.email-btn:active {
+  transform: scale(0.98);
+  box-shadow: 0 4px 12px rgba(39, 168, 74, 0.28);
+}
 
-    body.loaded .footer {
-      animation: fadeInUpSoft 0.7s ease-out forwards;
-      animation-delay: 1.25s;
-    }
+/* ── Secondary / Ghost Button ── */
+.btn-secondary {
+  background: transparent;
+  color: var(--accent);
+  border: 1.5px solid rgba(30, 138, 60, 0.35);
+  box-shadow: none;
+}
 
-    @media (max-width: 360px) {
-      .subtitle {
-        margin-bottom: 40px;
-      }
+.btn-secondary:hover {
+  background: rgba(30, 138, 60, 0.06);
+  border-color: var(--accent);
+  color: var(--accent-dim);
+  transform: translateY(-1px);
+}
 
-      .btn {
-        padding: 14px 18px;
-        font-size: 15px;
-      }
-    }
+.btn-secondary:active {
+  transform: scale(0.98);
+}
 
+/* ── Footer ── */
+.footer {
+  margin-top: 20px;
+  font-size: 13px;
+  text-align: center;
+  color: var(--text-muted);
+  opacity: 0;
+  transform: translateY(14px);
+}
+
+.footer a {
+  text-decoration: none;
+  font-weight: 600;
+  color: var(--accent);
+  margin-left: 4px;
+  transition: color 0.2s;
+}
+
+.footer a:hover {
+  color: var(--accent-dim);
+}
+
+.footer a:active {
+  opacity: 0.7;
+}
+
+/* ── Google Button Wrapper ── */
 .google-btn-wrapper {
-  min-height: 56px;
+  min-height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.google-btn-wrapper:hover {
-  background: var(--button-bg-hover);
-}
-
-.google-btn-wrapper:active {
-  transform: translateY(42px) scale(0.98);
-}
-
-.google-btn-wrapper {
-  transform: translateY(40px);
   opacity: 0;
+  transform: translateY(14px);
+}
+
+/* ── Section Divider ── */
+.section-divider {
+  display: block;
+  width: 100%;
+  height: 1px;
+  border: none;
+  background: #c8ddc9;
+  margin: 24px 0 20px;
+  opacity: 1;
+}
+
+/* ============================================================
+   Entrance Animations — triggered by body.loaded
+   ============================================================ */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeScale {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.92);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+body.loaded .logo-img {
+  animation: fadeScale 0.7s cubic-bezier(0.34, 1.5, 0.64, 1) forwards;
+  animation-delay: 0.05s;
+}
+
+body.loaded .title {
+  animation: fadeUp 0.6s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+body.loaded .subtitle {
+  animation: fadeUp 0.6s ease-out forwards;
+  animation-delay: 0.32s;
+}
+
+body.loaded .divider {
+  animation: fadeUp 0.6s ease-out forwards;
+  animation-delay: 0.44s;
+}
+
+body.loaded .google-btn-wrapper {
+  animation: fadeUp 0.6s ease-out forwards;
+  animation-delay: 0.54s;
+}
+
+body.loaded .section-divider {
+  animation: fadeUp 0.6s ease-out forwards;
+  animation-delay: 0.62s;
+}
+
+body.loaded .email-group {
+  animation: fadeUp 0.6s ease-out forwards;
+  animation-delay: 0.68s;
+}
+
+body.loaded .email-btn {
+  animation: fadeUp 0.6s ease-out forwards;
+  animation-delay: 0.76s;
+}
+
+body.loaded .btn-secondary {
+  animation: fadeUp 0.6s ease-out forwards;
+  animation-delay: 0.84s;
+}
+
+body.loaded .footer {
+  animation: fadeUp 0.6s ease-out forwards;
+  animation-delay: 0.9s;
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+@media (max-width: 380px) {
+  .app-container {
+    border-radius: 20px;
+    padding: 28px 18px;
+  }
+
+  .title {
+    font-size: 19px;
+  }
+
+  .email-input,
+  .btn {
+    font-size: 14px;
+  }
 }
