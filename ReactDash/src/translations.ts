@@ -1054,6 +1054,11 @@ export const translations = {
     tet: "Media atualiza ho susesu.",
   },
 
+  mediaSavedRefreshFailed: {
+    en: "Media was saved successfully, but the media list could not be refreshed. Please refresh the page and try again.",
+    tet: "Media rai ho susesu, maibé lista media la konsege atualiza. Favor atualiza pájina no tenta fali.",
+  },
+
   mediaDeletedSuccessfully: {
     en: "Media deleted successfully.",
     tet: "Media hamos ho susesu.",

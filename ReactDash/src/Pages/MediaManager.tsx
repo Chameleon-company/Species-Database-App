@@ -743,7 +743,7 @@ export default function MediaManager() {
     return () => window.clearTimeout(timer);
   }, [successKey]);
 
-  const fetchMedia = async () => {
+  const fetchMedia = async (): Promise<boolean> => {
     setLoading(true);
     setErrorKey(null);
     setLoadFailed(false);
@@ -755,16 +755,18 @@ export default function MediaManager() {
         setErrorKey(resolveErrorKey("fetch", res.status));
         setLoadFailed(true);
         setMedia([]);
-        return;
+        return false;
       }
 
       const data = await res.json();
       setMedia(Array.isArray(data) ? data : []);
+      return true;
     } catch {
       // The request never got a response at all (offline, DNS, CORS, etc).
       setErrorKey(resolveErrorKey("fetch", 0));
       setLoadFailed(true);
       setMedia([]);
+      return false;
     } finally {
       setLoading(false);
     }
@@ -860,11 +862,18 @@ export default function MediaManager() {
         return row;
       }
 
-      await fetchMedia();
+      const refreshSucceeded = await fetchMedia();
 
-      setSuccessKey(
-        isNew ? "mediaAddedSuccessfully" : "mediaUpdatedSuccessfully"
-      );
+      if (refreshSucceeded) {
+        setErrorKey(null);
+        setSuccessKey(
+          isNew ? "mediaAddedSuccessfully" : "mediaUpdatedSuccessfully"
+        );
+      } else {
+        setSuccessKey(null);
+        setLoadFailed(true);
+        setErrorKey("mediaSavedRefreshFailed");
+      }
     } catch {
       // The request never got a response at all (offline, DNS, CORS, etc).
       setErrorKey(resolveErrorKey("save", 0));
