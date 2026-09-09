@@ -928,8 +928,16 @@ export default function MediaManager() {
         return;
       }
 
-      await fetchMedia();
-      setSuccessKey("mediaDeletedSuccessfully");
+      const refreshSucceeded = await fetchMedia();
+
+      if (refreshSucceeded) {
+        setErrorKey(null);
+        setSuccessKey("mediaDeletedSuccessfully");
+      } else {
+        setSuccessKey(null);
+        setLoadFailed(true);
+        setErrorKey("mediaDeletedRefreshFailed");
+      }
     } catch {
       setErrorKey(resolveErrorKey("delete", 0));
     } finally {

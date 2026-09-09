@@ -1064,6 +1064,11 @@ export const translations = {
     tet: "Media hamos ho susesu.",
   },
 
+  mediaDeletedRefreshFailed: {
+    en: "Media was deleted successfully, but the media list could not be refreshed. Please refresh the page and try again.",
+    tet: "Media hamos ho susesu, maibé lista media la konsege atualiza. Favor atualiza pájina no tenta fali.",
+  },
+
   adminMediaInstructionsTitle: {
     en: "Administrator Instructions",
     tet: "Instrusaun Administradór",
