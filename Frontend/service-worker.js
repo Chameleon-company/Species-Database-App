@@ -78,8 +78,11 @@ self.addEventListener("fetch", (event) => {
   if (url.protocol === "blob:") {return;}
 
   // Handle Supabase storage URLs (images/videos)
-  if (event.request.destination === "image" || event.request.destination === "video" &&
-    url.origin !== location.origin) {
+  if (
+      (event.request.destination === "image" || 
+         event.request.destination === "video") &&
+    url.origin !== location.origin
+  ) {
     event.respondWith(handleMediaRequest(event.request));
     return;
   }
