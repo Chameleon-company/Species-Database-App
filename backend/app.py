@@ -976,6 +976,11 @@ def translate():
 # Analytics Endpoints
 @app.route("/analytics/overview", methods=["GET"])
 def analytics_overview():
+    # Check administrator authentication
+    admin_id, err = get_admin_user(supabase)
+    if err:
+        return jsonify({"error": err[0]}), err[1]
+
     try:
         users_res = supabase.table("users").select(
             "user_id, is_active", count="exact"
@@ -1021,6 +1026,11 @@ def analytics_overview():
     
 @app.route("/analytics/users", methods=["GET"])
 def analytics_users():
+    # Check administrator authentication
+    admin_id, err = get_admin_user(supabase)
+    if err:
+        return jsonify({"error": err[0]}), err[1]
+
     try:
         users_res = supabase.table("users").select(
             "user_id, name, role, is_active"

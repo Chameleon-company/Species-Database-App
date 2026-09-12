@@ -284,5 +284,34 @@ class TestSpeciesManagementRoutesRequireAdmin(unittest.TestCase):
                         f"POST {path} touched the database without a valid token",
                     )
 
+ANALYTICS_ADMIN_ROUTES = [
+    "/analytics/overview",
+    "/analytics/users",
+]
+
+
+class TestAnalyticsRoutesRequireAdmin(unittest.TestCase):
+
+    def setUp(self):
+        _reset()
+        self.client = FLASK_APP.test_client()
+
+    def test_no_token_is_refused(self):
+        for path in ANALYTICS_ADMIN_ROUTES:
+            with self.subTest(route=f"GET {path}"):
+                resp = self.client.get(path)
+                self.assertEqual(resp.status_code, 401)
+
+    def test_invalid_token_is_refused(self):
+        for path in ANALYTICS_ADMIN_ROUTES:
+            with self.subTest(route=f"GET {path}"):
+                resp = self.client.get(path, headers=GARBAGE)
+                self.assertEqual(resp.status_code, 401)
+
+    def test_user_analytics_leaks_nothing_without_a_token(self):
+        resp = self.client.get("/analytics/users")
+        self.assertEqual(resp.status_code, 401)
+        self.assertNotIn(b"Existing Person", resp.data)
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
