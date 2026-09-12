@@ -528,6 +528,7 @@
       let activeFilters = {
         leafType: null,
         fruitType: null,
+        sortDirection: null,
       };
 
       // Leaf Type options
@@ -601,14 +602,32 @@
         const searchInput = document.getElementById("searchInput");
         if (searchInput && searchInput.value.trim() !== "") {
           const query = searchInput.value.toLowerCase().trim();
-          filtered = filtered.filter(
-            (species) =>
-              species.scientific_name &&
-              species.scientific_name.toLowerCase().includes(query)
-          );
+          filtered = filtered.filter((species) => {
+            const searchableFields = [
+              species.scientific_name,
+              species.common_name,
+              species.habitat,
+              species.identification_character,
+              species.leaf_type,
+              species.fruit_type,
+            ];
+            return searchableFields.some((field) =>
+              String(field || "").toLowerCase().includes(query)
+            );
+          });
         }
+        // Apply alphabetical sorting after search and filters
+if (activeFilters.sortDirection) {
+  filtered.sort((a, b) => {
+    const nameA = String(a.scientific_name || "").toLowerCase();
+    const nameB = String(b.scientific_name || "").toLowerCase();
 
-        // Render results or show no results message
+    return activeFilters.sortDirection === "az"
+      ? nameA.localeCompare(nameB)
+      : nameB.localeCompare(nameA);
+  });
+}
+     // Render results or show no results message
         if (filtered.length === 0 && typeof renderNoResults === 'function') {
           renderNoResults();
         } else {
@@ -700,6 +719,7 @@
             // Clear all filters
             activeFilters.leafType = null;
             activeFilters.fruitType = null;
+            activeFilters.sortDirection = null;
 
             // Remove active state from all filter buttons except "all"
             document.querySelectorAll(".filter-button").forEach((b) => {
@@ -803,21 +823,8 @@
       }
 
       function sortSpecies(direction) {
-        if (!window.loadedSpeciesData || window.loadedSpeciesData.length === 0) {
-          console.warn("No species data to sort.");
-          return;
-        }
-
-        const sorted = [...window.loadedSpeciesData].sort((a, b) => {
-          const nameA = a.scientific_name.toLowerCase();
-          const nameB = b.scientific_name.toLowerCase();
-
-          return direction === "az"
-            ? nameA.localeCompare(nameB)
-            : nameB.localeCompare(nameA);
-        });
-
-        renderSpecies(sorted);
+        activeFilters.sortDirection = direction;
+        applyFilters();
       }
     </script>
   </body>
