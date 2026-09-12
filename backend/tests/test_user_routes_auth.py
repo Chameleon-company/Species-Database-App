@@ -336,5 +336,29 @@ class TestTranslationRouteRequiresAdmin(unittest.TestCase):
         resp = self.client.post("/translate", json=self.body)
         self.assertNotIn(b"Private species description", resp.data)
 
+class TestAdminLogout(unittest.TestCase):
+
+    def setUp(self):
+        _reset()
+        self.client = FLASK_APP.test_client()
+
+    def test_logout_requires_admin_token(self):
+        resp = self.client.post("/api/auth/admin-logout")
+        self.assertEqual(resp.status_code, 401)
+
+    def test_logout_revokes_current_session(self):
+        resp = self.client.post(
+            "/api/auth/admin-logout",
+            headers=VALID,
+        )
+        self.assertEqual(resp.status_code, 200)
+
+        session = FAKE.data["admin_sessions"][0]
+        self.assertTrue(session["revoked"])
+        self.assertEqual(session["revocation_reason"], "logout")
+
+        protected_resp = self.client.get("/api/users", headers=VALID)
+        self.assertEqual(protected_resp.status_code, 401)
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
