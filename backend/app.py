@@ -517,12 +517,10 @@ def upload_species_file():
     this is an admin only endpoint
     for uploading species data
     """
-    #checking peermissions
-    # admin_id, err = get_admin_user(supabase)
-    # if err:
-    #     return jsonify({"error": err[0]}), err[1]
-
-    #at this point we've confirmed theyre admin
+    # Check administrator authentication
+    admin_id, err = get_admin_user(supabase)
+    if err:
+        return jsonify({"error": err[0]}), err[1]
 
     if "file" not in request.files:
         return jsonify({"error": "No file part"}), 400
@@ -572,6 +570,12 @@ def audit_species_file():
     """
     Upload a file and return a data quality report (NO upload to Supabase).
     """
+
+    # Check administrator authentication
+    admin_id, err = get_admin_user(supabase)
+    if err:
+        return jsonify({"error": err[0]}), err[1]
+
     if "file" not in request.files:
         return jsonify({"error": "No file part"}), 400
 
@@ -601,7 +605,10 @@ def audit_species_file():
 
 @app.route("/species", methods=["POST"])
 def create_species():
-    print(f"Raw request data: {request.data}")
+    # Check administrator authentication
+    admin_id, err = get_admin_user(supabase)
+    if err:
+        return jsonify({"error": err[0]}), err[1]
     
     #Get variables from request
     data = request.json

@@ -246,5 +246,43 @@ class TestUserRoutesRequireAdmin(unittest.TestCase):
         self.assertIn(b"Existing Person", resp.data)
 
 
+SPECIES_ADMIN_ROUTES = [
+    "/upload-species",
+    "/audit-species",
+    "/species",
+]
+
+
+class TestSpeciesManagementRoutesRequireAdmin(unittest.TestCase):
+
+    def setUp(self):
+        _reset()
+        self.client = FLASK_APP.test_client()
+
+    def test_no_token_is_refused(self):
+        for path in SPECIES_ADMIN_ROUTES:
+            with self.subTest(route=f"POST {path}"):
+                resp = self.client.post(path)
+                self.assertEqual(resp.status_code, 401)
+
+    def test_invalid_token_is_refused(self):
+        for path in SPECIES_ADMIN_ROUTES:
+            with self.subTest(route=f"POST {path}"):
+                resp = self.client.post(path, headers=GARBAGE)
+                self.assertEqual(resp.status_code, 401)
+
+    def test_nothing_is_written_without_a_valid_token(self):
+        for headers in ({}, GARBAGE):
+            for path in SPECIES_ADMIN_ROUTES:
+                with self.subTest(route=f"POST {path}", headers=headers):
+                    _reset()
+                    resp = self.client.post(path, headers=headers)
+                    self.assertEqual(resp.status_code, 401)
+                    self.assertEqual(
+                        FAKE.writes,
+                        [],
+                        f"POST {path} touched the database without a valid token",
+                    )
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
