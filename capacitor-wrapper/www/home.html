@@ -312,7 +312,7 @@
 
         try {
           // Perform sync
-          const result = await syncManager.manualSync(true);
+          const result = await syncManager.manualSync(false);
           
           if (result.synced) {
             // Success

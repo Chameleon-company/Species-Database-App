@@ -52,6 +52,7 @@
       <script src="scripts/db.js"></script>
       <script src="scripts/dataService.js"></script>
       <script src="scripts/sync.js"></script>
+      <script src="scripts/imageCache.js"></script>
       <script src="scripts/specieslist.js"></script>
       <script src="scripts/filterCarousel.js"></script>
       <script src="scripts/detectOnline.js" defer></script>
@@ -284,7 +285,7 @@
           return;
         }
 
-        let filtered = [...loadedSpeciesData];
+        let filtered = [...window.loadedSpeciesData];
 
         // Apply leaf type filter
         if (activeFilters.leafType) {
@@ -440,8 +441,8 @@ if (filtered.length === 0 && typeof renderNoResults === "function") {
             }
 
             // Render all species - check if data is loaded
-            if (loadedSpeciesData && loadedSpeciesData.length > 0) {
-              renderSpecies(loadedSpeciesData);
+            if (window.loadedSpeciesData && window.loadedSpeciesData.length > 0) {
+              renderSpecies(window.loadedSpeciesData);
             } else {
               console.warn("Species data not loaded yet");
             }

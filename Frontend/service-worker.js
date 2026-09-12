@@ -78,7 +78,11 @@ self.addEventListener("fetch", (event) => {
   if (url.protocol === "blob:") {return;}
 
   // Handle Supabase storage URLs (images/videos)
-  if (event.request.destination === "image" || event.request.destination === "video") {
+  if (
+      (event.request.destination === "image" || 
+         event.request.destination === "video") &&
+    url.origin !== location.origin
+  ) {
     event.respondWith(handleMediaRequest(event.request));
     return;
   }
@@ -173,39 +177,49 @@ async function notifyClients(message) {
   }
 }
 
+//CYN
 //message handler - cache media URLs
 self.addEventListener("message", async (event) => {
   const { type, urls } = event.data;
 
   if (type === "CACHE_MEDIA" && Array.isArray(urls)) {
-    console.log("[SW] Caching", urls.length, "media URLs");
-    const cache = await caches.open(MEDIA_CACHE);
-
-    //keepig track of medai cache progress
-    let done = 0
-    const total = urls.length
-
-    for (const url of urls) {
-      try {
-
-        const req = new Request(url, {cache: "no-store"})
-        //skipping if cached
-        const cached = await cache.match(req)
-        if(!cached)
-        {
-          const res = await fetch(url);
-          if (res.ok) await cache.put(url, res.clone());
-        }
-        done++
-        notifyClients({type: "MEDIA_CACHE_PROGRESS", done, total,url})
-
-      } catch (e) {
-        done++
-        notifyClients({type: "MEDIA_CACHE_PROGRESS", done, total,url,error: true})
-      }
-    }
-    notifyClients({type: "MEDIA_CACHE_DONE",total})
+    event.waitUntil(cacheMediaUrls(urls));
   }
 });
+
+async function cacheMediaUrls(urls) {
+  console.log("[SW] Caching", urls.length, "media URLs");
+  const cache = await caches.open(MEDIA_CACHE);
+
+  let done = 0;
+  const total = urls.length;
+  const success = [];
+  const failed = [];
+
+  for (const url of urls) {
+    try {
+      const req = new Request(url, { cache: "no-store" });
+      const cached = await cache.match(req);
+      if (!cached) {
+        const res = await fetch(url);
+        if (res.ok) {
+          await cache.put(url, res.clone());
+          success.push(url);
+        } else {
+          failed.push(url);
+        }
+      } else {
+        success.push(url);
+      }
+      done++;
+      notifyClients({ type: "MEDIA_CACHE_PROGRESS", done, total, url });
+    } catch (e) {
+      failed.push(url);
+      done++;
+      notifyClients({ type: "MEDIA_CACHE_PROGRESS", done, total, url, error: true });
+    }
+  }
+  notifyClients({ type: "MEDIA_CACHE_DONE", total, success, failed });
+}
 
 console.log("[SW] Service Worker loaded");

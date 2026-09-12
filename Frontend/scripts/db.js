@@ -198,7 +198,9 @@ class SpeciesDB {
           status: data.status || 'idle',
           last_sync: data.last_sync || null,
           timestamp: data.timestamp !== undefined ? data.timestamp : timestamp,
-          error: data.error !== undefined ? data.error : null
+          error: data.error !== undefined ? data.error : null,
+          media_status: data.media_status !== undefined ? data.media_status : 'complete',
+          pending_media: Array.isArray(data.pending_media) ? data.pending_media : []
         }
       };
 
@@ -514,6 +516,61 @@ class SpeciesDB {
   }
 
   /**
+   * //CYN
+ * Upsert media metadata (partial update, no clear existing data)
+ * Used for incremental sync — different func with storeMediaMetadata()
+ * @param {Array} mediaArray - Array of media metadata objects (partial/changed only)
+ * @returns {Promise<void>}
+ */
+  async upsertMediaMetadata(mediaArray) {
+    if (!Array.isArray(mediaArray)) {
+      throw new Error('mediaArray must be an array');
+    }
+
+    const db = await this.init();
+
+    return new Promise((resolve, reject) => {
+    const transaction = db.transaction(["media"], "readwrite");
+    const store = transaction.objectStore("media");
+
+    transaction.oncomplete = () => {
+        resolve();
+    };
+
+    transaction.onerror = () => {
+        console.error("Error upserting media metadata:", transaction.error);
+        reject(
+            new Error(
+                `Failed to upsert media metadata: ${
+                    transaction.error || "Unknown IndexedDB error"
+                }`
+            )
+        );
+    };
+
+    transaction.onabort = () => {
+        console.error("Media metadata transaction aborted:", transaction.error);
+        reject(
+            new Error(
+                `Media metadata transaction aborted: ${
+                    transaction.error || "Unknown IndexedDB error"
+                }`
+            )
+        );
+    };
+
+    for (const media of mediaArray) {
+        if (!media.media_id) {
+            console.warn("Media missing media_id field:", media);
+            continue;
+        }
+
+        store.put(media);
+    }
+});
+  }
+
+  /**
    * Handle IndexedDB quota exceeded errors gracefully
    * @param {Error} error - The error object
    * @returns {Promise<void>}
@@ -598,6 +655,37 @@ class SpeciesDB {
       request.onerror = () => {
         console.error('Error getting media:', request.error);
         reject(new Error(`Failed to get media: ${request.error}`));
+      };
+    });
+  }
+
+  /**
+   * Get media metadata entries matching a list of urls (used to retry failed media)
+   * @param {Array<string>} urls - List of media urls to look up
+   * @returns {Promise<Array>}
+   */
+  async getMediaMetadataByUrls(urls) {
+    if (!Array.isArray(urls) || urls.length === 0) {
+      return [];
+    }
+
+    const db = await this.init();
+
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(['media'], 'readonly');
+      const store = transaction.objectStore('media');
+      const request = store.getAll();
+
+      request.onsuccess = () => {
+        const all = request.result || [];
+        const urlSet = new Set(urls);
+        const matched = all.filter((m) => urlSet.has(m.download_link || m.url));
+        resolve(matched);
+      };
+
+      request.onerror = () => {
+        console.error('Error getting media by urls:', request.error);
+        reject(new Error(`Failed to get media by urls: ${request.error}`));
       };
     });
   }
