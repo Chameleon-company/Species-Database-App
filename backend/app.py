@@ -100,6 +100,11 @@ def home():
        return render_template("index.html", frontend_url=FRONTEND_URL)
 
 
+@app.route("/privacy", methods=["GET"])
+def privacy_policy():
+    return render_template("privacy.html")
+
+
 def extract_page_image(html: str):
     """
     Looks for a page's 'real' image via Open Graph / Twitter meta tags.

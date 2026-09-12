@@ -360,5 +360,30 @@ class TestAdminLogout(unittest.TestCase):
         protected_resp = self.client.get("/api/users", headers=VALID)
         self.assertEqual(protected_resp.status_code, 401)
 
+class TestPrivacyPolicy(unittest.TestCase):
+
+    def setUp(self):
+        _reset()
+        self.client = FLASK_APP.test_client()
+
+    def test_privacy_policy_is_public(self):
+        resp = self.client.get("/privacy")
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("text/html", resp.content_type)
+        self.assertIn(b"Fini Species Database", resp.data)
+        self.assertIn(b"12 September 2026", resp.data)
+        self.assertIn(b"xPand Foundation", resp.data)
+
+    def test_internal_checklist_is_not_published(self):
+        resp = self.client.get("/privacy")
+
+        self.assertNotIn(b"Before publishing it", resp.data)
+        self.assertNotIn(b"INSERT DATE", resp.data)
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
