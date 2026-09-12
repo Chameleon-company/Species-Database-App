@@ -530,43 +530,44 @@ class SpeciesDB {
     const db = await this.init();
 
     return new Promise((resolve, reject) => {
-      const transaction = db.transaction(['media'], 'readwrite');
-      const store = transaction.objectStore('media');
+    const transaction = db.transaction(["media"], "readwrite");
+    const store = transaction.objectStore("media");
 
-      let completed = 0;
-      let hasError = false;
-      let errorMessage = null;
-
-      if (mediaArray.length === 0) {
+    transaction.oncomplete = () => {
         resolve();
-        return;
-      }
+    };
 
-      for (const media of mediaArray) {
+    transaction.onerror = () => {
+        console.error("Error upserting media metadata:", transaction.error);
+        reject(
+            new Error(
+                `Failed to upsert media metadata: ${
+                    transaction.error || "Unknown IndexedDB error"
+                }`
+            )
+        );
+    };
+
+    transaction.onabort = () => {
+        console.error("Media metadata transaction aborted:", transaction.error);
+        reject(
+            new Error(
+                `Media metadata transaction aborted: ${
+                    transaction.error || "Unknown IndexedDB error"
+                }`
+            )
+        );
+    };
+
+    for (const media of mediaArray) {
         if (!media.media_id) {
-          console.warn('Media missing media_id field:', media);
-          completed++;
-          if (completed === mediaArray.length) resolve();
-          continue;
+            console.warn("Media missing media_id field:", media);
+            continue;
         }
 
-        // put() = insert kalau belum ada, update kalau sudah ada — tanpa clear dulu
-        const request = store.put(media);
-
-        request.onsuccess = () => {
-          completed++;
-          if (completed === mediaArray.length && !hasError) resolve();
-        };
-
-        request.onerror = () => {
-          console.error(`Error upserting media ${media.media_id}:`, request.error);
-          hasError = true;
-          errorMessage = `Failed to upsert media ${media.media_id}: ${request.error}`;
-          completed++;
-          if (completed === mediaArray.length) reject(new Error(errorMessage));
-        };
-      }
-    });
+        store.put(media);
+    }
+});
   }
 
   /**
