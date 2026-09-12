@@ -952,26 +952,26 @@ def update_species_tet(species_id):
 
 @app.route("/translate", methods=["POST"])
 def translate():
-    print(f"Raw request data: {request.data}")
-    
-    data = request.json
+    # Check administrator authentication
+    admin_id, err = get_admin_user(supabase)
+    if err:
+        return jsonify({"error": err[0]}), err[1]
+
+    data = request.get_json(silent=True)
     if not data:
-        return jsonify({"error":"Invalid"}),400
-    
-    texts = data.get('text', [])
+        return jsonify({"error": "Invalid"}), 400
+
+    texts = data.get("text", [])
     if not texts:
-        return {"error": "No text provided"}, 400
-    
-    print(f"Received text: '{texts}'")
-    
+        return jsonify({"error": "No text provided"}), 400
+
     try:
         array = asyncio.run(translateMultipleTexts(texts))
-    except Exception as e:
-        return jsonify({"error":"Translation_failed","details":str(e)}),500
+    except Exception:
+        app.logger.error("Translation request failed")
+        return jsonify({"error": "Translation_failed"}), 500
 
-    print(f"Translated Text = '{array}'")
-    
-    return jsonify(array),200
+    return jsonify(array), 200
 
 # Analytics Endpoints
 @app.route("/analytics/overview", methods=["GET"])

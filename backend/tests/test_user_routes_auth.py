@@ -313,5 +313,28 @@ class TestAnalyticsRoutesRequireAdmin(unittest.TestCase):
         self.assertEqual(resp.status_code, 401)
         self.assertNotIn(b"Existing Person", resp.data)
 
+class TestTranslationRouteRequiresAdmin(unittest.TestCase):
+
+    def setUp(self):
+        _reset()
+        self.client = FLASK_APP.test_client()
+        self.body = {"text": ["Private species description"]}
+
+    def test_no_token_is_refused(self):
+        resp = self.client.post("/translate", json=self.body)
+        self.assertEqual(resp.status_code, 401)
+
+    def test_invalid_token_is_refused(self):
+        resp = self.client.post(
+            "/translate",
+            headers=GARBAGE,
+            json=self.body,
+        )
+        self.assertEqual(resp.status_code, 401)
+
+    def test_unauthenticated_response_does_not_echo_text(self):
+        resp = self.client.post("/translate", json=self.body)
+        self.assertNotIn(b"Private species description", resp.data)
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

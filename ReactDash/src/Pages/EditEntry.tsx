@@ -9,7 +9,6 @@ import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogContentText from '@mui/material/DialogContentText'
 import DialogTitle from '@mui/material/DialogTitle'
-import axios from 'axios'
 import { useParams } from "react-router-dom";
 import { adminFetch } from '../utils/adminFetch'
 import { translations } from '../translations'
@@ -252,8 +251,16 @@ export function EditEntry() {
         ]
 
         try {
-            const response = await axios.post(`${API_BASE}/translate`, { text: textArray })
-            const translatedText = response.data
+            const response = await adminFetch(`${API_BASE}/translate`, {
+                method: 'POST',
+                body: JSON.stringify({ text: textArray })
+            })
+
+            if (!response.ok) {
+                throw new Error(`Translation failed with status ${response.status}`)
+            }
+
+            const translatedText = await response.json()
 
             if (translatedText[4] === "-") translatedText[4] = ""
             if (translatedText[5] === "-") translatedText[5] = ""
