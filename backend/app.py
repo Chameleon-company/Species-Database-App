@@ -20,6 +20,7 @@ from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 import bcrypt
 from auth_authz import register_auth_routes, require_role, get_admin_user
+import time
 load_dotenv(override=True)
 print("CORS_ORIGINS =", os.getenv("CORS_ORIGINS"))
 
@@ -517,12 +518,9 @@ def upload_species_file():
     this is an admin only endpoint
     for uploading species data
     """
-    #checking peermissions
-    # admin_id, err = get_admin_user(supabase)
-    # if err:
-    #     return jsonify({"error": err[0]}), err[1]
-
-    #at this point we've confirmed theyre admin
+    admin_id, err = get_admin_user(supabase)
+    if err:
+        return jsonify({"error": err[0]}), err[1]
 
     if "file" not in request.files:
         return jsonify({"error": "No file part"}), 400
@@ -615,7 +613,8 @@ def create_species():
     phenology = data['phenology']
     seed_germination = data['seed_germination']
     pest = data['pest']
-    
+    definition = data.get('definition', '')
+
     #Get tetum variables from request
     scientific_name_tetum = data['scientific_name_tetum']
     common_name_tetum = data['common_name_tetum']
@@ -627,6 +626,7 @@ def create_species():
     phenology_tetum = data['phenology_tetum']
     seed_germination_tetum = data['seed_germination_tetum']
     pest_tetum = data['pest_tetum']
+    definition_tetum = data.get('definition_tetum', '')
     
     #Ensure mandatory fields are valid
     errors = []
@@ -677,7 +677,8 @@ def create_species():
             'fruit_type': fruit_type,
             'phenology': phenology,
             'seed_germination': seed_germination,
-            'pest': pest
+            'pest': pest,
+            'definition': definition
         }).execute()
         
         
@@ -700,7 +701,8 @@ def create_species():
             'fruit_type': fruit_type_tetum,
             'phenology': phenology_tetum,
             'seed_germination': seed_germination_tetum,
-            'pest': pest_tetum
+            'pest': pest_tetum,
+            'definition': definition_tetum
         }).execute()
         
         if not data2.data:
@@ -787,7 +789,8 @@ def update_species(species_id):
         "fruit_type",
         "phenology",
         "seed_germination",
-        "pest"
+        "pest",
+        "definition"
     ]
 
     for field in EN_FIELDS:
@@ -795,13 +798,13 @@ def update_species(species_id):
             en_update[field] = data[field]
     if not en_update:
         return jsonify({"error": "no english fields provided"}), 400
-    
+
     # update english row
     supabase.table("species_en")\
         .update(en_update)\
         .eq("species_id", species_id)\
         .execute()
-    
+
     ############# TETUM UPDATE PAYLOAD ##############
     tet_update = {}
     TET_FIELDS = [
@@ -814,7 +817,8 @@ def update_species(species_id):
         "fruit_type",
         "phenology",
         "seed_germination",
-        "pest"
+        "pest",
+        "definition"
     ]
 
     for field in TET_FIELDS:
@@ -880,7 +884,8 @@ def update_species_english(species_id):
         "fruit_type",
         "phenology",
         "seed_germination",
-        "pest"        
+        "pest",
+        "definition"
     ]
 
     for field in ENGLISH_FIELDS:
@@ -922,7 +927,8 @@ def update_species_tet(species_id):
         "fruit_type",
         "phenology",
         "seed_germination",
-        "pest"        
+        "pest",
+        "definition"
     ]
 
     for field in TET_FIELDS:
@@ -931,7 +937,7 @@ def update_species_tet(species_id):
 
     if not tet_update:
         return jsonify({"error": "no tetum fields provided"}), 400
-    
+
     # update tet row
     supabase.table("species_tet")\
         .update(tet_update)\
@@ -1233,6 +1239,99 @@ def get_next_version():
         .execute()
 
     return (res.data[0]["version"] + 1) if res.data else 1
+
+
+@app.before_request
+def start_timer():
+    request.start_time = time.time()
+
+@app.after_request
+def log_time(response):
+
+    duration = time.time() - request.start_time
+
+    print(
+        f"{request.method} "
+        f"{request.path} "
+        f"{response.status_code} "
+        f"{duration:.2f}s"
+    )
+
+    return response
+
+#max rows a single search may return, stops an open query pulling the table
+SEARCH_RESULT_LIMIT = 50
+SEARCH_MAX_QUERY_LEN = 100
+
+
+def _escape_postgrest_value(value):
+    """
+    makes a user string safe to drop into a PostgREST filter.
+
+    in the filter grammar ',' separates OR terms and '.' separates
+    column.operator.value, so an unescaped query can add its own terms and
+    match rows it was never meant to. wrapping the value in double quotes
+    makes PostgREST treat it as a literal; the backslash and double quote
+    inside it have to be escaped first or they close the quoting early.
+    """
+    escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+    return f'"{escaped}"'
+
+
+@app.get("/api/species/search")
+def search_species():
+
+    q = request.args.get("q", "").strip()
+
+    if not q:
+        return jsonify({"error": "query is needed"}), 400
+
+    if len(q) > SEARCH_MAX_QUERY_LEN:
+        return jsonify({
+            "error": f"query too long (max {SEARCH_MAX_QUERY_LEN} characters)"
+        }), 400
+
+    #quoted so ',' '.' and '*' in the query are data, never filter syntax
+    term = _escape_postgrest_value(f"*{q}*")
+
+    response = (
+        supabase.table("species_en")
+        .select("species_id, common_name, scientific_name")
+        .or_(
+            f"common_name.ilike.{term},scientific_name.ilike.{term}"
+        )
+        .limit(SEARCH_RESULT_LIMIT)
+        .execute()
+    )
+
+    return jsonify(response.data)
+
+
+@app.get("/health")
+def basic_health_check():
+    #master added /api/health for the status dashboard while this branch was away.
+    #that one walks every table, this is just a liveness ping. keeping both, but
+    #they cannot share a function name or flask refuses to register the second one.
+    try:
+        supabase.table("species_en") \
+            .select("species_id") \
+            .limit(1) \
+            .execute()
+
+        return jsonify({
+            "status": "healthy",
+            "database": "connected"
+        }), 200
+
+    except Exception as e:
+        #endpoint is unauthenticated, so the exception text stays in the logs.
+        #it can name the host, database and driver, which is free recon.
+        app.logger.exception("health check failed: %s", e)
+        return jsonify({
+            "status": "unhealthy",
+            "database": "disconnected"
+        }), 500
+  
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
