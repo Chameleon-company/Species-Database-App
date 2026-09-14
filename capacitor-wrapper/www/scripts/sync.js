@@ -11,30 +11,56 @@
 
 //send image URLs to the sw for background cachjing
 //after bundle sync and incremental updates
-function sendIMGToSW(images = [])
-{
-  if(!navigator.serviceWorker?.controller) return
+function sendIMGToSW(images = [], timeoutMs = 60000) {
+  return new Promise((resolve) => {
+    if (!navigator.serviceWorker?.controller) {
+      resolve({ success: [], failed: [], skipped: true });
+      return;
+    }
 
-  const urls = images
-    .map((m)=> m.download_link || m.url)
-    .filter(Boolean)
-  
-  if(!urls.length) return
-  navigator.serviceWorker.controller.postMessage({
-    type: "CACHE_MEDIA",
-    urls
-  })
+    const urls = images
+      .map((m) => m.download_link || m.url)
+      .filter(Boolean);
+
+    if (!urls.length) {
+      resolve({ success: [], failed: [], skipped: true });
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      navigator.serviceWorker.removeEventListener("message", onMessage);
+      resolve({ success: [], failed: urls, timedOut: true });
+    }, timeoutMs);
+
+    function onMessage(event) {
+      if (event.data?.type === "MEDIA_CACHE_DONE") {
+        clearTimeout(timeout);
+        navigator.serviceWorker.removeEventListener("message", onMessage);
+        resolve({
+          success: event.data.success || [],
+          failed: event.data.failed || []
+        });
+      }
+    }
+
+    navigator.serviceWorker.addEventListener("message", onMessage);
+
+    navigator.serviceWorker.controller.postMessage({
+      type: "CACHE_MEDIA",
+      urls
+    });
+  });
 }
 
 class SyncManager {
   constructor() {
     // Get API config (assumes config.js is loaded)
     this.apiConfig = typeof API_CONFIG !== 'undefined' ? API_CONFIG : {
-    baseUrl:
-      location.hostname === "localhost" ||
-      location.hostname === "127.0.0.1"
-        ? "http://127.0.0.1:5000"
-        : "https://species-database-app.onrender.com",
+      baseUrl:
+        location.hostname === "localhost" ||
+          location.hostname === "127.0.0.1"
+          ? "http://127.0.0.1:5000"
+          : "https://species-database-app.onrender.com",
 
       endpoints: {
         bundle: '/api/bundle',
@@ -83,11 +109,11 @@ class SyncManager {
     const headers = {
       'Content-Type': 'application/json'
     };
-    
+
     if (this.authToken) {
       headers['Authorization'] = `Bearer ${this.authToken}`;
     }
-    
+
     return headers;
   }
 
@@ -188,7 +214,7 @@ class SyncManager {
       return { synced: false, reason: 'already_syncing' };
     }
 
-    // Check if online
+    // Check if offline
     if (!navigator.onLine) {
       console.log('Device is offline, skipping sync');
       return { synced: false, reason: 'offline' };
@@ -202,6 +228,14 @@ class SyncManager {
         await this.db.init();
       }
 
+      // Retry any media left over from a previous interrupted sync FIRST,
+      // regardless of whether species data needs updating
+      const existingMetadata = await this.db.getSyncMetadata();
+      let leftoverRetry = null;
+      if (existingMetadata?.pending_media?.length > 0) {
+        leftoverRetry = await this.retryFailedMedia();
+      }
+      
       // Check if we have local data
       const hasData = await this.hasLocalData();
 
@@ -209,10 +243,24 @@ class SyncManager {
       if (options.forceBundle || !hasData) {
         this.reportProgress('Starting initial sync...');
         return await this.performInitialSync();
-      } else {
-        // Check for updates and do incremental sync
-        return await this.performIncrementalSync();
+      } 
+      // Check for updates and do incremental sync
+      const syncResult = await this.performIncrementalSync();
+
+      return leftoverRetry ? { ...syncResult, mediaRetry: leftoverRetry } : syncResult;
+
+      /*
+      // Species already up to date — check if a previous sync left media pending
+      if (!syncResult.synced && syncResult.reason === 'up_to_date') {
+        const metadata = await this.db.getSyncMetadata();
+        if (metadata?.pending_media?.length > 0) {
+          const retryResult = await this.retryFailedMedia();
+          return { ...syncResult, mediaRetry: retryResult };
+        }
       }
+
+      return syncResult;
+      */
     } catch (error) {
       console.error('Sync error:', error);
       await this.updateSyncStatus('error', error.message);
@@ -242,7 +290,7 @@ class SyncManager {
       // Step 1: Fetch bundle from API
       this.reportProgress('Fetching bundle from server...');
       const bundleUrl = `${this.apiConfig.baseUrl}${this.apiConfig.endpoints.bundle}`;
-      
+
       let response;
       try {
         response = await this.fetchWithTimeout(bundleUrl, {
@@ -277,12 +325,17 @@ class SyncManager {
       await this.storeSpeciesBundle(bundle);
 
       // Step 3: Store media metadata (if present)
-      if (bundle.media && Array.isArray(bundle.media) && bundle.media.length > 0) {
+      let mediaResult = { success: [], failed: [] };
+       if (bundle.media && Array.isArray(bundle.media) && bundle.media.length > 0) {
         this.reportProgress(`Storing media metadata (${bundle.media.length} items)...`);
         await this.db.storeMediaMetadata(bundle.media);
 
-        //trigerring background media caching
-        sendIMGToSW(bundle.media)
+        this.reportProgress(`Caching ${bundle.media.length} media files...`);
+        mediaResult = await sendIMGToSW(bundle.media);
+
+        if (mediaResult.failed.length > 0) {
+          console.warn(`[Sync] ${mediaResult.failed.length} media files failed to cache`, mediaResult.failed);
+        }
       }
 
       // Step 4: Update sync metadata
@@ -290,7 +343,9 @@ class SyncManager {
         version: bundle.version,
         last_sync: new Date().toISOString(),
         status: 'idle',
-        error: null
+        error: null,
+        media_status: mediaResult.failed.length > 0 ? 'partial' : 'complete',
+        pending_media: mediaResult.failed
       });
 
       this.reportProgress('Sync complete!');
@@ -304,8 +359,10 @@ class SyncManager {
           en: bundle.species_en?.length || 0,
           tet: bundle.species_tet?.length || 0
         },
-        mediaCount: bundle.media?.length || 0
-      };
+        mediaCount: bundle.media?.length || 0,
+        mediaStatus: mediaResult.failed.length > 0 ? 'partial' : 'complete',
+        pendingMediaCount: mediaResult.failed.length
+      };  
 
       if (this.onComplete) {
         this.onComplete(result);
@@ -337,7 +394,7 @@ class SyncManager {
       // Step 1: Check if updates are available
       this.reportProgress('Checking for updates...');
       const changesUrl = `${this.apiConfig.baseUrl}${this.apiConfig.endpoints.changes}?since_version=${localVersion}`;
-      
+
       let checkResponse;
       try {
         checkResponse = await this.fetchWithTimeout(changesUrl, {
@@ -384,7 +441,7 @@ class SyncManager {
       this.reportProgress(`Syncing ${checkResult.change_count} changes...`);
 
       const incrementalUrl = `${this.apiConfig.baseUrl}${this.apiConfig.endpoints.incremental}?since_version=${localVersion}`;
-      
+
       let response;
       try {
         response = await this.fetchWithTimeout(incrementalUrl, {
@@ -418,9 +475,18 @@ class SyncManager {
       this.reportProgress('Updating changed species...');
       await this.replaceChangedSpecies(changes);
 
-      if(changes.media && Array.isArray(changes.media))
-      {
-        sendIMGToSW(changes.media)
+       let mediaResult = { success: [], failed: [] };
+
+      if (changes.media && Array.isArray(changes.media) && changes.media.length > 0) {
+        //Storing the new image of new species that are added by incremental sync
+        await this.db.upsertMediaMetadata(changes.media);
+
+        this.reportProgress(`Caching ${changes.media.length} media files...`);
+        mediaResult = await sendIMGToSW(changes.media);
+
+        if (mediaResult.failed.length > 0) {
+          console.warn(`[Sync] ${mediaResult.failed.length} media files failed to cache`, mediaResult.failed);
+        }
       }
 
       // Step 4: Update sync metadata
@@ -428,7 +494,9 @@ class SyncManager {
         version: changes.latest_version,
         last_sync: new Date().toISOString(),
         status: 'idle',
-        error: null
+        error: null,
+        media_status: mediaResult.failed.length > 0 ? 'partial' : 'complete',
+        pending_media: mediaResult.failed
       });
 
       this.reportProgress('Sync complete!');
@@ -442,7 +510,9 @@ class SyncManager {
         speciesCount: {
           en: changes.species_en?.length || 0,
           tet: changes.species_tet?.length || 0
-        }
+        },
+        mediaStatus: mediaResult.failed.length > 0 ? 'partial' : 'complete',
+        pendingMediaCount: mediaResult.failed.length
       };
 
       if (this.onComplete) {
@@ -456,6 +526,57 @@ class SyncManager {
       await this.updateSyncStatus('error', error.message);
       throw error;
     }
+  }
+
+  /**
+   * Retry caching media that previously failed, without re-downloading species data
+   * @returns {Promise<Object>}
+   */
+  async retryFailedMedia() {
+    if (!this.db) {
+      throw new Error('Database not initialized');
+    }
+
+    if (!navigator.onLine) {
+      return { retried: 0, reason: 'offline' };
+    }
+
+    const metadata = await this.db.getSyncMetadata();
+    const pending = metadata?.pending_media || [];
+
+    if (!pending.length) {
+      return { retried: 0, reason: 'nothing_pending' };
+    }
+
+    this.reportProgress(`Retrying ${pending.length} failed media files...`);
+
+    const mediaItems = await this.db.getMediaMetadataByUrls(pending);
+
+    // Fallback: if metadata lookup somehow found nothing, still try the raw urls
+    const itemsToSend = mediaItems.length > 0
+      ? mediaItems
+      : pending.map((url) => ({ url }));
+
+    const mediaResult = await sendIMGToSW(itemsToSend);
+
+    await this.db.updateSyncMetadata({
+      ...metadata,
+      media_status: mediaResult.failed.length > 0 ? 'partial' : 'complete',
+      pending_media: mediaResult.failed
+    });
+
+    this.reportProgress(
+      mediaResult.failed.length > 0
+        ? `${mediaResult.failed.length} media files still failed`
+        : 'All media cached successfully'
+    );
+
+    return {
+      retried: pending.length,
+      success: mediaResult.success.length,
+      failed: mediaResult.failed.length,
+      mediaStatus: mediaResult.failed.length > 0 ? 'partial' : 'complete'
+    };
   }
 
   /**
@@ -514,12 +635,12 @@ class SyncManager {
 
     } catch (error) {
       console.error('Error storing species bundle:', error);
-      
+
       // Handle quota exceeded errors
       if (error.message.includes('quota') || error.message.includes('QuotaExceeded')) {
         throw new Error('Storage quota exceeded - please free up space on your device');
       }
-      
+
       throw new Error(`Failed to store species data: ${error.message}`);
     }
   }
@@ -540,7 +661,7 @@ class SyncManager {
       const metadata = await this.db.getSyncMetadata();
       const currentVersion = metadata?.version || 0;
       const newVersion = changes.latest_version || 0;
-      
+
       if (newVersion <= currentVersion) {
         console.warn(`Version not increasing: current=${currentVersion}, new=${newVersion}`);
       }
@@ -581,12 +702,12 @@ class SyncManager {
 
     } catch (error) {
       console.error('Error replacing changed species:', error);
-      
+
       // Handle quota exceeded errors
       if (error.message.includes('quota') || error.message.includes('QuotaExceeded')) {
         throw new Error('Storage quota exceeded - please free up space on your device');
       }
-      
+
       throw new Error(`Failed to update species data: ${error.message}`);
     }
   }
@@ -631,24 +752,24 @@ class SyncManager {
         return await this.checkAndSync({ forceBundle: options.forceBundle });
       } catch (error) {
         attempt++;
-        
+
         // Don't retry on authentication errors
         if (error.message.includes('Authentication failed')) {
           throw error;
         }
-        
+
         // Don't retry on quota exceeded errors
         if (error.message.includes('quota') || error.message.includes('QuotaExceeded')) {
           throw error;
         }
-        
+
         if (attempt >= maxRetries) {
           throw error;
         }
-        
+
         // Exponential backoff
         delay *= 2;
-        this.reportProgress(`Retry in ${delay/1000}s...`);
+        this.reportProgress(`Retry in ${delay / 1000}s...`);
         await this.sleep(delay);
       }
     }

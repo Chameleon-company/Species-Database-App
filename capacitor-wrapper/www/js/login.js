@@ -1,5 +1,22 @@
+const isAdminLoginPage = window.location.pathname.includes("login-admin.html");
+
+const ADMIN_DASHBOARD_URLS = {
+  dev: "http://localhost:5173",
+  prod: "https://species-database-app-123.onrender.com/",
+};
+
+function getAdminDashboardUrl() {
+  const isLocalHost =
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1";
+
+  return isLocalHost ? ADMIN_DASHBOARD_URLS.dev : ADMIN_DASHBOARD_URLS.prod;
+}
+
 function initGoogle()
 {
+  const buttonWidth = Math.min(360, Math.max(280, window.innerWidth - 80));
+
   google.accounts.id.initialize({
     client_id: "1052574621817-njpilvbmv49riq322c9vdi02pibcbbvg.apps.googleusercontent.com",
     callback: handleGoogleResponse,
@@ -13,17 +30,24 @@ function initGoogle()
       size: "large",
       text: "continue_with",
       shape: "pill",
-      width: 360,
+      width: buttonWidth,
     })
   }
 }
 function redirectPostLogin() {
+  const role = localStorage.getItem("role");
+
+  if (role === "admin" && localStorage.getItem("admin_token")) {
+    window.location.replace(getAdminDashboardUrl());
+    return;
+  }
+
   const lang = localStorage.getItem("appLanguage") || "en";
 
   if (lang === "tet") {
-    window.location.href = "tetum.html";
+    window.location.replace("tetum.html");
   } else {
-    window.location.href = "home.html";
+    window.location.replace("home.html");
   }
 }
 
@@ -31,6 +55,13 @@ function redirectPostLogin() {
 (function checkExistingLogin() {
   const userId = localStorage.getItem("user_id")
   const role = localStorage.getItem("role")
+  const adminToken = localStorage.getItem("admin_token")
+
+  if (role === "admin" && adminToken) {
+    window.location.replace(getAdminDashboardUrl())
+    return
+  }
+
   if(userId)
   {
     const lang = localStorage.getItem("appLanguage") || "en"
@@ -65,6 +96,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const usernameInput = document.getElementById("usernameInput");
   const passwordInput = document.getElementById("passwordInput");
   const errorBox = document.getElementById("loginError")
+  const loginEndpoint = isAdminLoginPage
+    ? `${API_CONFIG.baseUrl}${API_CONFIG.endpoints.adminLogin || "/api/auth/admin-login"}`
+    : `${API_CONFIG.baseUrl}${API_CONFIG.endpoints.login}`;
 
 
   document.getElementById("emailContinueBtn")?.addEventListener("click", async () => {
@@ -80,14 +114,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     try {
-      const res = await fetch(
-        `${API_CONFIG.baseUrl}${API_CONFIG.endpoints.login}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, password })
-        }
-      )
+      const res = await fetch(loginEndpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, password })
+      })
 
       const data = await res.json()
 
@@ -100,9 +131,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
       console.log("LOGIN SUCCESS:", data)
 
-      //storing user locally
-      localStorage.setItem("user_id", data.user_id)
-      localStorage.setItem("role", data.role)
+      if (isAdminLoginPage) {
+        localStorage.removeItem("user_id")
+        localStorage.setItem("admin_token", data.access_token)
+        localStorage.setItem("role", "admin")
+      } else {
+        //storing user locally
+        localStorage.setItem("user_id", data.user_id)
+        localStorage.setItem("role", data.role)
+      }
 
 
       console.log("Logged in as", data.role)
@@ -148,10 +185,11 @@ async function handleGoogleResponse(res) {
     }
     localStorage.setItem("admin_token", data.access_token)
     localStorage.setItem("role", "admin")
+    localStorage.removeItem("user_id")
 
     console.log("admin login success")
 
-    window.location.href = "home.html"
+    window.location.replace(getAdminDashboardUrl())
 
   }
   catch(err){

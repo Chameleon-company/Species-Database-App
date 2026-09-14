@@ -172,6 +172,34 @@ const dataService = {
 
       req.onerror = () => resolve(null);
     });
+  },
+
+  //Check if a video exists for this species (cloud)
+  async hasVideo(speciesId) {
+    if (!speciesId) return false;
+
+    await window.db.init();
+    const database = await window.db._openDB();
+
+    return new Promise((resolve) => {
+      const tx = database.transaction("media", "readonly");
+      const store = tx.objectStore("media");
+      const index = store.index("species_id");
+
+      const req = index.getAll(parseInt(speciesId));
+
+      req.onsuccess = () => {
+        const media = req.result || [];
+
+        const hasVideo = media.some(
+          m => m.media_type === "video" && m.download_link
+        );
+
+        resolve(hasVideo);
+      };
+
+      req.onerror = () => resolve(false);
+    });
   }
 
 };

@@ -42,6 +42,24 @@
   display: block;
 }
 
+/* Used to align text and icons to correct positions. Want text on LHS, icon on RHS */
+.species-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+/* Icon to indicate if there is an available video */
+.species-card-video-available {
+  width: 32px !important;
+  height: 32px !important;
+  margin-left: 10px;
+  flex-shrink: 0;
+  object-fit: contain;
+  display: block;
+}
+
 /* Species Text Container - Task 5: Handle overflow */
 .species-text {
   display: flex;

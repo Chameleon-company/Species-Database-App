@@ -360,8 +360,8 @@ export const translations = {
   },
 
   inactive: {
-  en: "Inactive",
-  tet: "Inativu",
+    en: "Inactive",
+    tet: "Inativu",
   },
 
   active: {
@@ -370,8 +370,8 @@ export const translations = {
   },
 
   activityInactive: {
-  en: "Logged Out",
-  tet: "Sai ona",
+    en: "Logged Out",
+    tet: "Sai ona",
   },
 
   activityModerate: {
@@ -783,266 +783,334 @@ export const translations = {
     en: "Password is required",
     tet: "Password presiza",
   },
+
   dashboardTitle: {
     en: "Species Database Dashboard",
     tet: "Painel Base Dadus Espésie",
   },
+
   dashboardSubtitle: {
     en: "Browse and manage the English & Tetum species records",
     tet: "Haree no jere rejistu espésie iha Inglés no Tetum",
   },
+
   english: {
     en: "English",
     tet: "Inglés",
   },
+
   tetum: {
     en: "Tetum",
     tet: "Tetum",
   },
+
   selectedSpecies: {
-  en: "Selected Species",
-  tet: "Espésie Selecionadu",
+    en: "Selected Species",
+    tet: "Espésie Selecionadu",
   },
+
   pests: {
-  en: "Pests",
-  tet: "Praga sira",
+    en: "Pests",
+    tet: "Praga sira",
   },
 
   loginSubtitle: {
     en: "Authorised Administrators Only",
     tet: "Ba Administradór Autorizadu Deʼit",
   },
+
   googleLoginFailed: {
-  en: "Google login failed. Please try again.",
-  tet: "Login Google la susesu. Favor tenta fali."
+    en: "Google login failed. Please try again.",
+    tet: "Login Google la susesu. Favor tenta fali.",
   },
 
   adminLoginFailed: {
-  en: "Admin login failed. Please try again.",
-  tet: "Login admin la susesu. Favor tenta fali."
+    en: "Admin login failed. Please try again.",
+    tet: "Login admin la susesu. Favor tenta fali.",
   },
 
   somethingWentWrong: {
-  en: "Something went wrong. Please try again.",
-  tet: "Iha problema ida. Favor tenta fali."
+    en: "Something went wrong. Please try again.",
+    tet: "Iha problema ida. Favor tenta fali.",
   },
 
   signInWithGoogle: {
-  en: "Sign In With Google",
-  tet: "Tama ho Google",
+    en: "Sign In With Google",
+    tet: "Tama ho Google",
   },
 
   showPassword: {
-  en: "Show password",
-  tet: "Hatudu liafuan-segredu",
+    en: "Show password",
+    tet: "Hatudu liafuan-segredu",
   },
 
   hidePassword: {
-  en: "Hide password",
-  tet: "Subar liafuan-segredu",
+    en: "Hide password",
+    tet: "Subar liafuan-segredu",
   },
 
   noMedia: {
-  en: "No Media",
-  tet: "Laiha Mídia",
+    en: "No Media",
+    tet: "Laiha Mídia",
   },
 
   mediaPreview: {
-  en: "Media preview",
-  tet: "Prevía Mídia",
+    en: "Media preview",
+    tet: "Prevía Mídia",
   },
 
   retry: {
-  en: "Retry",
-  tet: "Tenta Fali",
+    en: "Retry",
+    tet: "Tenta Fali",
   },
 
   deleteMediaTitle: {
-  en: "Delete Media?",
-  tet: "Apaga Mídia?",
+    en: "Delete Media?",
+    tet: "Apaga Mídia?",
   },
 
   cannotBeUndone: {
-  en: "This cannot be undone.",
-  tet: "Ida ne'e labele fila fali.",
+    en: "This cannot be undone.",
+    tet: "Ida ne'e labele fila fali.",
   },
 
   preview: {
-  en: "Preview",
-  tet: "Prevía",
+    en: "Preview",
+    tet: "Prevía",
   },
 
   clickToEdit: {
-  en: "Click to edit",
-  tet: "Klik hodi edita",
+    en: "Click to edit",
+    tet: "Klik hodi edita",
   },
 
   select: {
-  en: "Select",
-  tet: "Hili",
+    en: "Select",
+    tet: "Hili",
   },
 
   pasteUrl: {
-  en: "Paste URL",
-  tet: "Kola URL",
+    en: "Paste URL",
+    tet: "Kola URL",
   },
 
   items: {
-  en: "items",
-  tet: "item sira",
+    en: "items",
+    tet: "item sira",
   },
 
   images: {
-  en: "images",
-  tet: "imajen sira",
+    en: "images",
+    tet: "imajen sira",
   },
 
   videos: {
-  en: "videos",
-  tet: "vídeu sira",
+    en: "videos",
+    tet: "vídeu sira",
   },
 
   untitled: {
-  en: "Untitled",
-  tet: "La iha titulu",
+    en: "Untitled",
+    tet: "La iha titulu",
   },
 
   previewNotAvailable: {
-  en: "Preview not available",
-  tet: "Prevía la disponivel",
+    en: "Preview not available",
+    tet: "Prevía la disponivel",
   },
 
   close: {
-  en: "Close",
-  tet: "Taka",
+    en: "Close",
+    tet: "Taka",
   },
 
   noImageFound: {
-  en: "No image found",
-  tet: "Laiha imajen",
+    en: "No image found",
+    tet: "Laiha imajen",
   },
 
   loadingImage: {
-  en: "Loading image...",
-  tet: "Karrega imajen...",
+    en: "Loading image...",
+    tet: "Karrega imajen...",
   },
 
   englishEntry: {
-  en: "English Entry",
-  tet: "Dadus Inglés",
+    en: "English Entry",
+    tet: "Dadus Inglés",
   },
 
   translatedTetumEntry: {
-  en: "Translated Tetum Entry",
-  tet: "Dadus Tetum Traduzidu",
+    en: "Translated Tetum Entry",
+    tet: "Dadus Tetum Traduzidu",
   },
 
   originalTetumEntry: {
-  en: "Original Tetum Entry",
-  tet: "Dadus Tetum Orijinál",
+    en: "Original Tetum Entry",
+    tet: "Dadus Tetum Orijinál",
   },
 
   pleaseCheckFields: {
-  en: "Please check fields to ensure correct translation:",
-  tet: "Favór verifika kampu sira hodi garante tradusaun loos:",
+    en: "Please check fields to ensure correct translation:",
+    tet: "Favór verifika kampu sira hodi garante tradusaun loos:",
   },
 
   speciesUpdatedSuccessfully: {
-  en: "Species updated successfully!",
-  tet: "Espésie atualiza ho susesu!",
+    en: "Species updated successfully!",
+    tet: "Espésie atualiza ho susesu!",
   },
 
   editing: {
-  en: "Editing...",
-  tet: "Edita hela...",
+    en: "Editing...",
+    tet: "Edita hela...",
   },
 
   saveChanges: {
-  en: "Save Changes",
-  tet: "Rai Mudansa",
+    en: "Save Changes",
+    tet: "Rai Mudansa",
   },
 
   deleting: {
-  en: "Deleting...",
-  tet: "Hamoos hela...",
+    en: "Deleting...",
+    tet: "Hamoos hela...",
   },
 
   deleteEntry: {
-  en: "Delete Entry",
-  tet: "Hamoos Dadus",
+    en: "Delete Entry",
+    tet: "Hamoos Dadus",
   },
-  //
-  //Error messages
-  //
 
   error: {
-  en: "Error",
-  tet: "Erro",
+    en: "Error",
+    tet: "Erro",
   },
 
   unknownError: {
-  en: "Unknown error",
-  tet: "Erro deskoñesidu",
+    en: "Unknown error",
+    tet: "Erro deskoñesidu",
   },
 
   networkErrorFetchingUsers: {
-  en: "Network error fetching users",
-  tet: "Erro rede",
+    en: "Network error fetching users",
+    tet: "Erro rede",
   },
 
   errorLoadingTetumRow: {
-  en: "Error loading Tetum row.",
-  tet: "Erru hodi karrega liña Tetum.",
+    en: "Error loading Tetum row.",
+    tet: "Erru hodi karrega liña Tetum.",
   },
 
   databaseUploadFailed: {
-  en: "Error, database upload failed",
-  tet: "Erro, upload falha",
+    en: "Error, database upload failed",
+    tet: "Erro, upload falha",
   },
 
   failedToLoadSpecies: {
-  en: "Failed to load species",
-  tet: "La konsege karrega espésie",
+    en: "Failed to load species",
+    tet: "La konsege karrega espésie",
   },
 
   errorMediaRequiredFields: {
-  en: "Please fill in Species Name, Type, and Media URL before saving.",
-  tet: "Favor kompleta Naran Espesie, Tipu, no URL Media molok grava.",
+    en: "Please fill in Species Name, Type, and Media URL before saving.",
+    tet: "Favor kompleta Naran Espesie, Tipu, no URL Media molok grava.",
   },
+
   errorMediaAlreadyRegistered: {
-  en: "This media is already registered.",
-  tet: "Media ida ne'e rejistu ona.",
+    en: "This media is already registered.",
+    tet: "Media ida ne'e rejistu ona.",
   },
+
   errorFailedToLoadMedia: {
-  en: "Failed to load media. Please try again.",
-  tet: "La konsege karega media. Favor tenta fali.",
+    en: "Failed to load media. Please try again.",
+    tet: "La konsege karega media. Favor tenta fali.",
   },
+
   errorDeleteFailed: {
-  en: "Could not delete this item. Please try again.",
-  tet: "La konsege hamos item ida ne'e. Favor tenta fali.",
+    en: "Could not delete this item. Please try again.",
+    tet: "La konsege hamos item ida ne'e. Favor tenta fali.",
   },
+
   errorUploadFailed: {
-  en: "Upload failed. Please try again.",
-  tet: "Upload la konsege. Favor tenta fali.",
+    en: "Upload failed. Please try again.",
+    tet: "Upload la konsege. Favor tenta fali.",
   },
+
   errorGeneric: {
-  en: "Something went wrong. Please try again.",
-  tet: "Iha problema. Favor tenta fali.",
+    en: "Something went wrong. Please try again.",
+    tet: "Iha problema. Favor tenta fali.",
+  },
+
+  errorUnsavedMediaExists: {
+    en: "Please finish or cancel the current new media entry before adding another.",
+    tet: "Favor remata ka kansela media foun agora molok aumenta media seluk.",
+  },
+
+  mediaAddedSuccessfully: {
+    en: "Media added successfully.",
+    tet: "Media aumenta ho susesu.",
+  },
+
+  mediaUpdatedSuccessfully: {
+    en: "Media updated successfully.",
+    tet: "Media atualiza ho susesu.",
+  },
+
+  mediaSavedRefreshFailed: {
+    en: "Media was saved successfully, but the media list could not be refreshed. Please refresh the page and try again.",
+    tet: "Media rai ho susesu, maibé lista media la konsege atualiza. Favor atualiza pájina no tenta fali.",
+  },
+
+  mediaDeletedSuccessfully: {
+    en: "Media deleted successfully.",
+    tet: "Media hamos ho susesu.",
+  },
+
+  mediaDeletedRefreshFailed: {
+    en: "Media was deleted successfully, but the media list could not be refreshed. Please refresh the page and try again.",
+    tet: "Media hamos ho susesu, maibé lista media la konsege atualiza. Favor atualiza pájina no tenta fali.",
+  },
+
+  adminMediaInstructionsTitle: {
+    en: "Administrator Instructions",
+    tet: "Instrusaun Administradór",
+  },
+
+  adminMediaInstructionsAdd: {
+    en: "To add media, click Add Media and enter the species name, media type, media URL and alt text.",
+    tet: "Atu aumenta media, klik Add Media no hatama naran espésie, tipu media, URL media no alt text.",
+  },
+
+  adminMediaInstructionsUrl: {
+    en: "Image URLs must be publicly accessible so they can be displayed in the Species Database field application.",
+    tet: "URL imajen tenke asesível publikamente atu bele hatudu iha aplikasaun Species Database.",
+  },
+
+  adminMediaInstructionsFormats: {
+    en: "Supported image formats include JPG, JPEG, PNG and WebP.",
+    tet: "Formatu imajen ne'ebé suporta inklui JPG, JPEG, PNG no WebP.",
+  },
+
+  adminMediaInstructionsAlt: {
+    en: "Use clear and descriptive alt text that identifies what is shown in the image.",
+    tet: "Uza alt text ne'ebé klaru no deskritivu atu identifika saida mak hatudu iha imajen.",
+  },
+
+  adminMediaInstructionsReplace: {
+    en: "To replace an existing image, edit its Media URL and save the updated media entry.",
+    tet: "Atu troka imajen ezistente, edita nia Media URL no rai alterasaun ba media.",
   },
 
   pleaseFillInFields: {
-  en: "Please fill in",
-  tet: "Favor kompleta",
+    en: "Please fill in",
+    tet: "Favor kompleta",
   },
 
   errorInvalidMediaUrl: {
-  en: "Please enter a valid Media URL starting with http:// or https://.",
-  tet: "Favor hakerek URL Media validu ne'ebé hahú ho http:// ka https://.",
+    en: "Please enter a valid Media URL starting with http:// or https://.",
+    tet: "Favor hakerek URL Media validu ne'ebé hahú ho http:// ka https://.",
   },
 
   errorNetwork: {
-  en: "Can't reach the server. Check your connection and try again.",
-  tet: "La bele kontaktu servidor. Verifika ita-boot nia koneksaun no tenta fali.",
-  }
-
+    en: "Can't reach the server. Check your connection and try again.",
+    tet: "La bele kontaktu servidor. Verifika ita-boot nia koneksaun no tenta fali.",
+  },
 };

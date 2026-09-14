@@ -1,33 +1,33 @@
 /**
  * IndexedDB Database Module
- * 
+ *
  * Manages local IndexedDB storage for species data, media metadata, and sync status.
  * Provides methods for storing, retrieving, and managing species data.
- * 
+ *
  * Database: 'species_db'
  * Stores:
- *   - 'species' (keyPath: 'id') 
+ *   - 'species' (keyPath: 'id')
  *        Unified store for all species.
  *        Primary key 'id' is a COMPOSITE value: `${species_id}_${language}`
  *        Example: "1_en", "1_tet"
  *        Each language version becomes a separate row, but they share numeric species_id.
  *   - 'media' (keyPath: 'media_id') - Media metadata with species_id index
  *   - 'sync_metadata' (keyPath: 'key') - Sync tracking metadata
- * 
+ *
  * Indexes on 'species' store:
  *   - common_name
  *   - habitat
  *   - leaf_type
  *   - fruit_type
  *   - language
- * 
+ *
  * Dependencies: None (standalone module)
  */
 
 class SpeciesDB {
   constructor() {
     this.dbName = 'species_db';
-    this.dbVersion = 2; // Increment if schema (stores/indexes) changes
+    this.dbVersion = 7; //Increment if schema (stores/indexes) changes 
     this.db = null;
   }
 
@@ -37,8 +37,13 @@ class SpeciesDB {
    * @returns {Promise<IDBDatabase>}
    */
   async init() {
-    if (this.db) {
-      return this.db;
+    //Check for db version -> db version (see above) needs to change each time a new table is added (e.g. local image caching)
+    //this version needs to be changed in service-worker.js too!
+    if (this.db && this.db.version === this.dbVersion) {return this.db;}
+
+    if (this.db && this.db.version < this.dbVersion) {
+      this.db.close();
+      this.db = null;
     }
 
     return new Promise((resolve, reject) => {
@@ -51,23 +56,23 @@ class SpeciesDB {
 
       request.onsuccess = () => {
         this.db = request.result;
-        
+
         // Handle database close event
         this.db.onclose = () => {
           this.db = null;
         };
-        
+
         resolve(this.db);
       };
 
       request.onupgradeneeded = (event) => {
         const db = event.target.result;
         const transaction = event.target.transaction;
-        
+
         // Create 'species' object store with keyPath: 'id'
         if (!db.objectStoreNames.contains('species')) {
           const speciesStore = db.createObjectStore('species', { keyPath: 'id' });
-          
+
           // Create indexes on species store
           speciesStore.createIndex('common_name', 'common_name', { unique: false });
           speciesStore.createIndex('habitat', 'habitat', { unique: false });
@@ -104,6 +109,18 @@ class SpeciesDB {
         // Create 'sync_metadata' object store with keyPath: 'key'
         if (!db.objectStoreNames.contains('sync_metadata')) {
           db.createObjectStore('sync_metadata', { keyPath: 'key' });
+        }
+
+        //image_blobs store for local saving of images (save as object and then load locally)
+        if (!db.objectStoreNames.contains('image_blobs')) {
+          const imageStore = db.createObjectStore('image_blobs',{keyPath: 'url'});
+          imageStore.createIndex('species_id','species_id',{unique: false});
+        }
+
+        //video_blobs store for local saving of videos (save as object and then load locally)
+        if (!db.objectStoreNames.contains('video_blobs')) {
+          const videoStore = db.createObjectStore('video_blobs',{keyPath: 'url'});
+          videoStore.createIndex('species_id','species_id',{unique: false});
         }
 
         console.log('IndexedDB schema initialized: species_db v' + this.dbVersion);
@@ -171,9 +188,9 @@ class SpeciesDB {
     return new Promise((resolve, reject) => {
       const transaction = db.transaction(['sync_metadata'], 'readwrite');
       const store = transaction.objectStore('sync_metadata');
-      
+
       const timestamp = data.last_sync || new Date().toISOString();
-      
+
       const metadataEntry = {
         key: 'sync_status',
         value: {
@@ -181,7 +198,9 @@ class SpeciesDB {
           status: data.status || 'idle',
           last_sync: data.last_sync || null,
           timestamp: data.timestamp !== undefined ? data.timestamp : timestamp,
-          error: data.error !== undefined ? data.error : null
+          error: data.error !== undefined ? data.error : null,
+          media_status: data.media_status !== undefined ? data.media_status : 'complete',
+          pending_media: Array.isArray(data.pending_media) ? data.pending_media : []
         }
       };
 
@@ -209,7 +228,7 @@ class SpeciesDB {
     return new Promise((resolve, reject) => {
       const transaction = db.transaction(['species'], 'readonly');
       const store = transaction.objectStore('species');
-      
+
       let request;
       if (language) {
         const index = store.index('language');
@@ -259,7 +278,7 @@ class SpeciesDB {
         // Clear only specific language
         const index = store.index('language');
         const request = index.openCursor(IDBKeyRange.only(language));
-        
+
         request.onsuccess = (event) => {
           const cursor = event.target.result;
           if (cursor) {
@@ -269,7 +288,7 @@ class SpeciesDB {
             resolve();
           }
         };
-        
+
         request.onerror = () => {
           console.error('Error clearing species:', request.error);
           reject(new Error(`Failed to clear species: ${request.error}`));
@@ -277,11 +296,11 @@ class SpeciesDB {
       } else {
         // Clear all species
         const clearRequest = store.clear();
-        
+
         clearRequest.onsuccess = () => {
           resolve();
         };
-        
+
         clearRequest.onerror = () => {
           console.error('Error clearing species:', clearRequest.error);
           reject(new Error(`Failed to clear species: ${clearRequest.error}`));
@@ -352,7 +371,7 @@ class SpeciesDB {
           hasError = true;
           errorMessage = `Failed to store species ${species.id}: ${request.error}`;
           completed++;
-          
+
           // If transaction aborted, reject immediately
           if (request.error && request.error.name === 'AbortError') {
             reject(new Error(errorMessage));
@@ -497,6 +516,61 @@ class SpeciesDB {
   }
 
   /**
+   * //CYN
+ * Upsert media metadata (partial update, no clear existing data)
+ * Used for incremental sync — different func with storeMediaMetadata()
+ * @param {Array} mediaArray - Array of media metadata objects (partial/changed only)
+ * @returns {Promise<void>}
+ */
+  async upsertMediaMetadata(mediaArray) {
+    if (!Array.isArray(mediaArray)) {
+      throw new Error('mediaArray must be an array');
+    }
+
+    const db = await this.init();
+
+    return new Promise((resolve, reject) => {
+    const transaction = db.transaction(["media"], "readwrite");
+    const store = transaction.objectStore("media");
+
+    transaction.oncomplete = () => {
+        resolve();
+    };
+
+    transaction.onerror = () => {
+        console.error("Error upserting media metadata:", transaction.error);
+        reject(
+            new Error(
+                `Failed to upsert media metadata: ${
+                    transaction.error || "Unknown IndexedDB error"
+                }`
+            )
+        );
+    };
+
+    transaction.onabort = () => {
+        console.error("Media metadata transaction aborted:", transaction.error);
+        reject(
+            new Error(
+                `Media metadata transaction aborted: ${
+                    transaction.error || "Unknown IndexedDB error"
+                }`
+            )
+        );
+    };
+
+    for (const media of mediaArray) {
+        if (!media.media_id) {
+            console.warn("Media missing media_id field:", media);
+            continue;
+        }
+
+        store.put(media);
+    }
+});
+  }
+
+  /**
    * Handle IndexedDB quota exceeded errors gracefully
    * @param {Error} error - The error object
    * @returns {Promise<void>}
@@ -507,6 +581,113 @@ class SpeciesDB {
       throw new Error('Storage quota exceeded. Please free up space on your device.');
     }
     throw error;
+  }
+
+  /**
+   * Get species by ID and language
+   * @param {number|string} speciesId - The species ID
+   * @param {string} language - Language code ('en' or 'tet')
+   * @returns {Promise<Object|null>}
+   */
+  async getSpeciesById(speciesId, language = 'en') {
+    const db = await this.init();
+    const compositeKey = `${speciesId}_${language}`;
+
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(['species'], 'readonly');
+      const store = transaction.objectStore('species');
+      const request = store.get(compositeKey);
+
+      request.onsuccess = () => {
+        resolve(request.result || null);
+      };
+
+      request.onerror = () => {
+        console.error('Error getting species:', request.error);
+        reject(new Error(`Failed to get species: ${request.error}`));
+      };
+    });
+  }
+
+  /**
+   * Get all species for a specific language
+   * @param {string} language - Language code ('en' or 'tet')
+   * @returns {Promise<Array>}
+   */
+  async getAllSpecies(language = 'en') {
+    const db = await this.init();
+
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(['species'], 'readonly');
+      const store = transaction.objectStore('species');
+      const index = store.index('language');
+      const request = index.getAll(IDBKeyRange.only(language));
+
+      request.onsuccess = () => {
+        resolve(request.result || []);
+      };
+
+      request.onerror = () => {
+        console.error('Error getting all species:', request.error);
+        reject(new Error(`Failed to get species: ${request.error}`));
+      };
+    });
+  }
+
+  /**
+   * Get media metadata by species ID
+   * @param {number|string} speciesId - The species ID
+   * @returns {Promise<Array>}
+   */
+  async getMediaBySpeciesId(speciesId) {
+    const db = await this.init();
+
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(['media'], 'readonly');
+      const store = transaction.objectStore('media');
+      const index = store.index('species_id');
+      const request = index.getAll(IDBKeyRange.only(Number(speciesId)));
+
+      request.onsuccess = () => {
+        resolve(request.result || []);
+      };
+
+      request.onerror = () => {
+        console.error('Error getting media:', request.error);
+        reject(new Error(`Failed to get media: ${request.error}`));
+      };
+    });
+  }
+
+  /**
+   * Get media metadata entries matching a list of urls (used to retry failed media)
+   * @param {Array<string>} urls - List of media urls to look up
+   * @returns {Promise<Array>}
+   */
+  async getMediaMetadataByUrls(urls) {
+    if (!Array.isArray(urls) || urls.length === 0) {
+      return [];
+    }
+
+    const db = await this.init();
+
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(['media'], 'readonly');
+      const store = transaction.objectStore('media');
+      const request = store.getAll();
+
+      request.onsuccess = () => {
+        const all = request.result || [];
+        const urlSet = new Set(urls);
+        const matched = all.filter((m) => urlSet.has(m.download_link || m.url));
+        resolve(matched);
+      };
+
+      request.onerror = () => {
+        console.error('Error getting media by urls:', request.error);
+        reject(new Error(`Failed to get media by urls: ${request.error}`));
+      };
+    });
   }
 }
 

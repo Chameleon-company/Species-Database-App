@@ -12,6 +12,7 @@ import VideocamIcon from "@mui/icons-material/Videocam";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import SearchIcon from "@mui/icons-material/Search";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import { adminFetch } from "../utils/adminFetch";
 import LanguageToggle from "../Components/LanguageToggle";
 import { translations } from "../translations";
@@ -390,7 +391,8 @@ function MediaPreviewDialog({
   t: (key: string) => string;
 }) {
   const open = !!media;
-  const youtubeId = media?.media_type === "video" ? getYoutubeId(media.download_link) : null;
+  const youtubeId =
+    media?.media_type === "video" ? getYoutubeId(media.download_link) : null;
   const {
     resolvedUrl: dialogResolvedUrl,
     resolving: dialogResolving,
@@ -487,6 +489,7 @@ function MediaPreviewDialog({
                 <strong style={{ color: "#3d5a2a", minWidth: 80 }}>
                   {t("mediaUrl")}:
                 </strong>
+
                 <a
                   href={media.download_link}
                   target="_blank"
@@ -543,7 +546,13 @@ function MediaPreviewDialog({
   );
 }
 
-function TypeBadge({ type, t }: { type: string; t: (key: string) => string }) {
+function TypeBadge({
+  type,
+  t,
+}: {
+  type: string;
+  t: (key: string) => string;
+}) {
   const isImage = type === "image";
 
   return (
@@ -575,6 +584,7 @@ function TypeBadge({ type, t }: { type: string; t: (key: string) => string }) {
       ) : (
         <VideocamIcon sx={{ fontSize: 12 }} />
       )}
+
       {isImage ? t("image") : t("video")}
     </span>
   );
@@ -610,7 +620,12 @@ function DeleteDialog({
       }}
     >
       <DialogTitle
-        sx={{ fontWeight: 700, fontSize: 17, color: "#1a2e10", pb: 0.5 }}
+        sx={{
+          fontWeight: 700,
+          fontSize: 17,
+          color: "#1a2e10",
+          pb: 0.5,
+        }}
       >
         {t("deleteMediaTitle")}
       </DialogTitle>
@@ -620,6 +635,7 @@ function DeleteDialog({
           {t("deleteMediaConfirm")}{" "}
           <strong style={{ color: "#1a2e10" }}>{name}</strong>?
         </DialogContentText>
+
         <DialogContentText sx={{ fontSize: 13, color: "#9ca3af", mt: 1 }}>
           {t("cannotBeUndone")}
         </DialogContentText>
@@ -679,13 +695,18 @@ export default function MediaManager() {
   const [media, setMedia] = useState<Media[]>([]);
   const [filtered, setFiltered] = useState<Media[]>([]);
   const [loading, setLoading] = useState(false);
+  const [actionPending, setActionPending] = useState(false);
+  const [successKey, setSuccessKey] = useState<string | null>(null);
+
   // errorKey drives what's shown to the user, resolved from HTTP status
   // for backend errors, or set directly for client-side validation
   // (never from backend message text - see errorMessages.ts for why).
   const [errorKey, setErrorKey] = useState<string | null>(null);
+
   // Whether the current error came from loading the list itself (rather
   // than a save/delete) - drives whether the banner offers a Retry action.
   const [loadFailed, setLoadFailed] = useState(false);
+
   const [search, setSearch] = useState("");
   const [addHovered, setAddHovered] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Media | null>(null);
@@ -712,33 +733,62 @@ export default function MediaManager() {
     );
   }, [search, media]);
 
-  const fetchMedia = async () => {
+  useEffect(() => {
+    if (!successKey) return;
+
+    const timer = window.setTimeout(() => {
+      setSuccessKey(null);
+    }, 3500);
+
+    return () => window.clearTimeout(timer);
+  }, [successKey]);
+
+  const fetchMedia = async (): Promise<boolean> => {
     setLoading(true);
     setErrorKey(null);
     setLoadFailed(false);
 
     try {
       const res = await adminFetch(`${API_URL}/upload-media`, {});
+
       if (!res.ok) {
         setErrorKey(resolveErrorKey("fetch", res.status));
         setLoadFailed(true);
         setMedia([]);
-        return;
+        return false;
       }
 
       const data = await res.json();
       setMedia(Array.isArray(data) ? data : []);
+      return true;
     } catch {
       // The request never got a response at all (offline, DNS, CORS, etc).
       setErrorKey(resolveErrorKey("fetch", 0));
       setLoadFailed(true);
       setMedia([]);
+      return false;
     } finally {
       setLoading(false);
     }
   };
 
   const addMedia = () => {
+    if (actionPending || loading) return;
+
+    // Only allow one unsaved media row at a time. This prevents admins from
+    // accidentally creating multiple duplicate/unfinished submissions.
+    const hasUnsavedRow = media.some((m) => m.media_id < 0);
+
+    if (hasUnsavedRow) {
+      setLoadFailed(false);
+      setSuccessKey(null);
+      setErrorKey("errorUnsavedMediaExists");
+      return;
+    }
+
+    setSuccessKey(null);
+    setErrorKey(null);
+
     setMedia((prev) => [
       {
         media_id: Date.now() * -1,
@@ -754,11 +804,20 @@ export default function MediaManager() {
   // Removes a newly-added, unsaved row directly from local state.
   // No backend call and no confirmation dialog - it was never persisted.
   const cancelNewRow = (row: Media) => {
+    if (actionPending) return;
+
     setMedia((prev) => prev.filter((m) => m.media_id !== row.media_id));
+    setErrorKey(null);
   };
 
   const saveMedia = async (row: Media) => {
+    // Ignore repeated save attempts while another media action is active.
+    if (actionPending) {
+      return row;
+    }
+
     if (!row.species_name || !row.media_type || !row.download_link) {
+      setSuccessKey(null);
       setErrorKey("errorMediaRequiredFields");
       return row;
     }
@@ -766,17 +825,21 @@ export default function MediaManager() {
     // URL format validation: catches obviously-invalid entries (e.g. "d",
     // "asdf") before they ever reach the backend.
     if (!isValidUrl(row.download_link)) {
+      setSuccessKey(null);
       setErrorKey("errorInvalidMediaUrl");
       return row;
     }
 
     const isNew = row.media_id < 0;
+
     const url = isNew
       ? `${API_URL}/upload-media`
       : `${API_URL}/upload-media/${row.media_id}`;
 
+    setActionPending(true);
     setLoading(true);
     setErrorKey(null);
+    setSuccessKey(null);
     setLoadFailed(false);
 
     try {
@@ -799,11 +862,23 @@ export default function MediaManager() {
         return row;
       }
 
-      await fetchMedia();
+      const refreshSucceeded = await fetchMedia();
+
+      if (refreshSucceeded) {
+        setErrorKey(null);
+        setSuccessKey(
+          isNew ? "mediaAddedSuccessfully" : "mediaUpdatedSuccessfully"
+        );
+      } else {
+        setSuccessKey(null);
+        setLoadFailed(true);
+        setErrorKey("mediaSavedRefreshFailed");
+      }
     } catch {
       // The request never got a response at all (offline, DNS, CORS, etc).
       setErrorKey(resolveErrorKey("save", 0));
     } finally {
+      setActionPending(false);
       setLoading(false);
     }
 
@@ -811,28 +886,41 @@ export default function MediaManager() {
   };
 
   const handleDeleteClick = (row: Media) => {
+    if (actionPending || loading) return;
+
     // Unsaved new row (never hit the backend) - just remove it locally,
     // no need for a confirmation dialog or an API call.
     if (row.media_id < 0) {
       setMedia((prev) => prev.filter((m) => m.media_id !== row.media_id));
       return;
     }
+
     setDeleteTarget(row);
   };
-  const handleDeleteClose = () => setDeleteTarget(null);
+
+  const handleDeleteClose = () => {
+    if (actionPending) return;
+    setDeleteTarget(null);
+  };
 
   const handleDeleteConfirm = async () => {
-    if (!deleteTarget) return;
+    if (!deleteTarget || actionPending) return;
+
+    const target = deleteTarget;
 
     setDeleteTarget(null);
+    setActionPending(true);
     setLoading(true);
     setErrorKey(null);
+    setSuccessKey(null);
     setLoadFailed(false);
 
     try {
       const res = await adminFetch(
-        `${API_URL}/upload-media/${deleteTarget.media_id}`,
-        { method: "DELETE" }
+        `${API_URL}/upload-media/${target.media_id}`,
+        {
+          method: "DELETE",
+        }
       );
 
       if (!res.ok) {
@@ -840,10 +928,20 @@ export default function MediaManager() {
         return;
       }
 
-      await fetchMedia();
+      const refreshSucceeded = await fetchMedia();
+
+      if (refreshSucceeded) {
+        setErrorKey(null);
+        setSuccessKey("mediaDeletedSuccessfully");
+      } else {
+        setSuccessKey(null);
+        setLoadFailed(true);
+        setErrorKey("mediaDeletedRefreshFailed");
+      }
     } catch {
       setErrorKey(resolveErrorKey("delete", 0));
     } finally {
+      setActionPending(false);
       setLoading(false);
     }
   };
@@ -855,7 +953,13 @@ export default function MediaManager() {
       width: 80,
       sortable: false,
       renderCell: (params: GridRenderCellParams) => (
-        <div style={{ display: "flex", alignItems: "center", height: "100%" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            height: "100%",
+          }}
+        >
           <ThumbCell
             url={params.row.download_link}
             type={params.row.media_type}
@@ -876,11 +980,22 @@ export default function MediaManager() {
       field: "species_name",
       headerName: t("speciesName"),
       width: 200,
-      editable: true,
+      editable: !actionPending,
       renderCell: (params: GridRenderCellParams) => (
-        <span style={{ fontStyle: "italic", color: "#1a2e10", fontWeight: 500 }}>
+        <span
+          style={{
+            fontStyle: "italic",
+            color: "#1a2e10",
+            fontWeight: 500,
+          }}
+        >
           {params.value || (
-            <span style={{ color: "#9ca3af", fontStyle: "normal" }}>
+            <span
+              style={{
+                color: "#9ca3af",
+                fontStyle: "normal",
+              }}
+            >
               {t("clickToEdit")}
             </span>
           )}
@@ -891,7 +1006,7 @@ export default function MediaManager() {
       field: "media_type",
       headerName: t("type"),
       width: 100,
-      editable: true,
+      editable: !actionPending,
       type: "singleSelect",
       valueOptions: ["image", "video"],
       renderCell: (params: GridRenderCellParams) => (
@@ -906,7 +1021,12 @@ export default function MediaManager() {
           {params.value ? (
             <TypeBadge type={params.value} t={t} />
           ) : (
-            <span style={{ color: "#9ca3af", fontSize: 12 }}>
+            <span
+              style={{
+                color: "#9ca3af",
+                fontSize: 12,
+              }}
+            >
               {t("select")}
             </span>
           )}
@@ -918,7 +1038,7 @@ export default function MediaManager() {
       headerName: t("mediaUrl"),
       flex: 1,
       minWidth: 260,
-      editable: true,
+      editable: !actionPending,
       renderCell: (params: GridRenderCellParams) => (
         <span
           style={{
@@ -941,7 +1061,7 @@ export default function MediaManager() {
       field: "alt_text",
       headerName: t("altText"),
       width: 180,
-      editable: true,
+      editable: !actionPending,
       renderCell: (params: GridRenderCellParams) => (
         <span style={{ fontSize: 13, color: "#6b7280" }}>
           {params.value || <span style={{ color: "#d1d5db" }}>—</span>}
@@ -955,9 +1075,15 @@ export default function MediaManager() {
       sortable: false,
       renderCell: (params: GridRenderCellParams) =>
         params.row.media_id < 0 ? (
-          <CancelBtn onClick={() => cancelNewRow(params.row)} />
+          <CancelBtn
+            disabled={actionPending}
+            onClick={() => cancelNewRow(params.row)}
+          />
         ) : (
-          <DeleteBtn onClick={() => handleDeleteClick(params.row)} />
+          <DeleteBtn
+            disabled={actionPending}
+            onClick={() => handleDeleteClick(params.row)}
+          />
         ),
     },
   ];
@@ -1019,9 +1145,16 @@ export default function MediaManager() {
           </p>
         </div>
 
-        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+        <div
+          style={{
+            display: "flex",
+            gap: 12,
+            alignItems: "center",
+          }}
+        >
           <button
             onClick={addMedia}
+            disabled={actionPending || loading}
             onMouseEnter={() => setAddHovered(true)}
             onMouseLeave={() => setAddHovered(false)}
             style={{
@@ -1031,16 +1164,29 @@ export default function MediaManager() {
               padding: "9px 18px",
               borderRadius: 10,
               border: "none",
-              backgroundColor: addHovered ? "#245508" : "#2d6a0a",
+              backgroundColor:
+                actionPending || loading
+                  ? "#9ca3af"
+                  : addHovered
+                  ? "#245508"
+                  : "#2d6a0a",
               color: "#ffffff",
               fontSize: 13,
               fontWeight: 600,
               fontFamily: "inherit",
-              cursor: "pointer",
-              boxShadow: addHovered
-                ? "0 4px 14px rgba(45,106,10,0.35)"
-                : "0 2px 8px rgba(45,106,10,0.2)",
-              transform: addHovered ? "translateY(-1px)" : "translateY(0)",
+              cursor: actionPending || loading ? "not-allowed" : "pointer",
+              boxShadow:
+                actionPending || loading
+                  ? "none"
+                  : addHovered
+                  ? "0 4px 14px rgba(45,106,10,0.35)"
+                  : "0 2px 8px rgba(45,106,10,0.2)",
+              transform:
+                actionPending || loading
+                  ? "translateY(0)"
+                  : addHovered
+                  ? "translateY(-1px)"
+                  : "translateY(0)",
               transition: "all 0.15s",
             }}
           >
@@ -1048,6 +1194,95 @@ export default function MediaManager() {
             {t("addMedia")}
           </button>
         </div>
+      </div>
+
+      {/* Administrator instructions */}
+      <div
+        style={{
+          backgroundColor: "#ffffff",
+          border: "1px solid #d8edbd",
+          borderRadius: 12,
+          padding: "18px 20px",
+          marginBottom: 16,
+          boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            marginBottom: 10,
+          }}
+        >
+          <ImageIcon sx={{ fontSize: 20, color: "#2d6a0a" }} />
+
+          <h2
+            style={{
+              margin: 0,
+              fontSize: 15,
+              fontWeight: 700,
+              color: "#1a2e10",
+            }}
+          >
+            {t("adminMediaInstructionsTitle")}
+          </h2>
+        </div>
+
+        <p
+          style={{
+            margin: "0 0 8px 0",
+            fontSize: 13,
+            color: "#4b5563",
+            lineHeight: 1.6,
+          }}
+        >
+          {t("adminMediaInstructionsAdd")}
+        </p>
+
+        <p
+          style={{
+            margin: "0 0 8px 0",
+            fontSize: 13,
+            color: "#4b5563",
+            lineHeight: 1.6,
+          }}
+        >
+          {t("adminMediaInstructionsUrl")}
+        </p>
+
+        <p
+          style={{
+            margin: "0 0 8px 0",
+            fontSize: 13,
+            color: "#4b5563",
+            lineHeight: 1.6,
+          }}
+        >
+          {t("adminMediaInstructionsFormats")}
+        </p>
+
+        <p
+          style={{
+            margin: "0 0 8px 0",
+            fontSize: 13,
+            color: "#4b5563",
+            lineHeight: 1.6,
+          }}
+        >
+          {t("adminMediaInstructionsAlt")}
+        </p>
+
+        <p
+          style={{
+            margin: 0,
+            fontSize: 13,
+            color: "#4b5563",
+            lineHeight: 1.6,
+          }}
+        >
+          {t("adminMediaInstructionsReplace")}
+        </p>
       </div>
 
       <div
@@ -1100,12 +1335,54 @@ export default function MediaManager() {
         )}
       </div>
 
+      <Collapse in={!!successKey} unmountOnExit>
+        <Alert
+          severity="success"
+          icon={<CheckCircleOutlineIcon sx={{ fontSize: 20 }} />}
+          action={
+            <IconButton
+              size="small"
+              onClick={() => setSuccessKey(null)}
+              sx={{ color: "#15803d" }}
+            >
+              <CloseIcon sx={{ fontSize: 16 }} />
+            </IconButton>
+          }
+          sx={{
+            borderRadius: "12px",
+            border: "1px solid #bbf7d0",
+            backgroundColor: "#f0fdf4",
+            color: "#166534",
+            fontSize: 13,
+            fontWeight: 500,
+            marginBottom: "14px",
+            alignItems: "center",
+            boxShadow: "0 2px 10px rgba(22,101,52,0.08)",
+            "& .MuiAlert-icon": {
+              color: "#16a34a",
+            },
+            "& .MuiAlert-message": {
+              display: "flex",
+              alignItems: "center",
+            },
+          }}
+        >
+          {t(successKey ?? "success")}
+        </Alert>
+      </Collapse>
+
       <Collapse in={!!errorKey} unmountOnExit>
         <Alert
           severity="error"
           icon={<ErrorOutlineIcon sx={{ fontSize: 20 }} />}
           action={
-            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+              }}
+            >
               {loadFailed && (
                 <button
                   onClick={() => fetchMedia()}
@@ -1126,10 +1403,13 @@ export default function MediaManager() {
                   {t("retry")}
                 </button>
               )}
+
               <IconButton
                 size="small"
                 onClick={() => setErrorKey(null)}
-                sx={{ color: "#dc2626" }}
+                sx={{
+                  color: "#dc2626",
+                }}
               >
                 <CloseIcon sx={{ fontSize: 16 }} />
               </IconButton>
@@ -1145,8 +1425,13 @@ export default function MediaManager() {
             marginBottom: "14px",
             alignItems: "center",
             boxShadow: "0 2px 10px rgba(220,38,38,0.08)",
-            "& .MuiAlert-icon": { color: "#dc2626" },
-            "& .MuiAlert-message": { display: "flex", alignItems: "center" },
+            "& .MuiAlert-icon": {
+              color: "#dc2626",
+            },
+            "& .MuiAlert-message": {
+              display: "flex",
+              alignItems: "center",
+            },
           }}
         >
           {t(errorKey ?? "errorGeneric")}
@@ -1227,12 +1512,19 @@ export default function MediaManager() {
   );
 }
 
-function DeleteBtn({ onClick }: { onClick: () => void }) {
+function DeleteBtn({
+  onClick,
+  disabled = false,
+}: {
+  onClick: () => void;
+  disabled?: boolean;
+}) {
   const [hovered, setHovered] = useState(false);
 
   return (
     <button
       onClick={onClick}
+      disabled={disabled}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
@@ -1243,9 +1535,13 @@ function DeleteBtn({ onClick }: { onClick: () => void }) {
         height: 34,
         borderRadius: 8,
         border: "none",
-        backgroundColor: hovered ? "#fef2f2" : "transparent",
-        color: hovered ? "#dc2626" : "#9ca3af",
-        cursor: "pointer",
+        backgroundColor: disabled
+          ? "transparent"
+          : hovered
+          ? "#fef2f2"
+          : "transparent",
+        color: disabled ? "#d1d5db" : hovered ? "#dc2626" : "#9ca3af",
+        cursor: disabled ? "not-allowed" : "pointer",
         transition: "all 0.15s",
       }}
     >
@@ -1257,12 +1553,19 @@ function DeleteBtn({ onClick }: { onClick: () => void }) {
 // Used only on newly-added, unsaved rows. Removes the row immediately from
 // local state with no confirmation dialog and no backend call, since there
 // is nothing saved yet to lose - functions as "cancel adding this media".
-function CancelBtn({ onClick }: { onClick: () => void }) {
+function CancelBtn({
+  onClick,
+  disabled = false,
+}: {
+  onClick: () => void;
+  disabled?: boolean;
+}) {
   const [hovered, setHovered] = useState(false);
 
   return (
     <button
       onClick={onClick}
+      disabled={disabled}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       title="Cancel"
@@ -1274,9 +1577,13 @@ function CancelBtn({ onClick }: { onClick: () => void }) {
         height: 34,
         borderRadius: 8,
         border: "none",
-        backgroundColor: hovered ? "#f3f4f6" : "transparent",
-        color: hovered ? "#4b5563" : "#9ca3af",
-        cursor: "pointer",
+        backgroundColor: disabled
+          ? "transparent"
+          : hovered
+          ? "#f3f4f6"
+          : "transparent",
+        color: disabled ? "#d1d5db" : hovered ? "#4b5563" : "#9ca3af",
+        cursor: disabled ? "not-allowed" : "pointer",
         transition: "all 0.15s",
       }}
     >
