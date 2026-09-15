@@ -1030,6 +1030,12 @@ export const translations = {
   tet: "Iha problema. Favor tenta fali.",
   },
 
+  noRows: {
+  en: "No rows to display",
+  tet: "Laiha liña sira atu hatudu",
+  },
+
+
   pleaseFillInFields: {
   en: "Please fill in",
   tet: "Favor kompleta",
