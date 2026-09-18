@@ -504,6 +504,46 @@ export const translations = {
     tet: "Link mídia ne'e rejista ona",
   },
 
+  speciesNamePlaceholder: {
+    en: "e.g. Aleurites moluccana",
+    tet: "ezemplu Aleurites moluccana",
+  },
+
+  altTextPlaceholder: {
+    en: "Short description for accessibility",
+    tet: "Deskrisaun badak",
+  },
+
+  file: {
+    en: "File",
+    tet: "File",
+  },
+
+  dragOrClickMedia: {
+    en: "Drag and drop an image or video here, or click to browse",
+    tet: "Drag ka klik hodi hili imajen ka video",
+  },
+
+  dropMediaFile: {
+    en: "Drop your file here",
+    tet: "Tau file iha ne'e",
+  },
+
+  imageOrVideoFileTypes: {
+    en: "JPG, PNG, WEBP, GIF, MP4, WEBM, MOV",
+    tet: "JPG, PNG, WEBP, GIF, MP4, WEBM, MOV",
+  },
+
+  onlyImageOrVideoAllowed: {
+    en: "Only image or video files are supported",
+    tet: "Imajen ka video deit mak suporta",
+  },
+
+  heicNotSupportedConvertFirst: {
+    en: "HEIC photos aren't supported — convert to JPG first, then try again",
+    tet: "HEIC la suporta — troka ba JPG uluk",
+  },
+
   deleteMediaConfirm: {
     en: "Delete this media item ",
     tet: "Apaga mídia ida ne’e ",
