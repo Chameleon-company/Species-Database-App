@@ -1,0 +1,3 @@
+0:Casuarina_equisetifolia
+1:Swietenia_Macrophylla
+2:Tectona_Grandis
