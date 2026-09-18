@@ -65,8 +65,12 @@ def get_admin_user(supabase):
     token = request.headers.get("Authorization")
 
     if not token:
-        return None, ("missing admin toekn", 401)
-    
+        return None, ("missing admin token", 401)
+
+    # strip "Bearer " so we compare the raw token, not "Bearer <token>" can use this for testing with curl or postman
+    if token.startswith("Bearer "):
+        token = token.split(" ", 1)[1]
+
     sess_resp = (
         supabase.table("admin_sessions")
         .select("session_id, user_id, expires_at, revoked, revocation_reason, ip_address, user_agent")
@@ -75,7 +79,7 @@ def get_admin_user(supabase):
     )
 
     if not sess_resp.data:
-        return None, ("token nto valid", 401)
+        return None, ("invalid token", 401)
     
     session = sess_resp.data[0]
 
@@ -501,6 +505,10 @@ def register_auth_routes(app, supabase):
         # If no token is provided reject the request
         if not token:
             return jsonify({"error": "missing admin token"}), 401
+
+        # Strip "Bearer " prefix if present, so we compare the raw token
+        if token.startswith("Bearer "):
+            token = token.split(" ", 1)[1]
 
         # Check token is in admin_sessions table
         sess_resp = (
