@@ -1,30 +1,48 @@
 //Gets a safe URL (dfeinitely from the proper DB) instead of a user-provided value (could be malicious) which trips up GitHub's security check
 function getSafeVideoUrl(rawUrl) {
+    if (!rawUrl || typeof rawUrl !== "string") {
+        console.warn("[Video] Missing media URL");
+        return null;
+    }
+
     try {
-        const url = new URL(rawUrl);
+        const url = new URL(rawUrl.trim());
 
-        //const allowedHost = "oppcngtkhywxsazeqqet.supabase.co"; -> this is the original DB, if using local DB will not allow access to video
+        const allowedHosts = new Set(
+            API_CONFIG.SUPABASE_VIDEO_HOSTS || [API_CONFIG.SUPABASE_HOST]
+        );
 
-        const allowedHost = API_CONFIG.SUPABASE_HOST;
+        const allowedPaths = API_CONFIG.SUPABASE_VIDEO_PATHS || [
+            "/storage/v1/object/public/species_videos/",
+        ];
 
-        if (url.hostname !== allowedHost) {
+        if (url.protocol !== "https:") {
+            console.warn("[Video] Rejected non-HTTPS media URL");
             return null;
         }
 
-        //const validSupabaseHost = /^[a-z0-9]+\.supabase\.co$/i.test(url.hostname); //any similar looking SupaBase DB can be checked (for individual DB testing)
-        //const allowedPath = "/storage/v1/object/public/media/videos/"; //old path before new media uploader
-        const allowedPath = "/storage/v1/object/public/species_videos/"; //Changed to new file path based on media upload pipeline
+        if (!allowedHosts.has(url.hostname)) {
+            console.warn("[Video] Rejected media host:", url.hostname);
+            return null;
+        }
 
-        if (url.protocol !== "https:") {return null;}
-        if (url.hostname !== allowedHost) {return null;}
-        //if (!validSupabaseHost) {return null;}
-        if (!url.pathname.startsWith(allowedPath)) {return null;}
-        //Make sure its a video file
+        if (!allowedPaths.some(path => url.pathname.startsWith(path))) {
+            console.warn("[Video] Rejected media path:", url.pathname);
+            return null;
+        }
+
         const validVideoFile = /\.(mp4|webm|mov)$/i.test(url.pathname);
-        if (!validVideoFile) {return null;}
+
+        if (!validVideoFile) {
+            console.warn("[Video] Rejected media file type:", url.pathname);
+            return null;
+        }
 
         return url.href;
-    } catch {return null;}
+    } catch (error) {
+        console.warn("[Video] Invalid media URL", error);
+        return null;
+    }
 }
 
 
@@ -63,11 +81,33 @@ if(!VIDEO_SRC || !speciesId)
 
 //Chcek if online -> if not online and video hasnt cached show video is unavailable
 async function checkIfOnline() {
-    try {
-        const response= await fetch(VIDEO_SRC, {method: "HEAD",cache: "no-store"});
-        return response.ok;
+    if (!VIDEO_SRC) {
+        return false;
     }
-    catch {return false;}
+
+    try {
+        const response = await fetch(VIDEO_SRC, {
+            method: "HEAD",
+            cache: "no-store"
+        });
+
+        if (response.ok) {
+            return true;
+        }
+
+        // Some storage services reject HEAD even when GET works
+        const fallback = await fetch(VIDEO_SRC, {
+            method: "GET",
+            headers: {
+                Range: "bytes=0-0"
+            },
+            cache: "no-store"
+        });
+
+        return fallback.ok;
+    } catch {
+        return false;
+    }
 }
 
 //Return a video state to update download text, button and video player
@@ -241,7 +281,7 @@ downloadBtn?.addEventListener("click", async () => {
     } catch (err) {
         console.error("[Video] Download failed:", err);
         downloadStatus.textContent = "Download failed";
-        downloadBtn.textContent = "Not Downloaded";s
+        downloadBtn.textContent = "Not Downloaded";
         downloadBtn.disabled = false;
     }
 });
@@ -252,6 +292,12 @@ downloadBtn?.addEventListener("click", async () => {
 
 //Checks various states (in cache, not in cache and offlien) to change message and button behaviour
 async function checkDownloadState() {
+    if (!VIDEO_SRC || !speciesId) {
+        downloadStatus.textContent = "Video Unavailable";
+        downloadBtn.disabled = true;
+        return;
+    }
+
     const cached = await getCachedVideo(VIDEO_SRC);
     const state = await videoState();
     //if already cached -> disable

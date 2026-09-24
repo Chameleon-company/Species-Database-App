@@ -27,6 +27,19 @@ const API_CONFIG = {
     ? "lhsuizrhakkezafdbfkt.supabase.co"
     : "oppcngtkhywxsazeqqet.supabase.co",
 
+
+// Approved Supabase projects that may contain species videos
+SUPABASE_VIDEO_HOSTS: [
+  "oppcngtkhywxsazeqqet.supabase.co",
+  "lhsuizrhakkezafdbfkt.supabase.co",
+],
+
+// Current and legacy video storage paths
+SUPABASE_VIDEO_PATHS: [
+  "/storage/v1/object/public/species_videos/",
+  "/storage/v1/object/public/media/videos/",
+],
+
   // API endpoint paths (relative to baseUrl)
   endpoints: {
     // Sync endpoints
