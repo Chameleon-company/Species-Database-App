@@ -12,3 +12,4 @@ testData.xlsx
 .idea/
 .idea/caches/
 **/.idea/deploymentTargetSelector.xml
+dist/

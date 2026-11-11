@@ -18,15 +18,18 @@ ENV VITE_API_BASE=$VITE_API_BASE \
     VITE_SUPABASE_PUBLISHABLE_KEY_TETUM=$VITE_SUPABASE_PUBLISHABLE_KEY_TETUM \
     VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
 
-COPY ReactDash/package*.json ./
-RUN npm ci
+RUN npm install -g pnpm@12.16.1
 
-COPY ReactDash ./
-RUN npm run build
+COPY pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm fetch
+
+COPY . .
+RUN pnpm install --offline --frozen-lockfile --filter admin...
+RUN pnpm --filter admin build
 
 FROM nginx:1.27-alpine
 
-COPY ReactDash/nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=build /app/dist /usr/share/nginx/html
+COPY apps/admin/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/apps/admin/dist /usr/share/nginx/html
 
 EXPOSE 80
