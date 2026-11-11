@@ -9,9 +9,12 @@ The Rai Matak Species Guide supports field staff, botanists, and community partn
 The repository includes:
 
 - A Flask backend API in `backend`
-- A React admin dashboard in `ReactDash`
+- A React admin dashboard in `apps/admin`
 - A static field-user frontend in `Frontend`
 - A Capacitor Android wrapper in `capacitor-wrapper`
+- Placeholders for the new field app in `apps/field` and the new TypeScript API in `apps/api`
+
+The JavaScript apps share one pnpm workspace, defined in `pnpm-workspace.yaml`. Shared dependency versions live in its `catalog:` section, and `pnpm-lock.yaml` is the only lockfile.
 
 ## Recommended Setup with Docker
 
@@ -23,7 +26,8 @@ Install these before running project commands:
 
 - Git
 - Docker Desktop, or Docker Engine with Docker Compose v2
-- Node.js 22 or newer, including npm
+- Node.js 22 or newer
+- pnpm, installed with `npm install -g pnpm`
 
 Windows 11:
 
@@ -59,7 +63,6 @@ Linux:
 ```bash
 git clone https://github.com/Chameleon-company/Species-Database-App.git
 cd Species-Database-App
-git checkout DevSecOps
 ```
 
 ### 3. Create the Environment File
@@ -106,7 +109,7 @@ Do not commit `.env`.
 From the repository root:
 
 ```bash
-npm run dev
+pnpm run dev
 ```
 
 This builds and starts:
@@ -143,18 +146,18 @@ The setup is working when the dashboard opens and `/api/bundle` returns JSON.
 ### 6. Stop the App
 
 ```bash
-npm run docker:down
+pnpm run docker:down
 ```
 
 ## Common Commands
 
 ```bash
-npm run dev           # Build and start Docker containers
-npm run docker:down   # Stop Docker containers
-npm run docker:logs   # Follow container logs
-npm run docker:build  # Build Docker images only
-npm run build         # Build the React admin dashboard
-npm run lint          # Run React admin linting
+pnpm run dev           # Build and start Docker containers
+pnpm run docker:down   # Stop Docker containers
+pnpm run docker:logs   # Follow container logs
+pnpm run docker:build  # Build Docker images only
+pnpm run build         # Build every app in the workspace
+pnpm run lint          # Lint every app in the workspace
 ```
 
 ## Optional Local Development
@@ -166,7 +169,7 @@ Use this path only when you need to run services outside Docker.
 Install:
 
 - Node.js 22 or newer
-- npm
+- pnpm, installed with `npm install -g pnpm`
 - Python 3.12 or newer
 
 ### 2. Run the OS Install Script
@@ -174,9 +177,9 @@ Install:
 From the repository root, run the command for your OS:
 
 ```bash
-npm run install:linux
-npm run install:macos
-npm run install:windows11
+pnpm run install:linux
+pnpm run install:macos
+pnpm run install:windows11
 ```
 
 The script installs Node dependencies, creates `backend/venv`, installs Python requirements, and creates `.env` from `.env.example` if it does not exist.
@@ -186,13 +189,13 @@ The script installs Node dependencies, creates `backend/venv`, installs Python r
 Start the backend:
 
 ```bash
-npm run dev:backend
+pnpm run dev:backend
 ```
 
 Start the admin dashboard in another terminal:
 
 ```bash
-npm run dev:admin
+pnpm run dev:admin
 ```
 
 Local URLs:
@@ -231,8 +234,8 @@ Install:
 
 ```bash
 cd capacitor-wrapper
-npx cap sync android
-npx cap open android
+pnpm exec cap sync android
+pnpm exec cap open android
 ```
 
 ### 3. Run from Android Studio
@@ -241,7 +244,7 @@ npx cap open android
 2. Select a connected Android device or emulator.
 3. Run the app from Android Studio.
 
-Repeat `npx cap sync android` after changing static frontend files.
+Repeat `pnpm exec cap sync android` after changing static frontend files.
 
 ## Key Features
 
@@ -319,19 +322,19 @@ Docker is not running:
 Port already in use:
 
 1. Stop any existing service using ports `5000` or `5173`.
-2. Run `npm run docker:down`.
-3. Run `npm run dev` again.
+2. Run `pnpm run docker:down`.
+3. Run `pnpm run dev` again.
 
 Environment values missing:
 
 1. Confirm `.env` exists in the repository root.
 2. Confirm all Supabase and Google values are filled.
-3. Restart Docker with `npm run docker:down` and `npm run dev`.
+3. Restart Docker with `pnpm run docker:down` and `pnpm run dev`.
 
 Admin dashboard opens but data does not load:
 
 1. Check backend status with `docker compose ps`.
-2. Check logs with `npm run docker:logs`.
+2. Check logs with `pnpm run docker:logs`.
 3. Confirm `VITE_API_BASE` and `VITE_API_URL` point to `http://localhost:5000`.
 
 ---
