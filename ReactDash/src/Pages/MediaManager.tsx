@@ -1168,8 +1168,7 @@ export default function MediaManager() {
       body.append("media_type", form.media_type);
       body.append("alt_text", form.alt_text.trim());
 
-      // /upload-media-file placeholder endpoint. Need a proper one.
-      const res = await adminFetch(`${API_URL}/upload-media-file`, {
+      const res = await adminFetch(`${API_URL}/upload-media/file`, {
         method: "POST",
         body,
       });
