@@ -4,12 +4,11 @@ import AddIcon from "@mui/icons-material/Add";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import SearchIcon from "@mui/icons-material/Search";
 import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import TableLayout from "../Components/TableLayout";
 import { adminFetch } from "../utils/adminFetch";
 import { translations } from "../translations";
-import LanguageToggle from "../Components/LanguageToggle";
-import { useLanguage } from "../LanguageContext";
+import { useLanguage } from "../useLanguage";
 
 
 const apiUrl = import.meta.env.VITE_API_URL;
@@ -135,8 +134,7 @@ function CellLink({
 /* ─── Main Page ──────────────────────────────────────────────────── */
 export default function SpeciesPage() {
   const [rows, setRows] = useState<SpeciesRow[]>([]);
-  const [filteredRows, setFilteredRows] = useState<SpeciesRow[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
   const [deleteId, setDeleteId] = useState<number | null>(null);
@@ -147,18 +145,16 @@ export default function SpeciesPage() {
   const [open, setOpen] = useState(false);
 
   /* search filter */
-  useEffect(() => {
+  const filteredRows = useMemo(() => {
     const q = search.toLowerCase();
-    setFilteredRows(
-      q
-        ? rows.filter(
-            (r) =>
-              r.common_name?.toLowerCase().includes(q) ||
-              r.scientific_name?.toLowerCase().includes(q) ||
-              r.habitat?.toLowerCase().includes(q)
-          )
-        : rows
-    );
+    return q
+      ? rows.filter(
+          (r) =>
+            r.common_name?.toLowerCase().includes(q) ||
+            r.scientific_name?.toLowerCase().includes(q) ||
+            r.habitat?.toLowerCase().includes(q)
+        )
+      : rows;
   }, [search, rows]);
 
   const handleClose = () => {
@@ -196,30 +192,31 @@ export default function SpeciesPage() {
     }
   };
 
-  async function fetchSpecies() {
-    setLoading(true);
-    try {
-      const res = await adminFetch(`${apiUrl}/bundle`, { method: "GET" });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || err.detail || res.statusText);
+  useEffect(() => {
+    async function fetchSpecies() {
+      try {
+        const res = await adminFetch(`${apiUrl}/bundle`, { method: "GET" });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || err.detail || res.statusText);
+        }
+        const data = await res.json();
+        const mainData = data.species_en.map((item: Omit<SpeciesRow, "id">) => ({
+          id: item.species_id,
+          ...item,
+        }));
+        setRows(mainData);
+      } catch (e) {
+        console.error("Failed to fetch species:", e);
+      } finally {
+        setLoading(false);
       }
-      const data = await res.json();
-      const mainData = data.species_en.map((item: any) => ({
-        id: item.species_id,
-        ...item,
-      }));
-      setRows(mainData);
-    } catch (e) {
-      console.error("Failed to fetch species:", e);
-    } finally {
-      setLoading(false);
     }
-  }
 
-  useEffect(() => { fetchSpecies(); }, []);
+    fetchSpecies();
+  }, []);
 
-  const { lang, setLang } = useLanguage();
+  const { lang } = useLanguage();
   const t = (key: string) =>
     translations[key as keyof typeof translations]?.[lang] || key;
 

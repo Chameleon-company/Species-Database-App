@@ -7,7 +7,6 @@ import {
   CircularProgress,
   Divider,
   Chip,
-  Alert,
 } from "@mui/material";
 
 import PeopleIcon from "@mui/icons-material/People";
@@ -17,13 +16,11 @@ import TimerIcon from "@mui/icons-material/Timer";
 import SpaIcon from "@mui/icons-material/Spa";
 import ImageIcon from "@mui/icons-material/Image";
 import WarningIcon from "@mui/icons-material/Warning";
-import InsightsIcon from "@mui/icons-material/Insights";
 import StarIcon from "@mui/icons-material/Star";
 
 import { adminFetch } from "../utils/adminFetch";
 import { translations } from "../translations";
-import LanguageToggle from "../Components/LanguageToggle";
-import { useLanguage } from "../LanguageContext";
+import { useLanguage } from "../useLanguage";
 
 
 import {
@@ -63,11 +60,6 @@ function safeNumber(value: number | null | undefined): number {
   return typeof value === "number" ? value : 0;
 }
 
-function formatLastLogin(lastLogin: string | null): string {
-  if (!lastLogin) return "Never logged in";
-  return new Date(lastLogin).toLocaleString();
-}
-
 function getActivityLabel(user: UserAnalytics, t: (key: string) => string): string {
   const loginCount = safeNumber(user.login_count);
 
@@ -87,14 +79,13 @@ function getDisplayName(name: string): string {
 }
 
 export default function Analytics() {
-  const { lang, setLang } = useLanguage();
+  const { lang } = useLanguage();
 
-  const t = (key: string) => (translations as any)[key]?.[lang] || key;
+  const t = (key: string) => translations[key as keyof typeof translations]?.[lang] || key;
 
   const [overview, setOverview] = useState<Overview | null>(null);
   const [users, setUsers] = useState<UserAnalytics[]>([]);
   const [loading, setLoading] = useState(true);
-  const [apiWarning, setApiWarning] = useState("");
 
   useEffect(() => {
     Promise.all([
@@ -106,9 +97,6 @@ export default function Analytics() {
           setOverview(overviewData);
         } else {
           setOverview(null);
-          setApiWarning(
-            "Some analytics data could not be loaded because the backend returned an error."
-          );
           console.error("Overview API error:", overviewData);
         }
 
@@ -116,18 +104,12 @@ export default function Analytics() {
           setUsers(userData);
         } else {
           setUsers([]);
-          setApiWarning(
-            "User activity data could not be loaded because the backend returned an error."
-          );
           console.error("Users API error:", userData);
         }
       })
       .catch((error) => {
         setOverview(null);
         setUsers([]);
-        setApiWarning(
-          "Analytics data could not be loaded. Please check the backend API connection."
-        );
         console.error("Analytics API failed:", error);
       })
       .finally(() => setLoading(false));

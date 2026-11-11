@@ -1,6 +1,6 @@
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useEffectEvent, useState } from 'react'
 import { TextField } from '@mui/material'
 import Alert from '@mui/material/Alert'
 import type { Species } from '../mainTableSelect'
@@ -12,8 +12,7 @@ import DialogTitle from '@mui/material/DialogTitle'
 import { useParams } from "react-router-dom";
 import { adminFetch } from '../utils/adminFetch'
 import { translations } from '../translations'
-import LanguageToggle from "../Components/LanguageToggle";
-import { useLanguage } from "../LanguageContext";
+import { useLanguage } from "../useLanguage";
 
 
 const API_URL = import.meta.env.VITE_API_URL
@@ -443,6 +442,8 @@ export function EditEntry() {
         }
     }
 
+    const selectRow = useEffectEvent(handleRowSelect)
+
     useEffect(() => {
         async function loadSpecies() {
             if (!id) return
@@ -460,7 +461,7 @@ export function EditEntry() {
                 const species = await res.json()
 
                 setSpeciesTet(tetList)
-                handleRowSelect(species)
+                selectRow(species)
             }
             catch (err) {
                 console.error("failed loading species for editing", err)

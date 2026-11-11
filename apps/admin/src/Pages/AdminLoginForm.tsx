@@ -2,17 +2,32 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/logo.png";
 import { translations } from "../translations";
-import { useLanguage } from "../LanguageContext";
+import { useLanguage } from "../useLanguage";
 
 type GoogleCredentialResponse = {
   credential: string;
   select_by?: string;
 };
 
+type GoogleIdentity = {
+  accounts: {
+    id: {
+      initialize: (config: {
+        client_id: string;
+        callback: (response: GoogleCredentialResponse) => void;
+      }) => void;
+      renderButton: (
+        parent: HTMLElement | null,
+        options: { theme: string; size: string; width: string }
+      ) => void;
+    };
+  };
+};
+
 declare global {
   interface Window {
-    google: any;
-    handleGoogleLogin?: (response: any) => void;
+    google?: GoogleIdentity;
+    handleGoogleLogin?: (response: GoogleCredentialResponse) => void;
   }
 }
 
@@ -21,7 +36,7 @@ export default function AdminLoginForm() {
   const { lang, setLang } = useLanguage();
 
   const t = (key: string) =>
-    (translations as any)[key]?.[lang] || key;
+    translations[key as keyof typeof translations]?.[lang] || key;
 
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
@@ -81,8 +96,8 @@ export default function AdminLoginForm() {
         throw new Error(result.error || t("adminLoginFailed"));
       localStorage.setItem("admin_token", result.access_token);
       navigate("/");
-    } catch (err: any) {
-      setError(err.message || t("somethingWentWrong"));
+    } catch (err: unknown) {
+      setError((err instanceof Error && err.message) || t("somethingWentWrong"));
     } finally {
       setLoading(false);
     }

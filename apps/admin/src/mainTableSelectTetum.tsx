@@ -1,5 +1,5 @@
 import { DataGrid } from '@mui/x-data-grid'
-import type { GridColDef } from '@mui/x-data-grid'
+import type { GridColDef, GridRowSelectionModel } from '@mui/x-data-grid'
 import Paper from '@mui/material/Paper'
 import { useEffect, useState } from "react"
 import { translations } from './translations'
@@ -46,29 +46,29 @@ export default function MainTableSelectTetum({ onRowSelect, lang }: MainTablePro
   ]
 
   useEffect(() => {
+    async function getSpecies() {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/bundle`, {
+          credentials: "include"
+        })
+
+        if (!res.ok) {
+          throw new Error('Failed to get rows to display')
+        }
+
+        const data = await res.json()
+        setSpecies(data.species_tet ?? [])
+      } catch (err) {
+        console.error(err)
+        setSpecies([])
+      }
+    }
+
     getSpecies()
   }, [])
 
-  async function getSpecies() {
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/bundle`, {
-        credentials: "include"
-      })
-
-      if (!res.ok) {
-        throw new Error('Failed to get rows to display')
-      }
-
-      const data = await res.json()
-      setSpecies(data.species_tet ?? [])
-    } catch (err) {
-      console.error(err)
-      setSpecies([])
-    }
-  }
-
-  const handleRowSelection = (selectionModel: any) => {
-    const selectedIds = Array.from(selectionModel || [])
+  const handleRowSelection = (selectionModel: GridRowSelectionModel) => {
+    const selectedIds = Array.from(selectionModel.ids)
 
     if (selectedIds.length > 0) {
       const selectedId = selectedIds[0]

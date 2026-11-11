@@ -15,7 +15,7 @@ export default function TheDrawer() {
   const lang =
     (localStorage.getItem("lang") as "en" | "tet") || "en";
   const t = (key: string) =>
-    (translations as any)[key]?.[lang] || key;
+    translations[key as keyof typeof translations]?.[lang] || key;
 
   const toggleDrawer = (newOpen: boolean) => () => {
     setOpen(newOpen);

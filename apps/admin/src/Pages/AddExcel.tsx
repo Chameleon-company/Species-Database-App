@@ -2,8 +2,7 @@ import React, { useState, useRef, type DragEvent } from "react";
 import { Upload } from "lucide-react";
 import { adminFetch } from "../utils/adminFetch";
 import { translations } from "../translations";
-import LanguageToggle from "../Components/LanguageToggle";
-import { useLanguage } from "../LanguageContext";
+import { useLanguage } from "../useLanguage";
 
 interface UploadedFile {
   file: File;
@@ -16,7 +15,7 @@ export default function AddExcel() {
 
   const { lang, setLang } = useLanguage();
   const t = (key: string) =>
-    (translations as any)[key]?.[lang] || key;
+    translations[key as keyof typeof translations]?.[lang] || key;
 
   const changeLang = (newLang: "en" | "tet") => {
     localStorage.setItem("lang", newLang);
@@ -94,11 +93,11 @@ export default function AddExcel() {
         status: "success",
         message: t("uploadSuccess"),
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       setUploadedFile({
         file,
         status: "error",
-        message: err?.message || t("uploadFailed"),
+        message: (err instanceof Error && err.message) || t("uploadFailed"),
       });
     }
   };

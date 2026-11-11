@@ -1,5 +1,5 @@
 import { DataGrid } from '@mui/x-data-grid'
-import type { GridColDef } from '@mui/x-data-grid'
+import type { GridColDef, GridRowSelectionModel } from '@mui/x-data-grid'
 import Paper from '@mui/material/Paper'
 import { useEffect, useState } from "react"
 import { translations } from './translations'
@@ -46,29 +46,29 @@ export default function MainTableSelect({ onRowSelect, lang }: MainTableProps) {
     ]
 
   useEffect(() => {
+    async function getSpecies() {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/bundle`, {
+          credentials: "include",
+        })
+
+        if (!res.ok) {
+          throw new Error("failed to fetch species")
+        }
+
+        const data = await res.json()
+        setSpeciesEn(data.species_en ?? [])
+      } catch (err) {
+        console.error(err)
+        setSpeciesEn([])
+      }
+    }
+
     getSpecies()
   }, [])
 
-  async function getSpecies() {
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/bundle`, {
-        credentials: "include",
-      })
-
-      if (!res.ok) {
-        throw new Error("failed to fetch species")
-      }
-
-      const data = await res.json()
-      setSpeciesEn(data.species_en ?? [])
-    } catch (err) {
-      console.error(err)
-      setSpeciesEn([])
-    }
-  }
-
-  const handleRowSelection = (selectionModel: any) => {
-    const selectedIds = Array.from(selectionModel || [])
+  const handleRowSelection = (selectionModel: GridRowSelectionModel) => {
+    const selectedIds = Array.from(selectionModel.ids)
 
     if (selectedIds.length > 0) {
       const selectedId = selectedIds[0]

@@ -1,10 +1,10 @@
-import { useLanguage } from "../LanguageContext";
+import { useLanguage } from "../useLanguage";
 import { translations } from "../translations";
 
 export default function LanguageToggle() {
   const { lang, setLang } = useLanguage();
 
-  const t = (key: string) => (translations as any)[key]?.[lang] || key;
+  const t = (key: string) => translations[key as keyof typeof translations]?.[lang] || key;
 
   const buttonStyle = (active: boolean): React.CSSProperties => ({
     padding: "8px 22px",

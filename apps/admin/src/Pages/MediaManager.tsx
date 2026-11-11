@@ -23,7 +23,7 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import UploadIcon from "@mui/icons-material/CloudUpload";
 import { adminFetch } from "../utils/adminFetch";
 import { translations } from "../translations";
-import { useLanguage } from "../LanguageContext";
+import { useLanguage } from "../useLanguage";
 import { resolveErrorKey } from "../utils/errorMessages";
 import {
   Dialog,

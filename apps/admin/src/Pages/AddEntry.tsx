@@ -5,13 +5,13 @@ import React, { useState } from 'react'
 import Alert from '@mui/material/Alert'
 import { adminFetch } from '../utils/adminFetch'
 import { translations } from '../translations'
-import { useLanguage } from "../LanguageContext";
+import { useLanguage } from "../useLanguage";
 
 const API_URL = import.meta.env.VITE_API_URL
 const API_BASE = import.meta.env.VITE_API_BASE
 
 export default function Page1() {
-    const { lang, setLang } = useLanguage();
+    const { lang } = useLanguage();
 
     const t = (key: string) =>
       translations[key as keyof typeof translations]?.[lang] || key;

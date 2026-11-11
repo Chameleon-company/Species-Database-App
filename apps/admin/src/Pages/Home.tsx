@@ -1,68 +1,15 @@
 import TheDrawer from "../Components/drawer";
 import MainTableSelect from "../mainTableSelect";
 import MainTableSelectTetum from "../mainTableSelectTetum";
-import { useState } from "react";
-import type { Species } from "../mainTableSelect";
 import { translations } from "../translations";
-import { useLanguage } from "../LanguageContext";
+import { useLanguage } from "../useLanguage";
 
 
   export function Home() {
-    const [selectedSpecies, setSelectedSpecies] = useState<Species | null>(null);
-    const [selectedSpeciesTetum, setSelectedSpeciesTetum] =
-      useState<Species | null>(null);
       const { lang } = useLanguage();
 
-      const activeTab = lang === "tet" ? "tetum" : "english";
     const t = (key: string) =>
       translations[key as keyof typeof translations]?.[lang] || key;
-
-  const handleRowSelect = (rowData: Species | null) =>
-    setSelectedSpecies(rowData);
-  const handleRowSelectTetum = (rowData: Species | null) =>
-    setSelectedSpeciesTetum(rowData);
-
-  const fields: { key: keyof Species; label: string; icon: string }[] = [
-    { key: "species_id", label: "Species ID", icon: "#" },
-    { key: "scientific_name", label: "Scientific Name", icon: "🔬" },
-    { key: "common_name", label: "Common Name", icon: "🌿" },
-    { key: "leaf_type", label: "Leaf Type", icon: "🍃" },
-    { key: "fruit_type", label: "Fruit Type", icon: "🍑" },
-    { key: "etymology", label: "Etymology", icon: "📖" },
-    { key: "habitat", label: "Habitat", icon: "🌍" },
-    { key: "identification_character", label: "ID Character", icon: "🔍" },
-    { key: "phenology", label: "Phenology", icon: "📅" },
-    { key: "seed_germination", label: "Seed Germination", icon: "🌱" },
-    { key: "pest", label: "Pests", icon: "🐛" },
-  ];
-
-   const renderDetailPanel = (species: Species | null) => {
-    if (!species) return null;
-    return (
-      <div className="detail-panel">
-        <div className="detail-header">
-          <div className="detail-title-row">
-            <span className="detail-badge">{t("selectedSpecies")}</span>
-            <h3 className="detail-sci-name">{species.scientific_name}</h3>
-            <span className="detail-common">{species.common_name}</span>
-          </div>
-        </div>
-        <div className="detail-grid">
-          {fields.slice(2).map(({ key, label, icon }) => {
-            const val = species[key];
-            if (!val) return null;
-            return (
-              <div className="detail-card" key={key}>
-                <span className="detail-card-icon">{icon}</span>
-                <span className="detail-card-label">{label}</span>
-                <span className="detail-card-value">{String(val)}</span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
 
   return (
     <>
@@ -317,7 +264,7 @@ import { useLanguage } from "../LanguageContext";
       </div>
 
       <div className="table-wrap">
-        <MainTableSelect onRowSelect={handleRowSelect} lang="en" />
+        <MainTableSelect onRowSelect={() => undefined} lang="en" />
       </div>
     </div>
   )}
@@ -330,7 +277,7 @@ import { useLanguage } from "../LanguageContext";
       </div>
 
       <div className="table-wrap">
-        <MainTableSelectTetum onRowSelect={handleRowSelectTetum} lang="tet" />
+        <MainTableSelectTetum onRowSelect={() => undefined} lang="tet" />
       </div>
     </div>
   )}

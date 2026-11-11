@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useEffectEvent, useState } from "react";
 import { DataGrid, GridActionsCellItem, GridRowModes } from "@mui/x-data-grid";
 import type {
   GridColDef,
@@ -13,8 +13,7 @@ import SaveIcon from "@mui/icons-material/Save";
 import CancelIcon from "@mui/icons-material/Close";
 import { adminFetch } from "../utils/adminFetch";
 import { translations } from "../translations";
-import LanguageToggle from "../Components/LanguageToggle";
-import { useLanguage } from "../LanguageContext";
+import { useLanguage } from "../useLanguage";
 
 
 const API_BASE = import.meta.env.VITE_API_URL;
@@ -29,6 +28,10 @@ export interface User {
   password?: string;
 }
 
+type UserPayload = Pick<User, "name" | "role" | "is_active" | "auth_provider"> & {
+  password?: string;
+};
+
 interface SnackbarState {
   open: boolean;
   message: string;
@@ -36,19 +39,14 @@ interface SnackbarState {
 }
 
 export default function Users() {
-  const { lang, setLang } = useLanguage();
+  const { lang } = useLanguage();
 
   const t = (key: string) =>
-    (translations as any)[key]?.[lang] || key;
-
-  const changeLang = (newLang: "en" | "tet") => {
-    localStorage.setItem("lang", newLang);
-    setLang(newLang);
-  };
+    translations[key as keyof typeof translations]?.[lang] || key;
 
   const [rows, setRows] = useState<User[]>([]);
   const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [snackbar, setSnackbar] = useState<SnackbarState>({
     open: false,
     message: "",
@@ -66,30 +64,32 @@ export default function Users() {
     setSnackbar((prev) => ({ ...prev, open: false }));
   };
 
-  async function fetchUsers() {
-    setLoading(true);
-    try {
-      const res = await adminFetch(`${API_BASE}/users`);
+  function fetchUsers() {
+    return adminFetch(`${API_BASE}/users`)
+      .then(async (res) => {
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || err.detail || res.statusText);
+        }
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || err.detail || res.statusText);
-      }
-
-      const data: User[] = await res.json();
-      setRows(data);
-    } catch (e) {
-      const errorMsg =
-      e instanceof Error ? e.message : t("networkErrorFetchingUsers");
-      showSnackbar(errorMsg, "error");
-      console.error("Failed to fetch users:", e);
-    } finally {
-      setLoading(false);
-    }
+        const data: User[] = await res.json();
+        setRows(data);
+      })
+      .catch((e) => {
+        const errorMsg =
+        e instanceof Error ? e.message : t("networkErrorFetchingUsers");
+        showSnackbar(errorMsg, "error");
+        console.error("Failed to fetch users:", e);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }
 
+  const loadInitialUsers = useEffectEvent(fetchUsers);
+
   useEffect(() => {
-    fetchUsers();
+    loadInitialUsers();
   }, []);
 
   const handleAdd = () => {
@@ -140,7 +140,7 @@ export default function Users() {
 
     const url = isNew ? `${API_BASE}/users` : `${API_BASE}/users/${numericId}`;
 
-    const payload: any = {
+    const payload: UserPayload = {
       name: user.name.trim(),
       role: user.role.trim(),
       is_active: user.is_active,

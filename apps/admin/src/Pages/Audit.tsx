@@ -2,20 +2,31 @@ import { useState } from "react";
 import { Box, Typography, Button } from "@mui/material";
 import { adminFetch } from "../utils/adminFetch";
 import { translations } from "../translations";
-import LanguageToggle from "../Components/LanguageToggle";
-import { useLanguage } from "../LanguageContext";
+import { useLanguage } from "../useLanguage";
 
+
+interface AuditReport {
+  rows: number;
+  empty_rows: number;
+  total_missing_values: number;
+  has_blockers: boolean;
+  missing_values_by_column: Record<string, number>;
+  duplicates_count: number;
+  duplicate_scientific_names: string[];
+  leaf_type_invalid_values: string[];
+  fruit_type_invalid_values: string[];
+}
 
 type AuditApiResponse = {
   status: "success" | "error";
-  report?: any;
+  report?: AuditReport;
   error?: string;
 };
 
 export default function Audit() {
-  const { lang, setLang } = useLanguage();
+  const { lang } = useLanguage();
 
-  const t = (key: string) => (translations as any)[key]?.[lang] || key;
+  const t = (key: string) => translations[key as keyof typeof translations]?.[lang] || key;
 
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<AuditApiResponse | null>(null);
@@ -39,8 +50,8 @@ export default function Audit() {
 
       const data = (await res.json()) as AuditApiResponse;
       setResult(data);
-    } catch (e: any) {
-      setResult({ status: "error", error: e?.message ?? t("unknownError") });
+    } catch (e: unknown) {
+      setResult({ status: "error", error: e instanceof Error ? e.message : t("unknownError") });
     } finally {
       setLoading(false);
     }
@@ -171,8 +182,8 @@ export default function Audit() {
   
           <ul>
             {Object.entries(result.report.missing_values_by_column)
-              .filter(([, v]: any) => v > 0)
-              .map(([col, count]: any) => (
+              .filter(([, v]) => v > 0)
+              .map(([col, count]) => (
                 <li key={col}>
                   {col}: {count}
                 </li>
