@@ -229,6 +229,29 @@ def test_oversized_upload_returns_413():
     assert response.get_json()["error"]["code"] == "image_too_large"
 
 
+@pytest.mark.parametrize(
+    "size",
+    [
+        (8000, 6000),
+        (15000, 12500),
+    ],
+)
+def test_image_over_pixel_limit_returns_413(client, service, size):
+    output = BytesIO()
+    Image.new("1", size).save(output, format="PNG")
+    output.seek(0)
+
+    response = client.post(
+        "/api/ai/identify",
+        data={"image": (output, "huge.png")},
+        content_type="multipart/form-data",
+    )
+
+    assert response.status_code == 413
+    assert response.get_json()["error"]["code"] == "image_too_large"
+    assert service.call_count == 0
+
+
 @pytest.mark.parametrize("mode", ["L", "RGBA"])
 def test_non_rgb_images_are_accepted(client, mode):
     response = client.post(

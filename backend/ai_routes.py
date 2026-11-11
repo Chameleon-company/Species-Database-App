@@ -1,13 +1,14 @@
 from io import BytesIO
 
 from flask import jsonify, request
-from PIL import Image, UnidentifiedImageError
+from PIL import UnidentifiedImageError
 
 from ai_service import (
     ModelConfigurationError,
     SpeciesIdentificationService,
     get_species_identification_service,
 )
+from upload_validation import detect_image_format
 
 
 DEFAULT_MAX_UPLOAD_BYTES = 10 * 1024 * 1024
@@ -38,14 +39,7 @@ def _read_and_validate_upload(
     if len(image_bytes) > max_upload_bytes:
         raise ValueError("image_too_large")
 
-    try:
-        with Image.open(BytesIO(image_bytes)) as image:
-            detected_format = image.format
-            image.verify()
-    except (UnidentifiedImageError, OSError, ValueError) as exc:
-        raise ValueError("invalid_image") from exc
-
-    if detected_format not in SUPPORTED_IMAGE_FORMATS:
+    if detect_image_format(image_bytes) not in SUPPORTED_IMAGE_FORMATS:
         raise ValueError("unsupported_image_type")
 
     return image_bytes
