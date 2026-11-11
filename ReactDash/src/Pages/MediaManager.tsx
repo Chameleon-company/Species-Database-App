@@ -3,7 +3,14 @@ import {
   type GridColDef,
   type GridRenderCellParams,
 } from "@mui/x-data-grid";
-import { useEffect, useRef, useState, type DragEvent } from "react";
+import {
+  useEffect,
+  useEffectEvent,
+  useMemo,
+  useRef,
+  useState,
+  type DragEvent,
+} from "react";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CloseIcon from "@mui/icons-material/Close";
 import AddIcon from "@mui/icons-material/Add";
@@ -15,7 +22,6 @@ import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import UploadIcon from "@mui/icons-material/CloudUpload";
 import { adminFetch } from "../utils/adminFetch";
-import LanguageToggle from "../Components/LanguageToggle";
 import { translations } from "../translations";
 import { useLanguage } from "../LanguageContext";
 import { resolveErrorKey } from "../utils/errorMessages";
@@ -58,28 +64,39 @@ function isValidUrl(value: string): boolean {
   }
 }
 
+function isDirectImageSource(rawUrl: string, skip: boolean): boolean {
+  return !!rawUrl && !skip && looksLikeDirectImage(rawUrl);
+}
+
+function needsImageResolving(rawUrl: string, skip: boolean): boolean {
+  return !!rawUrl && !skip && !looksLikeDirectImage(rawUrl);
+}
+
 // Media URLs can come from many different sources. Some are already direct
 // image files; others are webpage links (e.g. an article about a species)
 // that merely CONTAIN an image. This hook resolves the latter via the
 // backend, which fetches the page server-side and extracts its real image.
 function useResolvedImageUrl(rawUrl: string, skip: boolean = false) {
-  const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
-  const [resolving, setResolving] = useState(false);
+  const [resolvedUrl, setResolvedUrl] = useState<string | null>(
+    isDirectImageSource(rawUrl, skip) ? rawUrl : null
+  );
+  const [resolving, setResolving] = useState(needsImageResolving(rawUrl, skip));
   const [resolveFailed, setResolveFailed] = useState(false);
+  const [prevRawUrl, setPrevRawUrl] = useState(rawUrl);
+  const [prevSkip, setPrevSkip] = useState(skip);
+
+  if (rawUrl !== prevRawUrl || skip !== prevSkip) {
+    setPrevRawUrl(rawUrl);
+    setPrevSkip(skip);
+    setResolvedUrl(isDirectImageSource(rawUrl, skip) ? rawUrl : null);
+    setResolveFailed(false);
+    if (needsImageResolving(rawUrl, skip)) setResolving(true);
+  }
 
   useEffect(() => {
-    setResolvedUrl(null);
-    setResolveFailed(false);
-
-    if (!rawUrl || skip) return;
-
-    if (looksLikeDirectImage(rawUrl)) {
-      setResolvedUrl(rawUrl);
-      return;
-    }
+    if (!needsImageResolving(rawUrl, skip)) return;
 
     const API_URL = import.meta.env.VITE_API_BASE;
-    setResolving(true);
 
     adminFetch(`${API_URL}/api/resolve-image?url=${encodeURIComponent(rawUrl)}`)
       .then((res) => {
@@ -125,12 +142,15 @@ function ThumbCell({
     resolveFailed: imageResolveFailed,
   } = useResolvedImageUrl(url, type !== "image");
 
-  useEffect(() => {
+  const [prevUrl, setPrevUrl] = useState(url);
+
+  if (url !== prevUrl) {
+    setPrevUrl(url);
     if (url) {
       setErr(false);
       setStatus("loading");
     }
-  }, [url]);
+  }
 
   // A row with no URL yet, or no type selected yet (still "Select"), is
   // incomplete - show the neutral placeholder rather than attempting to
@@ -721,14 +741,16 @@ function AddMediaDialog({
   const [dragActive, setDragActive] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [prevOpen, setPrevOpen] = useState(open);
 
-  useEffect(() => {
+  if (open !== prevOpen) {
+    setPrevOpen(open);
     if (open) {
       setForm(EMPTY_NEW_MEDIA);
       setFormError(null);
       setDragActive(false);
     }
-  }, [open]);
+  }
 
   const previewUrl =
     form.file && form.file.type.startsWith("image/")
@@ -1071,11 +1093,10 @@ const inputStyle: React.CSSProperties = {
 export default function MediaManager() {
   const { lang } = useLanguage();
 
-  const t = (key: string) => (translations as any)[key]?.[lang] || key;
+  const t = (key: string) => translations[key as keyof typeof translations]?.[lang] || key;
 
   const [media, setMedia] = useState<Media[]>([]);
-  const [filtered, setFiltered] = useState<Media[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [actionPending, setActionPending] = useState(false);
   const [successKey, setSuccessKey] = useState<string | null>(null);
 
@@ -1097,23 +1118,17 @@ export default function MediaManager() {
 
   const API_URL = import.meta.env.VITE_API_BASE;
 
-  useEffect(() => {
-    fetchMedia();
-  }, []);
-
-  useEffect(() => {
+  const filtered = useMemo(() => {
     const q = search.toLowerCase();
 
-    setFiltered(
-      q
-        ? media.filter(
-            (m) =>
-              m.species_name?.toLowerCase().includes(q) ||
-              m.media_type?.toLowerCase().includes(q) ||
-              m.alt_text?.toLowerCase().includes(q)
-          )
-        : media
-    );
+    return q
+      ? media.filter(
+          (m) =>
+            m.species_name?.toLowerCase().includes(q) ||
+            m.media_type?.toLowerCase().includes(q) ||
+            m.alt_text?.toLowerCase().includes(q)
+        )
+      : media;
   }, [search, media]);
 
   useEffect(() => {
@@ -1126,34 +1141,43 @@ export default function MediaManager() {
     return () => window.clearTimeout(timer);
   }, [successKey]);
 
-  const fetchMedia = async (): Promise<boolean> => {
-    setLoading(true);
-    setErrorKey(null);
-    setLoadFailed(false);
+  const loadMedia = (): Promise<boolean> =>
+    adminFetch(`${API_URL}/upload-media`, {})
+      .then(async (res) => {
+        if (!res.ok) {
+          setErrorKey(resolveErrorKey("fetch", res.status));
+          setLoadFailed(true);
+          setMedia([]);
+          return false;
+        }
 
-    try {
-      const res = await adminFetch(`${API_URL}/upload-media`, {});
-
-      if (!res.ok) {
-        setErrorKey(resolveErrorKey("fetch", res.status));
+        const data = await res.json();
+        setMedia(Array.isArray(data) ? data : []);
+        return true;
+      })
+      .catch(() => {
+        // The request never got a response at all (offline, DNS, CORS, etc).
+        setErrorKey(resolveErrorKey("fetch", 0));
         setLoadFailed(true);
         setMedia([]);
         return false;
-      }
+      })
+      .finally(() => {
+        setLoading(false);
+      });
 
-      const data = await res.json();
-      setMedia(Array.isArray(data) ? data : []);
-      return true;
-    } catch {
-      // The request never got a response at all (offline, DNS, CORS, etc).
-      setErrorKey(resolveErrorKey("fetch", 0));
-      setLoadFailed(true);
-      setMedia([]);
-      return false;
-    } finally {
-      setLoading(false);
-    }
+  const fetchMedia = (): Promise<boolean> => {
+    setLoading(true);
+    setErrorKey(null);
+    setLoadFailed(false);
+    return loadMedia();
   };
+
+  const loadInitialMedia = useEffectEvent(loadMedia);
+
+  useEffect(() => {
+    loadInitialMedia();
+  }, []);
 
   const handleSaveNewMedia = async (form: NewMediaForm) => {
     if (!form.file) return;
@@ -1360,7 +1384,7 @@ export default function MediaManager() {
       field: "media_id",
       headerName: t("id"),
       width: 70,
-      valueGetter: (_value: any, row: Media) =>
+      valueGetter: (_value: unknown, row: Media) =>
         row.media_id < 0 ? t("new") : row.media_id,
     },
     {
