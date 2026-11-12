@@ -1,0 +1,51 @@
+name: AI Backend Tests
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: ["master"]
+    paths:
+      - "AI/**"
+      - "backend/ai_routes.py"
+      - "backend/ai_service.py"
+      - "backend/app.py"
+      - "backend/tests/**"
+      - "backend/requirements-test.txt"
+      - "requirements.txt"
+      - ".github/workflows/ai-backend-tests.yml"
+
+jobs:
+  test-ai-backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: |
+            requirements.txt
+            backend/requirements-test.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install -r backend/requirements-test.txt
+
+      - name: Compile AI backend modules
+        run: |
+          python -m py_compile \
+            backend/app.py \
+            backend/ai_routes.py \
+            backend/ai_service.py \
+            backend/tests/evaluate_ai_model.py
+
+      - name: Run AI backend tests
+        working-directory: backend
+        run: python -m pytest tests -v

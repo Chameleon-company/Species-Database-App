@@ -90,6 +90,10 @@ register_auth_routes(app, supabase)
 from media import register_media_routes
 register_media_routes(app, supabase)
 
+# Register AI species identification routes
+from ai_routes import register_ai_routes
+register_ai_routes(app)
+
 
 #startup screen route
 @app.route("/")

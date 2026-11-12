@@ -3,7 +3,14 @@ import {
   type GridColDef,
   type GridRenderCellParams,
 } from "@mui/x-data-grid";
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useEffectEvent,
+  useMemo,
+  useRef,
+  useState,
+  type DragEvent,
+} from "react";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CloseIcon from "@mui/icons-material/Close";
 import AddIcon from "@mui/icons-material/Add";
@@ -13,8 +20,8 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import SearchIcon from "@mui/icons-material/Search";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import UploadIcon from "@mui/icons-material/CloudUpload";
 import { adminFetch } from "../utils/adminFetch";
-import LanguageToggle from "../Components/LanguageToggle";
 import { translations } from "../translations";
 import { useLanguage } from "../LanguageContext";
 import { resolveErrorKey } from "../utils/errorMessages";
@@ -57,28 +64,39 @@ function isValidUrl(value: string): boolean {
   }
 }
 
+function isDirectImageSource(rawUrl: string, skip: boolean): boolean {
+  return !!rawUrl && !skip && looksLikeDirectImage(rawUrl);
+}
+
+function needsImageResolving(rawUrl: string, skip: boolean): boolean {
+  return !!rawUrl && !skip && !looksLikeDirectImage(rawUrl);
+}
+
 // Media URLs can come from many different sources. Some are already direct
 // image files; others are webpage links (e.g. an article about a species)
 // that merely CONTAIN an image. This hook resolves the latter via the
 // backend, which fetches the page server-side and extracts its real image.
 function useResolvedImageUrl(rawUrl: string, skip: boolean = false) {
-  const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
-  const [resolving, setResolving] = useState(false);
+  const [resolvedUrl, setResolvedUrl] = useState<string | null>(
+    isDirectImageSource(rawUrl, skip) ? rawUrl : null
+  );
+  const [resolving, setResolving] = useState(needsImageResolving(rawUrl, skip));
   const [resolveFailed, setResolveFailed] = useState(false);
+  const [prevRawUrl, setPrevRawUrl] = useState(rawUrl);
+  const [prevSkip, setPrevSkip] = useState(skip);
+
+  if (rawUrl !== prevRawUrl || skip !== prevSkip) {
+    setPrevRawUrl(rawUrl);
+    setPrevSkip(skip);
+    setResolvedUrl(isDirectImageSource(rawUrl, skip) ? rawUrl : null);
+    setResolveFailed(false);
+    if (needsImageResolving(rawUrl, skip)) setResolving(true);
+  }
 
   useEffect(() => {
-    setResolvedUrl(null);
-    setResolveFailed(false);
-
-    if (!rawUrl || skip) return;
-
-    if (looksLikeDirectImage(rawUrl)) {
-      setResolvedUrl(rawUrl);
-      return;
-    }
+    if (!needsImageResolving(rawUrl, skip)) return;
 
     const API_URL = import.meta.env.VITE_API_BASE;
-    setResolving(true);
 
     adminFetch(`${API_URL}/api/resolve-image?url=${encodeURIComponent(rawUrl)}`)
       .then((res) => {
@@ -124,12 +142,15 @@ function ThumbCell({
     resolveFailed: imageResolveFailed,
   } = useResolvedImageUrl(url, type !== "image");
 
-  useEffect(() => {
+  const [prevUrl, setPrevUrl] = useState(url);
+
+  if (url !== prevUrl) {
+    setPrevUrl(url);
     if (url) {
       setErr(false);
       setStatus("loading");
     }
-  }, [url]);
+  }
 
   // A row with no URL yet, or no type selected yet (still "Select"), is
   // incomplete - show the neutral placeholder rather than attempting to
@@ -687,14 +708,395 @@ function DeleteDialog({
   );
 }
 
+type NewMediaForm = {
+  species_name: string;
+  media_type: "" | "image" | "video";
+  alt_text: string;
+  file: File | null;
+};
+
+const EMPTY_NEW_MEDIA: NewMediaForm = {
+  species_name: "",
+  media_type: "",
+  alt_text: "",
+  file: null,
+};
+
+function AddMediaDialog({
+  open,
+  onClose,
+  onSave,
+  saving,
+  saveErrorKey,
+  t,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onSave: (form: NewMediaForm) => Promise<void> | void;
+  saving: boolean;
+  saveErrorKey: string | null;
+  t: (key: string) => string;
+}) {
+  const [form, setForm] = useState<NewMediaForm>(EMPTY_NEW_MEDIA);
+  const [dragActive, setDragActive] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [prevOpen, setPrevOpen] = useState(open);
+
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open) {
+      setForm(EMPTY_NEW_MEDIA);
+      setFormError(null);
+      setDragActive(false);
+    }
+  }
+
+  const previewUrl =
+    form.file && form.file.type.startsWith("image/")
+      ? URL.createObjectURL(form.file)
+      : null;
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
+  const applyFile = (file: File) => {
+    const isHeic = /\.(heic|heif)$/i.test(file.name);
+    const isImage = file.type.startsWith("image/") && !isHeic;
+    const isVideo = file.type.startsWith("video/");
+
+    if (isHeic) {
+      setFormError(t("heicNotSupportedConvertFirst"));
+      return;
+    }
+
+    if (!isImage && !isVideo) {
+      setFormError(t("onlyImageOrVideoAllowed"));
+      return;
+    }
+
+    setFormError(null);
+    setForm((prev) => ({
+      ...prev,
+      file,
+      media_type: prev.media_type || (isImage ? "image" : "video"),
+    }));
+  };
+
+  const handleDrag = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      applyFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      applyFile(e.target.files[0]);
+    }
+  };
+
+  const removeFile = () => {
+    setForm((prev) => ({ ...prev, file: null }));
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const canSave =
+    !!form.species_name.trim() && !!form.media_type && !!form.file && !saving;
+
+  const handleSave = async () => {
+    if (!canSave) {
+      setFormError(t("mediaRequiredFields"));
+      return;
+    }
+    setFormError(null);
+    await onSave(form);
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onClose={saving ? undefined : onClose}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{
+        style: {
+          borderRadius: 16,
+          fontFamily: "'DM Sans', sans-serif",
+        },
+      }}
+    >
+      <DialogTitle
+        sx={{ fontWeight: 700, fontSize: 18, color: "#1a2e10", pb: 0.5 }}
+      >
+        {t("addMedia")}
+      </DialogTitle>
+
+      <DialogContent>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 4 }}>
+          <div>
+            <label style={labelStyle}>{t("speciesName")}</label>
+            <input
+              type="text"
+              value={form.species_name}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, species_name: e.target.value }))
+              }
+              placeholder={t("speciesNamePlaceholder")}
+              style={inputStyle}
+            />
+          </div>
+
+          <div>
+            <label style={labelStyle}>{t("type")}</label>
+            <select
+              value={form.media_type}
+              onChange={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  media_type: e.target.value as NewMediaForm["media_type"],
+                }))
+              }
+              style={inputStyle}
+            >
+              <option value="">{t("select")}</option>
+              <option value="image">{t("image")}</option>
+              <option value="video">{t("video")}</option>
+            </select>
+          </div>
+
+          <div>
+            <label style={labelStyle}>{t("altText")}</label>
+            <input
+              type="text"
+              value={form.alt_text}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, alt_text: e.target.value }))
+              }
+              placeholder={t("altTextPlaceholder")}
+              style={inputStyle}
+            />
+          </div>
+
+          <div>
+            <label style={labelStyle}>{t("file")}</label>
+
+            {!form.file ? (
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+                style={{
+                  border: `2px dashed ${dragActive ? "#2d6a0a" : "#d8edbd"}`,
+                  backgroundColor: dragActive ? "#f0f9e8" : "#f9fdf5",
+                  borderRadius: 12,
+                  padding: "28px 16px",
+                  textAlign: "center",
+                  cursor: "pointer",
+                  transition: "all 0.15s",
+                }}
+              >
+                <UploadIcon sx={{ fontSize: 26, color: "#86b85a" }} />
+                <div style={{ fontSize: 13, fontWeight: 600, color: "#1a2e10", marginTop: 6 }}>
+                  {dragActive ? t("dropMediaFile") : t("dragOrClickMedia")}
+                </div>
+                <div style={{ fontSize: 11, color: "#7a9464", marginTop: 2 }}>
+                  {t("imageOrVideoFileTypes")}
+                </div>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*,video/*"
+                  onChange={handleFileInputChange}
+                  style={{ display: "none" }}
+                />
+              </div>
+            ) : (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  border: "1px solid #d8edbd",
+                  borderRadius: 12,
+                  padding: 10,
+                }}
+              >
+                {previewUrl ? (
+                  <img
+                    src={previewUrl}
+                    alt={t("preview")}
+                    style={{
+                      width: 56,
+                      height: 56,
+                      objectFit: "cover",
+                      borderRadius: 8,
+                      border: "1px solid #d8edbd",
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: 56,
+                      height: 56,
+                      borderRadius: 8,
+                      backgroundColor: "#1a2e10",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <VideocamIcon sx={{ color: "#86b85a", fontSize: 24 }} />
+                  </div>
+                )}
+
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: "#1a2e10",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {form.file.name}
+                  </div>
+                  <div style={{ fontSize: 11, color: "#7a9464" }}>
+                    {(form.file.size / 1024 / 1024).toFixed(1)} MB
+                  </div>
+                </div>
+
+                <button
+                  onClick={removeFile}
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: "50%",
+                    border: "none",
+                    background: "#fef2f2",
+                    color: "#dc2626",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                    flexShrink: 0,
+                  }}
+                >
+                  <CloseIcon sx={{ fontSize: 16 }} />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {(formError || saveErrorKey) && (
+            <div
+              style={{
+                fontSize: 12,
+                color: "#b91c1c",
+                backgroundColor: "#fef2f2",
+                border: "1px solid #fecaca",
+                borderRadius: 8,
+                padding: "8px 12px",
+              }}
+            >
+              {formError || t(saveErrorKey as string)}
+            </div>
+          )}
+        </div>
+      </DialogContent>
+
+      <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+        <button
+          onClick={onClose}
+          disabled={saving}
+          style={{
+            padding: "8px 20px",
+            borderRadius: 9,
+            border: "1px solid #d8edbd",
+            background: "#ffffff",
+            color: "#4b5563",
+            fontSize: 13,
+            fontWeight: 600,
+            fontFamily: "inherit",
+            cursor: saving ? "default" : "pointer",
+            opacity: saving ? 0.6 : 1,
+          }}
+        >
+          {t("cancel")}
+        </button>
+
+        <button
+          onClick={handleSave}
+          disabled={!canSave}
+          style={{
+            padding: "8px 20px",
+            borderRadius: 9,
+            border: "none",
+            background: canSave ? "#2d6a0a" : "#a8c79a",
+            color: "#ffffff",
+            fontSize: 13,
+            fontWeight: 600,
+            fontFamily: "inherit",
+            cursor: canSave ? "pointer" : "default",
+            boxShadow: canSave ? "0 2px 8px rgba(45,106,10,0.25)" : "none",
+          }}
+        >
+          {saving ? t("uploading") : t("save")}
+        </button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+const labelStyle: React.CSSProperties = {
+  display: "block",
+  fontSize: 12,
+  fontWeight: 600,
+  color: "#3d5a2a",
+  marginBottom: 4,
+};
+
+const inputStyle: React.CSSProperties = {
+  width: "100%",
+  boxSizing: "border-box",
+  padding: "9px 12px",
+  borderRadius: 9,
+  border: "1px solid #d8edbd",
+  fontSize: 13,
+  fontFamily: "inherit",
+  color: "#1a2e10",
+  background: "#ffffff",
+};
+
 export default function MediaManager() {
   const { lang } = useLanguage();
 
-  const t = (key: string) => (translations as any)[key]?.[lang] || key;
+  const t = (key: string) => translations[key as keyof typeof translations]?.[lang] || key;
 
   const [media, setMedia] = useState<Media[]>([]);
-  const [filtered, setFiltered] = useState<Media[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [actionPending, setActionPending] = useState(false);
   const [successKey, setSuccessKey] = useState<string | null>(null);
 
@@ -711,26 +1113,22 @@ export default function MediaManager() {
   const [addHovered, setAddHovered] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Media | null>(null);
   const [previewTarget, setPreviewTarget] = useState<Media | null>(null);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [savingNewMedia, setSavingNewMedia] = useState(false);
 
   const API_URL = import.meta.env.VITE_API_BASE;
 
-  useEffect(() => {
-    fetchMedia();
-  }, []);
-
-  useEffect(() => {
+  const filtered = useMemo(() => {
     const q = search.toLowerCase();
 
-    setFiltered(
-      q
-        ? media.filter(
-            (m) =>
-              m.species_name?.toLowerCase().includes(q) ||
-              m.media_type?.toLowerCase().includes(q) ||
-              m.alt_text?.toLowerCase().includes(q)
-          )
-        : media
-    );
+    return q
+      ? media.filter(
+          (m) =>
+            m.species_name?.toLowerCase().includes(q) ||
+            m.media_type?.toLowerCase().includes(q) ||
+            m.alt_text?.toLowerCase().includes(q)
+        )
+      : media;
   }, [search, media]);
 
   useEffect(() => {
@@ -743,62 +1141,75 @@ export default function MediaManager() {
     return () => window.clearTimeout(timer);
   }, [successKey]);
 
-  const fetchMedia = async (): Promise<boolean> => {
-    setLoading(true);
-    setErrorKey(null);
-    setLoadFailed(false);
+  const loadMedia = (): Promise<boolean> =>
+    adminFetch(`${API_URL}/upload-media`, {})
+      .then(async (res) => {
+        if (!res.ok) {
+          setErrorKey(resolveErrorKey("fetch", res.status));
+          setLoadFailed(true);
+          setMedia([]);
+          return false;
+        }
 
-    try {
-      const res = await adminFetch(`${API_URL}/upload-media`, {});
-
-      if (!res.ok) {
-        setErrorKey(resolveErrorKey("fetch", res.status));
+        const data = await res.json();
+        setMedia(Array.isArray(data) ? data : []);
+        return true;
+      })
+      .catch(() => {
+        // The request never got a response at all (offline, DNS, CORS, etc).
+        setErrorKey(resolveErrorKey("fetch", 0));
         setLoadFailed(true);
         setMedia([]);
         return false;
-      }
+      })
+      .finally(() => {
+        setLoading(false);
+      });
 
-      const data = await res.json();
-      setMedia(Array.isArray(data) ? data : []);
-      return true;
-    } catch {
-      // The request never got a response at all (offline, DNS, CORS, etc).
-      setErrorKey(resolveErrorKey("fetch", 0));
-      setLoadFailed(true);
-      setMedia([]);
-      return false;
-    } finally {
-      setLoading(false);
-    }
+  const fetchMedia = (): Promise<boolean> => {
+    setLoading(true);
+    setErrorKey(null);
+    setLoadFailed(false);
+    return loadMedia();
   };
 
-  const addMedia = () => {
-    if (actionPending || loading) return;
+  const loadInitialMedia = useEffectEvent(loadMedia);
 
-    // Only allow one unsaved media row at a time. This prevents admins from
-    // accidentally creating multiple duplicate/unfinished submissions.
-    const hasUnsavedRow = media.some((m) => m.media_id < 0);
+  useEffect(() => {
+    loadInitialMedia();
+  }, []);
 
-    if (hasUnsavedRow) {
-      setLoadFailed(false);
-      setSuccessKey(null);
-      setErrorKey("errorUnsavedMediaExists");
-      return;
-    }
+  const handleSaveNewMedia = async (form: NewMediaForm) => {
+    if (!form.file) return;
 
-    setSuccessKey(null);
+    setSavingNewMedia(true);
     setErrorKey(null);
 
-    setMedia((prev) => [
-      {
-        media_id: Date.now() * -1,
-        species_name: "",
-        media_type: "",
-        download_link: "",
-        alt_text: "",
-      },
-      ...prev,
-    ]);
+    try {
+      const body = new FormData();
+      body.append("file", form.file);
+      body.append("species_name", form.species_name.trim());
+      body.append("media_type", form.media_type);
+      body.append("alt_text", form.alt_text.trim());
+
+      const res = await adminFetch(`${API_URL}/upload-media/file`, {
+        method: "POST",
+        body,
+      });
+
+      if (!res.ok) {
+        setErrorKey(resolveErrorKey("save", res.status));
+        return;
+      }
+
+      setAddDialogOpen(false);
+      await fetchMedia();
+    } catch {
+      // The request never got a response at all (offline, DNS, CORS, etc).
+      setErrorKey(resolveErrorKey("save", 0));
+    } finally {
+      setSavingNewMedia(false);
+    }
   };
 
   // Removes a newly-added, unsaved row directly from local state.
@@ -973,7 +1384,7 @@ export default function MediaManager() {
       field: "media_id",
       headerName: t("id"),
       width: 70,
-      valueGetter: (_value: any, row: Media) =>
+      valueGetter: (_value: unknown, row: Media) =>
         row.media_id < 0 ? t("new") : row.media_id,
     },
     {
@@ -1153,7 +1564,7 @@ export default function MediaManager() {
           }}
         >
           <button
-            onClick={addMedia}
+            onClick={() => setAddDialogOpen(true)}
             disabled={actionPending || loading}
             onMouseEnter={() => setAddHovered(true)}
             onMouseLeave={() => setAddHovered(false)}
@@ -1506,6 +1917,15 @@ export default function MediaManager() {
       <MediaPreviewDialog
         media={previewTarget}
         onClose={() => setPreviewTarget(null)}
+        t={t}
+      />
+
+      <AddMediaDialog
+        open={addDialogOpen}
+        onClose={() => setAddDialogOpen(false)}
+        onSave={handleSaveNewMedia}
+        saving={savingNewMedia}
+        saveErrorKey={addDialogOpen ? errorKey : null}
         t={t}
       />
     </div>
