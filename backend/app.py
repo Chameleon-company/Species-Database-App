@@ -100,6 +100,11 @@ def home():
        return render_template("index.html", frontend_url=FRONTEND_URL)
 
 
+@app.route("/privacy", methods=["GET"])
+def privacy_policy():
+    return render_template("privacy.html")
+
+
 def extract_page_image(html: str):
     """
     Looks for a page's 'real' image via Open Graph / Twitter meta tags.
@@ -517,12 +522,10 @@ def upload_species_file():
     this is an admin only endpoint
     for uploading species data
     """
-    #checking peermissions
-    # admin_id, err = get_admin_user(supabase)
-    # if err:
-    #     return jsonify({"error": err[0]}), err[1]
-
-    #at this point we've confirmed theyre admin
+    # Check administrator authentication
+    admin_id, err = get_admin_user(supabase)
+    if err:
+        return jsonify({"error": err[0]}), err[1]
 
     if "file" not in request.files:
         return jsonify({"error": "No file part"}), 400
@@ -572,6 +575,12 @@ def audit_species_file():
     """
     Upload a file and return a data quality report (NO upload to Supabase).
     """
+
+    # Check administrator authentication
+    admin_id, err = get_admin_user(supabase)
+    if err:
+        return jsonify({"error": err[0]}), err[1]
+
     if "file" not in request.files:
         return jsonify({"error": "No file part"}), 400
 
@@ -601,7 +610,10 @@ def audit_species_file():
 
 @app.route("/species", methods=["POST"])
 def create_species():
-    print(f"Raw request data: {request.data}")
+    # Check administrator authentication
+    admin_id, err = get_admin_user(supabase)
+    if err:
+        return jsonify({"error": err[0]}), err[1]
     
     #Get variables from request
     data = request.json
@@ -945,30 +957,35 @@ def update_species_tet(species_id):
 
 @app.route("/translate", methods=["POST"])
 def translate():
-    print(f"Raw request data: {request.data}")
-    
-    data = request.json
+    # Check administrator authentication
+    admin_id, err = get_admin_user(supabase)
+    if err:
+        return jsonify({"error": err[0]}), err[1]
+
+    data = request.get_json(silent=True)
     if not data:
-        return jsonify({"error":"Invalid"}),400
-    
-    texts = data.get('text', [])
+        return jsonify({"error": "Invalid"}), 400
+
+    texts = data.get("text", [])
     if not texts:
-        return {"error": "No text provided"}, 400
-    
-    print(f"Received text: '{texts}'")
-    
+        return jsonify({"error": "No text provided"}), 400
+
     try:
         array = asyncio.run(translateMultipleTexts(texts))
-    except Exception as e:
-        return jsonify({"error":"Translation_failed","details":str(e)}),500
+    except Exception:
+        app.logger.error("Translation request failed")
+        return jsonify({"error": "Translation_failed"}), 500
 
-    print(f"Translated Text = '{array}'")
-    
-    return jsonify(array),200
+    return jsonify(array), 200
 
 # Analytics Endpoints
 @app.route("/analytics/overview", methods=["GET"])
 def analytics_overview():
+    # Check administrator authentication
+    admin_id, err = get_admin_user(supabase)
+    if err:
+        return jsonify({"error": err[0]}), err[1]
+
     try:
         users_res = supabase.table("users").select(
             "user_id, is_active", count="exact"
@@ -1014,6 +1031,11 @@ def analytics_overview():
     
 @app.route("/analytics/users", methods=["GET"])
 def analytics_users():
+    # Check administrator authentication
+    admin_id, err = get_admin_user(supabase)
+    if err:
+        return jsonify({"error": err[0]}), err[1]
+
     try:
         users_res = supabase.table("users").select(
             "user_id, name, role, is_active"

@@ -123,7 +123,7 @@ def log_auth_event(supabase, user_id, event_type):
         supabase.table("analytics").insert({
             "user_id": user_id,
             "event_type": event_type,
-            "login_time": datetime.utcnow().isoformat()
+            "login_time": datetime.now(timezone.utc).isoformat()
             }).execute()
     except Exception as e:
         print(f"Auth event logging failed: {e}")

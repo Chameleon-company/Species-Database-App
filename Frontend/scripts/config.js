@@ -5,21 +5,40 @@
  * Used by sync.js and other scripts that need to communicate with the backend.
  */
 
+const isNativeApp = Boolean(window.Capacitor?.isNativePlatform?.());
+
+const isLocalDevelopment =
+  !isNativeApp &&
+  window.location.protocol === "http:" &&
+  (
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1"
+  );
+
 const API_CONFIG = {
   // Base URL of the backend API server
   // Automatically detects development vs production environment
-  baseUrl:
-    window.location.hostname === 'localhost' ||
-    window.location.hostname === '127.0.0.1'
-      ? 'http://127.0.0.1:5000'
-      : 'https://species-database-app.onrender.com',
+  baseUrl: isLocalDevelopment
+    ? "http://127.0.0.1:5000"
+    : "https://species-database-app.onrender.com",
 
-  //Ensure it is from an allowed supabase host (default production DB, enter YOUR DB here)
-  SUPABASE_HOST:
-    window.location.hostname === 'localhost' ||
-    window.location.hostname === '127.0.0.1'
-      ? 'lhsuizrhakkezafdbfkt.supabase.co' //YOUR SUPABASE DB HERE
-      : 'oppcngtkhywxsazeqqet.supabase.co',
+  // Ensure it is from an allowed Supabase host
+  SUPABASE_HOST: isLocalDevelopment
+    ? "lhsuizrhakkezafdbfkt.supabase.co"
+    : "oppcngtkhywxsazeqqet.supabase.co",
+
+
+// Approved Supabase projects that may contain species videos
+SUPABASE_VIDEO_HOSTS: [
+  "oppcngtkhywxsazeqqet.supabase.co",
+  "lhsuizrhakkezafdbfkt.supabase.co",
+],
+
+// Current and legacy video storage paths
+SUPABASE_VIDEO_PATHS: [
+  "/storage/v1/object/public/species_videos/",
+  "/storage/v1/object/public/media/videos/",
+],
 
   // API endpoint paths (relative to baseUrl)
   endpoints: {
@@ -37,7 +56,6 @@ const API_CONFIG = {
 
 window.API_CONFIG = API_CONFIG
 
-console.log("[API_CONFIG]", API_CONFIG)
 
 // // Make API_CONFIG available globally
 // if (typeof window !== 'undefined') {
