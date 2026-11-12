@@ -9,3 +9,23 @@ export function clearAdminSession(): void {
   localStorage.removeItem("admin_token");
   localStorage.removeItem("admin_role");
 }
+
+export async function logoutAdmin(apiBase: string): Promise<void> {
+  const token = localStorage.getItem("admin_token");
+  const normalizedBase = apiBase.replace(/\/+$/, "");
+
+  try {
+    if (token?.trim()) {
+      await fetch(`${normalizedBase}/api/auth/admin-logout`, {
+        method: "POST",
+        headers: {
+          Authorization: token,
+        },
+      });
+    }
+  } catch {
+    // Local logout must still succeed if the server is unavailable.
+  } finally {
+    clearAdminSession();
+  }
+}

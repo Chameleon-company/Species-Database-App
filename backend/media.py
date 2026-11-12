@@ -4,6 +4,9 @@ consists of media endpoints.
 manages metadata aand version signalling
 """
 
+import re
+from uuid import uuid4
+
 from flask import request, jsonify
 
 from datetime import datetime, timezone
@@ -13,6 +16,7 @@ from urllib.parse import urlparse
 import ipaddress
 import socket
 import requests
+from upload_validation import MAX_IMAGE_PIXELS, detect_image_format
 
 
 #the validator below fetches a caller-supplied URL from the server, so the
@@ -74,6 +78,92 @@ def validate_url_target(url):
         return False, "URL host is not permitted"
 
     return True, None
+
+
+MAX_UPLOAD_BYTES = {
+    "image": 10 * 1024 * 1024,
+    "video": 50 * 1024 * 1024,
+}
+MULTIPART_OVERHEAD_BYTES = 64 * 1024
+
+STORAGE_LOCATIONS = {
+    "image": ("species_images", "Photos"),
+    "video": ("media", "videos"),
+}
+
+IMAGE_TYPES = {
+    "JPEG": ("jpg", "image/jpeg"),
+    "PNG": ("png", "image/png"),
+    "WEBP": ("webp", "image/webp"),
+    "GIF": ("gif", "image/gif"),
+}
+
+VIDEO_TYPES = {
+    "MP4": ("mp4", "video/mp4"),
+    "MOV": ("mov", "video/quicktime"),
+    "WEBM": ("webm", "video/webm"),
+}
+
+MP4_BRANDS = {
+    b"isom", b"iso2", b"iso4", b"iso5", b"iso6",
+    b"mp41", b"mp42", b"avc1", b"M4V ", b"MSNV", b"dash",
+}
+
+UPLOAD_ERRORS = {
+    "invalid_image": ("the file is not a valid image", 400),
+    "image_too_large": (
+        f"the image is larger than {MAX_IMAGE_PIXELS // 1_000_000} megapixels",
+        413,
+    ),
+    "unsupported_type": (
+        "only JPG, PNG, WEBP, GIF, MP4, MOV and WEBM files are supported",
+        415,
+    ),
+}
+
+
+def _detect_video_format(data: bytes) -> str | None:
+    """Return "MP4", "MOV" or "WEBM" from the container header, or None.
+
+    MP4 and MOV share the ISO media "ftyp" box, so the major brand tells them
+    apart and keeps out other ISO media files such as HEIC photos and M4A audio.
+    WebM is an EBML file whose DocType element reads "webm".
+    """
+    if data[4:8] == b"ftyp":
+        brand = data[8:12]
+        if brand == b"qt  ":
+            return "MOV"
+        if brand in MP4_BRANDS:
+            return "MP4"
+        return None
+
+    if data[:4] == b"\x1a\x45\xdf\xa3" and b"\x42\x82\x84webm" in data[:64]:
+        return "WEBM"
+
+    return None
+
+
+def _detect_file_type(media_type: str, data: bytes) -> tuple[str, str]:
+    """Return the file extension and content type for an upload.
+
+    The type comes from the file's content, never its name, and must match the
+    media type the admin chose. Raises ValueError with a key of UPLOAD_ERRORS.
+    """
+    if media_type == "image":
+        image_format = detect_image_format(data)
+        if image_format not in IMAGE_TYPES:
+            raise ValueError("unsupported_type")
+        return IMAGE_TYPES[image_format]
+
+    video_format = _detect_video_format(data)
+    if video_format is None:
+        raise ValueError("unsupported_type")
+    return VIDEO_TYPES[video_format]
+
+
+def _storage_folder(scientific_name: str) -> str:
+    """Turn a scientific name into a safe folder name, such as "Tectona_grandis"."""
+    return re.sub(r"[^A-Za-z0-9_-]", "", scientific_name.strip().replace(" ", "_"))
 
 
 def register_media_routes(app, supabase):
@@ -211,6 +301,107 @@ def register_media_routes(app, supabase):
             "message": "media upload successful",
         }), 201
     
+    @app.post("/upload-media/file")
+    def upload_media_file():
+        """
+        Store an uploaded image or video and register it as media for a species.
+
+        Expects the multipart form fields file, species_name, media_type
+        ("image" or "video") and an optional alt_text. Images go to the
+        species_images bucket and videos to the media bucket, under a folder
+        named after the species and a random file name. Returns the new
+        media_id, the storage path and the public URL.
+        """
+        admin_id, err = get_admin_user(supabase)
+        if err:
+            return jsonify({"error": err[0]}), err[1]
+
+        largest_upload = max(MAX_UPLOAD_BYTES.values()) + MULTIPART_OVERHEAD_BYTES
+        if request.content_length and request.content_length > largest_upload:
+            return jsonify({"error": "the file is too large"}), 413
+
+        uploaded_file = request.files.get("file")
+        species_name = (request.form.get("species_name") or "").strip()
+        media_type = request.form.get("media_type")
+        alt_text = (request.form.get("alt_text") or "").strip()
+
+        if (
+            not uploaded_file
+            or not uploaded_file.filename
+            or not species_name
+            or media_type not in MAX_UPLOAD_BYTES
+        ):
+            return jsonify({
+                "error": "file, species_name and media_type (image or video) are required"
+            }), 400
+
+        max_bytes = MAX_UPLOAD_BYTES[media_type]
+        data = uploaded_file.read(max_bytes + 1)
+        if not data:
+            return jsonify({"error": "the file is empty"}), 400
+        if len(data) > max_bytes:
+            return jsonify({
+                "error": f"the {media_type} is larger than {max_bytes // (1024 * 1024)} MB"
+            }), 413
+
+        try:
+            extension, content_type = _detect_file_type(media_type, data)
+        except ValueError as exc:
+            message, status_code = UPLOAD_ERRORS[str(exc)]
+            return jsonify({"error": message}), status_code
+
+        species_resp = (
+            supabase.table("species_en")
+            .select("species_id, scientific_name")
+            .ilike("scientific_name", species_name)
+            .limit(1)
+            .execute()
+        )
+        if not species_resp.data:
+            return jsonify({"error": f"species '{species_name}' not found"}), 400
+
+        species_id = species_resp.data[0]["species_id"]
+        scientific_name = species_resp.data[0]["scientific_name"]
+
+        bucket, prefix = STORAGE_LOCATIONS[media_type]
+        path = f"{prefix}/{_storage_folder(scientific_name)}/{uuid4().hex}.{extension}"
+        storage = supabase.storage.from_(bucket)
+
+        try:
+            storage.upload(path, data, {"content-type": content_type})
+        except Exception:
+            app.logger.exception("Media upload to storage failed.")
+            return jsonify({"error": "the file could not be stored"}), 502
+
+        public_url = storage.get_public_url(path)
+
+        try:
+            res = (
+                supabase.table("media")
+                .insert({
+                    "species_id": species_id,
+                    "species_name": scientific_name,
+                    "media_type": media_type,
+                    "download_link": public_url,
+                    "streaming_link": public_url,
+                    "alt_text": alt_text,
+                })
+                .execute()
+            )
+        except Exception:
+            storage.remove([path])
+            raise
+
+        media_id = res.data[0]["media_id"]
+        log_change(supabase, "media", media_id, "CREATE")
+
+        return jsonify({
+            "status": "success",
+            "media_id": media_id,
+            "path": f"{bucket}/{path}",
+            "url": public_url,
+        }), 201
+
     #READ ALL MEDIA
     @app.get("/upload-media")
     def list_media():

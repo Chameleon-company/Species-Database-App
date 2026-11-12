@@ -17,9 +17,11 @@ import CloseIcon from "@mui/icons-material/Close";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 
 import Logo from "../assets/logo-color.png";
-import { clearAdminSession } from "../utils/adminSession";
+import { logoutAdmin } from "../utils/adminSession";
 import { translations } from "../translations";
 import { useLanguage } from "../LanguageContext";
+
+const API_BASE = import.meta.env.VITE_API_BASE;
 
 const DRAWER_WIDTH = 220;
 
@@ -438,8 +440,8 @@ function SidebarContent({
     );
   };
 
-  const handleLogout = () => {
-    clearAdminSession();
+  const handleLogout = async () => {
+    await logoutAdmin(API_BASE);
     navigate("/admin-login");
   };
 
@@ -519,8 +521,8 @@ export default function DrawerComponent({
     if (!isClosing) setMobileOpen(!mobileOpen);
   };
 
-  const handleLogout = () => {
-    clearAdminSession();
+  const handleLogout = async () => {
+    await logoutAdmin(API_BASE);
     navigate("/admin-login");
   };
 

@@ -260,5 +260,144 @@ class TestUserRoutesRequireAdmin(unittest.TestCase):
         self.assertIn(b"Existing Person", resp.data)
 
 
+SPECIES_ADMIN_ROUTES = [
+    "/upload-species",
+    "/audit-species",
+    "/species",
+]
+
+
+class TestSpeciesManagementRoutesRequireAdmin(unittest.TestCase):
+
+    def setUp(self):
+        _reset()
+        self.client = FLASK_APP.test_client()
+
+    def test_no_token_is_refused(self):
+        for path in SPECIES_ADMIN_ROUTES:
+            with self.subTest(route=f"POST {path}"):
+                resp = self.client.post(path)
+                self.assertEqual(resp.status_code, 401)
+
+    def test_invalid_token_is_refused(self):
+        for path in SPECIES_ADMIN_ROUTES:
+            with self.subTest(route=f"POST {path}"):
+                resp = self.client.post(path, headers=GARBAGE)
+                self.assertEqual(resp.status_code, 401)
+
+    def test_nothing_is_written_without_a_valid_token(self):
+        for headers in ({}, GARBAGE):
+            for path in SPECIES_ADMIN_ROUTES:
+                with self.subTest(route=f"POST {path}", headers=headers):
+                    _reset()
+                    resp = self.client.post(path, headers=headers)
+                    self.assertEqual(resp.status_code, 401)
+                    self.assertEqual(
+                        FAKE.writes,
+                        [],
+                        f"POST {path} touched the database without a valid token",
+                    )
+
+ANALYTICS_ADMIN_ROUTES = [
+    "/analytics/overview",
+    "/analytics/users",
+]
+
+
+class TestAnalyticsRoutesRequireAdmin(unittest.TestCase):
+
+    def setUp(self):
+        _reset()
+        self.client = FLASK_APP.test_client()
+
+    def test_no_token_is_refused(self):
+        for path in ANALYTICS_ADMIN_ROUTES:
+            with self.subTest(route=f"GET {path}"):
+                resp = self.client.get(path)
+                self.assertEqual(resp.status_code, 401)
+
+    def test_invalid_token_is_refused(self):
+        for path in ANALYTICS_ADMIN_ROUTES:
+            with self.subTest(route=f"GET {path}"):
+                resp = self.client.get(path, headers=GARBAGE)
+                self.assertEqual(resp.status_code, 401)
+
+    def test_user_analytics_leaks_nothing_without_a_token(self):
+        resp = self.client.get("/analytics/users")
+        self.assertEqual(resp.status_code, 401)
+        self.assertNotIn(b"Existing Person", resp.data)
+
+class TestTranslationRouteRequiresAdmin(unittest.TestCase):
+
+    def setUp(self):
+        _reset()
+        self.client = FLASK_APP.test_client()
+        self.body = {"text": ["Private species description"]}
+
+    def test_no_token_is_refused(self):
+        resp = self.client.post("/translate", json=self.body)
+        self.assertEqual(resp.status_code, 401)
+
+    def test_invalid_token_is_refused(self):
+        resp = self.client.post(
+            "/translate",
+            headers=GARBAGE,
+            json=self.body,
+        )
+        self.assertEqual(resp.status_code, 401)
+
+    def test_unauthenticated_response_does_not_echo_text(self):
+        resp = self.client.post("/translate", json=self.body)
+        self.assertNotIn(b"Private species description", resp.data)
+
+class TestAdminLogout(unittest.TestCase):
+
+    def setUp(self):
+        _reset()
+        self.client = FLASK_APP.test_client()
+
+    def test_logout_requires_admin_token(self):
+        resp = self.client.post("/api/auth/admin-logout")
+        self.assertEqual(resp.status_code, 401)
+
+    def test_logout_revokes_current_session(self):
+        resp = self.client.post(
+            "/api/auth/admin-logout",
+            headers=VALID,
+        )
+        self.assertEqual(resp.status_code, 200)
+
+        session = FAKE.data["admin_sessions"][0]
+        self.assertTrue(session["revoked"])
+        self.assertEqual(session["revocation_reason"], "logout")
+
+        protected_resp = self.client.get("/api/users", headers=VALID)
+        self.assertEqual(protected_resp.status_code, 401)
+
+class TestPrivacyPolicy(unittest.TestCase):
+
+    def setUp(self):
+        _reset()
+        self.client = FLASK_APP.test_client()
+
+    def test_privacy_policy_is_public(self):
+        resp = self.client.get("/privacy")
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("text/html", resp.content_type)
+        self.assertIn(b"Fini Species Database", resp.data)
+        self.assertIn(b"12 September 2026", resp.data)
+        self.assertIn(b"xPand Foundation", resp.data)
+
+    def test_internal_checklist_is_not_published(self):
+        resp = self.client.get("/privacy")
+
+        self.assertNotIn(b"Before publishing it", resp.data)
+        self.assertNotIn(b"INSERT DATE", resp.data)
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

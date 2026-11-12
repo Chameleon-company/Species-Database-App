@@ -129,8 +129,6 @@ document.addEventListener("DOMContentLoaded", () => {
         return
       }
 
-      console.log("LOGIN SUCCESS:", data)
-
       if (isAdminLoginPage) {
         localStorage.removeItem("user_id")
         localStorage.setItem("admin_token", data.access_token)
@@ -141,8 +139,6 @@ document.addEventListener("DOMContentLoaded", () => {
         localStorage.setItem("role", data.role)
       }
 
-
-      console.log("Logged in as", data.role)
 
       redirectPostLogin();
     }

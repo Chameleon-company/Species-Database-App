@@ -3,7 +3,6 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import React, { useState } from 'react'
 import Alert from '@mui/material/Alert'
-import axios from 'axios'
 import { adminFetch } from '../utils/adminFetch'
 import { translations } from '../translations'
 import { useLanguage } from "../LanguageContext";
@@ -110,15 +109,19 @@ export default function Page1() {
             tempPest
         ]
 
-        console.log('Translation: ', textArray)
-
         try {
             setLoading(true)
 
-            const response = await axios.post(`${API_BASE}/translate`, { text: textArray })
-            console.log('Translation: ', response)
+            const response = await adminFetch(`${API_BASE}/translate`, {
+                method: 'POST',
+                body: JSON.stringify({ text: textArray })
+            })
 
-            const translatedText = response.data
+            if (!response.ok) {
+                throw new Error(`Translation failed with status ${response.status}`)
+            }
+
+            const translatedText = await response.json()
 
             if (translatedText[4] === "-") translatedText[4] = ""
             if (translatedText[5] === "-") translatedText[5] = ""
@@ -140,7 +143,7 @@ export default function Page1() {
                 seedGerminationTetum: translatedText[8],
                 pestsTetum: translatedText[9]
             })
-        } catch {
+        } catch (error) {
             console.error('Translation error:', error)
         } finally {
             setLoading(false)
