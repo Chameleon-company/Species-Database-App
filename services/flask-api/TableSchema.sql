@@ -45,9 +45,9 @@ CREATE TABLE IF NOT EXISTS public.species_tet (
 );
 
 -- NOTE: species_en.definition / species_tet.definition are added to EXISTING
--- databases by backend/migrations/001_add_definition_and_storage_version.sql.
+-- databases by services/flask-api/migrations/001_add_definition_and_storage_version.sql.
 -- This file is the full-schema snapshot for creating a database from scratch;
--- it is not a change history. See backend/migrations/README.md.
+-- it is not a change history. See services/flask-api/migrations/README.md.
 
 --changelog used for incremental sync to devices
 CREATE TABLE IF NOT EXISTS public.changelog (
@@ -92,7 +92,7 @@ CREATE TABLE IF NOT EXISTS public.media (
 );
 
 -- NOTE: media.storage_version is added to EXISTING databases by
--- backend/migrations/001_add_definition_and_storage_version.sql.
+-- services/flask-api/migrations/001_add_definition_and_storage_version.sql.
 
 --active admin login sessions
 CREATE TABLE IF NOT EXISTS public.admin_sessions (

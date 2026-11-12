@@ -1,8 +1,7 @@
 from pathlib import Path
 import pandas as pd
 
-# Default path: project_root/data/species.xlsx
-DATA_PATH = Path(__file__).resolve().parent.parent / "data" / "species.xlsx"
+DATA_PATH = Path(__file__).resolve().parents[2] / "data" / "species.xlsx"
 
 
 def load_species_df(path: str | Path | None = None) -> pd.DataFrame:

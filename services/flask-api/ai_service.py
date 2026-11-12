@@ -8,9 +8,9 @@ import tensorflow as tf
 from PIL import Image, ImageOps
 
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_MODEL_PATH = PROJECT_ROOT / "AI" / "species_detector_mobilenetv2.h5"
-DEFAULT_LABELS_PATH = PROJECT_ROOT / "AI" / "class_labels.txt"
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_MODEL_PATH = PROJECT_ROOT / "ml" / "training" / "species_detector_mobilenetv2.h5"
+DEFAULT_LABELS_PATH = PROJECT_ROOT / "ml" / "training" / "class_labels.txt"
 
 IMAGE_HEIGHT = 224
 IMAGE_WIDTH = 224

@@ -14,7 +14,7 @@ Run them against the code before the fix and the first two groups fail.
 Entirely offline. Supabase is stubbed, no .env is read, nothing here can
 reach the shared project.
 
-Run:  python -m unittest discover -s backend/tests -v
+Run:  python -m unittest discover -s services/flask-api/tests -v
 """
 
 import datetime

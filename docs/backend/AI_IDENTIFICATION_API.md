@@ -119,7 +119,7 @@ Internal exception details, local file paths, and model implementation details m
 | 1 | `Swietenia_Macrophylla` |
 | 2 | `Tectona_Grandis` |
 
-The mapping is stored in `AI/class_labels.txt`. The service must fail during startup if the number of labels does not match the model output size.
+The mapping is stored in `ml/training/class_labels.txt`. The service must fail during startup if the number of labels does not match the model output size.
 
 ## Frontend requirements
 

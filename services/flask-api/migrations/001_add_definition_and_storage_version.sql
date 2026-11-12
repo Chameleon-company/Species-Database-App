@@ -7,7 +7,7 @@
 --           PR #204 (media.storage_version)
 --
 -- CONTEXT
---   These three columns are declared in backend/TableSchema.sql on the
+--   These three columns are declared in services/flask-api/TableSchema.sql on the
 --   `backend` branch, and the application code on that branch reads and writes
 --   them. They do not exist on `master`, and they do not exist in the live
 --   Supabase database. The feature branch was never merged to master, so

@@ -152,7 +152,7 @@ Returns 404 if the species does not exist, and `"videos": []` if it exists but h
 
 ### `storage_version`
 
-`media.storage_version` starts at 1 and increments whenever the stored file behind a record changes. Devices compare their cached value against the server's and re-download only when it differs, instead of re-pulling the whole media set. Added by [migration 001](../migrations/README.md).
+`media.storage_version` starts at 1 and increments whenever the stored file behind a record changes. Devices compare their cached value against the server's and re-download only when it differs, instead of re-pulling the whole media set. Added by [migration 001](../../services/flask-api/migrations/README.md).
 
 ## Users
 
@@ -231,5 +231,5 @@ Fixing these means adding `get_admin_user` guards to endpoints owned by several 
 
 ## Related
 
-- [`backend/migrations/README.md`](../migrations/README.md), schema change process
-- [`backend/tests/test_merge_readiness.py`](../tests/test_merge_readiness.py), offline test suite
+- [`services/flask-api/migrations/README.md`](../../services/flask-api/migrations/README.md), schema change process
+- [`services/flask-api/tests/test_merge_readiness.py`](../../services/flask-api/tests/test_merge_readiness.py), offline test suite

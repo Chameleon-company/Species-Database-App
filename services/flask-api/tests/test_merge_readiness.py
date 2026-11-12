@@ -12,9 +12,9 @@ could be handed to the Project Leader for merge into master:
   4. the two security fixes found during merge review actually hold
 
 They are deliberately offline. Supabase is stubbed, so nothing here touches
-the shared project - see backend/migrations/README.md for why that matters.
+the shared project - see services/flask-api/migrations/README.md for why that matters.
 
-Run:  python -m unittest discover -s backend/tests -v
+Run:  python -m unittest discover -s services/flask-api/tests -v
 """
 
 import os

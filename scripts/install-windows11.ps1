@@ -26,9 +26,9 @@ if ($Python) {
 
 pnpm install
 
-& $PythonExe @PythonArgs -m venv backend\venv
-& backend\venv\Scripts\python.exe -m pip install --upgrade pip
-& backend\venv\Scripts\python.exe -m pip install -r requirements.txt
+& $PythonExe @PythonArgs -m venv services\flask-api\venv
+& services\flask-api\venv\Scripts\python.exe -m pip install --upgrade pip
+& services\flask-api\venv\Scripts\python.exe -m pip install -r services\flask-api\requirements.txt
 
 if (-not (Test-Path ".env")) {
     Copy-Item ".env.example" ".env"

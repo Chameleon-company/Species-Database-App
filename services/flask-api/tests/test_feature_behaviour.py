@@ -16,7 +16,7 @@ payload, test_merge_readiness still passes and this file does not.
 Same rule as the other suite: entirely offline, no .env, nothing here can
 reach the shared Supabase project.
 
-Run:  python -m unittest discover -s backend/tests -v
+Run:  python -m unittest discover -s services/flask-api/tests -v
 """
 
 import datetime

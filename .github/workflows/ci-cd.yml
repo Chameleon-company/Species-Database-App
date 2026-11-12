@@ -15,7 +15,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 3.12 to match backend/Dockerfile and the README. On 3.9 the install
+      # 3.12 to match services/flask-api/Dockerfile and the README. On 3.9 the install
       # cannot succeed at all, because requirements.txt pins click==8.3.1 and
       # that needs 3.10 or newer.
       - name: Set up Python
@@ -25,12 +25,12 @@ jobs:
 
       - name: Install Python dependencies
         run: |
-          pip install -r requirements.txt
+          pip install -r services/flask-api/requirements.txt
 
       - name: Run Python security scan (Safety)
         run: |
           pip install safety
-          safety check --file requirements.txt --output json || true
+          safety check --file services/flask-api/requirements.txt --output json || true
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
@@ -53,7 +53,7 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          args: --file=requirements.txt --org=fbd7b7eb-23e2-443e-bd4d-cc08b4a918aa --project-name=SPECIES-DATABASE-APP
+          args: --file=services/flask-api/requirements.txt --org=fbd7b7eb-23e2-443e-bd4d-cc08b4a918aa --project-name=SPECIES-DATABASE-APP
 
       - name: Run TruffleHog for secrets scanning
         uses: trufflesecurity/trufflehog@main

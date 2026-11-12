@@ -10,7 +10,7 @@
     "install:macos": "bash scripts/install-macos.sh",
     "install:windows11": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-windows11.ps1",
     "dev": "docker compose up --build",
-    "dev:backend": "python backend/app.py",
+    "dev:backend": "python services/flask-api/app.py",
     "dev:admin": "pnpm --filter admin dev",
     "dev:field": "pnpm --filter field dev",
     "build": "pnpm -r build",

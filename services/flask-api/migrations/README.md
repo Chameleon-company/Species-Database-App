@@ -4,7 +4,7 @@ Every change to the SDA database schema goes in this folder, as a numbered SQL f
 
 ## Why this exists
 
-Schema changes used to live entirely in `backend/TableSchema.sql`, partly as `CREATE TABLE` statements and partly as commented-out `ALTER TABLE` lines somebody had to spot and run by hand. Nothing recorded which changes had reached which database.
+Schema changes used to live entirely in `services/flask-api/TableSchema.sql`, partly as `CREATE TABLE` statements and partly as commented-out `ALTER TABLE` lines somebody had to spot and run by hand. Nothing recorded which changes had reached which database.
 
 That has failed in production. Three columns (`species_en.definition`, `species_tet.definition`, `media.storage_version`) exist in the schema file and are read and written by application code, but do not exist in the live database. Nobody noticed for three months, because nothing checks.
 
@@ -34,10 +34,10 @@ NNN_short_description.rollback.sql     -- matching rollback
 The whole checklist is automated. It builds a throwaway PostgreSQL cluster, seeds it with the schema **currently deployed** (`upstream/master`), applies the migration, and tears everything down again:
 
 ```bash
-bash backend/migrations/test_migration.sh
+bash services/flask-api/migrations/test_migration.sh
 ```
 
-It requires local PostgreSQL binaries (`brew install postgresql@14`, or `apt install postgresql`). It never reads `backend/.env` and never connects to Supabase, so it cannot touch the shared project.
+It requires local PostgreSQL binaries (`brew install postgresql@14`, or `apt install postgresql`). It never reads `services/flask-api/.env` and never connects to Supabase, so it cannot touch the shared project.
 
 The twelve checks it runs:
 
@@ -56,7 +56,7 @@ The twelve checks it runs:
 | 11 | **No data lost** across apply then rollback |
 | 12 | `TableSchema.sql` still builds a correct database from scratch, with `admin_session_audit` intact |
 
-Point it at a different baseline with `BASE_REF=origin/master bash backend/migrations/test_migration.sh`.
+Point it at a different baseline with `BASE_REF=origin/master bash services/flask-api/migrations/test_migration.sh`.
 
 Last run: **all 12 passed** against PostgreSQL 14.22 on 2026-08-10.
 

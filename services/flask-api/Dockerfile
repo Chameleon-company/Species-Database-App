@@ -5,13 +5,13 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-COPY requirements.txt .
+COPY services/flask-api/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY backend ./backend
-COPY AI ./AI
+COPY services/flask-api ./services/flask-api
+COPY ml/training ./ml/training
 
-WORKDIR /app/backend
+WORKDIR /app/services/flask-api
 
 EXPOSE 5000
 

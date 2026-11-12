@@ -5,7 +5,7 @@
 # Author: Byron Ehrhardt (s224341683) - Backend Lead
 #
 # Runs the checklist from README.md against a THROWAWAY local PostgreSQL
-# database. It never connects to Supabase and never reads backend/.env, so it
+# database. It never connects to Supabase and never reads services/flask-api/.env, so it
 # cannot touch the shared project.
 #
 # What it proves:
@@ -22,13 +22,13 @@
 #   Ubuntu: sudo apt install postgresql
 #
 # Usage:
-#   bash backend/migrations/test_migration.sh
-#   BASE_REF=origin/master bash backend/migrations/test_migration.sh
+#   bash services/flask-api/migrations/test_migration.sh
+#   BASE_REF=origin/master bash services/flask-api/migrations/test_migration.sh
 # =============================================================================
 set -uo pipefail
 
-REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-MIG="$REPO/backend/migrations"
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+MIG="$REPO/services/flask-api/migrations"
 WORK="${TMPDIR:-/tmp}/sda-migration-test.$$"
 PGPORT_TEST="${PGPORT_TEST:-5599}"
 # The branch whose schema represents the CURRENTLY DEPLOYED database.
@@ -81,7 +81,7 @@ echo "=== STEP 1 - seed scratch DB with $BASE_REF schema ======================"
 cd "$REPO" || fail "cd repo"
 git rev-parse --verify "$BASE_REF" >/dev/null 2>&1 \
     || fail "ref '$BASE_REF' not found (try: git fetch upstream)"
-if ! git show "$BASE_REF:backend/TableSchema.sql" | pg -d "$DB" -q >"$WORK/seed.log" 2>&1; then
+if ! { git show "$BASE_REF:services/flask-api/TableSchema.sql" 2>/dev/null || git show "$BASE_REF:services/flask-api/TableSchema.sql"; } | pg -d "$DB" -q >"$WORK/seed.log" 2>&1; then
     tail -20 "$WORK/seed.log"; fail "seeding $BASE_REF schema"
 fi
 ok "$BASE_REF schema loaded - $(pgq -d "$DB" -c "SELECT count(*) FROM information_schema.tables WHERE table_schema='public';") tables"
@@ -183,7 +183,7 @@ ok "row counts unchanged through apply+rollback ($SURV)"
 echo
 echo "=== STEP 12 - TableSchema.sql builds a correct DB from scratch =========="
 createdb -h 127.0.0.1 -p "$PGPORT_TEST" -U postgres "$SNAPDB" || fail "createdb snapshot"
-if ! pg -d "$SNAPDB" -q -f "$REPO/backend/TableSchema.sql" >"$WORK/snap.log" 2>&1; then
+if ! pg -d "$SNAPDB" -q -f "$REPO/services/flask-api/TableSchema.sql" >"$WORK/snap.log" 2>&1; then
     tail -20 "$WORK/snap.log"; fail "TableSchema.sql does not load"
 fi
 SNAP=$(pgq -d "$SNAPDB" -c "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND column_name IN ('definition','storage_version');")

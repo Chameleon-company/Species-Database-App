@@ -16,5 +16,6 @@
 **/.venv
 *.log
 .env
-backend/.sonar
-TESTING
+services/flask-api/.sonar
+tests
+docs

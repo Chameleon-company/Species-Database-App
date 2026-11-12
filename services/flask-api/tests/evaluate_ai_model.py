@@ -6,7 +6,7 @@ from pathlib import Path
 AI_TESTING_DIR = Path(__file__).resolve().parent
 TESTING_DIR = AI_TESTING_DIR.parent
 BACKEND_DIR = Path(__file__).resolve().parents[1]
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 sys.path.insert(0, str(BACKEND_DIR))
 
@@ -15,15 +15,13 @@ from ai_service import get_species_identification_service
 
 EVALUATION_ROOT = (
     PROJECT_ROOT
-    / "TESTING"
-    / "AI"
+    / "ml"
     / "evaluation"
 )
 
 OUTPUT_FILE = (
     PROJECT_ROOT
-    / "TESTING"
-    / "AI"
+    / "ml"
     / "evaluation_results.csv"
 )
 
