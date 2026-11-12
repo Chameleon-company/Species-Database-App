@@ -46,7 +46,7 @@ This repository implements a structured pipeline to:
 Install the required Python dependencies:
 
 ```bash
-pip install pandas requests tensorflow scikit-learn numpy
+pip install -r requirements.txt
 ```
 
 ---
@@ -166,6 +166,16 @@ After successful training, the following artifacts are produced:
 
 - **`species_detector_mobilenetv2.h5`** – Trained classification model
 - **`class_labels.txt`** – Mapping of numeric class indices to scientific names
+
+### Model served by the API
+
+The API does not load the `.h5` file.
+It serves `species_detector_mobilenetv2.tflite` with LiteRT, which needs about 180 MB of memory instead of the 660 MB that TensorFlow needs.
+After every retraining, regenerate the `.tflite` file from the repo root and commit both files:
+
+```bash
+python ml/training/convert_to_litert.py
+```
 
 ### Evaluation Metrics
 
