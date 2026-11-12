@@ -6,13 +6,30 @@ English-Tetum bilingual field application for offline species guidance and Rai M
 
 The Rai Matak Species Guide supports field staff, botanists, and community partners working in Timor-Leste. The app provides offline access to species identification data, ecological notes, photos, and learning resources.
 
-The repository includes:
+## Repository Layout
 
-- A Flask backend API in `backend`
-- A React admin dashboard in `apps/admin`
-- A static field-user frontend in `Frontend`
-- A Capacitor Android wrapper in `capacitor-wrapper`
-- Placeholders for the new field app in `apps/field` and the new TypeScript API in `apps/api`
+```
+apps/
+  admin/          React admin dashboard
+  api/            new TypeScript API (Hono), replaces the Flask API route by route
+  field/          new field app, replaces field-legacy
+  field-legacy/   static field app that runs in production today
+  android/        Capacitor Android wrapper around the field app
+services/
+  flask-api/      Flask API that runs in production today, with its tests and migrations
+ml/
+  training/       species identification model, training code and results
+  data/           species data files
+  species-cli/    command-line tool for the species data
+docs/
+  backend/        API reference and backend notes
+  testing/        T2 testing reports
+tests/
+  e2e/            T2 automation suites
+  api/            T2 API test collections
+packages/         shared workspace packages
+scripts/          OS install scripts
+```
 
 The JavaScript apps share one pnpm workspace, defined in `pnpm-workspace.yaml`. Shared dependency versions live in its `catalog:` section, and `pnpm-lock.yaml` is the only lockfile.
 
@@ -182,13 +199,15 @@ pnpm run install:macos
 pnpm run install:windows11
 ```
 
-The script installs Node dependencies, creates `backend/venv`, installs Python requirements, and creates `.env` from `.env.example` if it does not exist.
+The script installs Node dependencies, creates `services/flask-api/venv`, installs Python requirements, and creates `.env` from `.env.example` if it does not exist.
 
 ### 3. Start Local Services
 
-Start the backend:
+Activate the backend virtual environment, then start the backend:
 
 ```bash
+source services/flask-api/venv/bin/activate        # Linux and macOS
+services\flask-api\venv\Scripts\Activate.ps1   # Windows PowerShell
 pnpm run dev:backend
 ```
 
@@ -205,7 +224,7 @@ Local URLs:
 
 ## Static Field-User Frontend
 
-The field-user frontend is the static HTML app in `Frontend`.
+The field-user frontend is the static HTML app in `apps/field-legacy`.
 
 Prerequisite:
 
@@ -214,12 +233,12 @@ Prerequisite:
 Procedure:
 
 1. Open the repository folder in Visual Studio Code.
-2. Open `Frontend/index.html`.
+2. Open `apps/field-legacy/index.html`.
 3. Use Live Server to open the page in a browser.
 
 ## Android App
 
-The Android project is managed through Capacitor in `capacitor-wrapper`.
+The Android project is managed through Capacitor in `apps/android`.
 
 ### 1. Install Prerequisites
 
@@ -233,7 +252,7 @@ Install:
 ### 2. Open the Android Project
 
 ```bash
-cd capacitor-wrapper
+cd apps/android
 pnpm exec cap sync android
 pnpm exec cap open android
 ```
@@ -274,13 +293,13 @@ Main authentication endpoints:
 
 ## Backend API Reference
 
-Endpoint-by-endpoint documentation, including which endpoints require an admin session, is in [`backend/docs/API.md`](backend/docs/API.md).
+Endpoint-by-endpoint documentation, including which endpoints require an admin session, is in [`docs/backend/API.md`](docs/backend/API.md).
 
 ## Database Schema Changes
 
-`backend/TableSchema.sql` is a **snapshot of the full intended schema**, and it's how you create a new database from scratch. It is not a change history, and it can't tell you what state an existing database is in.
+`services/flask-api/TableSchema.sql` is a **snapshot of the full intended schema**, and it's how you create a new database from scratch. It is not a change history, and it can't tell you what state an existing database is in.
 
-Changes to an existing database go in `backend/migrations/` as numbered SQL files, each with a matching rollback. Read [`backend/migrations/README.md`](backend/migrations/README.md) before adding one.
+Changes to an existing database go in `services/flask-api/migrations/` as numbered SQL files, each with a matching rollback. Read [`services/flask-api/migrations/README.md`](services/flask-api/migrations/README.md) before adding one.
 
 Two rules matter most:
 
@@ -290,7 +309,7 @@ Two rules matter most:
 Verify a migration against a throwaway local database before it goes near Supabase:
 
 ```bash
-bash backend/migrations/test_migration.sh
+bash services/flask-api/migrations/test_migration.sh
 ```
 
 This creates its own temporary PostgreSQL cluster, seeds it with the schema currently deployed, applies the migration, checks idempotency and rollback, and cleans up. It never reads `.env` and never connects to Supabase.
@@ -298,7 +317,9 @@ This creates its own temporary PostgreSQL cluster, seeds it with the schema curr
 ## Backend Tests
 
 ```bash
-python -m unittest discover -s backend/tests -v
+cd services/flask-api
+python -m pip install -r requirements.txt -r requirements-test.txt
+python -m pytest tests -v
 ```
 
 The suite runs fully offline. Supabase is stubbed, so it makes no network calls and can't touch shared data. It covers app startup and route registration, the admin authentication surface, the guard on `POST /upload-species`, and the search-filter and media-URL validation.
@@ -307,7 +328,7 @@ The suite runs fully offline. Supabase is stubbed, so it makes no network calls 
 
 The project includes security scanning for dependencies and secrets. See `SECURITY.md` for vulnerability reporting guidance.
 
-Known unauthenticated endpoints that should require an admin session are listed under **Known gaps** in [`backend/docs/API.md`](backend/docs/API.md).
+Known unauthenticated endpoints that should require an admin session are listed under **Known gaps** in [`docs/backend/API.md`](docs/backend/API.md).
 
 > **Working with `.env`:** the Supabase key used by the backend is a `service_role` key, which bypasses row-level security and can run schema changes. Treat any populated Supabase project the team shares as production: never point local tests at it, and never run `ALTER`/`DELETE` against it while developing.
 
