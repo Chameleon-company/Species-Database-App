@@ -156,6 +156,7 @@ def test_image_is_stored_and_registered(client, db, changes, image_format, exten
         "download_link": body["url"],
         "streaming_link": body["url"],
         "alt_text": "Teak leaves",
+        "storage_version": 1,
     }]
     assert changes == [("media", 101, "CREATE")]
 

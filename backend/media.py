@@ -385,6 +385,7 @@ def register_media_routes(app, supabase):
                     "download_link": public_url,
                     "streaming_link": public_url,
                     "alt_text": alt_text,
+                    "storage_version": 1,
                 })
                 .execute()
             )
