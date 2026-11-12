@@ -7,11 +7,13 @@ from PIL import Image
 import ai_service
 from ai_service import (
     ModelConfigurationError,
+    SpeciesIdentificationService,
     get_configured_confidence_threshold,
     load_labels,
     load_model,
     postprocess_prediction,
     preprocess_image,
+    resize_bilinear,
     run_inference,
 )
 
@@ -85,22 +87,49 @@ def test_preprocess_image_rejects_corrupted_data():
         preprocess_image(BytesIO(b"not an image"))
 
 
-class FakeModel:
-    input_shape = (None, 224, 224, 3)
-    output_shape = (None, 3)
+TENSORFLOW_RESIZE_REFERENCE = [
+    [[24.375, 27.375, 30.375], [40.125, 43.125, 46.125], [55.875, 58.875, 61.875], [71.625, 74.625, 77.625]],
+    [[129.375, 132.375, 135.375], [145.125, 148.125, 151.125], [160.875, 163.875, 166.875], [176.625, 179.625, 182.625]],
+    [[170.375, 173.375, 69.7084], [79.4584, 82.4584, 85.4584], [95.2084, 98.2084, 101.2084], [110.9584, 113.9584, 116.9584]],
+]
 
-    def __init__(self, predictions):
-        self.predictions = np.asarray(
-            [predictions],
-            dtype=np.float32,
-        )
 
-    def predict(self, image_batch, verbose=0):
+def test_resize_matches_tensorflow_bilinear():
+    image = ((np.arange(5 * 7 * 3).reshape(5, 7, 3) * 3) % 256).astype(np.uint8)
+
+    resized = resize_bilinear(image, 3, 4)
+
+    assert resized.dtype == np.float32
+    assert resized == pytest.approx(np.array(TENSORFLOW_RESIZE_REFERENCE), abs=1e-3)
+
+
+class FakeInterpreter:
+    def __init__(self, predictions, input_shape=(1, 224, 224, 3)):
+        self.predictions = np.asarray([predictions], dtype=np.float32)
+        self.input_shape = input_shape
+        self.received = None
+
+    def allocate_tensors(self):
+        pass
+
+    def get_input_details(self):
+        return [{"index": 0, "shape": np.array(self.input_shape)}]
+
+    def get_output_details(self):
+        return [{"index": 1, "shape": np.array(self.predictions.shape)}]
+
+    def set_tensor(self, index, value):
+        self.received = value
+
+    def invoke(self):
+        pass
+
+    def get_tensor(self, index):
         return self.predictions
 
 
 def test_run_inference_returns_three_probabilities():
-    model = FakeModel([0.1, 0.2, 0.7])
+    model = FakeInterpreter([0.1, 0.2, 0.7])
     image_batch = np.zeros(
         (1, 224, 224, 3),
         dtype=np.float32,
@@ -165,12 +194,11 @@ def test_postprocess_rejects_label_count_mismatch():
 def test_load_model_rejects_unexpected_input_shape(
     monkeypatch,
 ):
-    fake_model = FakeModel([0.1, 0.2, 0.7])
-    fake_model.input_shape = (None, 128, 128, 3)
+    fake_model = FakeInterpreter([0.1, 0.2, 0.7], input_shape=(1, 128, 128, 3))
 
     monkeypatch.setattr(
-        ai_service.tf.keras.models,
-        "load_model",
+        ai_service,
+        "Interpreter",
         lambda *args, **kwargs: fake_model,
     )
 
@@ -178,17 +206,17 @@ def test_load_model_rejects_unexpected_input_shape(
         ModelConfigurationError,
         match="Unexpected model input shape",
     ):
-        load_model("fake_model.h5", expected_label_count=3)
+        load_model("fake_model.tflite", expected_label_count=3)
 
 
 def test_load_model_rejects_label_count_mismatch(
     monkeypatch,
 ):
-    fake_model = FakeModel([0.1, 0.2, 0.7])
+    fake_model = FakeInterpreter([0.1, 0.2, 0.7])
 
     monkeypatch.setattr(
-        ai_service.tf.keras.models,
-        "load_model",
+        ai_service,
+        "Interpreter",
         lambda *args, **kwargs: fake_model,
     )
 
@@ -196,7 +224,17 @@ def test_load_model_rejects_label_count_mismatch(
         ModelConfigurationError,
         match="does not match",
     ):
-        load_model("fake_model.h5", expected_label_count=2)
+        load_model("fake_model.tflite", expected_label_count=2)
+
+
+def test_served_model_loads_and_identifies_an_image():
+    service = SpeciesIdentificationService()
+
+    result = service.identify(create_image())
+
+    assert result["species_label"] in EXPECTED_LABELS
+    assert 0.0 <= result["confidence"] <= 1.0
+    assert isinstance(result["uncertain"], bool)
 
 
 def test_default_confidence_threshold(monkeypatch):

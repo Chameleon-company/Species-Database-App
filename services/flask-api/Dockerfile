@@ -9,7 +9,7 @@ COPY services/flask-api/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY services/flask-api ./services/flask-api
-COPY ml/training ./ml/training
+COPY ml/training/species_detector_mobilenetv2.tflite ml/training/class_labels.txt ./ml/training/
 
 WORKDIR /app/services/flask-api
 

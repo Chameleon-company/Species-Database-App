@@ -1,15 +1,16 @@
 from functools import lru_cache
 from pathlib import Path
+from threading import Lock
 from typing import BinaryIO, Union
 import os
 
 import numpy as np
-import tensorflow as tf
+from ai_edge_litert.interpreter import Interpreter
 from PIL import Image, ImageOps
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_MODEL_PATH = PROJECT_ROOT / "ml" / "training" / "species_detector_mobilenetv2.h5"
+DEFAULT_MODEL_PATH = PROJECT_ROOT / "ml" / "training" / "species_detector_mobilenetv2.tflite"
 DEFAULT_LABELS_PATH = PROJECT_ROOT / "ml" / "training" / "class_labels.txt"
 
 IMAGE_HEIGHT = 224
@@ -71,56 +72,89 @@ def load_labels(labels_path: Path = DEFAULT_LABELS_PATH) -> list[str]:
 def load_model(
     model_path: Path = DEFAULT_MODEL_PATH,
     expected_label_count: int | None = None,
-) -> tf.keras.Model:
-    """Load and structurally validate the Keras classification model."""
-    model = tf.keras.models.load_model(Path(model_path), compile=False)
+) -> Interpreter:
+    """Load the LiteRT model and check its input and output shapes."""
+    interpreter = Interpreter(model_path=str(model_path))
+    interpreter.allocate_tensors()
 
-    expected_input_shape = (
-        None,
-        IMAGE_HEIGHT,
-        IMAGE_WIDTH,
-        IMAGE_CHANNELS,
-    )
+    input_shape = tuple(int(size) for size in interpreter.get_input_details()[0]["shape"])
+    expected_input_shape = (1, IMAGE_HEIGHT, IMAGE_WIDTH, IMAGE_CHANNELS)
 
-    if tuple(model.input_shape) != expected_input_shape:
+    if input_shape != expected_input_shape:
         raise ModelConfigurationError(
-            f"Unexpected model input shape: {model.input_shape}."
+            f"Unexpected model input shape: {input_shape}."
         )
 
-    output_count = int(model.output_shape[-1])
+    output_count = int(interpreter.get_output_details()[0]["shape"][-1])
 
     if expected_label_count is not None and output_count != expected_label_count:
         raise ModelConfigurationError(
             "Model output count does not match the verified label count."
         )
 
-    return model
+    return interpreter
+
+
+def resize_bilinear(image: np.ndarray, height: int, width: int) -> np.ndarray:
+    """Resize an HxWxC array the way tf.image.resize(method="bilinear") does.
+
+    The model was trained on images resized by TensorFlow, which samples at
+    half-pixel centres and does not antialias. Pillow's bilinear resize
+    antialiases when it shrinks an image, which changes the pixels enough to
+    flip some predictions, so this reproduces TensorFlow's sampling instead.
+    Only the source rows and columns that are sampled are converted to float,
+    so a large photo stays in memory as uint8.
+    """
+    source_height, source_width = image.shape[:2]
+
+    rows = np.clip((np.arange(height) + 0.5) * (source_height / height) - 0.5, 0, source_height - 1)
+    cols = np.clip((np.arange(width) + 0.5) * (source_width / width) - 0.5, 0, source_width - 1)
+
+    top = np.floor(rows).astype(np.intp)
+    left = np.floor(cols).astype(np.intp)
+    bottom = np.minimum(top + 1, source_height - 1)
+    right = np.minimum(left + 1, source_width - 1)
+
+    row_weight = (rows - top)[:, None, None]
+    col_weight = (cols - left)[None, :, None]
+
+    def sample(row_index, col_index):
+        return image[row_index][:, col_index].astype(np.float64)
+
+    upper = sample(top, left) * (1 - col_weight) + sample(top, right) * col_weight
+    lower = sample(bottom, left) * (1 - col_weight) + sample(bottom, right) * col_weight
+
+    return (upper * (1 - row_weight) + lower * row_weight).astype(np.float32)
 
 
 def preprocess_image(image_source: ImageSource) -> np.ndarray:
-    """Decode, orient, convert and normalise an image for MobileNetV2."""
+    """Decode, orient, convert and normalise an image for MobileNetV2.
+
+    The image is rotated in place and only converted when it is not already
+    RGB, so a 12 megapixel phone photo is not copied several times over.
+    """
     with Image.open(image_source) as opened_image:
-        oriented_image = ImageOps.exif_transpose(opened_image)
-        rgb_image = oriented_image.convert("RGB")
-        image_array = np.asarray(rgb_image, dtype=np.float32)
+        opened_image.load()
+        ImageOps.exif_transpose(opened_image, in_place=True)
+        rgb_image = opened_image if opened_image.mode == "RGB" else opened_image.convert("RGB")
+        image_array = np.asarray(rgb_image, dtype=np.uint8)
 
-    resized_image = tf.image.resize(
-        image_array,
-        [IMAGE_HEIGHT, IMAGE_WIDTH],
-        method="bilinear",
-    )
+    resized_image = resize_bilinear(image_array, IMAGE_HEIGHT, IMAGE_WIDTH)
+    normalised_image = resized_image / np.float32(255.0)
 
-    normalised_image = resized_image / 255.0
-    batch = tf.expand_dims(normalised_image, axis=0)
-
-    return batch.numpy().astype(np.float32)
+    return normalised_image[np.newaxis, ...].astype(np.float32)
 
 
-def run_inference(model: tf.keras.Model, image_batch: np.ndarray) -> np.ndarray:
+def run_inference(interpreter: Interpreter, image_batch: np.ndarray) -> np.ndarray:
     """Run one preprocessed image through the model."""
-    predictions = np.asarray(model.predict(image_batch, verbose=0))
+    input_index = interpreter.get_input_details()[0]["index"]
+    output_details = interpreter.get_output_details()[0]
 
-    if predictions.shape != (1, int(model.output_shape[-1])):
+    interpreter.set_tensor(input_index, image_batch)
+    interpreter.invoke()
+    predictions = np.asarray(interpreter.get_tensor(output_details["index"]))
+
+    if predictions.shape != (1, int(output_details["shape"][-1])):
         raise RuntimeError(
             f"Unexpected prediction shape: {predictions.shape}."
         )
@@ -190,10 +224,18 @@ class SpeciesIdentificationService:
             expected_label_count=len(self.labels),
         )
         self.confidence_threshold = confidence_threshold
+        self._inference_lock = Lock()
 
     def identify(self, image_source: ImageSource) -> dict:
+        """Identify the species in one image.
+
+        A LiteRT interpreter is not safe to share between threads, so a lock
+        serialises inference when the API runs with threaded workers.
+        """
         image_batch = preprocess_image(image_source)
-        probabilities = run_inference(self.model, image_batch)
+
+        with self._inference_lock:
+            probabilities = run_inference(self.model, image_batch)
 
         return postprocess_prediction(
             probabilities,

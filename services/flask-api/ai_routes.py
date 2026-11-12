@@ -63,6 +63,7 @@ def register_ai_routes(
         except (
             FileNotFoundError,
             OSError,
+            ValueError,
             ModelConfigurationError,
         ):
             app.logger.exception(
