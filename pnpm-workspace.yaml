@@ -15,3 +15,5 @@ catalog:
 
 allowBuilds:
   esbuild: true
+
+engineStrict: true

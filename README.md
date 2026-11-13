@@ -111,10 +111,11 @@ GOOGLE_CLIENT_ID=
 VITE_GOOGLE_CLIENT_ID=
 ```
 
-Keep these default local values unless your ports change:
+Keep these default local values unless your ports change.
+If your `.env` predates the new field app, add the two `5174` origins to `CORS_ORIGINS`.
 
 ```bash
-CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174
+CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174
 VITE_API_BASE=http://localhost:5000
 VITE_API_URL=http://localhost:5000/api
 ```
@@ -236,12 +237,15 @@ Local URLs:
 - Field app: `http://localhost:5174`
 - Backend API: `http://localhost:5000`
 
-The field app in `apps/field` uses Preact and Vite.
-Its build fails when the first load is over the brotli budget in `apps/field/vite.config.ts`.
+The field app in `apps/field` is the Preact rebuild of the field app.
+Production and the Android app still use `apps/field-legacy`.
+`render.yaml` does not deploy `apps/field`.
+The `apps/field` build fails when its first load is over 50 KiB gzip.
+The budget is in `apps/field/vite.config.ts`.
 
 ## Static Field-User Frontend
 
-The field-user frontend is the static HTML app in `apps/field-legacy`.
+The live field-user frontend is the static HTML app in `apps/field-legacy`.
 
 Prerequisite:
 
