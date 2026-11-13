@@ -233,7 +233,7 @@ check_002() {
     pg -d "$DB" -c "CREATE TABLE public.after_002 (id int);" || fail "create a table after 002"
     apply "$MIG/002_enable_rls_and_revoke_client_roles.rollback.sql"
     apply "$MIG/002_enable_rls_and_revoke_client_roles.rollback.sql"
-    [ "$(pgq -d "$DB" -c "SELECT has_table_privilege('anon', 'public.after_002', 'SELECT') OR has_table_privilege('authenticated', 'public.after_002', 'SELECT');")" = "f" ] \
+    [ "$(pgq -d "$DB" -c "SELECT bool_or(has_table_privilege(r, 'public.after_002', '$TABLE_PRIVILEGES') OR has_any_column_privilege(r, 'public.after_002', 'SELECT,INSERT,UPDATE,REFERENCES')) FROM unnest(ARRAY['anon','authenticated']) r;")" = "f" ] \
         || fail "the rollback opened a table created after 002"
     pg -d "$DB" -c "DROP TABLE public.after_002;" || fail "drop the table created after 002"
     ok "a table created after 002 stays closed after the rollback"
@@ -253,6 +253,7 @@ assert_before_002() {
     local tables; tables=$(wc -w <<< "$TABLES")
     [ "$(client_full_access)" = "$((2 * tables))" ] || fail "anon and authenticated lack full table privileges before 002"
     local sequences; sequences=$(pgq -d "$DB" -c "SELECT count(*) FROM pg_class WHERE relnamespace = 'public'::regnamespace AND relkind = 'S';")
+    [ "$sequences" -gt 0 ] || fail "no public sequences to check before 002"
     [ "$(client_full_sequence_access)" = "$((2 * sequences))" ] || fail "anon and authenticated lack full sequence privileges before 002"
     [ "$(client_default_grants)" = "6" ] || fail "postgres default privileges do not grant tables, sequences and functions to both client roles before 002"
     ok "before 002: RLS only on admin_session_audit, client roles hold every grant"

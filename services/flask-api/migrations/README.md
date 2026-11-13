@@ -90,7 +90,7 @@ State before 002 on 2026-11-14:
 | Functions and views in `public` | None | None |
 | API key | `sb_secret_` key | JWT with `role` claim `service_role` |
 
-These queries produce the table:
+These queries produce the database rows of the table:
 
 - RLS and table grants:
   `select relname, relkind, relrowsecurity, relacl from pg_class where relnamespace = 'public'::regnamespace and relkind in ('r', 'p', 'v', 'm', 'f');`
@@ -121,8 +121,7 @@ Steps:
    `select relname, relacl from pg_class where relnamespace = 'public'::regnamespace and relkind = 'S';`
    Each row must show `anon=rwU` and `authenticated=rwU`.
    Save the output with the backup.
-   If a row differs, a rollback grants more on that sequence than prod had.
-   After such a rollback, restore that sequence's grants from the saved output.
+   If a row differs, add a REVOKE for that sequence at the end of the 002 rollback before you apply.
 3. Take a backup in the dashboard (Database, Backups).
 4. Run the 002 file in the SQL editor.
 5. Check the security advisor.
@@ -131,11 +130,11 @@ Steps:
    That INFO lint is the intended state.
 6. Log in to the admin, and load `/api/bundle` from the field app.
 7. If step 6 fails, the project owner takes over.
-   The 15 minutes start when step 6 fails.
-   First, check the API key type again.
-   A wrong key is the likely cause.
-   If the key is right, run the 002 rollback.
-   If the API still fails 15 minutes after a key fix, run the 002 rollback.
+   A 15-minute limit starts then.
+   Check the API key type again, because a wrong key is the likely cause.
+   If the key is right, run the 002 rollback at once.
+   If the key is wrong, set a `service_role` key on Render.
+   If the API still fails when the 15 minutes end, run the 002 rollback.
 
 Only the project owner runs the rollback.
 The rollback opens `users.password_hash` to the public key again.
