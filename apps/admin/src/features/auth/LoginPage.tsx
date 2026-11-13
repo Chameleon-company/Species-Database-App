@@ -67,7 +67,7 @@ export default function LoginPage() {
       <div className="w-full overflow-hidden rounded-3xl shadow-card sm:flex sm:max-w-170">
         <div className="flex flex-col items-center justify-center gap-1 bg-card px-8 pt-10 pb-7 sm:w-[44%] sm:shrink-0 sm:px-7 sm:py-12">
           <img src={logo} alt="FINI logo" className="mb-1 size-22.5 object-contain sm:size-27.5" />
-          <p className="text-center text-lg font-bold text-foreground">{t("loginSubtitle")}</p>
+          <p className="text-center text-lg font-bold text-balance text-foreground">{t("loginSubtitle")}</p>
         </div>
 
         <div className="flex flex-1 flex-col bg-linear-to-b from-brand-soft via-brand-light to-brand-leaf px-7 pt-6 pb-8 sm:px-8 sm:py-9">
