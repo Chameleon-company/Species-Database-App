@@ -642,9 +642,11 @@ class TestBulkUploadTetumIds(unittest.TestCase):
                 return types.SimpleNamespace(status_code=201, json=lambda: body, text="")
             return types.SimpleNamespace(status_code=self.tet_status, text="tet refused")
 
+        self.delete_status = 204
+
         def fake_delete(url, headers=None, params=None, timeout=None):
             self.calls.append(("delete", url.rsplit("/", 1)[-1], params))
-            return types.SimpleNamespace(status_code=204, text="")
+            return types.SimpleNamespace(status_code=self.delete_status, text="delete refused")
 
         async def fake_translate(text):
             return text
@@ -678,6 +680,12 @@ class TestBulkUploadTetumIds(unittest.TestCase):
         self.assertIn("row 1 (Tetum)", result["error"])
         self.assertEqual(self.calls[-1], ("delete", "species_en", {"species_id": "eq.42"}))
         self.assertEqual(sum(1 for c in self.calls if c[1] == "species_en" and c[0] == "post"), 1)
+
+    def test_a_failed_cleanup_is_named_in_the_error(self):
+        self.tet_status = 409
+        self.delete_status = 500
+        result = asyncio.run(uploader_module.process_file(self.csv.name))
+        self.assertIn("English row 42 could not be removed: delete refused", result["error"])
 
 
 if __name__ == "__main__":

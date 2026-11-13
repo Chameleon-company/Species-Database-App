@@ -164,7 +164,8 @@ Two limits stay after 002:
 On dev and prod on 2026-11-14, `species_tet` rows 23 to 27 had no English row.
 Each one was a cleaner Tetum translation of rows 1 to 5, with the same `scientific_name`.
 
-003 is not additive, so it breaks rules 4 and 5 above.
+003 is not additive.
+It breaks rules 4 and 5 above.
 The old bulk upload stores Tetum rows without an English id, and the foreign key refuses them.
 Deploy the API with the new bulk upload first, then apply 003.
 
@@ -195,7 +196,7 @@ Drop it with a later migration once the owner no longer needs the rollback.
 |---|---|---|---|
 | 001 | Add `species_en.definition`, `species_tet.definition`, `media.storage_version` | 2026-11-13, in the rebuild from `TableSchema.sql` | 2026-11-12 |
 | 002 | Enable RLS on every public table and revoke `anon` and `authenticated` access in `public` | 2026-11-14 | not yet |
-| 003 | Merge the orphan `species_tet` rows and require an English row for each Tetum row | 2026-11-14 | not yet |
+| 003 | Merge the orphan `species_tet` rows and require an English row for each Tetum row | 2026-11-14. Dev rolled back an earlier draft of 003 first | not yet |
 
 Snapshot matches with prod, newest last.
 Add a line each time you match `TableSchema.sql` to prod again.

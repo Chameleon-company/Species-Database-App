@@ -11,9 +11,9 @@
 --   - Drops the backup table.
 --
 -- Raises an exception and changes nothing in these cases:
---   - A partner row differs from the orphan text that 003 copied onto it.
---     An edit after 003 would be lost.
---   - A species_tet row already uses an orphan id.
+--   - A partner row is gone, or differs from the orphan text that 003 copied
+--     onto it. An edit after 003 would be lost.
+--   - A species_tet or species_en row already uses an orphan id.
 -- Idempotent. With no backup table, it only drops the foreign key.
 -- =============================================================================
 
@@ -32,24 +32,26 @@ BEGIN
 
     LOCK TABLE public.changelog IN EXCLUSIVE MODE;
 
-    SELECT string_agg(k.species_id::text, ', ') INTO edited
+    SELECT string_agg(o.merged_into::text, ', ') INTO edited
     FROM public.species_tet_s07_backup o
-    JOIN public.species_tet k ON k.species_id = o.merged_into
-    WHERE (k.scientific_name, k.common_name, k.etymology, k.habitat,
+    LEFT JOIN public.species_tet k ON k.species_id = o.merged_into
+    WHERE o.merged_into IS NOT NULL
+      AND (k.species_id IS NULL OR (k.scientific_name, k.common_name, k.etymology, k.habitat,
            k.identification_character, k.leaf_type, k.fruit_type, k.phenology,
            k.seed_germination, k.pest, k.definition)
           IS DISTINCT FROM
           (o.scientific_name, o.common_name, o.etymology, o.habitat,
            o.identification_character, o.leaf_type, o.fruit_type, o.phenology,
-           o.seed_germination, o.pest, o.definition);
+           o.seed_germination, o.pest, o.definition));
     IF edited IS NOT NULL THEN
-        RAISE EXCEPTION '003 rollback: species_tet rows % changed after 003', edited;
+        RAISE EXCEPTION '003 rollback: species_tet rows % changed or went away after 003', edited;
     END IF;
 
-    SELECT string_agg(t.species_id::text, ', ') INTO taken
+    SELECT string_agg(o.species_id::text, ', ') INTO taken
     FROM public.species_tet_s07_backup o
-    JOIN public.species_tet t ON t.species_id = o.species_id
-    WHERE o.merged_into IS NOT NULL;
+    WHERE o.merged_into IS NOT NULL
+      AND (EXISTS (SELECT 1 FROM public.species_tet t WHERE t.species_id = o.species_id)
+           OR EXISTS (SELECT 1 FROM public.species_en e WHERE e.species_id = o.species_id));
     IF taken IS NOT NULL THEN
         RAISE EXCEPTION '003 rollback: orphan ids % are in use again', taken;
     END IF;

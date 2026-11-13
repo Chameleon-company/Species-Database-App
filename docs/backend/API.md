@@ -46,13 +46,13 @@ The **Auth** column below means:
 | GET | `/api/species/incremental` | Public | Species rows changed since a given version, and the ids of deleted species |
 | GET | `/api/species/search` | Public | **New.** Search by common or scientific name |
 | GET | `/api/species/<species_id>` | Admin | Single species record |
-| POST | `/species` | Public | Create a species |
+| POST | `/species` | Admin | Create a species |
 | PUT | `/api/species/<species_id>` | Admin | Update a species |
 | DELETE | `/api/species/<species_id>` | Admin | Delete a species. Its Tetum row and media rows follow by cascade |
 | PUT | `/api/species/<species_id>/english` | Admin | Update the English record only |
 | PUT | `/api/species/<species_id>/tetum` | Admin | Update the Tetum record only |
-| POST | `/upload-species` | Admin | Bulk upload species from a spreadsheet. Each row goes into `species_en`, then into `species_tet` with the same `species_id`. Stops at the first failing row and returns `rows_inserted` |
-| POST | `/audit-species` | Public | Validate a spreadsheet without importing |
+| POST | `/upload-species` | Admin | Bulk upload species from a spreadsheet. Each row goes into `species_en`, then into `species_tet` with the same `species_id`. Stops at the first failing row, keeps the rows before it, and returns HTTP 500 with `error` and `rows_inserted` |
+| POST | `/audit-species` | Admin | Validate a spreadsheet without importing |
 
 ### `GET /api/species/search`
 

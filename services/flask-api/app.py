@@ -650,6 +650,9 @@ def audit_species_file():
 
     except Exception as e:
         return jsonify({"status": "error", "error": str(e)}), 500
+    finally:
+        if temp_path and os.path.exists(temp_path):
+            os.remove(temp_path)
 
 
 
@@ -907,7 +910,7 @@ def delete_species(species_id):
     """
     DELETE SPECIES
 
-    -delete species from species_en; species_tet and media rows follow by ON DELETE CASCADE
+    -delete species from both language tables (species_tet also cascades once migration 003 runs)
     -logs one row deletion for incremental sync
     """
 
@@ -915,6 +918,7 @@ def delete_species(species_id):
     if err:
         return jsonify({"error": err[0]}), err[1]
     supabase.table("species_en").delete().eq("species_id", species_id).execute()
+    supabase.table("species_tet").delete().eq("species_id", species_id).execute()
 
     log_change("species", species_id, "DELETE")
 
