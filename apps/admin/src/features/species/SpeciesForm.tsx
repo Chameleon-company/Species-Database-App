@@ -56,7 +56,7 @@ export default function SpeciesForm({ mode, initialValues, onSubmit, onDelete, d
   const handleTranslate = async () => {
     const errors = await Promise.all(
       REQUIRED_FIELDS.map(({ name }) => {
-        form.setFieldMeta(`en.${name}`, (meta) => ({ ...meta, isBlurred: true }));
+        form.setFieldMeta(`en.${name}`, (meta) => ({ ...meta, isBlurred: true, isDirty: true }));
         return form.validateField(`en.${name}`, "change");
       })
     );

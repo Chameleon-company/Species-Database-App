@@ -24,8 +24,8 @@ type FormTextFieldProps = {
  * shadcn Field bound to the surrounding `form.AppField`.
  *
  * Validators return translation keys. Blur runs the field's `onChange`
- * validators, and the first error shows once the field was blurred or the
- * form was submitted. `options` renders a Select; `rows` a Textarea.
+ * validators. The first error shows after a submit attempt, or once the
+ * field was edited and then blurred. `options` renders a Select; `rows` a Textarea.
  */
 export default function FormTextField({
   label,
@@ -43,9 +43,9 @@ export default function FormTextField({
   const t = (key: string) => translations[key as keyof typeof translations]?.[lang] || key;
 
   const errors = useSelector(field.store, (state) => state.meta.errors);
-  const blurred = useSelector(field.store, (state) => state.meta.isBlurred);
+  const editedAndLeft = useSelector(field.store, (state) => state.meta.isBlurred && state.meta.isDirty);
   const submitted = useSelector(field.form.store, (state) => state.submissionAttempts > 0);
-  const error = blurred || submitted ? errors[0] : undefined;
+  const error = editedAndLeft || submitted ? errors[0] : undefined;
   const invalid = Boolean(error);
 
   const id = field.name;
