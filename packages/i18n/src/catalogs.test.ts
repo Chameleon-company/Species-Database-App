@@ -1,6 +1,14 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, test } from "vitest";
-import { catalogs, interpolate, locales, translate, type Locale } from "./translate.ts";
+import {
+  catalogs,
+  interpolate,
+  locales,
+  translate,
+  type Locale,
+  type MessageKey,
+  type MessageParams,
+} from "./translate.ts";
 
 const placeholders = (message: string) =>
   [...message.matchAll(/\{(\w+)\}/g)].map(([, name]) => name).sort();
@@ -60,6 +68,20 @@ describe("translate", () => {
     expect(translate("en", "search")).toBe(catalogs.en.search);
     expect(translate("tet", "search")).toBe(catalogs.tet.search);
   });
+
+  test("fills every placeholder of every key in every locale", () => {
+    const keys = Object.keys(catalogs.en) as MessageKey[];
+    const unfilled = locales.flatMap((locale) =>
+      keys
+        .filter((key) => {
+          const names = placeholders(catalogs.en[key]);
+          const params = Object.fromEntries(names.map((name) => [name, `<${name}>`]));
+          return /\{\w+\}/.test(translate(locale, key, params));
+        })
+        .map((key) => `${locale}.${key}`),
+    );
+    expect(unfilled).toEqual([]);
+  });
 });
 
 describe("interpolate", () => {
@@ -79,5 +101,19 @@ describe("interpolate", () => {
 
   test("ignores inherited properties", () => {
     expect(interpolate("{toString}", {})).toBe("{toString}");
+  });
+
+  test("reads a params object with no prototype", () => {
+    const params: MessageParams = Object.assign(Object.create(null), { count: 3 });
+    expect(interpolate("{count} records", params)).toBe("3 records");
+  });
+
+  test("renders a zero value", () => {
+    expect(interpolate("{count} records", { count: 0 })).toBe("0 records");
+  });
+
+  test("keeps a placeholder whose param is undefined or null", () => {
+    const params = { count: undefined, place: null } as unknown as MessageParams;
+    expect(interpolate("{count} records in {place}", params)).toBe("{count} records in {place}");
   });
 });

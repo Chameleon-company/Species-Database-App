@@ -47,9 +47,6 @@ Keep these rules:
 3. Use the key in the app.
 
 Use a camelCase key that names what the text is for, such as `deleteEntry`.
-Write a variable as `{name}` in the text, and pass its value as a param.
-For example, a key `photoCount` with the text `"{count} photos"` takes `{ count: 12 }`.
-`photoCount` is only an example and is not in the catalog.
 
 In the admin, `useLanguage()` gives `t` for the current language:
 
@@ -66,6 +63,32 @@ import { translate } from "@sda/i18n/translate";
 
 translate("tet", "deleteEntry");
 ```
+
+### Add a string with a variable
+
+Write each variable as `{name}` in the text.
+Pass its value in the params object, the last argument of `t` or `translate`.
+
+For example, add this line to `messages/en.json`:
+
+```json
+"photoCount": "{count} photos",
+```
+
+Add this line to `messages/tet.json`:
+
+```json
+"photoCount": "Foto {count}",
+```
+
+Then call the key with a `count` param:
+
+```tsx
+t("photoCount", { count: 12 });
+```
+
+The call gives "12 photos" in English and "Foto 12" in Tetum.
+A placeholder with no param, or with an `undefined` or `null` param, stays as `{count}`.
 
 If you do not know the Tetum text, do not copy the English text into `tet.json`.
 Ask a Tetum speaker on the team first.

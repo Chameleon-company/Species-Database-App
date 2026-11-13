@@ -14,14 +14,15 @@ export const isLocale = (value: unknown): value is Locale => locales.includes(va
 
 /**
  * Replaces each `{name}` in `message` with the own property `params[name]`.
- * A placeholder without a matching own property stays as written.
+ * A placeholder stays as written when that own property is missing, `undefined` or `null`.
  * Uses no API newer than Chrome 71.
  */
 export const interpolate = (message: string, params?: MessageParams): string => {
   if (!params) return message;
-  return message.replace(/\{(\w+)\}/g, (placeholder, name: string) =>
-    Object.prototype.hasOwnProperty.call(params, name) ? String(params[name]) : placeholder,
-  );
+  return message.replace(/\{(\w+)\}/g, (placeholder, name: string) => {
+    const value = Object.prototype.hasOwnProperty.call(params, name) ? params[name] : undefined;
+    return value == null ? placeholder : String(value);
+  });
 };
 
 export const translate = (locale: Locale, key: MessageKey, params?: MessageParams): string =>
