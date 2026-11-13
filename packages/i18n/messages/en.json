@@ -237,5 +237,7 @@
   "wed": "Wed",
   "thu": "Thu",
   "fri": "Fri",
-  "speciesRecordCount": "{count} species records in the English Database"
+  "speciesRecordCount": "{count} species records in the English Database",
+  "rowsPerPage": "Rows per page:",
+  "paginationRange": "{from}–{to} of {count}"
 }

@@ -1,6 +1,6 @@
 {
   "id": "ID",
-  "mainMenu": "Reproduz Menu",
+  "mainMenu": "Menu Prinsipál",
   "scientificName": "Naran Sientífiku",
   "commonName": "Naran Komun",
   "etymology": "Etymolojia",
@@ -33,9 +33,9 @@
   "uploadSpecies": "Upload Dadus Espesies",
   "dragOrClick": "Drag ka klik hodi hili file Excel",
   "chooseFile": "Hili File",
-  "uploading": "Uploading...",
+  "uploading": "Upload hela...",
   "success": "Sucesso",
-  "remove": "Remove",
+  "remove": "Hasai",
   "onlyExcelAllowed": "Excel files deit mak suporta",
   "processingFile": "Prosesu hela...",
   "uploadSuccess": "Upload sukses",
@@ -237,5 +237,7 @@
   "wed": "Kuarta",
   "thu": "Kinta",
   "fri": "Sesta",
-  "speciesRecordCount": "Rejistu espésie {count} iha Dadus Inglés"
+  "speciesRecordCount": "Rejistu espésie {count} iha Dadus Inglés",
+  "rowsPerPage": "Liña kada pájina:",
+  "paginationRange": "{from}–{to} husi {count}"
 }
