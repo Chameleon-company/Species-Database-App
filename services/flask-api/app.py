@@ -480,16 +480,13 @@ def get_species_incremental():
             "deleted_species_ids": [],
             "latest_version": since_version
         })
-    deleted_ids = sorted({
-        row["entity_id"]
-        for row in changes.data
-        if row["operation"] == "DELETE" and row["entity_id"] is not None
-    })
-    species_ids = list({
-        row["entity_id"]
-        for row in changes.data
-        if row["entity_id"] is not None and row["entity_id"] not in deleted_ids
-    })
+    last_operation = {
+        row["entity_id"]: row["operation"]
+        for row in sorted(changes.data, key=lambda r: r["version"])
+        if row["entity_id"] is not None
+    }
+    deleted_ids = sorted(i for i, op in last_operation.items() if op == "DELETE")
+    species_ids = [i for i, op in last_operation.items() if op != "DELETE"]
     
     latest_version =max(row["version"] for row in changes.data)
 

@@ -549,6 +549,17 @@ class TestIncrementalSync(unittest.TestCase):
         self.assertEqual(body["species_en"], [])
         self.assertEqual(body["latest_version"], 6)
 
+    def test_a_species_written_after_its_delete_is_not_deleted(self):
+        FAKE.data["species_en"].append({"species_id": 5, "scientific_name": "Back again"})
+        FAKE.data["changelog"].append(
+            {"change_id": 6, "version": 6, "entity_id": 5,
+             "entity_type": "species", "operation": "UPDATE"})
+        resp = self.client.get("/api/species/incremental?since_version=2")
+        body = resp.get_json()
+        self.assertEqual(resp.status_code, 200, body)
+        self.assertEqual(body["deleted_species_ids"], [])
+        self.assertEqual([r["species_id"] for r in body["species_en"]], [5])
+
     def test_bulk_insert_forces_a_bundle(self):
         FAKE.data["changelog"].append(
             {"change_id": 6, "version": 6, "entity_id": None,
