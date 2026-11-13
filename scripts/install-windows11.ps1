@@ -10,7 +10,7 @@ function Require-Command {
     }
 }
 
-Require-Command "node" "Node.js 22+ is required."
+Require-Command "node" "Node.js 22.12+ is required."
 Require-Command "pnpm" "pnpm is required. Install it with: npm install -g pnpm"
 
 $Python = Get-Command "py" -ErrorAction SilentlyContinue

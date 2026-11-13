@@ -40,14 +40,14 @@ Install these before running project commands:
 
 - Git
 - Docker Desktop, or Docker Engine with Docker Compose v2
-- Node.js 22 or newer
+- Node.js 22.12 or newer
 - pnpm, installed with `npm install -g pnpm`
 
 Windows 11:
 
 1. Install Git for Windows.
 2. Install Docker Desktop.
-3. Install Node.js 22 LTS or newer.
+3. Install Node.js 22.12 LTS or newer.
 4. Open Docker Desktop and wait until the engine is running.
 5. Open PowerShell from the repository root.
 
@@ -55,7 +55,7 @@ macOS:
 
 1. Install Git.
 2. Install Docker Desktop for Mac.
-3. Install Node.js 22 LTS or newer.
+3. Install Node.js 22.12 LTS or newer.
 4. Open Docker Desktop and wait until it is running.
 5. Open Terminal from the repository root.
 
@@ -63,7 +63,7 @@ Linux:
 
 1. Install Git.
 2. Install Docker Engine with Docker Compose v2, or Docker Desktop for Linux.
-3. Install Node.js 22 LTS or newer.
+3. Install Node.js 22.12 LTS or newer.
 4. Confirm Docker is running:
 
    ```bash
@@ -185,7 +185,7 @@ Use this path only when you need to run services outside Docker.
 
 Install:
 
-- Node.js 22 or newer
+- Node.js 22.12 or newer
 - pnpm, installed with `npm install -g pnpm`
 - Python 3.12 or newer
 
@@ -246,7 +246,7 @@ Install:
 
 - Android Studio
 - Android SDK through Android Studio
-- Node.js 22 or newer
+- Node.js 22.12 or newer
 - Project dependencies through one of the OS install scripts
 
 ### 2. Open the Android Project

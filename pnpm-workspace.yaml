@@ -7,7 +7,7 @@ enableGlobalVirtualStore: false
 catalog:
   "@types/node": ^24.10.1
   typescript: ~5.9.3
-  vite: ^7.3.2
+  vite: ^8.3.8
 
 allowBuilds:
   esbuild: true

@@ -3,7 +3,7 @@
   "private": true,
   "packageManager": "pnpm@12.16.1",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.12.0"
   },
   "scripts": {
     "install:linux": "bash scripts/install-linux.sh",
