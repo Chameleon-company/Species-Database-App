@@ -111,14 +111,8 @@ GOOGLE_CLIENT_ID=
 VITE_GOOGLE_CLIENT_ID=
 ```
 
-Keep these default local values unless your ports change.
+Keep the local `CORS_ORIGINS`, `VITE_API_BASE` and `VITE_API_URL` values from `.env.example` unless your ports change.
 If your `.env` predates the new field app, add `http://localhost:5174` and `http://127.0.0.1:5174` to `CORS_ORIGINS`.
-
-```bash
-CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174
-VITE_API_BASE=http://localhost:5000
-VITE_API_URL=http://localhost:5000/api
-```
 
 Do not commit `.env`.
 
@@ -234,7 +228,7 @@ pnpm run dev:field
 Local URLs:
 
 - Admin dashboard: `http://localhost:5173`
-- Field app: `http://localhost:5174`
+- Field app: `http://127.0.0.1:5174`
 - Backend API: `http://localhost:5000`
 
 The field app in `apps/field` is the Preact rebuild of the field app.

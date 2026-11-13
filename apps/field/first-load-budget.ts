@@ -36,7 +36,8 @@ const kib = (bytes: number) => `${(bytes / 1024).toFixed(1)} KiB`;
  * `maxGzipKiB` KiB.
  */
 export function firstLoadBudget({ maxGzipKiB }: { maxGzipKiB: number }): Plugin {
-  if (!(maxGzipKiB > 0)) throw new Error(`maxGzipKiB must be a positive number, got ${maxGzipKiB}`);
+  if (!(Number.isFinite(maxGzipKiB) && maxGzipKiB > 0))
+    throw new Error(`maxGzipKiB must be a positive number, got ${maxGzipKiB}`);
   const limitBytes = maxGzipKiB * 1024;
   return {
     name: "first-load-budget",

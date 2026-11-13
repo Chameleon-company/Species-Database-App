@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Rolldown } from "vite";
-import { firstLoadFiles } from "./first-load-budget.ts";
+import { firstLoadBudget, firstLoadFiles } from "./first-load-budget.ts";
 
 const chunk = (
   fileName: string,
@@ -61,5 +61,18 @@ describe("firstLoadFiles", () => {
       chunk("b.js", { imports: ["a.js"] }),
     ]);
     expect(firstLoadFiles(bundle)).toEqual(["a.js", "b.js"]);
+  });
+});
+
+describe("firstLoadBudget", () => {
+  it.each([0, -1, Number.NaN, Number.POSITIVE_INFINITY])(
+    "rejects a budget of %s KiB",
+    (maxGzipKiB) => {
+      expect(() => firstLoadBudget({ maxGzipKiB })).toThrow("maxGzipKiB must be a positive number");
+    },
+  );
+
+  it("accepts a positive finite budget", () => {
+    expect(firstLoadBudget({ maxGzipKiB: 50 }).name).toBe("first-load-budget");
   });
 });
