@@ -25,6 +25,7 @@ best_v=""
 for d in /opt/homebrew/opt/postgresql@*/bin /usr/local/opt/postgresql@*/bin /usr/lib/postgresql/*/bin; do
     [ -x "$d/initdb" ] || continue
     v=$("$d/initdb" --version | awk '{print $3}')
+    [[ "$v" =~ ^[0-9]+(\.[0-9]+)*$ ]] || continue
     if [ -z "$best_v" ] || [ "$(printf '%s\n' "$best_v" "$v" | sort -V | tail -1)" = "$v" ]; then
         best=$d
         best_v=$v
@@ -56,13 +57,13 @@ fingerprint() {
     local union
     union=$(pgq -d "$DB" -c "SELECT string_agg(format('SELECT %L || x::text r FROM public.%I x', relname, relname), ' UNION ALL ' ORDER BY relname)
         FROM pg_class WHERE relnamespace = 'public'::regnamespace AND relkind IN ('r', 'p');")
-    pgq -d "$DB" -c "SELECT md5(string_agg(r, '|' ORDER BY r)) FROM ($union) q;"
+    pgq -d "$DB" -c "SELECT md5(string_agg(r, '|' ORDER BY r)) FROM ($union) q;" 2>&1
 }
 
 same_rows_as() {
     local now; now=$(fingerprint)
-    [[ "$1" =~ ^[0-9a-f]{32}$ ]] || fail "could not fingerprint the rows before the migration"
-    [[ "$now" =~ ^[0-9a-f]{32}$ ]] || fail "could not fingerprint the rows after the rollback"
+    [[ "$1" =~ ^[0-9a-f]{32}$ ]] || fail "could not fingerprint the rows before the migration: $1"
+    [[ "$now" =~ ^[0-9a-f]{32}$ ]] || fail "could not fingerprint the rows after the rollback: $now"
     [[ "$now" == "$1" ]]
 }
 
@@ -180,7 +181,11 @@ INSERT INTO public.admin_session_audit (session_id, user_id, event_type) VALUES 
 INSERT INTO public.analytics (user_id, login_time, duration) VALUES (1, now(), 60);
 INSERT INTO public.changelog (version, entity_id, entity_type, operation) VALUES (1, 1, 'species', 'CREATE');
 SQL
-ok "seeded rows in all 8 tables"
+EMPTY=$(pgq -d "$DB" -c "SELECT string_agg(relname, ', ') FROM pg_class c
+    WHERE relnamespace = 'public'::regnamespace AND relkind IN ('r', 'p')
+    AND NOT (xpath('/row/n/text()', query_to_xml(format('SELECT count(*) AS n FROM public.%I', relname), false, true, '')))[1]::text::int > 0;")
+[ -z "$EMPTY" ] || fail "seed left tables empty: $EMPTY"
+ok "every public table has seed rows"
 
 for f in "$MIG"/[0-9][0-9][0-9]_*.sql; do
     [[ "$f" == *.rollback.sql ]] && continue
