@@ -9,8 +9,11 @@ export function hasAdminSession(): boolean {
   return readAdminToken() !== null;
 }
 
+let sessionEnded = false;
+
 export function saveAdminToken(token: string): void {
   localStorage.setItem(TOKEN_KEY, token);
+  sessionEnded = false;
 }
 
 export function clearAdminSession(): void {
@@ -30,12 +33,16 @@ export function onSessionEnd(listener: SessionEndListener): () => void {
 }
 
 /**
- * Clears the session and notifies `onSessionEnd` listeners.
- * Returns false when nothing listens, so the caller must navigate itself.
+ * Clears the session and notifies `onSessionEnd` listeners once per session:
+ * later calls before the next `saveAdminToken` notify nobody. Returns false
+ * when nothing listens, so the caller must navigate itself.
  */
 export function endAdminSession(): boolean {
   clearAdminSession();
-  sessionEndListeners.forEach((listener) => listener());
+  if (!sessionEnded) {
+    sessionEnded = true;
+    sessionEndListeners.forEach((listener) => listener());
+  }
   return sessionEndListeners.size > 0;
 }
 

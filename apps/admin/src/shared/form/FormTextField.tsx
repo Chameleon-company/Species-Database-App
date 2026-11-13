@@ -104,7 +104,7 @@ export default function FormTextField({
       )}
       {invalid && (
         <FieldError>
-          {error === TOO_LONG ? `${field.state.value.length} / ${maxLength}` : t(String(error))}
+          {error === TOO_LONG && maxLength ? `${field.state.value.length} / ${maxLength}` : t(String(error))}
         </FieldError>
       )}
     </Field>
