@@ -76,6 +76,8 @@
   "activityInactive": "Logged Out",
   "activityModerate": "Moderate",
   "activityActive": "Logged In",
+  "activityFrequent": "Frequent",
+  "activityNone": "No logins",
   "auth": "Auth",
   "google": "Google",
   "local": "Local",

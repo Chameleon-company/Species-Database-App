@@ -76,6 +76,8 @@
   "activityInactive": "Sai ona",
   "activityModerate": "Moderadu",
   "activityActive": "Tama ona",
+  "activityFrequent": "Beibeik",
+  "activityNone": "La iha login",
   "auth": "Autentikasaun",
   "google": "Google",
   "local": "Lokal",
