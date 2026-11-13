@@ -86,6 +86,13 @@ cd Species-Database-App
 
 The app needs Supabase and Google configuration values. Ask the project owner for the correct values before starting the app.
 
+| Supabase project | Ref | Use |
+| --- | --- | --- |
+| `species-database-dev` | `tdiquvydwzxmtludjmpe` | Local development. Point your `.env` here. |
+| `species-database-prod` | `oppcngtkhywxsazeqqet` | Production only. Its keys live in Render. |
+
+The backend and the admin dashboard both read the one `.env` file in the repository root.
+
 Create `.env` from the template:
 
 ```bash
@@ -104,10 +111,6 @@ Fill these values in `.env`:
 SUPABASE_URL=
 SUPABASE_KEY=
 GOOGLE_CLIENT_ID=
-VITE_SUPABASE_URL=
-VITE_SUPABASE_PUBLISHABLE_KEY=
-VITE_SUPABASE_URL_TETUM=
-VITE_SUPABASE_PUBLISHABLE_KEY_TETUM=
 VITE_GOOGLE_CLIENT_ID=
 ```
 

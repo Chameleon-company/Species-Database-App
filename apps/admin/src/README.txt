@@ -1,4 +1,0 @@
-.env.local needs to be added to src file with:
-
-VITE_SUPABASE_URL= YOUR DATABASE URL
-VITE_SUPABASE_PUBLISHABLE_KEY= YOUR DATABASE KEY

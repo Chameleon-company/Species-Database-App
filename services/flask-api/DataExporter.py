@@ -2,9 +2,13 @@ import requests
 import json
 import os
 
-SUPABASE_URL = "https://miwuxlsmwcsqgprtvcdm.supabase.co"
-SUPABASE_KEY = "sb_publishable_Nffc0mLAzEW6PgeXQJ5JCw_NvTMiN_w"  
-TABLES = ["species_en", "species_tet", "users"]  
+from dotenv import load_dotenv
+
+load_dotenv()
+
+SUPABASE_URL = os.environ["SUPABASE_URL"]
+SUPABASE_KEY = os.environ["SUPABASE_KEY"]
+TABLES = ["species_en", "species_tet"]
 OUTPUT_DIR = "supabase_json_exports"
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -16,10 +20,10 @@ for table in TABLES:
         "Authorization": f"Bearer {SUPABASE_KEY}",
         "Accept": "application/json"
     }
-    
+
     print(f"Fetching table: {table}")
     response = requests.get(url, headers=headers)
-    
+
     if response.status_code == 200:
         data = response.json()
         output_file = os.path.join(OUTPUT_DIR, f"{table}.json")

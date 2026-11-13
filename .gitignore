@@ -3,6 +3,7 @@ venv/
 .venv/
 __pycache__/
 .env
+.env.local
 services/flask-api/.sonar/
 node_modules/
 *.tsbuildinfo
