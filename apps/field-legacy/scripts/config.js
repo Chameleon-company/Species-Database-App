@@ -7,6 +7,9 @@
 
 const isNativeApp = Boolean(window.Capacitor?.isNativePlatform?.());
 
+const PROD_SUPABASE_HOST = "oppcngtkhywxsazeqqet.supabase.co";
+const DEV_SUPABASE_HOST = "tdiquvydwzxmtludjmpe.supabase.co";
+
 const isLocalDevelopment =
   !isNativeApp &&
   window.location.protocol === "http:" &&
@@ -23,21 +26,19 @@ const API_CONFIG = {
     : "https://species-database-app.onrender.com",
 
   // Ensure it is from an allowed Supabase host
-  SUPABASE_HOST: isLocalDevelopment
-    ? "tdiquvydwzxmtludjmpe.supabase.co"
-    : "oppcngtkhywxsazeqqet.supabase.co",
+  SUPABASE_HOST: isLocalDevelopment ? DEV_SUPABASE_HOST : PROD_SUPABASE_HOST,
 
 
-// Approved Supabase projects that may contain species videos
-SUPABASE_VIDEO_HOSTS: isLocalDevelopment
-  ? ["oppcngtkhywxsazeqqet.supabase.co", "tdiquvydwzxmtludjmpe.supabase.co"]
-  : ["oppcngtkhywxsazeqqet.supabase.co"],
+  // Approved Supabase projects that may contain species videos
+  SUPABASE_VIDEO_HOSTS: isLocalDevelopment
+    ? [PROD_SUPABASE_HOST, DEV_SUPABASE_HOST]
+    : [PROD_SUPABASE_HOST],
 
-// Current and legacy video storage paths
-SUPABASE_VIDEO_PATHS: [
-  "/storage/v1/object/public/species_videos/",
-  "/storage/v1/object/public/media/videos/",
-],
+  // Current and legacy video storage paths
+  SUPABASE_VIDEO_PATHS: [
+    "/storage/v1/object/public/species_videos/",
+    "/storage/v1/object/public/media/videos/",
+  ],
 
   // API endpoint paths (relative to baseUrl)
   endpoints: {
