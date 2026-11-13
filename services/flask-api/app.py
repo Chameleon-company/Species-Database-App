@@ -458,7 +458,7 @@ def get_species_incremental():
     #find ewhich species ids changed
     changes = (
         supabase.table("changelog")
-        .select("entity_id, version")
+        .select("entity_id, version, operation")
         .gt("version", since_version)
         .execute()
     )

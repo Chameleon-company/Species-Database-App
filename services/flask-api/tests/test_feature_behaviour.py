@@ -46,6 +46,8 @@ class _Table:
         self.db = db
         self.name = name
         self._filters = {}
+        self._predicates = []
+        self._columns = None
         self._payload = None
         self._op = None
         self._limit = None
@@ -58,8 +60,10 @@ class _Table:
         self._op, self._payload = "update", payload
         return self
 
-    def select(self, *_a, **_k):
+    def select(self, columns="*", *_a, **_k):
         self._op = "select"
+        names = [c.strip() for c in columns.split(",")]
+        self._columns = None if "*" in names else names
         return self
 
     def delete(self):
@@ -68,6 +72,14 @@ class _Table:
 
     def eq(self, col, val):
         self._filters[col] = val
+        return self
+
+    def gt(self, col, val):
+        self._predicates.append(lambda r: r.get(col) is not None and r[col] > val)
+        return self
+
+    def in_(self, col, vals):
+        self._predicates.append(lambda r: r.get(col) in vals)
         return self
 
     def or_(self, *a, **_k):
@@ -101,7 +113,8 @@ class _Table:
             return _Resp(written)
 
         matched = [r for r in rows
-                   if all(r.get(c) == v for c, v in self._filters.items())]
+                   if all(r.get(c) == v for c, v in self._filters.items())
+                   and all(p(r) for p in self._predicates)]
 
         if self._op == "update":
             for r in matched:
@@ -114,7 +127,10 @@ class _Table:
                 rows.remove(r)
             return _Resp(matched)
 
-        return _Resp(matched[:self._limit] if self._limit else matched)
+        selected = matched[:self._limit] if self._limit else matched
+        if self._columns:
+            selected = [{c: r.get(c) for c in self._columns} for r in selected]
+        return _Resp(selected)
 
 
 class FakeSupabase:
@@ -494,6 +510,34 @@ class TestVideoLinkDestination(unittest.TestCase):
                   "alt_text": "clip"})
         self.assertEqual(resp.status_code, 201)
         self.assertTrue(FAKE.writes_to("media", "insert"))
+
+
+class TestIncrementalSync(unittest.TestCase):
+    def setUp(self):
+        _reset()
+        FAKE.data["changelog"] = [
+            {"change_id": 1, "version": 1, "entity_id": 1,
+             "entity_type": "species", "operation": "CREATE"},
+            {"change_id": 2, "version": 2, "entity_id": 1,
+             "entity_type": "species", "operation": "UPDATE"},
+            {"change_id": 3, "version": 3, "entity_id": 7,
+             "entity_type": "species", "operation": "DELETE"},
+        ]
+        self.client = FLASK_APP.test_client()
+
+    def test_returns_changed_rows_and_deleted_ids(self):
+        resp = self.client.get("/api/species/incremental?since_version=1")
+        self.assertEqual(resp.status_code, 200, resp.get_json())
+        body = resp.get_json()
+        self.assertEqual(body["latest_version"], 3)
+        self.assertEqual([r["species_id"] for r in body["species_en"]], [1])
+        self.assertEqual([r["species_id"] for r in body["species_tet"]], [1])
+        self.assertEqual(body["deleted_species_ids"], [7])
+
+    def test_up_to_date_client_gets_no_rows(self):
+        resp = self.client.get("/api/species/incremental?since_version=3")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.get_json()["species_en"], [])
 
 
 if __name__ == "__main__":
