@@ -63,7 +63,8 @@ src/
 Each feature folder holds its own `api.ts` with the queries and mutations for that feature.
 Pages import shadcn components from `@sda/ui/components/<name>` and never through an index file.
 
-Shared components live in `packages/ui`, so other apps in the workspace can use them.
+Shared components live in `packages/ui`.
+Other apps in the workspace can use them too.
 To add a shadcn component, run `pnpm dlx shadcn@latest add <name>` in `apps/admin`.
 The CLI writes the component into `packages/ui/src/components`.
 After that, change its `import { cn } from "cn"` line to `import { cn } from "#lib/utils"`.
