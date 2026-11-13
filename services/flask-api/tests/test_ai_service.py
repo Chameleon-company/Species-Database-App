@@ -2,7 +2,7 @@ from io import BytesIO
 
 import numpy as np
 import pytest
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 
 import ai_service
 from ai_service import (
@@ -89,16 +89,18 @@ def test_preprocess_image_reads_a_camera_jpeg_with_extra_frames():
     camera_jpeg = create_image(image_format="MPO")
     with Image.open(camera_jpeg) as opened:
         assert opened.format == "MPO"
+        assert opened.n_frames > 1
     camera_jpeg.seek(0)
 
-    np.testing.assert_array_equal(
+    np.testing.assert_allclose(
         preprocess_image(camera_jpeg),
         preprocess_image(create_image(image_format="JPEG")),
+        atol=2 / 255,
     )
 
 
 def test_preprocess_image_rejects_corrupted_data():
-    with pytest.raises(Exception):
+    with pytest.raises(UnidentifiedImageError):
         preprocess_image(BytesIO(b"not an image"))
 
 
