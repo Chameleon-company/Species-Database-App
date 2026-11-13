@@ -18,16 +18,11 @@ export async function adminFetch(input:RequestInfo, init: RequestInit = {}) {
     //for file upload etc
     const isFormData = init.body instanceof FormData
 
-    //fetch with auth header
-    const res = await fetch(input, {
-        ...init,
-        headers: {
-            //saving any ehaders passed by caller
-            ...(init.headers || {}),
-            ...(isFormData ? {} : {"Content-Type": "application/json"}),
-            Authorization: token,
-        }
-    })
+    const headers = new Headers(init.headers)
+    if (!isFormData) headers.set("Content-Type", "application/json")
+    headers.set("Authorization", token)
+
+    const res = await fetch(input, { ...init, headers })
     
     //401 returned when:
     ///- token expired

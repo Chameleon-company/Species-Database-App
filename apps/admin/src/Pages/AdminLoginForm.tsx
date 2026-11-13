@@ -59,7 +59,7 @@ export default function AdminLoginForm() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Google login failed");
         localStorage.setItem("admin_token", data.access_token);
-        navigate("/");
+        void navigate("/");
       } catch {
         setError(t("googleLoginFailed"));
       } finally {
@@ -95,7 +95,7 @@ export default function AdminLoginForm() {
       if (!response.ok)
         throw new Error(result.error || t("adminLoginFailed"));
       localStorage.setItem("admin_token", result.access_token);
-      navigate("/");
+      void navigate("/");
     } catch (err: unknown) {
       setError((err instanceof Error && err.message) || t("somethingWentWrong"));
     } finally {
@@ -449,7 +449,7 @@ export default function AdminLoginForm() {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                loginAdmin();
+                void loginAdmin();
               }}
             >
               {/* Username */}

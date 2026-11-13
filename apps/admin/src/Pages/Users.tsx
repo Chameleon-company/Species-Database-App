@@ -89,7 +89,7 @@ export default function Users() {
   const loadInitialUsers = useEffectEvent(fetchUsers);
 
   useEffect(() => {
-    loadInitialUsers();
+    void loadInitialUsers();
   }, []);
 
   const handleAdd = () => {

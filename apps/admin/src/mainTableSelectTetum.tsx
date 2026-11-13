@@ -64,7 +64,7 @@ export default function MainTableSelectTetum({ onRowSelect, lang }: MainTablePro
       }
     }
 
-    getSpecies()
+    void getSpecies()
   }, [])
 
   const handleRowSelection = (selectionModel: GridRowSelectionModel) => {

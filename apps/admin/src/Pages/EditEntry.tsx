@@ -461,7 +461,7 @@ export function EditEntry() {
                 const species = await res.json()
 
                 setSpeciesTet(tetList)
-                selectRow(species)
+                await selectRow(species)
             }
             catch (err) {
                 console.error("failed loading species for editing", err)
@@ -469,7 +469,7 @@ export function EditEntry() {
             }
         }
 
-        loadSpecies()
+        void loadSpecies()
     }, [id])
 
     return (

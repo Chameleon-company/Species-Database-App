@@ -213,7 +213,7 @@ export default function SpeciesPage() {
       }
     }
 
-    fetchSpecies();
+    void fetchSpecies();
   }, []);
 
   const { lang } = useLanguage();

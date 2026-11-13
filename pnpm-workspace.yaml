@@ -6,8 +6,11 @@ enableGlobalVirtualStore: false
 
 catalog:
   "@types/node": ^24.10.1
-  typescript: ~5.9.3
+  oxlint: 1.93.0
+  oxlint-tsgolint: 7.0.2006
+  typescript: ~7.0.2
   vite: ^8.3.8
 
 allowBuilds:
   esbuild: true
+

@@ -64,7 +64,7 @@ export default function MainTableSelect({ onRowSelect, lang }: MainTableProps) {
       }
     }
 
-    getSpecies()
+    void getSpecies()
   }, [])
 
   const handleRowSelection = (selectionModel: GridRowSelectionModel) => {

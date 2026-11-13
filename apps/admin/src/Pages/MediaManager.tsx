@@ -1176,7 +1176,7 @@ export default function MediaManager() {
   const loadInitialMedia = useEffectEvent(loadMedia);
 
   useEffect(() => {
-    loadInitialMedia();
+    void loadInitialMedia();
   }, []);
 
   const handleSaveNewMedia = async (form: NewMediaForm) => {

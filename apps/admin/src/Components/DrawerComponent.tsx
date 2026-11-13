@@ -442,7 +442,7 @@ function SidebarContent({
 
   const handleLogout = async () => {
     await logoutAdmin(API_BASE);
-    navigate("/admin-login");
+    void navigate("/admin-login");
   };
 
   const [logoutHovered, setLogoutHovered] = React.useState(false);
@@ -523,7 +523,7 @@ export default function DrawerComponent({
 
   const handleLogout = async () => {
     await logoutAdmin(API_BASE);
-    navigate("/admin-login");
+    void navigate("/admin-login");
   };
 
   return (

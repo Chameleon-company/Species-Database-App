@@ -140,7 +140,7 @@ export default function Audit() {
 
         if (selected) {
           setTimeout(() => {
-            runAudit();
+            void runAudit();
           }, 100);
         }
       }}
