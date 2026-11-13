@@ -20,9 +20,10 @@ WORK=$(mktemp -d /tmp/sda-mig.XXXXXX) || { echo "!! FAIL: mktemp"; exit 1; }
 DB=sda_mig_test
 SNAPDB=sda_snapshot_test
 
-PGBIN=$(ls -d /opt/homebrew/opt/postgresql@*/bin /usr/local/opt/postgresql@*/bin \
-    /usr/lib/postgresql/*/bin 2>/dev/null | sort -V | tail -1)
-[ -n "$PGBIN" ] && [ -x "$PGBIN/initdb" ] && export PATH="$PGBIN:$PATH"
+for d in $(ls -d /opt/homebrew/opt/postgresql@*/bin /usr/local/opt/postgresql@*/bin \
+    /usr/lib/postgresql/*/bin 2>/dev/null | sort -rV); do
+    [ -x "$d/initdb" ] && export PATH="$d:$PATH" && break
+done
 
 fail() { echo "!! FAIL: $*"; exit 1; }
 ok()   { echo "   ok: $*"; }
@@ -85,8 +86,9 @@ load_snapshot() {
 }
 
 schema_dump() {
-    pg_dump -h "$WORK" -U postgres --schema-only "$1" \
-        | grep -v -E '^\\(restrict|unrestrict) '
+    pg_dump -h "$WORK" -U postgres --schema-only "$1" >"$WORK/$1.dump" || fail "pg_dump $1"
+    grep -q "CREATE TABLE public.species_en" "$WORK/$1.dump" || fail "pg_dump $1 has no species_en table"
+    grep -v -E '^\\(restrict|unrestrict) ' "$WORK/$1.dump" >"$WORK/$1.schema"
 }
 
 check_001() {
@@ -108,15 +110,16 @@ check_001() {
 
     pg -d "$DB" -c "UPDATE species_en SET definition = 'A large deciduous timber tree.' WHERE species_id = 1;" \
         || fail "write to definition"
+    [ "$(pgq -d "$DB" -c "SELECT definition FROM species_en WHERE species_id = 1;")" = "A large deciduous timber tree." ] \
+        || fail "definition did not keep the written value"
     pg -d "$DB" -c "UPDATE media SET storage_version = storage_version + 1 WHERE media_id = 1;" \
         || fail "increment storage_version"
     [ "$(pgq -d "$DB" -c "SELECT storage_version FROM media WHERE media_id = 1;")" = "2" ] \
         || fail "storage_version did not increment to 2"
     ok "definition is writable and storage_version increments"
 
-    if pg -d "$DB" -c "INSERT INTO media (species_id, species_name, media_type, download_link, storage_version) VALUES (2, 'x', 'image', 'https://e.org/b.jpg', NULL);" >/dev/null 2>&1; then
-        fail "storage_version accepted NULL"
-    fi
+    local out; out=$(pg -d "$DB" -c "INSERT INTO media (species_id, species_name, media_type, download_link, storage_version) VALUES (1, 'x', 'image', 'https://e.org/b.jpg', NULL);" 2>&1)
+    [[ "$out" == *'null value in column "storage_version"'* ]] || fail "storage_version accepted NULL or failed for another reason: $out"
     ok "storage_version rejects NULL"
 
     step "001 - rollback"
@@ -180,7 +183,9 @@ done
 
 step "STEP 4 - TableSchema.sql matches the migration chain"
 load_snapshot "$SNAPDB"
-if ! diff <(schema_dump "$SNAPDB") <(schema_dump "$DB") >"$WORK/schema.diff"; then
+schema_dump "$SNAPDB"
+schema_dump "$DB"
+if ! diff "$WORK/$SNAPDB.schema" "$WORK/$DB.schema" >"$WORK/schema.diff"; then
     head -40 "$WORK/schema.diff"
     fail "TableSchema.sql and the migration chain build different schemas"
 fi
