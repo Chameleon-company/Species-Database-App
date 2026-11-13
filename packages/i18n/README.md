@@ -1,6 +1,7 @@
 # @sda/i18n
 
-English and Tetum interface text for the admin and the field app.
+English and Tetum interface text.
+The admin reads its text from this package.
 
 ```
 packages/i18n/
@@ -12,7 +13,8 @@ packages/i18n/
 
 `en.json` is the source.
 Its keys set the `MessageKey` type.
-An unknown key fails the TypeScript build.
+`translate` and the admin `t` accept only a `MessageKey`.
+An unknown key in a call to them fails the TypeScript build.
 
 ## Fix or add a Tetum translation
 
@@ -46,10 +48,7 @@ Keep these rules:
 
 Use a camelCase key that names what the text is for, such as `deleteEntry`.
 Write a variable as `{name}` in the text, and pass its value as a param.
-
-```json
-"speciesRecordCount": "{count} species records in the English Database"
-```
+For example, a key `photoCount` with the text `"{count} photos"` takes `{ count: 12 }`.
 
 In the admin, `useLanguage()` gives `t` for the current language:
 
@@ -57,7 +56,7 @@ In the admin, `useLanguage()` gives `t` for the current language:
 const { t } = useLanguage();
 
 t("deleteEntry");
-t("speciesRecordCount", { count: 12 });
+t("photoCount", { count: 12 });
 ```
 
 Outside React, call `translate` directly:

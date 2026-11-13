@@ -37,6 +37,7 @@ services:
     buildFilter:
       paths:
         - apps/admin/**
+        - packages/i18n/**
         - package.json
         - pnpm-lock.yaml
         - pnpm-workspace.yaml

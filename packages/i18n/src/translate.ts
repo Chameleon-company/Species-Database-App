@@ -13,13 +13,13 @@ export const catalogs: Record<Locale, Catalog> = { en, tet };
 export const isLocale = (value: unknown): value is Locale => locales.includes(value as Locale);
 
 /**
- * Returns the `locale` text for `key`, with each `{name}` placeholder
- * replaced by `params[name]`. Placeholders without a matching param stay as written.
+ * Replaces each `{name}` in `message` with the own property `params[name]`.
+ * A placeholder without a matching own property stays as written.
  */
-export const translate = (locale: Locale, key: MessageKey, params?: MessageParams): string => {
-  const message = catalogs[locale][key];
-  if (!params) return message;
-  return message.replace(/\{(\w+)\}/g, (placeholder, name: string) =>
-    name in params ? String(params[name]) : placeholder,
+export const format = (message: string, params: MessageParams = {}): string =>
+  message.replace(/\{(\w+)\}/g, (placeholder, name: string) =>
+    Object.hasOwn(params, name) ? String(params[name]) : placeholder,
   );
-};
+
+export const translate = (locale: Locale, key: MessageKey, params?: MessageParams): string =>
+  format(catalogs[locale][key], params);

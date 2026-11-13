@@ -107,7 +107,7 @@
   "dropMediaFile": "Drop your file here",
   "imageOrVideoFileTypes": "JPG, PNG, WEBP, GIF, MP4, WEBM, MOV",
   "onlyImageOrVideoAllowed": "Only image or video files are supported",
-  "heicNotSupportedConvertFirst": "HEIC photos aren't supported — convert to JPG first, then try again",
+  "heicNotSupportedConvertFirst": "HEIC photos are not supported. Convert to JPG first, then try again.",
   "deleteMediaConfirm": "Delete this media item ",
   "deleteFailed": "Delete failed",
   "image": "Image",
@@ -236,8 +236,5 @@
   "tue": "Tue",
   "wed": "Wed",
   "thu": "Thu",
-  "fri": "Fri",
-  "speciesRecordCount": "{count} species records in the English Database",
-  "rowsPerPage": "Rows per page:",
-  "paginationRange": "{from}–{to} of {count}"
+  "fri": "Fri"
 }

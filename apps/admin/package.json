@@ -9,12 +9,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@sda/i18n": "workspace:*",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.3.6",
     "@mui/material": "^7.3.5",
     "@mui/x-data-grid": "^8.20.0",
+    "@sda/i18n": "workspace:*",
     "@tailwindcss/vite": "^4.1.18",
     "axios": "^1.15.0",
     "bcryptjs": "^3.0.3",
