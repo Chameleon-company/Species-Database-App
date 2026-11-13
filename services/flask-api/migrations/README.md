@@ -87,6 +87,7 @@ State before 002, recorded on dev and prod on 2026-11-14:
 | Table grants | `anon` and `authenticated` hold ALL on all 8 tables, and on nothing else |
 | Sequence grants | `anon` and `authenticated` hold ALL on all 8 sequences on dev. Prod default privileges grant the same. The 2026-11-14 check did not cover the prod sequence ACLs |
 | Default privileges of `postgres` in `public` | ALL on tables and sequences, and EXECUTE on functions, for `anon`, `authenticated` and `service_role` |
+| Default privileges of `supabase_admin` in `public` | The same grants as `postgres`. 002 leaves them unchanged |
 | Functions and views in `public` | None |
 | API key role | `service_role` on prod (JWT `role` claim), `sb_secret_` key on dev |
 
@@ -124,6 +125,9 @@ Two limits stay after 002:
 - `postgres` is not a member of `supabase_admin`.
   A migration cannot change the `supabase_admin` default privileges.
   Create tables through migrations, which run as `postgres`.
+  An object that `supabase_admin` creates in `public` still opens to `anon`, and the harness cannot see it.
+  The security advisor is the live check, because it flags such a table as `rls_disabled_in_public`.
+  Check the advisor after any dashboard or extension change.
 
 ## Migration log
 
