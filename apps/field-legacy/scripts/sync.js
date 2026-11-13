@@ -515,6 +515,7 @@ class SyncManager {
           en: changes.species_en?.length || 0,
           tet: changes.species_tet?.length || 0
         },
+        deletedCount: changes.deleted_species_ids?.length || 0,
         mediaStatus: mediaResult.failed.length > 0 ? 'partial' : 'complete',
         pendingMediaCount: mediaResult.failed.length
       };
@@ -699,7 +700,8 @@ class SyncManager {
       }
 
       for (const speciesId of changes.deleted_species_ids || []) {
-        await this.db.deleteSpecies(speciesId);
+        const urls = await this.db.deleteSpecies(speciesId);
+        navigator.serviceWorker?.controller?.postMessage({ type: 'UNCACHE_MEDIA', urls });
       }
 
       // Validate row replacement worked

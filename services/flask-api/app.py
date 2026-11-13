@@ -480,15 +480,23 @@ def get_species_incremental():
             "deleted_species_ids": [],
             "latest_version": since_version
         })
-    last_operation = {
-        row["entity_id"]: row["operation"]
-        for row in sorted(changes.data, key=lambda r: r["version"])
-        if row["entity_id"] is not None
-    }
+    rows = sorted(changes.data, key=lambda r: r["version"])
+    bulk = next((i for i, row in enumerate(rows) if row["entity_id"] is None), None)
+    if bulk is not None:
+        rows = rows[:bulk]
+    if not rows:
+        return jsonify({
+            "species_en": [],
+            "species_tet": [],
+            "deleted_species_ids": [],
+            "latest_version": since_version
+        })
+
+    last_operation = {row["entity_id"]: row["operation"] for row in rows}
     deleted_ids = sorted(i for i, op in last_operation.items() if op == "DELETE")
     species_ids = [i for i, op in last_operation.items() if op != "DELETE"]
-    
-    latest_version =max(row["version"] for row in changes.data)
+
+    latest_version = rows[-1]["version"]
 
     if not species_ids:
         return jsonify({
@@ -521,6 +529,9 @@ def get_species_incremental():
             "since_version":since_version
         }), 500
         
+    live_ids = {r["species_id"] for r in species_en.data + species_tet.data}
+    deleted_ids = sorted(set(deleted_ids) | (set(species_ids) - live_ids))
+
     return jsonify({
         "latest_version": latest_version,
         "species_en": species_en.data,

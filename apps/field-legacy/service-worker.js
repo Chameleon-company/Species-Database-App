@@ -185,6 +185,12 @@ self.addEventListener("message", async (event) => {
   if (type === "CACHE_MEDIA" && Array.isArray(urls)) {
     event.waitUntil(cacheMediaUrls(urls));
   }
+
+  if (type === "UNCACHE_MEDIA" && Array.isArray(urls)) {
+    event.waitUntil(
+      caches.open(MEDIA_CACHE).then((cache) => Promise.all(urls.map((url) => cache.delete(url))))
+    );
+  }
 });
 
 async function cacheMediaUrls(urls) {

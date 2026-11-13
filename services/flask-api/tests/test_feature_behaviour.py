@@ -560,6 +560,30 @@ class TestIncrementalSync(unittest.TestCase):
         self.assertEqual(body["deleted_species_ids"], [])
         self.assertEqual([r["species_id"] for r in body["species_en"]], [5])
 
+    def test_incremental_stops_before_a_bulk_insert(self):
+        FAKE.data["changelog"] += [
+            {"change_id": 6, "version": 6, "entity_id": None,
+             "entity_type": "species", "operation": "BULK_INSERT (3 rows)"},
+            {"change_id": 7, "version": 7, "entity_id": 1,
+             "entity_type": "species", "operation": "UPDATE"},
+        ]
+        resp = self.client.get("/api/species/incremental?since_version=1")
+        body = resp.get_json()
+        self.assertEqual(resp.status_code, 200, body)
+        self.assertEqual(body["latest_version"], 3)
+
+        resp = self.client.get("/api/species/incremental?since_version=5")
+        self.assertEqual(resp.get_json()["latest_version"], 5)
+
+    def test_a_changed_species_with_no_rows_counts_as_deleted(self):
+        FAKE.data["changelog"].append(
+            {"change_id": 6, "version": 6, "entity_id": 8,
+             "entity_type": "species", "operation": "UPDATE"})
+        resp = self.client.get("/api/species/incremental?since_version=5")
+        body = resp.get_json()
+        self.assertEqual(resp.status_code, 200, body)
+        self.assertEqual(body["deleted_species_ids"], [8])
+
     def test_bulk_insert_forces_a_bundle(self):
         FAKE.data["changelog"].append(
             {"change_id": 6, "version": 6, "entity_id": None,
