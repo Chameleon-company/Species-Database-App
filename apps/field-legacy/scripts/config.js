@@ -24,14 +24,14 @@ const API_CONFIG = {
 
   // Ensure it is from an allowed Supabase host
   SUPABASE_HOST: isLocalDevelopment
-    ? "lhsuizrhakkezafdbfkt.supabase.co"
+    ? "tdiquvydwzxmtludjmpe.supabase.co"
     : "oppcngtkhywxsazeqqet.supabase.co",
 
 
 // Approved Supabase projects that may contain species videos
 SUPABASE_VIDEO_HOSTS: [
   "oppcngtkhywxsazeqqet.supabase.co",
-  "lhsuizrhakkezafdbfkt.supabase.co",
+  "tdiquvydwzxmtludjmpe.supabase.co",
 ],
 
 // Current and legacy video storage paths

@@ -341,8 +341,13 @@ Each service deploys from `master` when every GitHub check on the commit passes.
 A failed check stops the deploy, and the last good deploy stays live.
 Each service rebuilds only when a file in its own source paths changes.
 
-Secret values are marked `sync: false` in `render.yaml`.
-They live only in the Render dashboard, never in git.
+`SUPABASE_URL` and `SUPABASE_KEY` are marked `sync: false` in `render.yaml`.
+Their values live only in the Render dashboard, never in git.
+Every other value in `render.yaml` is public.
+
+Render links each service to its Blueprint entry by service name.
+The live services already carry the names in `render.yaml`.
+Renaming a service does not change its `onrender.com` URL, but the Android app and the field app hardcode those URLs.
 
 ## Security and CI/CD
 
@@ -352,7 +357,7 @@ The backend tests run on every pull request and every push to `master` that chan
 
 Known unauthenticated endpoints that should require an admin session are listed under **Known gaps** in [`docs/backend/API.md`](docs/backend/API.md).
 
-> **Working with `.env`:** the Supabase key used by the backend is a `service_role` key, which bypasses row-level security and can run schema changes. Treat any populated Supabase project the team shares as production: never point local tests at it, and never run `ALTER`/`DELETE` against it while developing.
+> **Working with `.env`:** the Supabase key used by the backend is a secret key, which bypasses row-level security and can run schema changes. Point your `.env` at `species-database-dev` only. Never put the production key on your machine.
 
 ## Troubleshooting
 

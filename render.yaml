@@ -24,9 +24,9 @@ services:
       - key: SUPABASE_KEY
         sync: false
       - key: GOOGLE_CLIENT_ID
-        sync: false
+        value: 1052574621817-njpilvbmv49riq322c9vdi02pibcbbvg.apps.googleusercontent.com
       - key: CORS_ORIGINS
-        sync: false
+        value: https://species-database-app-123.onrender.com,https://species-database-app-1.onrender.com,https://localhost
 
   - type: web
     name: species-database-admin
@@ -44,13 +44,13 @@ services:
     staticPublishPath: apps/admin/dist
     envVars:
       - key: NODE_VERSION
-        value: "24"
+        value: "22"
       - key: VITE_API_BASE
         value: https://species-database-app.onrender.com
       - key: VITE_API_URL
         value: https://species-database-app.onrender.com/api
       - key: VITE_GOOGLE_CLIENT_ID
-        sync: false
+        value: 1052574621817-njpilvbmv49riq322c9vdi02pibcbbvg.apps.googleusercontent.com
 
   - type: web
     name: species-database-field
