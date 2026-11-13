@@ -22,16 +22,16 @@ import { useOverview, useUserActivity, type UserActivity } from "./api";
 const count = (value: number | null | undefined) => (typeof value === "number" ? value : 0);
 
 const ACTIVITY = {
-  activityInactive: "border-border bg-card text-muted-foreground",
+  activityNone: "border-border bg-card text-muted-foreground",
   activityModerate: "border-info-border bg-info-soft text-info",
-  activityActive: "border-brand-chip bg-brand-chip text-primary",
+  activityFrequent: "border-brand-chip bg-brand-chip text-primary",
 } as const;
 
 function activityKey(user: UserActivity): keyof typeof ACTIVITY {
   const logins = count(user.login_count);
-  if (logins === 0) return "activityInactive";
+  if (logins === 0) return "activityNone";
   if (logins < 3) return "activityModerate";
-  return "activityActive";
+  return "activityFrequent";
 }
 
 const cardClass = "gap-0 rounded-xl py-0 shadow-card";
