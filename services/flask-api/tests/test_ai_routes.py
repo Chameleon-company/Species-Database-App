@@ -6,7 +6,7 @@ from PIL import Image
 
 import ai_routes
 from ai_routes import register_ai_routes
-from ai_service import ModelConfigurationError
+from ai_service import ModelConfigurationError, preprocess_image
 
 
 LABELS = [
@@ -54,7 +54,7 @@ def create_image(
     image = Image.new(mode, (32, 32), colour)
     output = BytesIO()
     if image_format == "MPO":
-        preview = Image.new("RGB", (16, 24), (200, 10, 10))
+        preview = Image.new("RGB", (max(1, image.width // 2), max(1, image.height // 2)), (200, 10, 10))
         image.save(output, format="MPO", save_all=True, append_images=[preview])
     else:
         image.save(output, format=image_format)
@@ -187,6 +187,28 @@ def test_corrupted_image_returns_400(client):
         },
         content_type="multipart/form-data",
     )
+
+    assert response.status_code == 400
+    assert response.get_json()["error"]["code"] == "invalid_image"
+
+
+def test_truncated_pixel_data_returns_400():
+    class PreprocessingService:
+        labels = LABELS
+
+        def identify(self, image_source):
+            preprocess_image(image_source)
+
+    jpeg = create_image(image_format="JPEG").getvalue()
+    truncated = jpeg[: jpeg.rindex(b"\xff\xda") + 16]
+    app = create_test_app(PreprocessingService())
+
+    with app.test_client() as client:
+        response = client.post(
+            "/api/ai/identify",
+            data={"image": (BytesIO(truncated), "truncated.jpg")},
+            content_type="multipart/form-data",
+        )
 
     assert response.status_code == 400
     assert response.get_json()["error"]["code"] == "invalid_image"

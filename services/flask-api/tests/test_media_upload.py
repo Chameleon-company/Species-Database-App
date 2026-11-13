@@ -82,7 +82,7 @@ def create_image(image_format="PNG", size=(32, 32), mode="RGB"):
     output = BytesIO()
     image = Image.new(mode, size)
     if image_format == "MPO":
-        preview = Image.new("RGB", (16, 24), (200, 10, 10))
+        preview = Image.new("RGB", (max(1, image.width // 2), max(1, image.height // 2)), (200, 10, 10))
         image.save(output, format="MPO", save_all=True, append_images=[preview])
     else:
         image.save(output, format=image_format)

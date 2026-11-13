@@ -2,7 +2,7 @@ from io import BytesIO
 
 import numpy as np
 import pytest
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 
 import ai_service
 from ai_service import (
@@ -36,7 +36,7 @@ def create_image(mode="RGB", image_format="PNG"):
     image = Image.new(mode, (40, 60), colour)
     output = BytesIO()
     if image_format == "MPO":
-        preview = Image.new("RGB", (16, 24), (200, 10, 10))
+        preview = Image.new("RGB", (max(1, image.width // 2), max(1, image.height // 2)), (200, 10, 10))
         image.save(output, format="MPO", save_all=True, append_images=[preview])
     else:
         image.save(output, format=image_format)
@@ -93,21 +93,23 @@ def test_preprocess_image_reads_a_camera_jpeg_with_extra_frames():
         assert opened.n_frames > 1
     camera_jpeg.seek(0)
 
-    np.testing.assert_allclose(
+    np.testing.assert_array_equal(
         preprocess_image(camera_jpeg),
         preprocess_image(create_image(image_format="JPEG")),
-        atol=2 / 255,
     )
 
 
-@pytest.mark.parametrize(
-    "data",
-    [b"not an image", create_image(image_format="JPEG").getvalue()[:200]],
-    ids=["not-an-image", "truncated-jpeg"],
-)
-def test_preprocess_image_rejects_corrupted_data(data):
-    with pytest.raises(OSError):
-        preprocess_image(BytesIO(data))
+def test_preprocess_image_rejects_corrupted_data():
+    with pytest.raises(UnidentifiedImageError):
+        preprocess_image(BytesIO(b"not an image"))
+
+
+def test_preprocess_image_rejects_truncated_pixel_data():
+    jpeg = create_image(image_format="JPEG").getvalue()
+    truncated = jpeg[: jpeg.rindex(b"\xff\xda") + 16]
+
+    with pytest.raises(OSError, match="truncated"):
+        preprocess_image(BytesIO(truncated))
 
 
 TENSORFLOW_RESIZE_REFERENCE = [
