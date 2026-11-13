@@ -8,10 +8,11 @@
   },
   "scripts": {
     "build": "tsc",
-    "test": "node --experimental-strip-types --test"
+    "test": "vitest run"
   },
   "devDependencies": {
     "@types/node": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

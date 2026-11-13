@@ -1,7 +1,6 @@
-import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { describe, test } from "node:test";
-import { catalogs, locales, translate, type Locale } from "./translate.ts";
+import { describe, expect, test } from "vitest";
+import { catalogs, format, locales, translate, type Locale } from "./translate.ts";
 
 const placeholders = (message: string) =>
   [...message.matchAll(/\{(\w+)\}/g)].map(([, name]) => name).sort();
@@ -25,17 +24,11 @@ describe("catalogs", () => {
     const catalog = readCatalog(locale);
 
     test(`${locale} has every English key`, () => {
-      assert.deepEqual(
-        englishKeys.filter((key) => !(key in catalog)),
-        [],
-      );
+      expect(englishKeys.filter((key) => !(key in catalog))).toEqual([]);
     });
 
     test(`${locale} has no key that English lacks`, () => {
-      assert.deepEqual(
-        Object.keys(catalog).filter((key) => !(key in english)),
-        [],
-      );
+      expect(Object.keys(catalog).filter((key) => !(key in english))).toEqual([]);
     });
 
     test(`${locale} uses the same {placeholders} as English`, () => {
@@ -44,38 +37,43 @@ describe("catalogs", () => {
           typeof catalog[key] === "string" &&
           placeholders(catalog[key]).join() !== placeholders(String(english[key])).join(),
       );
-      assert.deepEqual(mismatched, []);
+      expect(mismatched).toEqual([]);
     });
   }
 
   for (const locale of locales) {
     test(`${locale} has no duplicate keys`, () => {
-      assert.deepEqual(duplicateKeys(readCatalogText(locale)), []);
+      expect(duplicateKeys(readCatalogText(locale))).toEqual([]);
     });
 
     test(`${locale} values are non-empty strings`, () => {
       const invalid = Object.entries(readCatalog(locale))
         .filter(([, value]) => typeof value !== "string" || value.trim() === "")
         .map(([key]) => key);
-      assert.deepEqual(invalid, []);
+      expect(invalid).toEqual([]);
     });
   }
 });
 
 describe("translate", () => {
   test("returns the text for the locale", () => {
-    assert.equal(translate("en", "search"), catalogs.en.search);
-    assert.equal(translate("tet", "search"), catalogs.tet.search);
+    expect(translate("en", "search")).toBe(catalogs.en.search);
+    expect(translate("tet", "search")).toBe(catalogs.tet.search);
   });
+});
 
+describe("format", () => {
   test("replaces placeholders with params", () => {
-    assert.equal(
-      translate("en", "speciesRecordCount", { count: 12 }),
-      "12 species records in the English Database",
+    expect(format("{count} records in {place}", { count: 12, place: "Dili" })).toBe(
+      "12 records in Dili",
     );
   });
 
   test("keeps a placeholder that has no param", () => {
-    assert.equal(translate("en", "speciesRecordCount", {}), catalogs.en.speciesRecordCount);
+    expect(format("{count} records", {})).toBe("{count} records");
+  });
+
+  test("ignores inherited properties", () => {
+    expect(format("{toString}", {})).toBe("{toString}");
   });
 });
