@@ -9,7 +9,6 @@ import ConfirmDialog from "../../shared/ui/ConfirmDialog";
 import LoadError from "../../shared/ui/LoadError";
 import Page from "../../shared/ui/Page";
 import { useTableText } from "../../shared/ui/useTableText";
-import { translations } from "../../translations";
 import { useLanguage } from "../../useLanguage";
 import { useDeleteUser, useUsers, type User } from "./api";
 import UserDialog from "./UserDialog";
@@ -18,8 +17,7 @@ const column = dataTableColumnHelper<User>();
 const NO_USERS: User[] = [];
 
 export default function UsersPage() {
-  const { lang } = useLanguage();
-  const t = (key: string) => translations[key as keyof typeof translations]?.[lang] || key;
+  const { t } = useLanguage();
   const { emptyLabel, labels } = useTableText();
 
   const users = useUsers();

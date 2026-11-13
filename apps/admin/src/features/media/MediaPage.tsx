@@ -5,13 +5,13 @@ import { Button } from "@sda/ui/components/button";
 import { Card, CardContent } from "@sda/ui/components/card";
 import { DataTable, DataTableText } from "@sda/ui/components/data-table";
 import { dataTableColumnHelper } from "@sda/ui/lib/data-table";
+import type { MessageKey } from "@sda/i18n/translate";
 import { ApiError } from "../../shared/api/apiClient";
 import ConfirmDialog from "../../shared/ui/ConfirmDialog";
 import LoadError from "../../shared/ui/LoadError";
 import Page from "../../shared/ui/Page";
 import SearchField from "../../shared/ui/SearchField";
 import { useTableText } from "../../shared/ui/useTableText";
-import { translations } from "../../translations";
 import { useLanguage } from "../../useLanguage";
 import { useDeleteMedia, useMediaList } from "./api";
 import { resolveErrorKey } from "./errorMessages";
@@ -22,7 +22,7 @@ import { MediaThumb, TypeBadge } from "./MediaVisuals";
 
 const column = dataTableColumnHelper<Media>();
 
-const INSTRUCTION_KEYS = [
+const INSTRUCTION_KEYS: MessageKey[] = [
   "adminMediaInstructionsAdd",
   "adminMediaInstructionsUrl",
   "adminMediaInstructionsFormats",
@@ -34,8 +34,7 @@ const matches = (media: Media, query: string) =>
   [media.species_name, media.media_type, media.alt_text].some((value) => value?.toLowerCase().includes(query));
 
 export default function MediaPage() {
-  const { lang } = useLanguage();
-  const t = (key: string) => translations[key as keyof typeof translations]?.[lang] || key;
+  const { t } = useLanguage();
   const { emptyLabel, labels } = useTableText();
 
   const media = useMediaList();

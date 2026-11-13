@@ -10,19 +10,17 @@ import {
 } from "@sda/ui/components/dropdown-menu";
 import { SidebarTrigger } from "@sda/ui/components/sidebar";
 import LanguageSwitch from "../../shared/ui/LanguageSwitch";
-import { translations } from "../../translations";
 import { useLanguage } from "../../useLanguage";
 import { useLogout } from "./useLogout";
 
 function AccountMenu() {
-  const { lang } = useLanguage();
-  const t = (key: string) => translations[key as keyof typeof translations]?.[lang] || key;
+  const { t } = useLanguage();
   const logout = useLogout();
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label="Account menu" className="rounded-full text-icon">
+        <Button variant="ghost" size="icon" aria-label={t("accountMenu")} className="rounded-full text-icon">
           <CircleUserRound className="size-7" />
         </Button>
       </DropdownMenuTrigger>
@@ -42,9 +40,11 @@ function AccountMenu() {
 }
 
 export default function TopBar() {
+  const { t } = useLanguage();
+
   return (
     <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b border-sidebar-border bg-card px-4">
-      <SidebarTrigger aria-label="open drawer" className="text-body md:hidden" />
+      <SidebarTrigger aria-label={t("openMenu")} className="text-body md:hidden" />
       <div className="flex-1" />
       <LanguageSwitch />
       <AccountMenu />

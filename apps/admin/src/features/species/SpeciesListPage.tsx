@@ -11,7 +11,6 @@ import LoadError from "../../shared/ui/LoadError";
 import Page from "../../shared/ui/Page";
 import SearchField from "../../shared/ui/SearchField";
 import { useTableText } from "../../shared/ui/useTableText";
-import { translations } from "../../translations";
 import { useLanguage } from "../../useLanguage";
 import { useDeleteSpecies, useSpeciesList } from "./api";
 import type { SpeciesRecord } from "./species";
@@ -22,8 +21,7 @@ const matches = (row: SpeciesRecord, query: string) =>
   [row.common_name, row.scientific_name, row.habitat].some((value) => value?.toLowerCase().includes(query));
 
 export default function SpeciesListPage() {
-  const { lang } = useLanguage();
-  const t = (key: string) => translations[key as keyof typeof translations]?.[lang] || key;
+  const { lang, t } = useLanguage();
   const { emptyLabel, labels } = useTableText();
 
   const species = useSpeciesList(lang);
@@ -95,7 +93,7 @@ export default function SpeciesListPage() {
   return (
     <Page
       title={t("species")}
-      subtitle={`${species.data?.length ?? 0} ${t("species")} records in the ${t(databaseKey)}`}
+      subtitle={t("speciesRecordCount", { count: species.data?.length ?? 0, database: t(databaseKey) })}
       actions={
         <>
           <Button asChild>

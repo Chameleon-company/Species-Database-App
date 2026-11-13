@@ -238,5 +238,13 @@
   "tue": "Tersa",
   "wed": "Kuarta",
   "thu": "Kinta",
-  "fri": "Sesta"
+  "fri": "Sesta",
+  "speciesRecordCount": "Rejistu espésie {count} iha {database}",
+  "rowsPerPage": "Liña kada pájina:",
+  "paginationRange": "{from}–{to} husi {count}",
+  "previousPage": "Pájina anterior",
+  "nextPage": "Pájina tuir mai",
+  "accountMenu": "Menu konta",
+  "openMenu": "Loke menu",
+  "clearSearch": "Limpa buka"
 }

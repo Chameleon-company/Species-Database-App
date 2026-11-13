@@ -5,10 +5,10 @@ import { Alert, AlertDescription } from "@sda/ui/components/alert";
 import { Button } from "@sda/ui/components/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@sda/ui/components/dialog";
 import { Field, FieldLabel } from "@sda/ui/components/field";
+import type { MessageKey } from "@sda/i18n/translate";
 import { ApiError } from "../../shared/api/apiClient";
 import { useAppForm } from "../../shared/form/useAppForm";
 import FileDropzone from "../../shared/ui/FileDropzone";
-import { translations } from "../../translations";
 import { useLanguage } from "../../useLanguage";
 import { useUpdateMedia, useUploadMedia } from "./api";
 import { resolveErrorKey } from "./errorMessages";
@@ -63,14 +63,13 @@ function FilePreview({ chosen, onRemove, removeLabel }: { chosen: ChosenFile; on
 }
 
 function MediaForm({ media, onClose }: { media: Media | null; onClose: () => void }) {
-  const { lang } = useLanguage();
-  const t = (key: string) => translations[key as keyof typeof translations]?.[lang] || key;
+  const { t } = useLanguage();
   const upload = useUploadMedia();
   const update = useUpdateMedia();
   const editing = media !== null;
 
   const [chosen, setChosen] = useState<ChosenFile | null>(null);
-  const [errorKey, setErrorKey] = useState<string | null>(null);
+  const [errorKey, setErrorKey] = useState<MessageKey | null>(null);
   const previewUrlRef = useRef<string | null>(null);
   const file = chosen?.file ?? null;
 
@@ -96,7 +95,7 @@ function MediaForm({ media, onClose }: { media: Media | null; onClose: () => voi
     } as MediaValues,
     onSubmit: async ({ value }) => {
       setErrorKey(null);
-      const done = (key: string) => {
+      const done = (key: MessageKey) => {
         toast.success(t(key));
         onClose();
       };
@@ -217,9 +216,11 @@ function MediaForm({ media, onClose }: { media: Media | null; onClose: () => voi
 
 /** Add-media dialog (file upload) when `media` is null, edit dialog (URL and metadata) otherwise. */
 export default function MediaDialog({ open, media, onClose }: MediaDialogProps) {
+  const { t } = useLanguage();
+
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
-      <DialogContent className="rounded-2xl sm:max-w-xl">
+      <DialogContent closeLabel={t("close")} className="rounded-2xl sm:max-w-xl">
         {open && <MediaForm key={media?.media_id ?? "new"} media={media} onClose={onClose} />}
       </DialogContent>
     </Dialog>

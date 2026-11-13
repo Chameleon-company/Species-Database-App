@@ -238,5 +238,13 @@
   "tue": "Tue",
   "wed": "Wed",
   "thu": "Thu",
-  "fri": "Fri"
+  "fri": "Fri",
+  "speciesRecordCount": "{count} species records in the {database}",
+  "rowsPerPage": "Rows per page:",
+  "paginationRange": "{from}–{to} of {count}",
+  "previousPage": "Previous page",
+  "nextPage": "Next page",
+  "accountMenu": "Account menu",
+  "openMenu": "Open menu",
+  "clearSearch": "Clear search"
 }

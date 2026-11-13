@@ -6,7 +6,6 @@ import { Spinner } from "@sda/ui/components/spinner";
 import { ApiError } from "../../shared/api/apiClient";
 import FileDropzone from "../../shared/ui/FileDropzone";
 import Page from "../../shared/ui/Page";
-import { translations } from "../../translations";
 import { useLanguage } from "../../useLanguage";
 import { useImportSpreadsheet } from "./api";
 
@@ -16,8 +15,7 @@ const EXCEL_EXTENSION = ".xlsx";
 const isExcel = (file: File) => file.name.endsWith(EXCEL_EXTENSION);
 
 export default function SpeciesImportPage() {
-  const { lang } = useLanguage();
-  const t = (key: string) => translations[key as keyof typeof translations]?.[lang] || key;
+  const { t } = useLanguage();
   const importSpreadsheet = useImportSpreadsheet();
   const [fileName, setFileName] = useState<string | null>(null);
 
@@ -52,7 +50,7 @@ export default function SpeciesImportPage() {
               <span className="flex-1 truncate font-medium">{fileName}</span>
               {importSpreadsheet.isPending && (
                 <span className="flex items-center gap-2 text-muted-foreground">
-                  <Spinner />
+                  <Spinner aria-label={t("loading")} />
                   {t("processingFile")}
                 </span>
               )}

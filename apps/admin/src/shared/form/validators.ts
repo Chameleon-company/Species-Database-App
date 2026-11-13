@@ -1,6 +1,8 @@
+import type { MessageKey } from "@sda/i18n/translate";
+
 /** Field validator that returns `errorKey` for an empty or whitespace-only value. */
 export const required =
-  (errorKey: string) =>
+  (errorKey: MessageKey) =>
   ({ value }: { value: string }) =>
     value.trim() ? undefined : errorKey;
 

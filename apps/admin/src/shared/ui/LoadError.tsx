@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import { CircleAlert } from "lucide-react";
 import { Alert, AlertDescription } from "@sda/ui/components/alert";
 import { Button } from "@sda/ui/components/button";
-import { translations } from "../../translations";
 import { useLanguage } from "../../useLanguage";
 
 type LoadErrorProps = {
@@ -11,8 +10,7 @@ type LoadErrorProps = {
 };
 
 export default function LoadError({ children, onRetry }: LoadErrorProps) {
-  const { lang } = useLanguage();
-  const t = (key: string) => translations[key as keyof typeof translations]?.[lang] || key;
+  const { t } = useLanguage();
 
   return (
     <Alert variant="destructive" className="flex items-center gap-3 rounded-xl border-destructive/40 bg-destructive-soft">

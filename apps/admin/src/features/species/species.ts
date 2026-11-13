@@ -1,3 +1,5 @@
+import type { MessageKey } from "@sda/i18n/translate";
+
 export type SpeciesFieldName =
   | "scientific_name"
   | "common_name"
@@ -13,9 +15,9 @@ export type SpeciesFieldName =
 
 export type SpeciesField = {
   name: SpeciesFieldName;
-  labelKey: string;
+  labelKey: MessageKey;
   maxLength: number;
-  requiredKey?: string;
+  requiredKey?: MessageKey;
   rows?: number;
 };
 

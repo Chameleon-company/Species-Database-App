@@ -14,12 +14,12 @@ import {
   SidebarSeparator,
   useSidebar,
 } from "@sda/ui/components/sidebar";
+import type { MessageKey } from "@sda/i18n/translate";
 import Logo from "../../assets/logo-color.png";
-import { translations } from "../../translations";
 import { useLanguage } from "../../useLanguage";
 import { useLogout } from "./useLogout";
 
-const NAV_ITEMS: { to: string; labelKey: string; Icon: ComponentType<{ className?: string }> }[] = [
+const NAV_ITEMS: { to: string; labelKey: MessageKey; Icon: ComponentType<{ className?: string }> }[] = [
   { to: "/", labelKey: "dashboard", Icon: House },
   { to: "/species", labelKey: "species", Icon: TreeDeciduous },
   { to: "/media", labelKey: "media", Icon: Images },
@@ -55,12 +55,11 @@ function NavItem({ to, label, Icon }: { to: string; label: string; Icon: Compone
 }
 
 export default function AppSidebar() {
-  const { lang } = useLanguage();
-  const t = (key: string) => translations[key as keyof typeof translations]?.[lang] || key;
+  const { t } = useLanguage();
   const logout = useLogout();
 
   return (
-    <Sidebar className="border-r-sidebar-border">
+    <Sidebar mobileLabel={t("mainMenu")} className="border-r-sidebar-border">
       <SidebarHeader className="h-20 items-center justify-center border-b bg-muted p-0">
         <img src={Logo} alt="FINI Logo" className="h-10 w-auto object-contain" />
       </SidebarHeader>

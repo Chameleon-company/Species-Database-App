@@ -6,7 +6,6 @@ import { Field, FieldLabel } from "@sda/ui/components/field";
 import { Input } from "@sda/ui/components/input";
 import { useAppForm } from "../../shared/form/useAppForm";
 import { firstError, required, withinLength } from "../../shared/form/validators";
-import { translations } from "../../translations";
 import { useLanguage } from "../../useLanguage";
 import { useTranslateToTetum } from "./api";
 import { SPECIES_FIELDS, emptySpeciesForm, type SpeciesFieldName, type SpeciesFormValues } from "./species";
@@ -43,8 +42,7 @@ function Section({ title, subtitle, children }: { title: string; subtitle?: stri
  * Translation overwrites every translated Tetum field and keeps the Tetum definition.
  */
 export default function SpeciesForm({ mode, initialValues, onSubmit, onDelete, deleting = false }: SpeciesFormProps) {
-  const { lang } = useLanguage();
-  const t = (key: string) => translations[key as keyof typeof translations]?.[lang] || key;
+  const { t } = useLanguage();
 
   const [showTetum, setShowTetum] = useState(mode === "edit");
   const [translated, setTranslated] = useState(false);

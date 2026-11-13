@@ -6,7 +6,6 @@ import { ApiError } from "../../shared/api/apiClient";
 import ConfirmDialog from "../../shared/ui/ConfirmDialog";
 import LoadError from "../../shared/ui/LoadError";
 import Page from "../../shared/ui/Page";
-import { translations } from "../../translations";
 import { useLanguage } from "../../useLanguage";
 import { useCreateSpecies, useDeleteSpecies, useSpeciesPair, useUpdateSpecies } from "./api";
 import SpeciesForm from "./SpeciesForm";
@@ -16,8 +15,7 @@ const messageOf = (error: unknown, fallback: string) =>
   error instanceof ApiError && error.message ? error.message : fallback;
 
 export default function SpeciesFormPage() {
-  const { lang } = useLanguage();
-  const t = (key: string) => translations[key as keyof typeof translations]?.[lang] || key;
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const speciesId = id ? Number(id) : null;

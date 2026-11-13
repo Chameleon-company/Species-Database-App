@@ -6,7 +6,6 @@ import { Field, FieldLabel } from "@sda/ui/components/field";
 import { ApiError } from "../../shared/api/apiClient";
 import { useAppForm } from "../../shared/form/useAppForm";
 import { required } from "../../shared/form/validators";
-import { translations } from "../../translations";
 import { useLanguage } from "../../useLanguage";
 import { useSaveUser, type User, type UserInput } from "./api";
 
@@ -17,8 +16,7 @@ type UserDialogProps = {
 };
 
 function UserForm({ user, onClose }: { user: User | null; onClose: () => void }) {
-  const { lang } = useLanguage();
-  const t = (key: string) => translations[key as keyof typeof translations]?.[lang] || key;
+  const { t } = useLanguage();
   const saveUser = useSaveUser();
   const isNew = user === null;
 
@@ -121,9 +119,11 @@ function UserForm({ user, onClose }: { user: User | null; onClose: () => void })
 
 /** Create dialog when `user` is null, edit dialog otherwise. */
 export default function UserDialog({ open, user, onClose }: UserDialogProps) {
+  const { t } = useLanguage();
+
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
-      <DialogContent className="rounded-2xl sm:max-w-md">
+      <DialogContent closeLabel={t("close")} className="rounded-2xl sm:max-w-md">
         {open && <UserForm key={user?.user_id ?? "new"} user={user} onClose={onClose} />}
       </DialogContent>
     </Dialog>

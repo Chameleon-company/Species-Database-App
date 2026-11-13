@@ -6,7 +6,6 @@ import { Button } from "@sda/ui/components/button";
 import { Input } from "@sda/ui/components/input";
 import logo from "../../assets/logo.png";
 import LanguageSwitch from "../../shared/ui/LanguageSwitch";
-import { translations } from "../../translations";
 import { useLanguage } from "../../useLanguage";
 import { LoginRejectedError, useGoogleLogin, usePasswordLogin } from "./api";
 import { clickGoogleButton, mountGoogleButtonWhenReady } from "./googleIdentity";
@@ -25,8 +24,7 @@ function GoogleMark() {
 const fieldClass = "h-12 rounded-lg border-0 bg-card px-3.5 text-sm shadow-sm placeholder:text-faint focus-visible:ring-primary/30";
 
 export default function LoginPage() {
-  const { lang } = useLanguage();
-  const t = (key: string) => translations[key as keyof typeof translations]?.[lang] || key;
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const passwordLogin = usePasswordLogin();
   const googleLogin = useGoogleLogin();

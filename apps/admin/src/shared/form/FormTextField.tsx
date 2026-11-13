@@ -4,9 +4,9 @@ import { Field, FieldError, FieldLabel } from "@sda/ui/components/field";
 import { Input } from "@sda/ui/components/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sda/ui/components/select";
 import { Textarea } from "@sda/ui/components/textarea";
+import type { MessageKey } from "@sda/i18n/translate";
 import { useFieldContext } from "./formContext";
 import { tooLongLimit } from "./validators";
-import { translations } from "../../translations";
 import { useLanguage } from "../../useLanguage";
 
 type FormTextFieldProps = {
@@ -42,8 +42,7 @@ export default function FormTextField({
   options,
 }: FormTextFieldProps) {
   const field = useFieldContext<string>();
-  const { lang } = useLanguage();
-  const t = (key: string) => translations[key as keyof typeof translations]?.[lang] || key;
+  const { t } = useLanguage();
 
   const errors = useSelector(field.store, (state) => state.meta.errors);
   const editedAndLeft = useSelector(field.store, (state) => state.meta.isBlurred && state.meta.isDirty);
@@ -109,7 +108,7 @@ export default function FormTextField({
         <FieldError>
           {tooLongLimit(String(error)) !== null
             ? `${field.state.value.length} / ${tooLongLimit(String(error))}`
-            : t(String(error))}
+            : t(String(error) as MessageKey)}
         </FieldError>
       )}
     </Field>

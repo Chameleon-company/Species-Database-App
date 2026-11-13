@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { Button } from "@sda/ui/components/button";
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@sda/ui/components/dialog";
-import { translations } from "../../translations";
 import { useLanguage } from "../../useLanguage";
 import { useResolvedImage } from "./api";
 import { youtubeId, type Media } from "./media";
@@ -17,8 +16,7 @@ function Detail({ label, children }: { label: string; children: ReactNode }) {
 }
 
 export default function MediaPreviewDialog({ media, onClose }: { media: Media | null; onClose: () => void }) {
-  const { lang } = useLanguage();
-  const t = (key: string) => translations[key as keyof typeof translations]?.[lang] || key;
+  const { t } = useLanguage();
   const isVideo = media?.media_type === "video";
   const videoId = isVideo && media ? youtubeId(media.download_link) : null;
   const image = useResolvedImage(media?.download_link ?? "", Boolean(media) && !isVideo);
@@ -45,7 +43,7 @@ export default function MediaPreviewDialog({ media, onClose }: { media: Media | 
 
   return (
     <Dialog open={Boolean(media)} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="rounded-2xl bg-background sm:max-w-3xl">
+      <DialogContent closeLabel={t("close")} className="rounded-2xl bg-background sm:max-w-3xl">
         {media && (
           <>
             <DialogHeader className="flex-row items-center justify-between gap-3 pr-8">

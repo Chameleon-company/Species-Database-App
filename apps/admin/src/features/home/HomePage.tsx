@@ -1,11 +1,9 @@
 import Page from "../../shared/ui/Page";
-import { translations } from "../../translations";
 import { useLanguage } from "../../useLanguage";
 import SpeciesTable from "../species/SpeciesTable";
 
 export default function HomePage() {
-  const { lang } = useLanguage();
-  const t = (key: string) => translations[key as keyof typeof translations]?.[lang] || key;
+  const { lang, t } = useLanguage();
 
   return (
     <Page title={t("dashboardTitle")} subtitle={t("dashboardSubtitle")}>

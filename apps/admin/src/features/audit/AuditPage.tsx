@@ -4,7 +4,6 @@ import { Card, CardContent } from "@sda/ui/components/card";
 import { Spinner } from "@sda/ui/components/spinner";
 import Page from "../../shared/ui/Page";
 import { SPECIES_FIELDS } from "../species/species";
-import { translations } from "../../translations";
 import { useLanguage } from "../../useLanguage";
 import { useAuditSpreadsheet } from "./api";
 
@@ -12,7 +11,7 @@ import { useAuditSpreadsheet } from "./api";
 const AUDIT_COLUMN_ALIASES: Record<string, string> = { identification_characters: "identification_character" };
 
 const auditColumnLabelKey = (column: string) =>
-  SPECIES_FIELDS.find(({ name }) => name === (AUDIT_COLUMN_ALIASES[column] ?? column))?.labelKey ?? column;
+  SPECIES_FIELDS.find(({ name }) => name === (AUDIT_COLUMN_ALIASES[column] ?? column))?.labelKey;
 
 function Section({ title, items, empty }: { title: string; items: ReactNode[]; empty?: string }) {
   return (
@@ -28,9 +27,12 @@ function Section({ title, items, empty }: { title: string; items: ReactNode[]; e
 }
 
 export default function AuditPage() {
-  const { lang } = useLanguage();
-  const t = (key: string) => translations[key as keyof typeof translations]?.[lang] || key;
+  const { t } = useLanguage();
   const audit = useAuditSpreadsheet();
+  const columnLabel = (column: string) => {
+    const labelKey = auditColumnLabelKey(column);
+    return labelKey ? t(labelKey) : column;
+  };
   const inputRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const report = audit.data;
@@ -42,7 +44,7 @@ export default function AuditPage() {
           <div className="flex flex-wrap items-center gap-4">
             <span className="text-sm text-body">{fileName ?? t("noFileSelected")}</span>
             <Button onClick={() => inputRef.current?.click()} disabled={audit.isPending}>
-              {audit.isPending && <Spinner />}
+              {audit.isPending && <Spinner aria-label={t("loading")} />}
               {audit.isPending ? t("running") : t("runAudit")}
             </Button>
             <input
@@ -86,7 +88,7 @@ export default function AuditPage() {
                   .filter(([, missing]) => missing > 0)
                   .map(([column, missing]) => (
                     <li key={column}>
-                      {t(auditColumnLabelKey(column))}: {missing}
+                      {columnLabel(column)}: {missing}
                     </li>
                   ))}
               />

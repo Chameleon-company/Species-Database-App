@@ -10,7 +10,6 @@ import {
   AlertDialogTitle,
 } from "@sda/ui/components/alert-dialog";
 import { buttonVariants } from "@sda/ui/components/button";
-import { translations } from "../../translations";
 import { useLanguage } from "../../useLanguage";
 
 type ConfirmDialogProps = {
@@ -32,8 +31,7 @@ export default function ConfirmDialog({
   onConfirm,
   onClose,
 }: ConfirmDialogProps) {
-  const { lang } = useLanguage();
-  const t = (key: string) => translations[key as keyof typeof translations]?.[lang] || key;
+  const { t } = useLanguage();
 
   return (
     <AlertDialog open={open} onOpenChange={(next) => !next && !pending && onClose()}>

@@ -3,14 +3,12 @@ import { Image as ImageIcon, ImageOff, Play, Video } from "lucide-react";
 import { Badge } from "@sda/ui/components/badge";
 import { Spinner } from "@sda/ui/components/spinner";
 import { cn } from "@sda/ui/lib/utils";
-import { translations } from "../../translations";
 import { useLanguage } from "../../useLanguage";
 import { useResolvedImage } from "./api";
 import { youtubeId, youtubeThumbnail, type Media } from "./media";
 
 export function TypeBadge({ type }: { type: string }) {
-  const { lang } = useLanguage();
-  const t = (key: string) => translations[key as keyof typeof translations]?.[lang] || key;
+  const { t } = useLanguage();
   const isImage = type === "image";
 
   return (
@@ -31,8 +29,7 @@ const tileClass = "flex size-16 shrink-0 items-center justify-center overflow-hi
 
 /** 64 px preview tile. Clicking it opens the media preview. */
 export function MediaThumb({ media, onPreview }: { media: Media; onPreview: () => void }) {
-  const { lang } = useLanguage();
-  const t = (key: string) => translations[key as keyof typeof translations]?.[lang] || key;
+  const { t } = useLanguage();
   const isVideo = media.media_type === "video";
   const image = useResolvedImage(media.download_link, !isVideo);
   const [broken, setBroken] = useState(false);
@@ -68,7 +65,7 @@ export function MediaThumb({ media, onPreview }: { media: Media; onPreview: () =
   if (image.pending) {
     return (
       <div className={cn(tileClass, "bg-muted")}>
-        <Spinner className="text-brand-accent" />
+        <Spinner aria-label={t("loading")} className="text-brand-accent" />
       </div>
     );
   }

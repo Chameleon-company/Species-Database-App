@@ -16,7 +16,6 @@ import { Skeleton } from "@sda/ui/components/skeleton";
 import { cn } from "@sda/ui/lib/utils";
 import LoadError from "../../shared/ui/LoadError";
 import Page from "../../shared/ui/Page";
-import { translations } from "../../translations";
 import { useLanguage } from "../../useLanguage";
 import { useOverview, useUserActivity, type UserActivity } from "./api";
 
@@ -58,8 +57,7 @@ function Line({ label, children }: { label: string; children: ReactNode }) {
 }
 
 export default function AnalyticsPage() {
-  const { lang } = useLanguage();
-  const t = (key: string) => translations[key as keyof typeof translations]?.[lang] || key;
+  const { t } = useLanguage();
   const overview = useOverview();
   const activity = useUserActivity();
 
