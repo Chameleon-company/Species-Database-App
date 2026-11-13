@@ -355,7 +355,8 @@ A new service URL needs a new app release.
 
 The API runs in Render's `singapore` region, beside the Supabase projects in `ap-southeast-1`.
 Render has no Australian region.
-Render cannot move a service to another region, so a region change needs a new service.
+Render cannot move a service to another region.
+A region change needs a new service.
 
 ## Security and CI/CD
 
