@@ -141,10 +141,12 @@ CREATE TABLE IF NOT EXISTS public.admin_session_audit (
 );
 
 -- Backup of the species_tet rows that migration 003 changed. The 003 rollback
--- reads it. Existing databases get this from
+-- reads it. merged_into holds the partner id of each merged orphan.
+-- Existing databases get this from
 -- services/flask-api/migrations/003_merge_orphan_tetum_rows.sql.
 CREATE TABLE IF NOT EXISTS public.species_tet_s07_backup (
     LIKE public.species_tet,
+    merged_into INT,
     PRIMARY KEY (species_id)
 );
 ALTER TABLE public.species_tet_s07_backup ENABLE ROW LEVEL SECURITY;

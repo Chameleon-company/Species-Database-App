@@ -164,21 +164,30 @@ Two limits stay after 002:
 On dev and prod on 2026-11-14, `species_tet` rows 23 to 27 had no English row.
 Each one was a cleaner Tetum translation of rows 1 to 5, with the same `scientific_name`.
 
+003 is not additive, so it breaks rules 4 and 5 above.
+The old bulk upload stores Tetum rows without an English id, and the foreign key refuses them.
+Deploy the API with the new bulk upload first, then apply 003.
+
 Steps:
 
-1. Check that the orphans are the 5 rows above:
+1. Deploy the API from this branch.
+2. Check that the orphans are the 5 rows above:
    `select t.species_id, t.scientific_name from species_tet t where not exists (select 1 from species_en e where e.species_id = t.species_id);`
-2. Take a backup in the dashboard (Database, Backups).
-3. Run the 003 file in the SQL editor.
+3. Take a backup in the dashboard (Database, Backups).
+4. Run the 003 file in the SQL editor.
    It stops with an error and changes nothing when an orphan has no single partner.
-4. Check that `species_tet_s07_backup` holds 10 rows and the orphan query returns nothing.
-5. Open a changed species in the admin, in English and in Tetum.
+   An exact `scientific_name` match is required.
+5. Check that `species_tet_s07_backup` holds 10 rows and the orphan query returns nothing.
+6. Open a changed species in the admin, in English and in Tetum.
 
-The rollback restores every backed-up row exactly and drops the foreign key.
-Run it before a new `species_tet` row takes an orphan's id.
+The rollback puts back every backed-up row and drops the foreign key.
+It refuses to run when a partner row changed after 003, because that edit would be lost.
+It also refuses when a `species_tet` row uses an orphan id again.
+Only the project owner runs it.
 
-The bulk upload (`/upload-species`) now stores each Tetum row with the id of its English row.
-Without that, the foreign key refuses the Tetum rows.
+`species_tet_s07_backup` stays after 003, so that the rollback can work.
+It is in `TableSchema.sql` for that reason.
+Drop it with a later migration once the owner no longer needs the rollback.
 
 ## Migration log
 

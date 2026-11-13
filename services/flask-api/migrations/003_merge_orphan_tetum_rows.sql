@@ -4,28 +4,32 @@
 -- Created: 2026-11-14
 --
 -- An orphan is a species_tet row with no species_en row of the same id.
--- Its partner is the species_tet row that has an English row and the same
--- scientific_name.
+-- Its partner is the species_tet row with the same scientific_name and an
+-- English row.
 --
 -- Effect:
---   - Creates public.species_tet_s07_backup (RLS on, no client grants) and
---     copies every orphan and every partner row into it, as they were.
+--   - Creates public.species_tet_s07_backup with RLS on and no client grants.
+--   - Copies every orphan and every partner into the backup, as they were.
+--     merged_into holds the partner id of each orphan and is NULL for a partner.
 --   - Copies every column except species_id from each orphan onto its partner.
 --   - Deletes the orphans.
---   - Writes one changelog row per partner (UPDATE) and per orphan (DELETE).
---   - Adds species_tet_species_id_fkey: species_tet.species_id references
+--   - Logs UPDATE for each partner and DELETE for each orphan in changelog.
+--   - Adds species_tet_species_id_fkey from species_tet.species_id to
 --     species_en.species_id, ON DELETE CASCADE.
 --
--- Raises an exception, and changes nothing, when an orphan has no partner or
--- more than one, or when two orphans share a partner.
+-- Raises an exception and changes nothing in these cases:
+--   - An orphan has no partner.
+--   - An orphan has more than one partner.
+--   - Two orphans share a partner.
 -- With no orphans, only the backup table and the foreign key are created.
--- Idempotent. See README.md, "Applying 003".
+-- Idempotent. Deploy the bulk-upload change first. See README.md, "Applying 003".
 -- =============================================================================
 
 BEGIN;
 
 CREATE TABLE IF NOT EXISTS public.species_tet_s07_backup (
     LIKE public.species_tet,
+    merged_into INT,
     PRIMARY KEY (species_id)
 );
 ALTER TABLE public.species_tet_s07_backup ENABLE ROW LEVEL SECURITY;
@@ -43,6 +47,8 @@ BEGIN
         RETURN;
     END IF;
 
+    LOCK TABLE public.changelog IN EXCLUSIVE MODE;
+
     CREATE TEMP TABLE s07_pairs ON COMMIT DROP AS
     SELECT o.species_id AS orphan_id, k.species_id AS keep_id
     FROM public.species_tet o
@@ -57,9 +63,15 @@ BEGIN
         RAISE EXCEPTION '003: % orphan species_tet rows do not each match exactly one partner', orphans;
     END IF;
 
-    INSERT INTO public.species_tet_s07_backup
-    SELECT t.*
+    INSERT INTO public.species_tet_s07_backup (
+        species_id, scientific_name, common_name, etymology, habitat,
+        identification_character, leaf_type, fruit_type, phenology,
+        seed_germination, pest, definition, merged_into)
+    SELECT t.species_id, t.scientific_name, t.common_name, t.etymology, t.habitat,
+           t.identification_character, t.leaf_type, t.fruit_type, t.phenology,
+           t.seed_germination, t.pest, t.definition, p.keep_id
     FROM public.species_tet t
+    LEFT JOIN s07_pairs p ON p.orphan_id = t.species_id
     WHERE t.species_id IN (SELECT orphan_id FROM s07_pairs UNION SELECT keep_id FROM s07_pairs)
     ON CONFLICT (species_id) DO NOTHING;
 

@@ -577,29 +577,32 @@ def upload_species_file():
     if uploaded_file.filename == "":
         return jsonify({"error": "No selected file"}), 400
 
+    temp_path = None
     try:
         suffix = ".xlsx" if uploaded_file.filename.endswith(".xlsx") else ".csv"
         with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
             uploaded_file.save(tmp.name)
             temp_path = tmp.name
 
-        en_result = asyncio.run(process_file(temp_path, translate=False))  # English
-        tet_result = asyncio.run(process_file(temp_path, translate=True))   # Tetum
+        result = asyncio.run(process_file(temp_path))
 
-        rows_inserted = min(
-            en_result["rows_inserted"],
-            tet_result["rows_inserted"]
-        )
-        
-        log_change(
-            "species",
-            None,
-            f"BULK_INSERT ({rows_inserted} rows)"
-        )
+        if result["rows_inserted"] > 0:
+            log_change(
+                "species",
+                None,
+                f"BULK_INSERT ({result['rows_inserted']} rows)"
+            )
+
+        if result["error"]:
+            return jsonify({
+                "error": result["error"],
+                "rows_inserted": result["rows_inserted"]
+            }), 500
 
         return jsonify({
             "status": "success",
-            "message": "Data uploaded to species_en & species_tet tables"
+            "message": "Data uploaded to species_en & species_tet tables",
+            "rows_inserted": result["rows_inserted"]
         }), 200
 
     except Exception as e:
@@ -630,6 +633,7 @@ def audit_species_file():
     if uploaded_file.filename == "":
         return jsonify({"error": "No selected file"}), 400
 
+    temp_path = None
     try:
         suffix = ".xlsx" if uploaded_file.filename.endswith(".xlsx") else ".csv"
         with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
@@ -903,7 +907,7 @@ def delete_species(species_id):
     """
     DELETE SPECIES
 
-    -delete species from both language tables
+    -delete species from species_en; species_tet and media rows follow by ON DELETE CASCADE
     -logs one row deletion for incremental sync
     """
 
@@ -911,7 +915,6 @@ def delete_species(species_id):
     if err:
         return jsonify({"error": err[0]}), err[1]
     supabase.table("species_en").delete().eq("species_id", species_id).execute()
-    supabase.table("species_tet").delete().eq("species_id", species_id).execute()
 
     log_change("species", species_id, "DELETE")
 

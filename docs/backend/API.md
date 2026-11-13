@@ -48,10 +48,10 @@ The **Auth** column below means:
 | GET | `/api/species/<species_id>` | Admin | Single species record |
 | POST | `/species` | Public | Create a species |
 | PUT | `/api/species/<species_id>` | Admin | Update a species |
-| DELETE | `/api/species/<species_id>` | Admin | Delete a species |
+| DELETE | `/api/species/<species_id>` | Admin | Delete a species. Its Tetum row and media rows follow by cascade |
 | PUT | `/api/species/<species_id>/english` | Admin | Update the English record only |
 | PUT | `/api/species/<species_id>/tetum` | Admin | Update the Tetum record only |
-| POST | `/upload-species` | Admin | Bulk upload species from a spreadsheet |
+| POST | `/upload-species` | Admin | Bulk upload species from a spreadsheet. Each row goes into `species_en`, then into `species_tet` with the same `species_id`. Stops at the first failing row and returns `rows_inserted` |
 | POST | `/audit-species` | Public | Validate a spreadsheet without importing |
 
 ### `GET /api/species/search`

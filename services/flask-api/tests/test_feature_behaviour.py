@@ -629,46 +629,55 @@ class TestIncrementalSync(unittest.TestCase):
 
 class TestBulkUploadTetumIds(unittest.TestCase):
     def setUp(self):
-        self.posted = []
-        self.english = {"Tectona grandis": [{"species_id": 41}]}
+        self.calls = []
+        self.next_id = 41
+        self.tet_status = 201
 
-        def fake_get(url, headers=None, params=None):
-            name = params["scientific_name"].removeprefix("eq.")
-            return types.SimpleNamespace(status_code=200, json=lambda: self.english.get(name, []))
+        def fake_post(url, headers=None, data=None, timeout=None):
+            row = json.loads(data)
+            self.calls.append(("post", url.rsplit("/", 1)[-1], row))
+            if url.endswith("/species_en"):
+                self.next_id += 1
+                body = [dict(row, species_id=self.next_id)]
+                return types.SimpleNamespace(status_code=201, json=lambda: body, text="")
+            return types.SimpleNamespace(status_code=self.tet_status, text="tet refused")
 
-        def fake_post(url, headers=None, data=None):
-            self.posted.append((url, json.loads(data)))
-            return types.SimpleNamespace(status_code=201, text="")
+        def fake_delete(url, headers=None, params=None, timeout=None):
+            self.calls.append(("delete", url.rsplit("/", 1)[-1], params))
+            return types.SimpleNamespace(status_code=204, text="")
 
         async def fake_translate(text):
             return text
 
         self.saved = (uploader_module.requests, uploader_module.translate_to_tetum, uploader_module.time.sleep)
-        uploader_module.requests = types.SimpleNamespace(get=fake_get, post=fake_post)
+        uploader_module.requests = types.SimpleNamespace(post=fake_post, delete=fake_delete)
         uploader_module.translate_to_tetum = fake_translate
         uploader_module.time.sleep = lambda *_: None
 
         fields = uploader_module.db_cols
         self.csv = tempfile.NamedTemporaryFile("w", suffix=".csv", delete=False)
         self.csv.write(",".join(fields) + "\n")
-        self.csv.write(",".join("Tectona grandis" if f == "scientific_name" else "x" for f in fields) + "\n")
+        for name in ("Tectona grandis", "Tectona grandis"):
+            self.csv.write(",".join(name if f == "scientific_name" else "x" for f in fields) + "\n")
         self.csv.close()
 
     def tearDown(self):
         uploader_module.requests, uploader_module.translate_to_tetum, uploader_module.time.sleep = self.saved
         os.unlink(self.csv.name)
 
-    def test_tetum_rows_take_the_english_species_id(self):
-        asyncio.run(uploader_module.process_file(self.csv.name, translate=True))
-        url, row = self.posted[0]
-        self.assertTrue(url.endswith("/rest/v1/species_tet"))
-        self.assertEqual(row["species_id"], 41)
+    def test_each_tetum_row_takes_the_id_its_english_insert_returned(self):
+        result = asyncio.run(uploader_module.process_file(self.csv.name))
+        self.assertEqual(result, {"rows_inserted": 2, "error": None})
+        tet_ids = [row["species_id"] for kind, table, row in self.calls if table == "species_tet"]
+        self.assertEqual(tet_ids, [42, 43])
 
-    def test_a_tetum_row_without_an_english_row_is_refused(self):
-        self.english = {}
-        with self.assertRaises(Exception):
-            asyncio.run(uploader_module.process_file(self.csv.name, translate=True))
-        self.assertEqual(self.posted, [])
+    def test_a_refused_tetum_row_removes_its_english_row_and_stops(self):
+        self.tet_status = 409
+        result = asyncio.run(uploader_module.process_file(self.csv.name))
+        self.assertEqual(result["rows_inserted"], 0)
+        self.assertIn("row 1 (Tetum)", result["error"])
+        self.assertEqual(self.calls[-1], ("delete", "species_en", {"species_id": "eq.42"}))
+        self.assertEqual(sum(1 for c in self.calls if c[1] == "species_en" and c[0] == "post"), 1)
 
 
 if __name__ == "__main__":

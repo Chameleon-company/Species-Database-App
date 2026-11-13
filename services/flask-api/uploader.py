@@ -44,97 +44,93 @@ async def translate_to_tetum(text):
         return ""
 
 
-def english_species_id(scientific_name):
-    """
-    Return the newest species_en.species_id with this scientific_name.
-
-    Raises Exception when no species_en row has that scientific_name.
-    """
-    response = requests.get(
-        f"{SUPABASE_URL.rstrip('/')}/rest/v1/species_en",
-        headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}"},
-        params={
-            "select": "species_id",
-            "scientific_name": f"eq.{scientific_name}",
-            "order": "species_id.desc",
-            "limit": "1",
-        },
-    )
-    if response.status_code >= 300 or not response.json():
-        raise Exception(f"No English row for '{scientific_name}', so its Tetum row cannot be stored")
-    return response.json()[0]["species_id"]
-
-
 def normalize(col):
     return col.strip().lower().replace(" ", "_")
 
-async def process_file(file_path: str, translate: bool = True):
-    """
-    Process Excel/CSV file and upload translated or raw values.
-    translate=True -> Tetum table
-    translate=False -> English table
-    """
-    if file_path.lower().endswith(".csv"):
-        encodings = ["utf-8", "latin-1", "cp1252"]
-        for enc in encodings:
-            try:
-                df = pd.read_csv(file_path, dtype=str, encoding=enc).fillna("")
-                break
-            except:
-                continue
-    else:
-        df = pd.read_excel(file_path, dtype=str).fillna("")
-    
-    if (translate):
-        endpoint = f"{SUPABASE_URL.rstrip('/')}/rest/v1/species_tet"
-        headers = {
-            "apikey": SUPABASE_KEY,
-            "Authorization": f"Bearer {SUPABASE_KEY}",
-            "Content-Type": "application/json",
-            "Prefer": "return=minimal"
-        }
-    else:
-        endpoint = f"{SUPABASE_URL.rstrip('/')}/rest/v1/species_en"
-        headers = {
-            "apikey": SUPABASE_KEY,
-            "Authorization": f"Bearer {SUPABASE_KEY}",
-            "Content-Type": "application/json",
-            "Prefer": "return=minimal"
-        }
+REQUEST_TIMEOUT = 30
 
+
+def _headers(prefer):
+    return {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "Content-Type": "application/json",
+        "Prefer": prefer,
+    }
+
+
+def _table_url(table):
+    return f"{SUPABASE_URL.rstrip('/')}/rest/v1/{table}"
+
+
+def _read_rows(file_path):
+    if file_path.lower().endswith(".csv"):
+        for enc in ["utf-8", "latin-1", "cp1252"]:
+            try:
+                return pd.read_csv(file_path, dtype=str, encoding=enc).fillna("")
+            except Exception:
+                continue
+        raise Exception("Could not read the CSV file")
+    return pd.read_excel(file_path, dtype=str).fillna("")
+
+
+async def process_file(file_path: str):
+    """
+    Insert each file row into species_en, then its Tetum translation into
+    species_tet with the species_id that the species_en insert returned.
+
+    Stops at the first failing row. When the species_tet insert fails, deletes
+    the species_en row of that file row. Raises Exception before any insert
+    when a required column is missing.
+
+    Returns {"rows_inserted": int, "error": str | None}.
+    """
+    df = _read_rows(file_path)
     normalized_cols = {normalize(c): c for c in df.columns}
 
     missing_cols = [col for col in db_cols if normalize(col) not in normalized_cols]
     if missing_cols:
         raise Exception(
-            f"❌ Missing required columns in uploaded file: {missing_cols}. "
+            f"Missing required columns in uploaded file: {missing_cols}. "
             f"Please check the column names and try again."
         )
-    inserted_count = 0;
+
+    inserted = 0
     for idx in range(len(df)):
-        row_raw = {}
+        row_en = {
+            col: str(df.at[idx, normalized_cols[normalize(col)]])
+            for col in db_cols
+        }
 
-        for col in db_cols:
-            key = normalize(col)
-            src_col = normalized_cols.get(key)
-            row_raw[col] = "" if not src_col else str(df.at[idx, src_col])
+        response = requests.post(
+            _table_url("species_en"), headers=_headers("return=representation"),
+            data=json.dumps(row_en), timeout=REQUEST_TIMEOUT,
+        )
+        if response.status_code >= 300:
+            return {"rows_inserted": inserted, "error": f"Upload error at row {idx+1} (English): {response.text}"}
+        species_id = response.json()[0]["species_id"]
 
-        if translate:
-            row_data = {"species_id": english_species_id(row_raw["scientific_name"])}
+        try:
+            row_tet = {"species_id": species_id}
             for col in db_cols:
                 if col == "scientific_name":
-                    row_data[col] = row_raw[col]  
+                    row_tet[col] = row_en[col]
                 else:
-                    row_data[col] = await translate_to_tetum(row_raw[col])
+                    row_tet[col] = await translate_to_tetum(row_en[col])
                 time.sleep(0.2)
+            response = requests.post(
+                _table_url("species_tet"), headers=_headers("return=minimal"),
+                data=json.dumps(row_tet), timeout=REQUEST_TIMEOUT,
+            )
+            if response.status_code >= 300:
+                raise Exception(response.text)
+        except Exception as e:
+            requests.delete(
+                _table_url("species_en"), headers=_headers("return=minimal"),
+                params={"species_id": f"eq.{species_id}"}, timeout=REQUEST_TIMEOUT,
+            )
+            return {"rows_inserted": inserted, "error": f"Upload error at row {idx+1} (Tetum): {e}"}
 
-        else:
-            row_data = row_raw
-        
-        response = requests.post(endpoint, headers=headers, data=json.dumps(row_data))
-        if response.status_code >= 300:
-            raise Exception(f"Upload error at row {idx+1}: {response.text}")
-        inserted_count += 1
-    return {
-    "rows_inserted": inserted_count
-    }
+        inserted += 1
+
+    return {"rows_inserted": inserted, "error": None}
