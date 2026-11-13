@@ -186,7 +186,7 @@ Without that, the foreign key refuses the Tetum rows.
 |---|---|---|---|
 | 001 | Add `species_en.definition`, `species_tet.definition`, `media.storage_version` | 2026-11-13, in the rebuild from `TableSchema.sql` | 2026-11-12 |
 | 002 | Enable RLS on every public table and revoke `anon` and `authenticated` access in `public` | 2026-11-14 | not yet |
-| 003 | Merge the orphan `species_tet` rows and require an English row for each Tetum row | not yet | not yet |
+| 003 | Merge the orphan `species_tet` rows and require an English row for each Tetum row | 2026-11-14 | not yet |
 
 Snapshot matches with prod, newest last.
 Add a line each time you match `TableSchema.sql` to prod again.
