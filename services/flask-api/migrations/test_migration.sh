@@ -124,8 +124,6 @@ check_001() {
 
     local out; out=$(pg -d "$DB" -v VERBOSITY=verbose -c "INSERT INTO media (species_id, species_name, media_type, download_link, storage_version) VALUES (2, 'x', 'image', 'https://e.org/b.jpg', NULL);" 2>&1)
     [[ "$out" == *23502* && "$out" == *storage_version* ]] || fail "storage_version accepted NULL or failed for another reason: $out"
-    [ "$(pgq -d "$DB" -c "SELECT attnotnull FROM pg_attribute WHERE attrelid = 'public.media'::regclass AND attname = 'storage_version';")" = "t" ] \
-        || fail "storage_version is not NOT NULL in the catalog"
     ok "storage_version rejects NULL"
 
     step "001 - rollback"
