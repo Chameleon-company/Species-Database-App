@@ -43,6 +43,7 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 # Used for the Admin Dashboard link and the /api/health reachability check.
 FRONTEND_URL = cors_origins[0] if cors_origins else None
+INCREMENTAL_SYNC_LIMIT = 20
 
 print("Supabase URL:", SUPABASE_URL)
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -428,11 +429,7 @@ def get_species_changes():
 
     row_count = len(changed_species_ids)
 
-    #threshold: if too many changes, no point having incremental syncing
-    #will just pull the bundle
-    THRESHOLD = 20
-
-    if row_count > THRESHOLD:
+    if row_count > INCREMENTAL_SYNC_LIMIT:
         return jsonify({
             "up_to_date": False,
             "force_bundle": True,
@@ -489,20 +486,16 @@ def get_species_incremental():
             "latest_version": since_version
         })
     rows = changes.data
-    bulk_version = next((row["version"] for row in rows if row["entity_id"] is None), None)
-    if bulk_version is not None:
-        rows = [row for row in rows if row["version"] < bulk_version]
-    if not rows:
+    last_operation = {row["entity_id"]: row["operation"] for row in rows}
+    deleted_ids = sorted(i for i, op in last_operation.items() if i is not None and op == "DELETE")
+    species_ids = [i for i, op in last_operation.items() if i is not None and op != "DELETE"]
+
+    if None in last_operation or len(species_ids) > INCREMENTAL_SYNC_LIMIT:
         return jsonify({
-            "species_en": [],
-            "species_tet": [],
-            "deleted_species_ids": [],
+            "force_bundle": True,
+            "reason": "bulk_change" if None in last_operation else "too_many_changes",
             "latest_version": since_version
         })
-
-    last_operation = {row["entity_id"]: row["operation"] for row in rows}
-    deleted_ids = sorted(i for i, op in last_operation.items() if op == "DELETE")
-    species_ids = [i for i, op in last_operation.items() if op != "DELETE"]
 
     latest_version = rows[-1]["version"]
 

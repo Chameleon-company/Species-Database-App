@@ -430,6 +430,24 @@ class SpeciesDB {
   }
 
   /**
+   * Delete one language row of a species.
+   * @param {number} speciesId - Shared species_id
+   * @param {'en'|'tet'} language
+   * @returns {Promise<void>}
+   */
+  async deleteSpeciesLanguage(speciesId, language) {
+    const db = await this.init();
+
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(['species'], 'readwrite');
+      transaction.objectStore('species').delete(`${Number(speciesId)}_${language}`);
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(new Error(`Failed to delete species ${speciesId} ${language}: ${transaction.error}`));
+      transaction.onabort = () => reject(new Error(`Deleting species ${speciesId} ${language} aborted: ${transaction.error}`));
+    });
+  }
+
+  /**
    * Delete both language rows of a species, its media metadata and its cached image and video blobs.
    * Matches species_id as a number and as a string, because callers store both forms.
    * @param {number|string} speciesId - Shared species_id

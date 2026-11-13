@@ -560,22 +560,7 @@ class TestIncrementalSync(unittest.TestCase):
         self.assertEqual(body["deleted_species_ids"], [])
         self.assertEqual([r["species_id"] for r in body["species_en"]], [5])
 
-    def test_incremental_stops_before_a_bulk_insert(self):
-        FAKE.data["changelog"] += [
-            {"change_id": 6, "version": 6, "entity_id": None,
-             "entity_type": "species", "operation": "BULK_INSERT (3 rows)"},
-            {"change_id": 7, "version": 7, "entity_id": 1,
-             "entity_type": "species", "operation": "UPDATE"},
-        ]
-        resp = self.client.get("/api/species/incremental?since_version=1")
-        body = resp.get_json()
-        self.assertEqual(resp.status_code, 200, body)
-        self.assertEqual(body["latest_version"], 3)
-
-        resp = self.client.get("/api/species/incremental?since_version=5")
-        self.assertEqual(resp.get_json()["latest_version"], 5)
-
-    def test_a_row_sharing_the_bulk_version_waits_for_the_bundle(self):
+    def test_a_bulk_insert_makes_incremental_ask_for_a_bundle(self):
         FAKE.data["changelog"] += [
             {"change_id": 6, "version": 6, "entity_id": 1,
              "entity_type": "species", "operation": "UPDATE"},
@@ -583,9 +568,20 @@ class TestIncrementalSync(unittest.TestCase):
              "entity_type": "species", "operation": "BULK_INSERT (3 rows)"},
         ]
         resp = self.client.get("/api/species/incremental?since_version=5")
+        self.assertEqual(resp.get_json(), {
+            "force_bundle": True, "reason": "bulk_change", "latest_version": 5,
+        })
+
+    def test_too_many_species_make_incremental_ask_for_a_bundle(self):
+        FAKE.data["changelog"] += [
+            {"change_id": 100 + i, "version": 100 + i, "entity_id": 100 + i,
+             "entity_type": "species", "operation": "UPDATE"}
+            for i in range(21)
+        ]
+        resp = self.client.get("/api/species/incremental?since_version=99")
         body = resp.get_json()
-        self.assertEqual(body["latest_version"], 5)
-        self.assertEqual(body["species_en"], [])
+        self.assertTrue(body["force_bundle"])
+        self.assertEqual(body["reason"], "too_many_changes")
 
     def test_a_changed_species_with_no_rows_counts_as_deleted(self):
         FAKE.data["changelog"].append(
