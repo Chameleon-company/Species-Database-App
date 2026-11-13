@@ -11,12 +11,16 @@ import {
   type CellData,
   type RowData,
   type TableFeatures,
-} from "@tanstack/react-table"
+} from "@tanstack/react-table";
 
 declare module "@tanstack/react-table" {
-  interface ColumnMeta<in out TFeatures extends TableFeatures, in out TData extends RowData, TValue extends CellData = CellData> {
+  interface ColumnMeta<
+    in out TFeatures extends TableFeatures,
+    in out TData extends RowData,
+    TValue extends CellData = CellData,
+  > {
     /** Classes for the column's header and body cells, e.g. a width. */
-    className?: string
+    className?: string;
   }
 }
 
@@ -27,9 +31,9 @@ export const dataTableFeatures = tableFeatures({
   paginatedRowModel: createPaginatedRowModel(),
   sortedRowModel: createSortedRowModel(),
   sortFns: { alphanumeric: sortFn_alphanumeric, text: sortFn_text, basic: sortFn_basic },
-})
+});
 
-export type DataTableFeatures = typeof dataTableFeatures
+export type DataTableFeatures = typeof dataTableFeatures;
 
 export const dataTableColumnHelper = <TData extends RowData>() =>
-  createColumnHelper<DataTableFeatures, TData>()
+  createColumnHelper<DataTableFeatures, TData>();

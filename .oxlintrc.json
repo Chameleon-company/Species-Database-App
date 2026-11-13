@@ -106,7 +106,18 @@
       }
     },
     {
-      "files": ["apps/admin/src/**"],
+      "files": ["packages/ui/src/**"],
+      "plugins": ["typescript", "react"],
+      "env": {
+        "browser": true
+      },
+      "rules": {
+        "react/rules-of-hooks": "error",
+        "react/exhaustive-deps": "error"
+      }
+    },
+    {
+      "files": ["apps/admin/src/**", "packages/ui/src/**"],
       "rules": {
         "react/error-boundaries": "error",
         "react/globals": "error",

@@ -1,41 +1,41 @@
-import type { ReactNode } from "react"
-import { useTable, type ColumnDef, type RowData, type SortingState } from "@tanstack/react-table"
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight } from "lucide-react"
-import { cn } from "#lib/utils"
+import type { ReactNode } from "react";
+import { useTable, type ColumnDef, type RowData, type SortingState } from "@tanstack/react-table";
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { cn } from "#lib/utils";
 
-import { Button } from "#components/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#components/select"
-import { Skeleton } from "#components/skeleton"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "#components/table"
-import { dataTableFeatures, type DataTableFeatures } from "#lib/data-table"
+import { Button } from "#components/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#components/select";
+import { Skeleton } from "#components/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "#components/table";
+import { dataTableFeatures, type DataTableFeatures } from "#lib/data-table";
 
 export type DataTableLabels = {
-  rowsPerPage: string
-  range: (from: number, to: number, total: number) => string
-  previousPage: string
-  nextPage: string
-}
+  rowsPerPage: string;
+  range: (from: number, to: number, total: number) => string;
+  previousPage: string;
+  nextPage: string;
+};
 
 const DEFAULT_LABELS: DataTableLabels = {
   rowsPerPage: "Rows per page:",
   range: (from, to, total) => `${from}–${to} of ${total}`,
   previousPage: "Previous page",
   nextPage: "Next page",
-}
+};
 
 type DataTableProps<TData extends RowData> = {
-  columns: ColumnDef<DataTableFeatures, TData>[]
-  data: TData[]
-  getRowId?: (row: TData) => string
-  loading?: boolean
-  emptyLabel: ReactNode
-  pageSizeOptions?: number[]
-  initialPageSize?: number
-  initialSorting?: SortingState
-  labels?: Partial<DataTableLabels>
-}
+  columns: ColumnDef<DataTableFeatures, TData>[];
+  data: TData[];
+  getRowId?: (row: TData) => string;
+  loading?: boolean;
+  emptyLabel: ReactNode;
+  pageSizeOptions?: number[];
+  initialPageSize?: number;
+  initialSorting?: SortingState;
+  labels?: Partial<DataTableLabels>;
+};
 
-const SKELETON_ROWS = 5
+const SKELETON_ROWS = 5;
 
 /** One-line cell text that ends in an ellipsis past its width. The `title` shows the full text. */
 function DataTableText({ children, className }: { children: string; className?: string }) {
@@ -43,7 +43,7 @@ function DataTableText({ children, className }: { children: string; className?: 
     <span title={children} className={cn("block truncate", className)}>
       {children}
     </span>
-  )
+  );
 }
 
 /**
@@ -62,7 +62,7 @@ function DataTable<TData extends RowData>({
   initialSorting = [],
   labels,
 }: DataTableProps<TData>) {
-  const text = { ...DEFAULT_LABELS, ...labels }
+  const text = { ...DEFAULT_LABELS, ...labels };
   const table = useTable(
     {
       features: dataTableFeatures,
@@ -74,14 +74,14 @@ function DataTable<TData extends RowData>({
         pagination: { pageIndex: 0, pageSize: initialPageSize },
       },
     },
-    (state) => state
-  )
+    (state) => state,
+  );
 
-  const { pageIndex, pageSize } = table.state.pagination
-  const total = data.length
-  const from = total === 0 ? 0 : pageIndex * pageSize + 1
-  const to = Math.min(total, (pageIndex + 1) * pageSize)
-  const rows = table.getRowModel().rows
+  const { pageIndex, pageSize } = table.state.pagination;
+  const total = data.length;
+  const from = total === 0 ? 0 : pageIndex * pageSize + 1;
+  const to = Math.min(total, (pageIndex + 1) * pageSize);
+  const rows = table.getRowModel().rows;
 
   return (
     <div data-slot="data-table" className="overflow-hidden rounded-2xl border bg-card shadow-card">
@@ -90,14 +90,15 @@ function DataTable<TData extends RowData>({
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id} className="border-border hover:bg-muted">
               {headerGroup.headers.map((header) => {
-                const sorted = header.column.getIsSorted()
-                const SortIcon = sorted === "asc" ? ArrowUp : sorted === "desc" ? ArrowDown : ArrowUpDown
+                const sorted = header.column.getIsSorted();
+                const SortIcon =
+                  sorted === "asc" ? ArrowUp : sorted === "desc" ? ArrowDown : ArrowUpDown;
                 return (
                   <TableHead
                     key={header.id}
                     className={cn(
                       "h-12 px-3 text-label text-brand-text uppercase",
-                      header.column.columnDef.meta?.className
+                      header.column.columnDef.meta?.className,
                     )}
                   >
                     {header.isPlaceholder ? null : header.column.getCanSort() ? (
@@ -113,7 +114,7 @@ function DataTable<TData extends RowData>({
                       <table.FlexRender header={header} />
                     )}
                   </TableHead>
-                )
+                );
               })}
             </TableRow>
           ))}
@@ -144,7 +145,10 @@ function DataTable<TData extends RowData>({
             ))
           ) : (
             <TableRow className="hover:bg-transparent">
-              <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
+              <TableCell
+                colSpan={columns.length}
+                className="h-24 text-center text-muted-foreground"
+              >
                 {emptyLabel}
               </TableCell>
             </TableRow>
@@ -155,7 +159,10 @@ function DataTable<TData extends RowData>({
       <div className="flex flex-wrap items-center justify-end gap-x-6 gap-y-2 border-t bg-muted px-4 py-2 text-compact">
         <div className="flex items-center gap-2">
           <span>{text.rowsPerPage}</span>
-          <Select value={String(pageSize)} onValueChange={(value) => table.setPageSize(Number(value))}>
+          <Select
+            value={String(pageSize)}
+            onValueChange={(value) => table.setPageSize(Number(value))}
+          >
             <SelectTrigger size="sm" className="w-18 bg-card">
               <SelectValue />
             </SelectTrigger>
@@ -171,29 +178,29 @@ function DataTable<TData extends RowData>({
         <div className="flex items-center gap-4">
           <span className="tabular-nums">{text.range(from, to, total)}</span>
           <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={text.previousPage}
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            <ChevronLeft />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={text.nextPage}
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={text.previousPage}
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+            >
+              <ChevronLeft />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={text.nextPage}
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+            >
               <ChevronRight />
             </Button>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-export { DataTable, DataTableText }
+export { DataTable, DataTableText };
