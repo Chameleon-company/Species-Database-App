@@ -16,6 +16,7 @@ from ai_service import (
     resize_bilinear,
     run_inference,
 )
+from conftest import create_image
 
 
 EXPECTED_LABELS = [
@@ -23,25 +24,6 @@ EXPECTED_LABELS = [
     "Swietenia_Macrophylla",
     "Tectona_Grandis",
 ]
-
-
-def create_image(mode="RGB", image_format="PNG"):
-    if mode == "RGBA":
-        colour = (20, 120, 60, 180)
-    elif mode == "L":
-        colour = 128
-    else:
-        colour = (20, 120, 60)
-
-    image = Image.new(mode, (40, 60), colour)
-    output = BytesIO()
-    if image_format == "MPO":
-        preview = Image.new("RGB", (max(1, image.width // 2), max(1, image.height // 2)), (200, 10, 10))
-        image.save(output, format="MPO", save_all=True, append_images=[preview])
-    else:
-        image.save(output, format=image_format)
-    output.seek(0)
-    return output
 
 
 def test_load_labels_returns_verified_order(tmp_path):
@@ -78,7 +60,7 @@ def test_load_labels_rejects_invalid_configuration(
 
 @pytest.mark.parametrize("mode", ["RGB", "L", "RGBA"])
 def test_preprocess_image_creates_expected_batch(mode):
-    batch = preprocess_image(create_image(mode=mode))
+    batch = preprocess_image(BytesIO(create_image(size=(40, 60), mode=mode)))
 
     assert batch.shape == (1, 224, 224, 3)
     assert batch.dtype == np.float32
@@ -87,7 +69,7 @@ def test_preprocess_image_creates_expected_batch(mode):
 
 
 def test_preprocess_image_reads_a_camera_jpeg_with_extra_frames():
-    camera_jpeg = create_image(image_format="MPO")
+    camera_jpeg = BytesIO(create_image(image_format="MPO"))
     with Image.open(camera_jpeg) as opened:
         assert opened.format == "MPO"
         assert opened.n_frames > 1
@@ -95,7 +77,7 @@ def test_preprocess_image_reads_a_camera_jpeg_with_extra_frames():
 
     np.testing.assert_array_equal(
         preprocess_image(camera_jpeg),
-        preprocess_image(create_image(image_format="JPEG")),
+        preprocess_image(BytesIO(create_image(image_format="JPEG"))),
     )
 
 
@@ -105,7 +87,7 @@ def test_preprocess_image_rejects_corrupted_data():
 
 
 def test_preprocess_image_rejects_truncated_pixel_data():
-    jpeg = create_image(image_format="JPEG").getvalue()
+    jpeg = create_image(image_format="JPEG")
     truncated = jpeg[: jpeg.rindex(b"\xff\xda") + 16]
 
     with pytest.raises(OSError, match="truncated"):
@@ -255,7 +237,7 @@ def test_load_model_rejects_label_count_mismatch(
 def test_served_model_loads_and_identifies_an_image():
     service = SpeciesIdentificationService()
 
-    result = service.identify(create_image())
+    result = service.identify(BytesIO(create_image()))
 
     assert result["species_label"] in EXPECTED_LABELS
     assert 0.0 <= result["confidence"] <= 1.0

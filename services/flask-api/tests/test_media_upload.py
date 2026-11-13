@@ -3,9 +3,9 @@ from types import SimpleNamespace
 
 import pytest
 from flask import Flask
-from PIL import Image
 
 import media
+from conftest import create_image
 
 
 SPECIES = [{"species_id": 2, "scientific_name": "Tectona grandis"}]
@@ -76,17 +76,6 @@ class FakeSupabase:
 
     def table(self, name):
         return FakeQuery(self, name)
-
-
-def create_image(image_format="PNG", size=(32, 32), mode="RGB"):
-    output = BytesIO()
-    image = Image.new(mode, size)
-    if image_format == "MPO":
-        preview = Image.new("RGB", (max(1, image.width // 2), max(1, image.height // 2)), (200, 10, 10))
-        image.save(output, format="MPO", save_all=True, append_images=[preview])
-    else:
-        image.save(output, format=image_format)
-    return output.getvalue()
 
 
 @pytest.fixture
