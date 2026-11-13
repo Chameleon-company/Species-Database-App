@@ -4,7 +4,7 @@ services:
     runtime: python
     repo: https://github.com/Chameleon-company/Species-Database-App
     branch: master
-    region: virginia
+    region: singapore
     plan: starter
     autoDeployTrigger: checksPass
     buildFilter:
@@ -46,9 +46,9 @@ services:
       - key: NODE_VERSION
         value: "22"
       - key: VITE_API_BASE
-        value: https://species-database-app.onrender.com
+        value: https://species-database-api.onrender.com
       - key: VITE_API_URL
-        value: https://species-database-app.onrender.com/api
+        value: https://species-database-api.onrender.com/api
       - key: VITE_GOOGLE_CLIENT_ID
         value: 1052574621817-njpilvbmv49riq322c9vdi02pibcbbvg.apps.googleusercontent.com
 

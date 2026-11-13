@@ -23,7 +23,7 @@ const API_CONFIG = {
   // Automatically detects development vs production environment
   baseUrl: isLocalDevelopment
     ? "http://127.0.0.1:5000"
-    : "https://species-database-app.onrender.com",
+    : "https://species-database-api.onrender.com",
 
   // Ensure it is from an allowed Supabase host
   SUPABASE_HOST: isLocalDevelopment ? DEV_SUPABASE_HOST : PROD_SUPABASE_HOST,

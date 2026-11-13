@@ -333,7 +333,7 @@ Production runs on Render, and `render.yaml` defines every service.
 
 | Service | URL | Source |
 | --- | --- | --- |
-| API | `https://species-database-app.onrender.com` | `services/flask-api` and the model in `ml/training` |
+| API | `https://species-database-api.onrender.com` | `services/flask-api` and the model in `ml/training` |
 | Admin dashboard | `https://species-database-app-123.onrender.com` | `apps/admin` |
 | Field web app | `https://species-database-app-1.onrender.com` | `apps/field-legacy` |
 
@@ -349,8 +349,12 @@ Keep the admin origin first in `CORS_ORIGINS`, because the API links to the firs
 `GOOGLE_CLIENT_ID` and `VITE_GOOGLE_CLIENT_ID` must hold the same OAuth client ID.
 
 Render links each service to its Blueprint entry by service name.
-The live services already carry the names in `render.yaml`.
-Renaming a service does not change its `onrender.com` URL, but the Android app and the field app hardcode those URLs.
+Renaming a service does not change its `onrender.com` URL.
+The Android app and the field app hardcode these URLs, so a new service URL needs an app release.
+
+The API runs in Render's `singapore` region, beside the Supabase projects in `ap-southeast-1`.
+Render has no Australian region.
+Render cannot move a service to another region, so a region change needs a new service.
 
 ## Security and CI/CD
 
