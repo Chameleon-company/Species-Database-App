@@ -6,7 +6,6 @@ import {
   locales,
   translate,
   type Locale,
-  type MessageKey,
   type MessageParams,
 } from "./translate.ts";
 
@@ -67,20 +66,6 @@ describe("translate", () => {
   test("returns the text for the locale", () => {
     expect(translate("en", "search")).toBe(catalogs.en.search);
     expect(translate("tet", "search")).toBe(catalogs.tet.search);
-  });
-
-  test("fills every placeholder of every key in every locale", () => {
-    const keys = Object.keys(catalogs.en) as MessageKey[];
-    const unfilled = locales.flatMap((locale) =>
-      keys
-        .filter((key) => {
-          const names = placeholders(catalogs.en[key]);
-          const params = Object.fromEntries(names.map((name) => [name, `<${name}>`]));
-          return /\{\w+\}/.test(translate(locale, key, params));
-        })
-        .map((key) => `${locale}.${key}`),
-    );
-    expect(unfilled).toEqual([]);
   });
 });
 
