@@ -377,6 +377,7 @@ def get_species_changes():
         .in_("entity_type", ["species", "media"])
         .gt("version", since_version)
         .order("version")
+        .order("change_id")
         .execute()
     )
 
@@ -468,13 +469,15 @@ def get_species_incremental():
         .eq("entity_type", "species")
         .gt("version", since_version)
         .order("version")
+        .order("change_id")
         .execute()
     )
 
     if changes.data is None:
         return jsonify({
-            "error": "sync failed",
+            "error": "sync_failed",
             "stage": "changelog_fetch",
+            "message": "changelog data fail to fetch it",
             "since_version": since_version
         }), 500
 
@@ -490,7 +493,7 @@ def get_species_incremental():
     deleted_ids = sorted(i for i, op in last_operation.items() if i is not None and op == "DELETE")
     species_ids = [i for i, op in last_operation.items() if i is not None and op != "DELETE"]
 
-    if None in last_operation or len(species_ids) > INCREMENTAL_SYNC_LIMIT:
+    if None in last_operation or len(last_operation) > INCREMENTAL_SYNC_LIMIT:
         return jsonify({
             "force_bundle": True,
             "reason": "bulk_change" if None in last_operation else "too_many_changes",

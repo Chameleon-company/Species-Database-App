@@ -10,15 +10,21 @@
  */
 
 /**
- * Delete URLs from every Cache Storage cache. Runs in the page, so it works without a service worker controller.
+ * Delete URLs from every service worker media cache (names starting with "media-cache").
+ * Runs in the page, so it works without a service worker controller. Never throws.
  * @param {string[]} urls
  * @returns {Promise<void>}
  */
 async function uncacheMedia(urls) {
   if (!urls.length || !('caches' in self)) return;
-  for (const name of await caches.keys()) {
-    const cache = await caches.open(name);
-    await Promise.all(urls.map((url) => cache.delete(url)));
+  try {
+    for (const name of await caches.keys()) {
+      if (!name.startsWith('media-cache')) continue;
+      const cache = await caches.open(name);
+      await Promise.all(urls.map((url) => cache.delete(url)));
+    }
+  } catch (error) {
+    console.warn('[Sync] Could not clear cached media', error);
   }
 }
 
