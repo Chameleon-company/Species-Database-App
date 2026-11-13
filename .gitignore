@@ -13,3 +13,4 @@ testData.xlsx
 .idea/
 .vscode/
 dist/
+target/
