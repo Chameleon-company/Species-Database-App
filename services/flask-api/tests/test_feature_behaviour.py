@@ -583,6 +583,18 @@ class TestIncrementalSync(unittest.TestCase):
         self.assertTrue(body["force_bundle"])
         self.assertEqual(body["reason"], "too_many_changes")
 
+    def test_a_full_changelog_page_makes_both_endpoints_ask_for_a_bundle(self):
+        FAKE.data["changelog"] += [
+            {"change_id": 100 + i, "version": 100 + i, "entity_id": 1,
+             "entity_type": "species", "operation": "UPDATE"}
+            for i in range(1000)
+        ]
+        for path in ("incremental", "changes"):
+            resp = self.client.get(f"/api/species/{path}?since_version=99")
+            body = resp.get_json()
+            self.assertTrue(body["force_bundle"], path)
+            self.assertEqual(body["reason"], "too_many_changes", path)
+
     def test_a_changed_species_with_no_rows_counts_as_deleted(self):
         FAKE.data["changelog"].append(
             {"change_id": 6, "version": 6, "entity_id": 8,

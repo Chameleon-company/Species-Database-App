@@ -44,6 +44,7 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 # Used for the Admin Dashboard link and the /api/health reachability check.
 FRONTEND_URL = cors_origins[0] if cors_origins else None
 INCREMENTAL_SYNC_LIMIT = 20
+CHANGELOG_PAGE = 1000
 
 print("Supabase URL:", SUPABASE_URL)
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -378,6 +379,7 @@ def get_species_changes():
         .gt("version", since_version)
         .order("version")
         .order("change_id")
+        .limit(CHANGELOG_PAGE)
         .execute()
     )
 
@@ -412,6 +414,14 @@ def get_species_changes():
             "force_bundle": True,
             "latest_version": latest_version,
             "reason": "media_changed"
+        })
+
+    if len(changes.data) >= CHANGELOG_PAGE:
+        return jsonify({
+            "up_to_date": False,
+            "force_bundle": True,
+            "latest_version": latest_version,
+            "reason": "too_many_changes"
         })
 
     if any(row["entity_id"] is None for row in changes.data):
@@ -470,6 +480,7 @@ def get_species_incremental():
         .gt("version", since_version)
         .order("version")
         .order("change_id")
+        .limit(CHANGELOG_PAGE)
         .execute()
     )
 
@@ -493,7 +504,7 @@ def get_species_incremental():
     deleted_ids = sorted(i for i, op in last_operation.items() if i is not None and op == "DELETE")
     species_ids = [i for i, op in last_operation.items() if i is not None and op != "DELETE"]
 
-    if None in last_operation or len(last_operation) > INCREMENTAL_SYNC_LIMIT:
+    if None in last_operation or len(last_operation) > INCREMENTAL_SYNC_LIMIT or len(rows) >= CHANGELOG_PAGE:
         return jsonify({
             "force_bundle": True,
             "reason": "bulk_change" if None in last_operation else "too_many_changes",
