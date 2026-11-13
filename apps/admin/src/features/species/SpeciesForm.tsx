@@ -4,7 +4,8 @@ import { Button } from "@sda/ui/components/button";
 import { Card, CardContent } from "@sda/ui/components/card";
 import { Field, FieldLabel } from "@sda/ui/components/field";
 import { Input } from "@sda/ui/components/input";
-import { useAppForm, required } from "../../shared/form/useAppForm";
+import { useAppForm } from "../../shared/form/useAppForm";
+import { firstError, required, withinLength } from "../../shared/form/validators";
 import { translations } from "../../translations";
 import { useLanguage } from "../../useLanguage";
 import { useTranslateToTetum } from "./api";
@@ -94,7 +95,7 @@ export default function SpeciesForm({ mode, initialValues, onSubmit, onDelete, d
               )}
             </form.Subscribe>
           ) : (
-            <form.AppField key={name} name={`${language}.${name}`} validators={{ onChange: required(requiredKey!) }}>
+            <form.AppField key={name} name={`${language}.${name}`} validators={{ onChange: firstError(required(requiredKey!), withinLength(maxLength)) }}>
               {(field) => <field.TextField label={t(labelKey)} required maxLength={maxLength} />}
             </form.AppField>
           )
@@ -106,7 +107,7 @@ export default function SpeciesForm({ mode, initialValues, onSubmit, onDelete, d
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {OPTIONAL_FIELDS.map(({ name, labelKey, rows, maxLength }) => (
           <div key={name} className={name === "definition" ? "md:col-span-2" : undefined}>
-            <form.AppField name={`${language}.${name}`}>
+            <form.AppField name={`${language}.${name}`} validators={{ onChange: withinLength(maxLength) }}>
               {(field) => <field.TextField label={t(labelKey)} rows={rows} maxLength={maxLength} />}
             </form.AppField>
           </div>

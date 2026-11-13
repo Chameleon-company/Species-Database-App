@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build": "pnpm run typecheck"
   },
   "imports": {
     "#components/*": "./src/components/*.tsx",

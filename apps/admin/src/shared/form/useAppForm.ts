@@ -17,9 +17,3 @@ const { useAppForm: useBaseAppForm } = createFormHook({
  */
 export const useAppForm = ((options) =>
   useBaseAppForm({ canSubmitWhenInvalid: true, ...options })) as typeof useBaseAppForm;
-
-/** Field validator that returns `errorKey` for an empty or whitespace-only value. */
-export const required =
-  (errorKey: string) =>
-  ({ value }: { value: string }) =>
-    value.trim() ? undefined : errorKey;

@@ -1,8 +1,8 @@
-import { clearAdminSession, readAdminToken } from "./adminSession";
+import { endAdminSession, readAdminToken } from "./adminSession";
 
 const LOGIN_URL = "/#/admin-login";
 
-/** Thrown after the session ended and a reload to the login route started. */
+/** Thrown after a request found the admin session missing or rejected. */
 export class SessionEndedError extends Error {
   constructor() {
     super("Admin session ended");
@@ -11,9 +11,7 @@ export class SessionEndedError extends Error {
 }
 
 function endSession(): never {
-  clearAdminSession();
-  window.location.assign(LOGIN_URL);
-  window.location.reload();
+  if (!endAdminSession()) window.location.assign(LOGIN_URL);
   throw new SessionEndedError();
 }
 
@@ -21,9 +19,9 @@ function endSession(): never {
  * `fetch` with the stored admin token in `Authorization`.
  *
  * Sets `Content-Type: application/json` unless the body is `FormData`.
- * With no stored token, or on a 401 or 403 response, it clears the session,
- * reloads the app on the login route (dropping all cached data) and throws
- * `SessionEndedError`.
+ * With no stored token, or on a 401 or 403 response, it ends the session
+ * through `endAdminSession` (navigating to the login route itself when no
+ * listener handles it) and throws `SessionEndedError`.
  */
 export async function adminFetch(input: RequestInfo, init: RequestInit = {}) {
   const token = readAdminToken();

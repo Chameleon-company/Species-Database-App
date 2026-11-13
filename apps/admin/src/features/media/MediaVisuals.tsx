@@ -74,10 +74,18 @@ export function MediaThumb({ media, onPreview }: { media: Media; onPreview: () =
 
   if (image.failed || !image.url || broken) {
     return (
-      <div className={cn(tileClass, "flex-col gap-0.5 border-dashed border-destructive/40 bg-destructive-soft p-1 text-center text-label leading-tight font-normal tracking-normal text-destructive")}>
+      <button
+        type="button"
+        title={t("retry")}
+        onClick={() => {
+          setBroken(false);
+          image.retry();
+        }}
+        className={cn(tileClass, "flex-col gap-0.5 border-dashed border-destructive/40 bg-destructive-soft p-1 text-center text-label leading-tight font-normal tracking-normal text-destructive hover:bg-destructive/15")}
+      >
         <ImageOff className="size-4" />
         {t("noImageFound")}
-      </div>
+      </button>
     );
   }
 

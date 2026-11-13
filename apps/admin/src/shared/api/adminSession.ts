@@ -18,6 +18,27 @@ export function clearAdminSession(): void {
   localStorage.removeItem(ROLE_KEY);
 }
 
+type SessionEndListener = () => void;
+const sessionEndListeners = new Set<SessionEndListener>();
+
+/** Subscribes to forced session ends. Returns the unsubscribe function. */
+export function onSessionEnd(listener: SessionEndListener): () => void {
+  sessionEndListeners.add(listener);
+  return () => {
+    sessionEndListeners.delete(listener);
+  };
+}
+
+/**
+ * Clears the session and notifies `onSessionEnd` listeners.
+ * Returns false when nothing listens, so the caller must navigate itself.
+ */
+export function endAdminSession(): boolean {
+  clearAdminSession();
+  sessionEndListeners.forEach((listener) => listener());
+  return sessionEndListeners.size > 0;
+}
+
 /**
  * Revokes the session on the API, then clears it locally.
  * The local session is cleared even when the API call fails.

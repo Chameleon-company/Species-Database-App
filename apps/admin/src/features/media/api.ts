@@ -20,7 +20,8 @@ export const useMediaList = () => useQuery(mediaListQuery);
 
 /**
  * Displayable image URL for a media link. Direct image links pass through;
- * other pages go through the API's resolver once and stay cached.
+ * other pages go through the API's resolver once (one retry) and stay cached.
+ * A failed lookup is not refetched on remount; `retry` refetches it.
  */
 export function useResolvedImage(url: string, enabled: boolean) {
   const direct = looksLikeDirectImage(url);
@@ -31,13 +32,14 @@ export function useResolvedImage(url: string, enabled: boolean) {
         .resolved_url,
     enabled: enabled && Boolean(url) && !direct,
     staleTime: Infinity,
-    retry: false,
+    retry: 1,
     retryOnMount: false,
   });
 
-  if (!enabled || !url) return { url: null, pending: false, failed: false };
-  if (direct) return { url, pending: false, failed: false };
-  return { url: resolved.data ?? null, pending: resolved.isPending, failed: resolved.isError };
+  const retry = () => void resolved.refetch();
+  if (!enabled || !url) return { url: null, pending: false, failed: false, retry };
+  if (direct) return { url, pending: false, failed: false, retry };
+  return { url: resolved.data ?? null, pending: resolved.isPending, failed: resolved.isError, retry };
 }
 
 function useMediaMutation<TVariables>(mutationFn: (variables: TVariables) => Promise<unknown>) {

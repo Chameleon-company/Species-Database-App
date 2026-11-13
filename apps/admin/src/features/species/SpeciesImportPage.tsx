@@ -10,9 +10,10 @@ import { translations } from "../../translations";
 import { useLanguage } from "../../useLanguage";
 import { useImportSpreadsheet } from "./api";
 
-const SPREADSHEET_EXTENSIONS = [".xlsx", ".csv"];
+const EXCEL_EXTENSION = ".xlsx";
 
-const isSpreadsheet = (file: File) => SPREADSHEET_EXTENSIONS.some((ext) => file.name.toLowerCase().endsWith(ext));
+/** The API reads a file as Excel only when its name ends in lowercase ".xlsx"; anything else is parsed as CSV. */
+const isExcel = (file: File) => file.name.endsWith(EXCEL_EXTENSION);
 
 export default function SpeciesImportPage() {
   const { lang } = useLanguage();
@@ -22,7 +23,7 @@ export default function SpeciesImportPage() {
 
   const handleFile = (file: File) => {
     setFileName(file.name);
-    if (!isSpreadsheet(file)) {
+    if (!isExcel(file)) {
       toast.error(t("onlyExcelAllowed"));
       return;
     }
@@ -38,7 +39,7 @@ export default function SpeciesImportPage() {
       <Card className="gap-4 rounded-2xl py-6 shadow-card">
         <CardContent className="flex flex-col gap-4 px-6">
           <FileDropzone
-            accept={SPREADSHEET_EXTENSIONS.join(",")}
+            accept={EXCEL_EXTENSION}
             onFile={handleFile}
             disabled={importSpreadsheet.isPending}
             title={t("uploadSpecies")}

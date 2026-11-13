@@ -5,6 +5,7 @@ import { Input } from "@sda/ui/components/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sda/ui/components/select";
 import { Textarea } from "@sda/ui/components/textarea";
 import { useFieldContext } from "./formContext";
+import { TOO_LONG } from "./validators";
 import { translations } from "../../translations";
 import { useLanguage } from "../../useLanguage";
 
@@ -101,7 +102,11 @@ export default function FormTextField({
           className="bg-card"
         />
       )}
-      {invalid && <FieldError>{t(String(error))}</FieldError>}
+      {invalid && (
+        <FieldError>
+          {error === TOO_LONG ? `${field.state.value.length} / ${maxLength}` : t(String(error))}
+        </FieldError>
+      )}
     </Field>
   );
 }

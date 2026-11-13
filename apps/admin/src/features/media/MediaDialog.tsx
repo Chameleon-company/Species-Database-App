@@ -153,6 +153,7 @@ function MediaForm({ media, onClose }: { media: Media | null; onClose: () => voi
           <field.TextField
             label={t("type")}
             placeholder={t("select")}
+            disabled={chosen !== null}
             options={[
               { value: "image", label: t("image") },
               { value: "video", label: t("video") },

@@ -17,15 +17,18 @@ async function requestToken(path: string, body: unknown): Promise<void> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok || typeof data.access_token !== "string" || !data.access_token) throw new LoginRejectedError();
-  saveAdminToken(data.access_token);
+  const data = await res.json().catch(() => null);
+  if (res.status >= 500 || res.status === 429) throw new Error(`Login unavailable (${res.status})`);
+  const token = data?.access_token;
+  if (!res.ok || typeof token !== "string" || !token) throw new LoginRejectedError();
+  saveAdminToken(token);
 }
 
 /**
  * Password login. Stores the access token on success. Throws
- * `LoginRejectedError` for any refusal, so the page never reveals whether an
- * account exists, is disabled or is Google-only; other errors are network failures.
+ * `LoginRejectedError` for any 4xx refusal (except 429) or a reply without a
+ * token, so the page never reveals whether an account exists, is disabled or
+ * is Google-only. Throws a plain Error for 5xx, 429 and network failures.
  */
 export const usePasswordLogin = () =>
   useMutation({

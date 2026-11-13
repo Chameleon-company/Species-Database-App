@@ -38,12 +38,12 @@ function activityKey(user: UserActivity) {
 
 const cardClass = "gap-0 rounded-xl py-0 shadow-card";
 
-function StatCard({ Icon, label, value }: { Icon: ComponentType<{ className?: string }>; label: string; value?: number }) {
+function StatCard({ Icon, label, value, empty }: { Icon: ComponentType<{ className?: string }>; label: string; value?: number; empty: string }) {
   return (
     <Card className={cardClass}>
       <CardContent className="flex flex-col items-center gap-1 px-4 py-6 text-center">
         <Icon className="size-6 text-primary" />
-        <span className="mt-2 text-2xl font-bold">{value ?? "-"}</span>
+        <span className="mt-2 text-2xl font-bold">{value ?? empty}</span>
         <span className="text-sm text-muted-foreground">{label}</span>
       </CardContent>
     </Card>
@@ -65,9 +65,10 @@ export default function AnalyticsPage() {
   const activity = useUserActivity();
 
   const users = activity.data ?? [];
-  const mostActive = [...users]
-    .filter((user) => count(user.login_count) > 0)
-    .sort((a, b) => count(b.login_count) - count(a.login_count))[0];
+  const mostActive = users.reduce<UserActivity | undefined>(
+    (best, user) => (count(user.login_count) > count(best?.login_count) ? user : best),
+    undefined
+  );
   const loading = overview.isPending || activity.isPending;
   const minutes = (value: number | null) => `${(value ?? 0).toFixed(1)} min`;
 
@@ -98,7 +99,7 @@ export default function AnalyticsPage() {
       <div className="grid grid-cols-[repeat(auto-fit,minmax(13.75rem,1fr))] gap-6">
         {loading
           ? stats.map(({ label }) => <Skeleton key={label} className="h-36 rounded-xl" />)
-          : stats.map((stat) => <StatCard key={stat.label} {...stat} />)}
+          : stats.map((stat) => <StatCard key={stat.label} {...stat} empty={t("notAvailable")} />)}
       </div>
 
       {mostActive && (
@@ -130,7 +131,7 @@ export default function AnalyticsPage() {
               <Line label={t("logins")}>{count(user.login_count)}</Line>
               <Line label={t("totalDuration")}>{minutes(user.total_duration)}</Line>
               <Line label={t("avgDuration")}>{minutes(user.average_duration)}</Line>
-              <Line label={t("lastLogin")}>{user.last_login ? new Date(user.last_login).toLocaleString() : "-"}</Line>
+              <Line label={t("lastLogin")}>{user.last_login ? new Date(user.last_login).toLocaleString() : t("notAvailable")}</Line>
               <p className={cn("mt-2 text-sm font-medium", user.is_active ? "text-success" : "text-destructive")}>
                 {user.is_active ? t("active") : t("inactive")}
               </p>
