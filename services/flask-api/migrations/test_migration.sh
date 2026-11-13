@@ -44,6 +44,20 @@ pg()  { psql -h "$WORK" -U postgres -v ON_ERROR_STOP=1 -q "$@"; }
 pgq() { psql -h "$WORK" -U postgres -v ON_ERROR_STOP=1 -tAq "$@"; }
 apply() { pg -d "$DB" -f "$1" >"$WORK/apply.log" 2>&1 || { tail -5 "$WORK/apply.log"; fail "applying $(basename "$1")"; }; }
 
+fingerprint() {
+    pgq -d "$DB" -c "SELECT md5(string_agg(r, '|' ORDER BY r)) FROM (
+        SELECT 'en' || x::text r FROM species_en x
+        UNION ALL SELECT 'tet' || x::text FROM species_tet x
+        UNION ALL SELECT 'media' || x::text FROM media x
+        UNION ALL SELECT 'users' || x::text FROM users x
+        UNION ALL SELECT 'sessions' || x::text FROM admin_sessions x) q;"
+}
+
+same_rows_as() {
+    local now; now=$(fingerprint)
+    [[ "$1" =~ ^[0-9a-f]{32}$ && "$now" == "$1" ]]
+}
+
 counts() {
     pgq -d "$DB" -c "SELECT (SELECT count(*) FROM species_en)||'/'||(SELECT count(*) FROM species_tet)||'/'||(SELECT count(*) FROM media)||'/'||(SELECT count(*) FROM users)||'/'||(SELECT count(*) FROM admin_sessions);"
 }
@@ -76,6 +90,7 @@ schema_dump() {
 }
 
 check_001() {
+    local before; before=$(fingerprint)
     step "001 - apply"
     apply "$MIG/001_add_definition_and_storage_version.sql"
     [ "$(target_columns)" = "3" ] || fail "expected 3 target columns after 001"
@@ -105,12 +120,11 @@ check_001() {
     ok "storage_version rejects NULL"
 
     step "001 - rollback"
-    local before; before=$(counts)
     apply "$MIG/001_add_definition_and_storage_version.rollback.sql"
     [ "$(target_columns)" = "0" ] || fail "rollback left target columns"
     apply "$MIG/001_add_definition_and_storage_version.rollback.sql"
-    [ "$(counts)" = "$before" ] || fail "row counts changed across rollback"
-    ok "rollback removes the columns, is a no-op on re-run and keeps every row"
+    same_rows_as "$before" || fail "rows differ from the state before 001"
+    ok "rollback removes the columns, is a no-op on re-run and restores every row exactly"
 
     apply "$MIG/001_add_definition_and_storage_version.sql"
     ok "re-applied for the next migration"
@@ -132,8 +146,11 @@ load_snapshot "$DB"
 ok "$(pgq -d "$DB" -c "SELECT count(*) FROM information_schema.tables WHERE table_schema='public';") tables"
 
 step "STEP 2 - roll back every migration to reach the pre-migration baseline"
-ROLLBACKS=$(ls "$MIG"/[0-9][0-9][0-9]_*.rollback.sql | sort -r)
-for f in $ROLLBACKS; do apply "$f"; ok "rolled back $(basename "$f")"; done
+ROLLBACKS=("$MIG"/[0-9][0-9][0-9]_*.rollback.sql)
+for ((i = ${#ROLLBACKS[@]} - 1; i >= 0; i--)); do
+    apply "${ROLLBACKS[i]}"
+    ok "rolled back $(basename "${ROLLBACKS[i]}")"
+done
 [ "$(target_columns)" = "0" ] || fail "001 columns present at the baseline"
 ok "baseline has no 001 columns"
 
@@ -154,7 +171,8 @@ VALUES (1, 'token', now() + interval '1 hour');
 SQL
 ok "seeded species_en/species_tet/media/users/admin_sessions = $(counts)"
 
-for f in $(ls "$MIG"/[0-9][0-9][0-9]_*.sql | grep -v '\.rollback\.sql$' | sort); do
+for f in "$MIG"/[0-9][0-9][0-9]_*.sql; do
+    [[ "$f" == *.rollback.sql ]] && continue
     n=$(basename "$f" | cut -c1-3)
     declare -F "check_$n" >/dev/null || fail "no checks for migration $n in test_migration.sh"
     "check_$n"

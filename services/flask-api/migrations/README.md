@@ -52,7 +52,7 @@ The harness runs these steps on a throwaway cluster:
 | 1 | Load `TableSchema.sql`, with the default grants that Supabase gives those roles |
 | 2 | Apply every rollback in reverse order, then assert the pre-migration baseline |
 | 3 | Seed representative rows |
-| per migration | Run `check_NNN`: apply, verify, re-apply, roll back, roll back again, keep every row, apply again |
+| per migration | Run `check_NNN`: apply, verify, re-apply, roll back, roll back again, check that every row is back exactly, apply again |
 | 4 | Build a second database from `TableSchema.sql` and require an identical `pg_dump --schema-only` |
 
 Step 4 proves that the snapshot and the migration chain build the same schema.
