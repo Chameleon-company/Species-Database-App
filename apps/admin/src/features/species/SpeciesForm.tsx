@@ -1,882 +1,175 @@
-import Box from '@mui/material/Box'
-import Button from '@mui/material/Button'
-import React, { useEffect, useEffectEvent, useState } from 'react'
-import { TextField } from '@mui/material'
-import Alert from '@mui/material/Alert'
-import type { Species } from './SpeciesTable'
-import Dialog from '@mui/material/Dialog'
-import DialogActions from '@mui/material/DialogActions'
-import DialogContent from '@mui/material/DialogContent'
-import DialogContentText from '@mui/material/DialogContentText'
-import DialogTitle from '@mui/material/DialogTitle'
-import { useParams } from "react-router-dom";
-import { adminFetch } from '../../shared/api/adminFetch'
-import { translations } from '../../translations'
+import { useState, type ReactNode } from "react";
+import { toast } from "sonner";
+import { Button } from "@sda/ui/components/button";
+import { Card, CardContent } from "@sda/ui/components/card";
+import { Field, FieldLabel } from "@sda/ui/components/field";
+import { Input } from "@sda/ui/components/input";
+import { useAppForm, required } from "../../shared/form/useAppForm";
+import { translations } from "../../translations";
 import { useLanguage } from "../../useLanguage";
+import { useTranslateToTetum } from "./api";
+import { MAX_LENGTH, SPECIES_FIELDS, emptySpeciesForm, type SpeciesFieldName, type SpeciesFormValues } from "./species";
 
+type SpeciesFormProps = {
+  mode: "create" | "edit";
+  initialValues: SpeciesFormValues;
+  onSubmit: (values: SpeciesFormValues) => Promise<unknown>;
+  onDelete?: () => void;
+  deleting?: boolean;
+};
 
-const API_URL = import.meta.env.VITE_API_URL
-const API_BASE = import.meta.env.VITE_API_BASE
+const REQUIRED_FIELDS = SPECIES_FIELDS.filter((field) => field.requiredKey);
+const OPTIONAL_FIELDS = SPECIES_FIELDS.filter((field) => !field.requiredKey);
 
-const formContainerSx = {
-    width: '100%',
-    paddingX: 0
+function Section({ title, subtitle, children }: { title: string; subtitle?: string; children: ReactNode }) {
+  return (
+    <Card className="gap-0 rounded-2xl py-6 shadow-card">
+      <CardContent className="mx-auto w-full max-w-250 px-4 sm:px-6">
+        <div className="mb-6 text-center">
+          <h2 className="text-lg font-bold">{title}</h2>
+          {subtitle && <p className="mt-1 text-compact text-muted-foreground">{subtitle}</p>}
+        </div>
+        {children}
+      </CardContent>
+    </Card>
+  );
 }
 
-const containerBoxSx = {
-    marginTop: 2,
-    width: '30%',
-    paddingX: 0,
-    marginX: 'auto'
-}
-
-const errorContainerSx = {
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 2
-}
-
-const bigFieldSx = {
-    '& .MuiInputBase-input': {
-        fontSize: '1.1rem',
-    },
-    '& .MuiInputLabel-root': {
-        fontSize: '1rem',
-    },
-    '& .MuiFormHelperText-root': {
-        fontSize: '0.9rem',
-        color: 'red',
-    },
-}
-
-export function EditEntry() {
-    const { id } = useParams<{ id: string }>()
-
-    const { lang, setLang } = useLanguage();
-    const t = (key: string) =>
-        translations[key as keyof typeof translations]?.[lang] || key
-
-    const [error, setError] = useState('')
-    const [uploadError, setUploadError] = useState('')
-    const [loading, setLoading] = useState(false)
-    const [deleteLoading, setDeleteLoading] = useState(false)
-    const [status, setStatus] = useState('')
-    const [rowSelected, setRowSelected] = useState(false)
-    const [ID, setID] = useState(-1)
-
-    const [, setResetKey] = useState(0)
-    const [translated, setTranslated] = useState(false)
-    const [translateLoading, setTranslateLoading] = useState(false)
-
-    const [speciesTet, setSpeciesTet] = useState<Species[]>([])
-    const [touched, setTouched] = useState<Record<string, boolean>>({})
-
-    const markTouched = (name: string) => {
-        setTouched(prev => ({ ...prev, [name]: true }))
-    }
-
-    const [formData, setFormData] = useState({
-        scientificName: '',
-        commonName: '',
-        leafType: '',
-        fruitType: '',
-        etymology: '',
-        definition: '',
-        habitat: '',
-        identificationCharacteristics: '',
-        phenology: '',
-        seedGermination: '',
-        pests: ''
-    })
-
-    const [formDataTetum, setFormDataTetum] = useState({
-        scientificNameTetum: '',
-        commonNameTetum: '',
-        leafTypeTetum: '',
-        fruitTypeTetum: '',
-        etymologyTetum: '',
-        definitionTetum: '',
-        habitatTetum: '',
-        identificationCharacteristicsTetum: '',
-        phenologyTetum: '',
-        seedGerminationTetum: '',
-        pestsTetum: ''
-    })
-
-    const [, setTetumRowError] = useState(false)
-    const [open, setOpen] = useState(false)
-
-    const changeLang = (newLang: "en" | "tet") => {
-        localStorage.setItem("lang", newLang)
-        setLang(newLang)
-    }
-
-    const handleClickOpen = () => {
-        setOpen(true)
-    }
-
-    const handleClose = () => {
-        setOpen(false)
-    }
-
-    const handleConfirmDelete = async () => {
-        setOpen(false)
-        await handleSubmitDelete()
-    }
-
-    const handleSubmitDelete = async () => {
-        setDeleteLoading(true)
-        setStatus('')
-        setError('')
-
-        try {
-            const res = await adminFetch(`${import.meta.env.VITE_API_URL}/species/${ID}`, {
-                method: 'DELETE',
-            })
-
-            if (!res.ok) {
-                const err = await res.json().catch(() => ({}))
-                throw new Error(err.error || t("failedToDeleteSpecies"))
-            }
-
-            setResetKey(prev => prev + 1)
-            setStatus(t("speciesDeletedSuccessfully"))
-            setError('')
-            setRowSelected(false)
-            setID(-1)
-
-            setFormData({
-                scientificName: '',
-                commonName: '',
-                leafType: '',
-                fruitType: '',
-                etymology: '',
-                definition: '',
-                habitat: '',
-                identificationCharacteristics: '',
-                phenology: '',
-                seedGermination: '',
-                pests: ''
-            })
-        }
-        catch (error) {
-            setError(`Error: ${(error as Error).message}`)
-        }
-        finally {
-            setDeleteLoading(false)
-        }
-    }
-
-    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = event.target
-
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }))
-    }
-
-    const handleChangeTetum = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = event.target
-
-        setFormDataTetum(prev => ({
-            ...prev,
-            [name]: value
-        }))
-    }
-
-    const resetTet = () => {
-        setFormDataTetum({
-            scientificNameTetum: '',
-            commonNameTetum: '',
-            leafTypeTetum: '',
-            fruitTypeTetum: '',
-            etymologyTetum: '',
-            definitionTetum: '',
-            habitatTetum: '',
-            identificationCharacteristicsTetum: '',
-            phenologyTetum: '',
-            seedGerminationTetum: '',
-            pestsTetum: ''
-        })
-    }
-
-    const handleTranslate = async () => {
-        resetTet()
-        setTranslated(false)
-        setError('')
-        setTranslateLoading(true)
-
-        let hasError = false
-
-        if (!formData.scientificName) {
-            setError(t("scientificNameEmpty"))
-            hasError = true
-        } else if (!formData.commonName) {
-            setError(t("commonNameEmpty"))
-            hasError = true
-        } else if (!formData.leafType) {
-            setError(t("leafTypeEmpty"))
-            hasError = true
-        } else if (!formData.fruitType) {
-            setError(t("fruitTypeEmpty"))
-            hasError = true
-        }
-
-        if (hasError) {
-            setTranslateLoading(false)
-            return
-        }
-
-        const tempEtymology = formData.etymology === "" ? "-" : formData.etymology
-        const tempHabitat = formData.habitat === "" ? "-" : formData.habitat
-        const tempIdent = formData.identificationCharacteristics === "" ? "-" : formData.identificationCharacteristics
-        const tempPhenology = formData.phenology === "" ? "-" : formData.phenology
-        const tempSeed = formData.seedGermination === "" ? "-" : formData.seedGermination
-        const tempPest = formData.pests === "" ? "-" : formData.pests
-
-        const textArray = [
-            formData.scientificName,
-            formData.commonName,
-            formData.leafType,
-            formData.fruitType,
-            tempEtymology,
-            tempHabitat,
-            tempIdent,
-            tempPhenology,
-            tempSeed,
-            tempPest
-        ]
-
-        try {
-            const response = await adminFetch(`${API_BASE}/translate`, {
-                method: 'POST',
-                body: JSON.stringify({ text: textArray })
-            })
-
-            if (!response.ok) {
-                throw new Error(`Translation failed with status ${response.status}`)
-            }
-
-            const translatedText = await response.json()
-
-            if (translatedText[4] === "-") translatedText[4] = ""
-            if (translatedText[5] === "-") translatedText[5] = ""
-            if (translatedText[6] === "-") translatedText[6] = ""
-            if (translatedText[7] === "-") translatedText[7] = ""
-            if (translatedText[8] === "-") translatedText[8] = ""
-            if (translatedText[9] === "-") translatedText[9] = ""
-
-            setFormDataTetum(prev => ({
-                scientificNameTetum: formData.scientificName,
-                commonNameTetum: translatedText[1],
-                leafTypeTetum: translatedText[2],
-                fruitTypeTetum: translatedText[3],
-                etymologyTetum: translatedText[4],
-                habitatTetum: translatedText[5],
-                identificationCharacteristicsTetum: translatedText[6],
-                phenologyTetum: translatedText[7],
-                seedGerminationTetum: translatedText[8],
-                pestsTetum: translatedText[9],
-                definitionTetum: prev.definitionTetum
-            }))
-            setTranslated(true)
-        }
-        catch (err) {
-            console.error('Translation error:', err)
-            setError(t("uploadFailed"))
-        }
-        finally {
-            setTranslateLoading(false)
-        }
-    }
-
-    const handleSubmit = async () => {
-        const requiredFields = [
-            { value: formData.scientificName, name: t("scientificName") },
-{ value: formData.commonName, name: t("commonName") },
-{ value: formData.leafType, name: t("leafType") },
-{ value: formData.fruitType, name: t("fruitType") },
-{ value: formDataTetum.commonNameTetum, name: t("commonName") },
-{ value: formDataTetum.leafTypeTetum, name: t("leafType") },
-{ value: formDataTetum.fruitTypeTetum, name: t("fruitType") }
-        ]
-
-        const emptyField = requiredFields.find(field => !field.value)
-
-        if (emptyField) {
-            setUploadError(`${emptyField.name} ${t("cannotBeEmpty")}`)
-            return
-        }
-
-        setLoading(true)
-        setStatus('')
-        setError('')
-        setUploadError('')
-
-        try {
-            const res = await adminFetch(`${import.meta.env.VITE_API_URL}/species/${ID}`, {
-                method: 'PUT',
-                body: JSON.stringify({
-                    scientific_name: formData.scientificName,
-                    common_name: formData.commonName,
-                    etymology: formData.etymology,
-                    definition: formData.definition,
-                    habitat: formData.habitat,
-                    identification_character: formData.identificationCharacteristics,
-                    leaf_type: formData.leafType,
-                    fruit_type: formData.fruitType,
-                    phenology: formData.phenology,
-                    seed_germination: formData.seedGermination,
-                    pest: formData.pests,
-
-                    scientific_name_tetum: formDataTetum.scientificNameTetum,
-                    common_name_tetum: formDataTetum.commonNameTetum,
-                    etymology_tetum: formDataTetum.etymologyTetum,
-                    definition_tetum: formDataTetum.definitionTetum,
-                    habitat_tetum: formDataTetum.habitatTetum,
-                    identification_character_tetum: formDataTetum.identificationCharacteristicsTetum,
-                    leaf_type_tetum: formDataTetum.leafTypeTetum,
-                    fruit_type_tetum: formDataTetum.fruitTypeTetum,
-                    phenology_tetum: formDataTetum.phenologyTetum,
-                    seed_germination_tetum: formDataTetum.seedGerminationTetum,
-                    pest_tetum: formDataTetum.pestsTetum
-                })
-            })
-
-            if (!res.ok) {
-                const err = await res.json().catch(() => ({}))
-                setUploadError(err.error || t("databaseUploadFailed"))
-                throw new Error(err.error || 'Update failed')
-            }
-
-            await res.json()
-            setResetKey(prev => prev + 1)
-            setStatus('Species updated successfully!')
-            setRowSelected(false)
-        }
-        catch (error) {
-            setUploadError(`Error: ${(error as Error).message}`)
-        }
-        finally {
-            setLoading(false)
-        }
-    }
-
-    const handleRowSelect = async (rowData: Species | null) => {
-        setStatus('')
-        setError('')
-        setTranslated(false)
-
-        if (!rowData) {
-            setRowSelected(false)
-            setID(-1)
-
-            setFormData({
-                scientificName: '',
-                commonName: '',
-                leafType: '',
-                fruitType: '',
-                etymology: '',
-                definition: '',
-                habitat: '',
-                identificationCharacteristics: '',
-                phenology: '',
-                seedGermination: '',
-                pests: ''
-            })
-            resetTet()
-            return
-        }
-
-        const rowID = rowData.species_id
-        setID(rowID)
-
-        setFormData({
-            scientificName: rowData.scientific_name || '',
-            commonName: rowData.common_name || '',
-            leafType: rowData.leaf_type || '',
-            fruitType: rowData.fruit_type || '',
-            etymology: rowData.etymology || '',
-            definition: rowData.definition || '',
-            habitat: rowData.habitat || '',
-            identificationCharacteristics: rowData.identification_character || '',
-            phenology: rowData.phenology || '',
-            seedGermination: rowData.seed_germination || '',
-            pests: rowData.pest || ''
-        })
-        setRowSelected(true)
-
-        try {
-            const tetumRow = speciesTet.find(r => r.species_id === rowID)
-
-            if (!tetumRow) {
-                setTetumRowError(true)
-                resetTet()
-                setError('')
-                return
-            }
-
-            setFormDataTetum({
-                scientificNameTetum: tetumRow.scientific_name || '',
-                commonNameTetum: tetumRow.common_name || '',
-                leafTypeTetum: tetumRow.leaf_type || '',
-                fruitTypeTetum: tetumRow.fruit_type || '',
-                etymologyTetum: tetumRow.etymology || '',
-                definitionTetum: tetumRow.definition || '',
-                habitatTetum: tetumRow.habitat || '',
-                identificationCharacteristicsTetum: tetumRow.identification_character || '',
-                phenologyTetum: tetumRow.phenology || '',
-                seedGerminationTetum: tetumRow.seed_germination || '',
-                pestsTetum: tetumRow.pest || ''
-            })
-
-            setTetumRowError(false)
-            setError('')
-        }
-        catch {
-            resetTet()
-            setTetumRowError(true)
-            setError("Error loading Tetum row.")
-        }
-    }
-
-    const selectRow = useEffectEvent(handleRowSelect)
-
-    useEffect(() => {
-        async function loadSpecies() {
-            if (!id) return
-
-            try {
-                const bundRes = await adminFetch(`${API_URL}/bundle`)
-                if (!bundRes.ok) throw new Error("failed to load bundle")
-
-                const bundle = await bundRes.json()
-                const tetList = bundle.species_tet ?? []
-
-                const res = await adminFetch(`${API_URL}/species/${id}`)
-                if (!res.ok) throw new Error(`failed to load species`)
-
-                const species = await res.json()
-
-                setSpeciesTet(tetList)
-                void selectRow(species)
-            }
-            catch (err) {
-                console.error("failed loading species for editing", err)
-                setError("Failed to load species")
-            }
-        }
-
-        void loadSpecies()
-    }, [id])
-
-    return (
-        <>
-            <div className="flex justify-between mb-4 items-center">
-            <h2 className="text-3xl font-bold">{t("editExistingEntry")}</h2>
-
-                <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                    <button onClick={() => changeLang("en")}>EN</button>
-                    <button onClick={() => changeLang("tet")}>TET</button>
-                </div>
-            </div>
-
-            <Box sx={containerBoxSx}>
-                {status && (
-                    <Alert severity="success">
-                        {status}
-                    </Alert>
+/**
+ * English and Tetum species form. In create mode the Tetum section appears
+ * after the first successful translation; in edit mode it shows from the start.
+ * Translation overwrites every translated Tetum field and keeps the Tetum definition.
+ */
+export default function SpeciesForm({ mode, initialValues, onSubmit, onDelete, deleting = false }: SpeciesFormProps) {
+  const { lang } = useLanguage();
+  const t = (key: string) => translations[key as keyof typeof translations]?.[lang] || key;
+
+  const [showTetum, setShowTetum] = useState(mode === "edit");
+  const [translated, setTranslated] = useState(false);
+  const translate = useTranslateToTetum();
+
+  const form = useAppForm({
+    defaultValues: initialValues,
+    onSubmit: ({ value }) => onSubmit(value),
+  });
+
+  const handleTranslate = async () => {
+    const errors = await Promise.all(
+      REQUIRED_FIELDS.map(({ name }) => {
+        form.setFieldMeta(`en.${name}`, (meta) => ({ ...meta, isBlurred: true }));
+        return form.validateField(`en.${name}`, "change");
+      })
+    );
+    if (errors.some((fieldErrors) => fieldErrors.length > 0)) return;
+
+    translate.mutate(form.state.values.en, {
+      onSuccess: (tetum) => {
+        Object.entries(tetum).forEach(([name, value]) =>
+          form.setFieldValue(`tet.${name as SpeciesFieldName}`, value ?? "")
+        );
+        setShowTetum(true);
+        setTranslated(true);
+      },
+      onError: () => toast.error(t("errorGeneric")),
+    });
+  };
+
+  const handleClear = () => {
+    form.reset(emptySpeciesForm());
+    setShowTetum(false);
+    setTranslated(false);
+  };
+
+  const renderFields = (language: "en" | "tet") => (
+    <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-1 justify-center gap-4 sm:grid-cols-[repeat(2,minmax(0,17.5rem))]">
+        {REQUIRED_FIELDS.map(({ name, labelKey, requiredKey }) =>
+          language === "tet" && name === "scientific_name" ? (
+            <form.Subscribe key={name} selector={(state) => state.values.en.scientific_name}>
+              {(scientificName) => (
+                <Field data-disabled>
+                  <FieldLabel htmlFor="tet.scientific_name">{t(labelKey)}</FieldLabel>
+                  <Input id="tet.scientific_name" value={scientificName} disabled readOnly />
+                </Field>
+              )}
+            </form.Subscribe>
+          ) : (
+            <form.AppField key={name} name={`${language}.${name}`} validators={{ onChange: required(requiredKey!) }}>
+              {(field) => <field.TextField label={t(labelKey)} required />}
+            </form.AppField>
+          )
+        )}
+      </div>
+
+      <p className="text-center text-compact font-semibold text-brand-text">{t("optional")}</p>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {OPTIONAL_FIELDS.map(({ name, labelKey, rows }) => (
+          <div key={name} className={name === "definition" ? "md:col-span-2" : undefined}>
+            <form.AppField name={`${language}.${name}`}>
+              {(field) => <field.TextField label={t(labelKey)} rows={rows} maxLength={MAX_LENGTH[language]} />}
+            </form.AppField>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        form.handleSubmit();
+      }}
+      noValidate
+      className="flex flex-col gap-6"
+    >
+      <Section title={t("englishEntry")}>
+        {renderFields("en")}
+        <div className="mt-6 flex flex-wrap justify-center gap-4">
+          <Button type="button" onClick={handleTranslate} disabled={translate.isPending}>
+            {translate.isPending ? t("loading") : t("translateToTetum")}
+          </Button>
+          {mode === "create" && (
+            <Button type="button" variant="outline" onClick={handleClear}>
+              {t("clearEntry")}
+            </Button>
+          )}
+        </div>
+      </Section>
+
+      {showTetum && (
+        <Section
+          title={
+            mode === "create" ? t("tetumTranslation") : t(translated ? "translatedTetumEntry" : "originalTetumEntry")
+          }
+          subtitle={mode === "create" ? t("reviewTetumText") : t("pleaseCheckFields")}
+        >
+          {renderFields("tet")}
+          <form.Subscribe selector={(state) => state.isSubmitting}>
+            {(isSubmitting) => (
+              <div className="mt-6 flex flex-wrap justify-center gap-4">
+                <Button type="submit" disabled={isSubmitting || translate.isPending || deleting}>
+                  {mode === "create"
+                    ? t(isSubmitting ? "adding" : "addEntry")
+                    : t(isSubmitting ? "editing" : "saveChanges")}
+                </Button>
+                {onDelete && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={onDelete}
+                    disabled={isSubmitting || deleting}
+                    className="border-destructive/40 text-destructive hover:bg-destructive-soft hover:text-destructive-hover"
+                  >
+                    {t(deleting ? "deleting" : "deleteEntry")}
+                  </Button>
                 )}
-            </Box>
-
-            <Box sx={errorContainerSx}>
-                {error && (
-                    <Alert severity="error">
-                        {error}
-                    </Alert>
-                )}
-            </Box>
-
-            {rowSelected && (
-                <Box sx={formContainerSx}>
-                    <h2 style={{ fontSize: '1.75rem' }}>{t("english")} Entry</h2>
-
-                    <Box display="flex" gap={2} mb={2} justifyContent="center">
-                        <TextField
-                            sx={{ ...bigFieldSx, maxWidth: 280 }}
-                            name="scientificName"
-                            label={t("scientificName")}
-                            value={formData.scientificName}
-                            onChange={handleChange}
-                            onBlur={() => markTouched('scientificName')}
-                            required
-                            error={touched.scientificName && !formData.scientificName}
-                            helperText={
-                                touched.scientificName && !formData.scientificName
-                                ? t("scientificNameEmpty")
-                                    : ""
-                            }
-                        />
-
-                        <TextField
-                            sx={{ ...bigFieldSx, maxWidth: 280 }}
-                            name="commonName"
-                            label={t("commonName")}
-                            value={formData.commonName}
-                            onChange={handleChange}
-                            onBlur={() => markTouched('commonName')}
-                            required
-                            error={touched.commonName && !formData.commonName}
-                            helperText={
-                                touched.commonName && !formData.commonName
-                                ? t("commonNameEmpty")
-                                    : ""
-                            }
-                        />
-                    </Box>
-
-                    <Box display="flex" gap={2} mb={2} justifyContent="center">
-                        <TextField
-                            sx={{ ...bigFieldSx, maxWidth: 280 }}
-                            name="leafType"
-                            label={t("leafType")}
-                            value={formData.leafType}
-                            onChange={handleChange}
-                            onBlur={() => markTouched('leafType')}
-                            required
-                            error={touched.leafType && !formData.leafType}
-                            helperText={
-                                touched.leafType && !formData.leafType
-                                ? t("leafTypeEmpty")
-                                    : ""
-                            }
-                        />
-
-                        <TextField
-                            sx={{ ...bigFieldSx, maxWidth: 280 }}
-                            name="fruitType"
-                            label={t("fruitType")}
-                            value={formData.fruitType}
-                            onChange={handleChange}
-                            onBlur={() => markTouched('fruitType')}
-                            required
-                            error={touched.fruitType && !formData.fruitType}
-                            helperText={
-                                touched.fruitType && !formData.fruitType
-                                ? t("fruitTypeEmpty")
-                                    : ""
-                            }
-                        />
-                    </Box>
-
-                    <Box display="flex" gap={2} mb={2}>
-                        <TextField
-                            fullWidth
-                            label={t("definition")}
-                            name="definition"
-                            multiline
-                            rows={3}
-                            value={formData.definition}
-                            onChange={handleChange}
-                            sx={bigFieldSx}
-                        />
-                    </Box>
-
-                    <Box display="flex" gap={2} mb={2}>
-                        <TextField
-                            fullWidth
-                            label={t("etymology")}
-                            name="etymology"
-                            multiline
-                            rows={4}
-                            value={formData.etymology}
-                            onChange={handleChange}
-                            sx={bigFieldSx}
-                        />
-
-                        <TextField
-                            fullWidth
-                            label={t("habitat")}
-                            name="habitat"
-                            multiline
-                            rows={4}
-                            value={formData.habitat}
-                            onChange={handleChange}
-                            sx={bigFieldSx}
-                        />
-                    </Box>
-
-                    <Box display="flex" gap={2} mb={2}>
-                        <TextField
-                            fullWidth
-                            label={t("identificationCharacteristics")}
-                            name="identificationCharacteristics"
-                            multiline
-                            rows={4}
-                            value={formData.identificationCharacteristics}
-                            onChange={handleChange}
-                            sx={bigFieldSx}
-                        />
-
-                        <TextField
-                            fullWidth
-                            label={t("phenology")}
-                            name="phenology"
-                            multiline
-                            rows={4}
-                            value={formData.phenology}
-                            onChange={handleChange}
-                            sx={bigFieldSx}
-                        />
-                    </Box>
-
-                    <Box display="flex" gap={2} mb={2}>
-                        <TextField
-                            fullWidth
-                            label={t("seedGermination")}
-                            name="seedGermination"
-                            multiline
-                            rows={5}
-                            value={formData.seedGermination}
-                            onChange={handleChange}
-                            sx={bigFieldSx}
-                        />
-
-                        <TextField
-                            fullWidth
-                            label={t("pest")}
-                            name="pests"
-                            multiline
-                            rows={5}
-                            value={formData.pests}
-                            onChange={handleChange}
-                            sx={bigFieldSx}
-                        />
-                    </Box>
-
-                    <Box>
-                        <Button
-                            variant="contained"
-                            onClick={handleTranslate}
-                            disabled={translateLoading}
-                        >
-                            {translateLoading ? t("loading") : t("translateToTetum")}
-                        </Button>
-                    </Box>
-                </Box>
+              </div>
             )}
-
-            {rowSelected && (
-                <Box mt={4}>
-                    {translated ? (
-                        <h2 style={{ fontSize: '1.5rem' }}>Translated Tetum Entry</h2>
-                    ) : (
-                        <h2 style={{ fontSize: '1.5rem' }}>Original Tetum Entry</h2>
-                    )}
-
-                    <h3>Please check fields to ensure correct translation:</h3>
-
-                    <Box display="flex" gap={2} mb={2} justifyContent="center">
-                        <TextField
-                            sx={{ ...bigFieldSx, maxWidth: 280 }}
-                            label={t("scientificName")}
-                            name="scientificNameTetum"
-                            value={formData.scientificName}
-                            disabled
-                        />
-
-                        <TextField
-                            sx={{ ...bigFieldSx, maxWidth: 280 }}
-                            label={t("commonName")}
-                            name="commonNameTetum"
-                            value={formDataTetum.commonNameTetum}
-                            onChange={handleChangeTetum}
-                            onBlur={() => markTouched('commonNameTetum')}
-                            required
-                            error={touched.commonNameTetum && !formDataTetum.commonNameTetum}
-                            helperText={
-                                touched.commonNameTetum && !formDataTetum.commonNameTetum
-                                ? t("commonNameEmpty")
-                                    : ""
-                            }
-                        />
-                    </Box>
-
-                    <Box display="flex" gap={2} mb={2} justifyContent="center">
-                        <TextField
-                            sx={{ ...bigFieldSx, maxWidth: 280 }}
-                            label={t("leafType")}
-                            name="leafTypeTetum"
-                            value={formDataTetum.leafTypeTetum}
-                            onChange={handleChangeTetum}
-                            onBlur={() => markTouched('leafTypeTetum')}
-                            required
-                            error={touched.leafTypeTetum && !formDataTetum.leafTypeTetum}
-                            helperText={
-                                touched.leafTypeTetum && !formDataTetum.leafTypeTetum
-                                ? t("leafTypeEmpty")
-                                    : ""
-                            }
-                        />
-
-                        <TextField
-                            sx={{ ...bigFieldSx, maxWidth: 280 }}
-                            label={t("fruitType")}
-                            name="fruitTypeTetum"
-                            value={formDataTetum.fruitTypeTetum}
-                            onChange={handleChangeTetum}
-                            onBlur={() => markTouched('fruitTypeTetum')}
-                            required
-                            error={touched.fruitTypeTetum && !formDataTetum.fruitTypeTetum}
-                            helperText={
-                                touched.fruitTypeTetum && !formDataTetum.fruitTypeTetum
-                                ? t("fruitTypeEmpty")
-                                    : ""
-                            }
-                        />
-                    </Box>
-
-                    <div><h5>{t("optional")}</h5></div>
-
-                    <Box display="flex" gap={2} mb={2}>
-                        <TextField
-                            fullWidth
-                            label={t("definition")}
-                            name="definitionTetum"
-                            multiline
-                            rows={3}
-                            value={formDataTetum.definitionTetum}
-                            onChange={handleChangeTetum}
-                            sx={bigFieldSx}
-                        />
-                    </Box>
-
-                    <Box display="flex" gap={2} mb={2}>
-                        <TextField
-                            fullWidth
-                            label={t("etymology")}
-                            name="etymologyTetum"
-                            multiline
-                            rows={4}
-                            value={formDataTetum.etymologyTetum}
-                            onChange={handleChangeTetum}
-                            sx={bigFieldSx}
-                        />
-
-                        <TextField
-                            fullWidth
-                            label={t("habitat")}
-                            name="habitatTetum"
-                            multiline
-                            rows={4}
-                            value={formDataTetum.habitatTetum}
-                            onChange={handleChangeTetum}
-                            sx={bigFieldSx}
-                        />
-                    </Box>
-
-                    <Box display="flex" gap={2} mb={2}>
-                        <TextField
-                            fullWidth
-                            label={t("identificationCharacteristics")}
-                            name="identificationCharacteristicsTetum"
-                            multiline
-                            rows={4}
-                            value={formDataTetum.identificationCharacteristicsTetum}
-                            onChange={handleChangeTetum}
-                            sx={bigFieldSx}
-                        />
-
-                        <TextField
-                            fullWidth
-                            label={t("phenology")}
-                            name="phenologyTetum"
-                            multiline
-                            rows={4}
-                            value={formDataTetum.phenologyTetum}
-                            onChange={handleChangeTetum}
-                            sx={bigFieldSx}
-                        />
-                    </Box>
-
-                    <Box display="flex" gap={2} mb={2}>
-                        <TextField
-                            fullWidth
-                            label={t("seedGermination")}
-                            name="seedGerminationTetum"
-                            multiline
-                            rows={4}
-                            value={formDataTetum.seedGerminationTetum}
-                            onChange={handleChangeTetum}
-                            sx={bigFieldSx}
-                        />
-
-                        <TextField
-                            fullWidth
-                            label={t("pest")}
-                            name="pestsTetum"
-                            multiline
-                            rows={4}
-                            value={formDataTetum.pestsTetum}
-                            onChange={handleChangeTetum}
-                            sx={bigFieldSx}
-                        />
-                    </Box>
-
-                    <Box sx={errorContainerSx}>
-                        {uploadError && (
-                            <Alert severity="error">
-                                {uploadError}
-                            </Alert>
-                        )}
-                    </Box>
-
-                    <Box>
-                        <Button
-                            variant="contained"
-                            onClick={handleSubmit}
-                            disabled={loading || translateLoading}
-                        >
-                            {loading ? 'Editing...' : 'Push edit'}
-                        </Button>
-                    </Box>
-
-                    <Box sx={{ marginTop: 2 }}>
-                        <Button
-                            variant="contained"
-                            color="error"
-                            onClick={handleClickOpen}
-                            disabled={deleteLoading}
-                        >
-                            {deleteLoading ? 'Deleting...' : 'Delete Entry'}
-                        </Button>
-                    </Box>
-                </Box>
-            )}
-
-            <Dialog
-                open={open}
-                onClose={handleClose}
-                aria-labelledby="alert-dialog-title"
-                aria-describedby="alert-dialog-description"
-            >
-                <DialogTitle id="alert-dialog-title">
-                {t("deleteSpeciesEntry")}
-                </DialogTitle>
-                <DialogContent>
-                    <DialogContentText id="alert-dialog-description">
-                    {t("deleteConfirmPrefix")} "{formData.commonName}"? {t("deleteConfirmSuffix")}
-                    </DialogContentText>
-                </DialogContent>
-                <DialogActions>
-                <Button onClick={handleClose}>{t("cancel")}</Button>
-                    <Button onClick={handleConfirmDelete} color="error" autoFocus>
-                    {t("delete")}
-                    </Button>
-                </DialogActions>
-            </Dialog>
-        </>
-    )
+          </form.Subscribe>
+        </Section>
+      )}
+    </form>
+  );
 }

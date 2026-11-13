@@ -1,194 +1,64 @@
-import React, { useState, useRef, type DragEvent } from "react";
-import { Upload } from "lucide-react";
-import { adminFetch } from "../../shared/api/adminFetch";
+import { useState } from "react";
+import { FileSpreadsheet } from "lucide-react";
+import { toast } from "sonner";
+import { Card, CardContent } from "@sda/ui/components/card";
+import { Spinner } from "@sda/ui/components/spinner";
+import { ApiError } from "../../shared/api/apiClient";
+import FileDropzone from "../../shared/ui/FileDropzone";
+import Page from "../../shared/ui/Page";
 import { translations } from "../../translations";
 import { useLanguage } from "../../useLanguage";
+import { useImportSpreadsheet } from "./api";
 
-interface UploadedFile {
-  file: File;
-  status: "uploading" | "success" | "error";
-  message?: string;
-}
+const EXCEL_EXTENSIONS = [".xlsx", ".xls"];
 
-export default function AddExcel() {
-  const API_URL = import.meta.env.VITE_API_BASE;
+const isExcel = (file: File) => EXCEL_EXTENSIONS.some((ext) => file.name.toLowerCase().endsWith(ext));
 
-  const { lang, setLang } = useLanguage();
-  const t = (key: string) =>
-    translations[key as keyof typeof translations]?.[lang] || key;
+export default function SpeciesImportPage() {
+  const { lang } = useLanguage();
+  const t = (key: string) => translations[key as keyof typeof translations]?.[lang] || key;
+  const importSpreadsheet = useImportSpreadsheet();
+  const [fileName, setFileName] = useState<string | null>(null);
 
-  const changeLang = (newLang: "en" | "tet") => {
-    localStorage.setItem("lang", newLang);
-    setLang(newLang);
-  };
-
-  const [dragActive, setDragActive] = useState(false);
-  const [uploadedFile, setUploadedFile] = useState<UploadedFile | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleDrag = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
-  };
-
-  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      void handleFile(e.dataTransfer.files[0]);
-    }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      void handleFile(e.target.files[0]);
-    }
-  };
-
-  const handleFile = async (file: File) => {
-    const validExtensions = [".xlsx", ".xls"];
-    const fileExtension = file.name
-      .substring(file.name.lastIndexOf("."))
-      .toLowerCase();
-
-    if (!validExtensions.includes(fileExtension)) {
-      setUploadedFile({
-        file,
-        status: "error",
-        message: t("onlyExcelAllowed"),
-      });
+  const handleFile = (file: File) => {
+    setFileName(file.name);
+    if (!isExcel(file)) {
+      toast.error(t("onlyExcelAllowed"));
       return;
     }
-
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      setUploadedFile({
-        file,
-        status: "uploading",
-        message: t("processingFile"),
-      });
-
-      const response = await adminFetch(`${API_URL}/upload-species`, {
-        method: "POST",
-        body: formData,
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || t("uploadFailed"));
-      }
-
-      setUploadedFile({
-        file,
-        status: "success",
-        message: t("uploadSuccess"),
-      });
-    } catch (err: unknown) {
-      setUploadedFile({
-        file,
-        status: "error",
-        message: (err instanceof Error && err.message) || t("uploadFailed"),
-      });
-    }
-  };
-
-  const onButtonClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const removeFile = () => {
-    setUploadedFile(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+    importSpreadsheet.mutate(file, {
+      onSuccess: () => toast.success(t("uploadSuccess")),
+      onError: (error) =>
+        toast.error(error instanceof ApiError && error.message ? error.message : t("uploadFailed")),
+    });
   };
 
   return (
-    <>
-      <div className="flex justify-between mb-4 items-center">
-        <h2 className="text-3xl font-bold">{t("addExcel")}</h2>
-
-        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          <button onClick={() => changeLang("en")}>EN</button>
-          <button onClick={() => changeLang("tet")}>TET</button>
-        </div>
-      </div>
-
-      <div className="w-full mx-auto p-5">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-3">
-            {t("uploadTitle")}
-          </h1>
-          <p className="text-gray-600">
-            {t("uploadDescription")}
-          </p>
-        </div>
-
-        <div className="bg-white rounded-3xl p-8 shadow">
-          <div
-            className={`border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer ${
-              dragActive ? "border-blue-600 bg-blue-50" : "border-gray-300"
-            }`}
-            onDragEnter={handleDrag}
-            onDragLeave={handleDrag}
-            onDragOver={handleDrag}
-            onDrop={handleDrop}
-            onClick={onButtonClick}
-          >
-            <Upload className="mx-auto mb-4" />
-
-            <div className="text-lg font-semibold">
-              {dragActive ? t("dropFile") : t("uploadSpecies")}
-            </div>
-
-            <p className="text-gray-600 mb-4">
-              {t("dragOrClick")}
-            </p>
-
-            <button type="button">
-              {t("chooseFile")}
-            </button>
-
-            <input
-              ref={fileInputRef}
-              type="file"
-              className="hidden"
-              accept=".xlsx,.xls"
-              onChange={handleChange}
-            />
-          </div>
-
-          {uploadedFile && (
-            <div className="mt-6">
-              <div>{uploadedFile.file.name}</div>
-
-              {uploadedFile.status === "uploading" && (
-                <div>{t("uploading")}</div>
+    <Page title={t("uploadTitle")} subtitle={t("uploadDescription")}>
+      <Card className="gap-4 rounded-2xl py-6 shadow-card">
+        <CardContent className="flex flex-col gap-4 px-6">
+          <FileDropzone
+            accept={EXCEL_EXTENSIONS.join(",")}
+            onFile={handleFile}
+            disabled={importSpreadsheet.isPending}
+            title={t("uploadSpecies")}
+            dropTitle={t("dropFile")}
+            hint={t("dragOrClick")}
+          />
+          {fileName && (
+            <div className="flex items-center gap-3 rounded-xl border px-4 py-3 text-compact">
+              <FileSpreadsheet className="size-5 text-brand-accent" />
+              <span className="flex-1 truncate font-medium">{fileName}</span>
+              {importSpreadsheet.isPending && (
+                <span className="flex items-center gap-2 text-muted-foreground">
+                  <Spinner />
+                  {t("processingFile")}
+                </span>
               )}
-
-              {uploadedFile.status === "success" && (
-                <div>{t("success")}</div>
-              )}
-
-              {uploadedFile.status === "error" && (
-                <div>{t("error")}: {uploadedFile.message}</div>
-              )}
-
-              <button onClick={removeFile}>{t("remove")}</button>
             </div>
           )}
-        </div>
-      </div>
-    </>
+        </CardContent>
+      </Card>
+    </Page>
   );
 }

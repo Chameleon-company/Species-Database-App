@@ -1,10 +1,9 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import AdminLayout from "./layout/AdminLayout";
 import { GuestOnly } from "./layout/routeGuards";
-import { Home } from "../features/home/HomePage";
+import HomePage from "../features/home/HomePage";
 import SpeciesListPage from "../features/species/SpeciesListPage";
-import Page1 from "../features/species/SpeciesCreatePage";
-import { EditEntry } from "../features/species/SpeciesForm";
+import SpeciesFormPage from "../features/species/SpeciesFormPage";
 import SpeciesImportPage from "../features/species/SpeciesImportPage";
 import MediaPage from "../features/media/MediaPage";
 import UsersPage from "../features/users/UsersPage";
@@ -24,11 +23,11 @@ export default function App() {
         }
       />
       <Route element={<AdminLayout />}>
-        <Route index element={<Home />} />
+        <Route index element={<HomePage />} />
         <Route path="species" element={<SpeciesListPage />} />
-        <Route path="species/new" element={<Page1 />} />
+        <Route path="species/new" element={<SpeciesFormPage />} />
         <Route path="species/import" element={<SpeciesImportPage />} />
-        <Route path="species/:id" element={<EditEntry />} />
+        <Route path="species/:id" element={<SpeciesFormPage />} />
         <Route path="media" element={<MediaPage />} />
         <Route path="users" element={<UsersPage />} />
         <Route path="analytics" element={<AnalyticsPage />} />

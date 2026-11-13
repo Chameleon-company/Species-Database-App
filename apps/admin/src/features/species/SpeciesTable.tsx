@@ -1,104 +1,64 @@
-import { DataGrid } from '@mui/x-data-grid'
-import type { GridColDef, GridRowSelectionModel } from '@mui/x-data-grid'
-import Paper from '@mui/material/Paper'
-import { useEffect, useState } from "react"
-import { translations } from '../../translations'
+import { DataTable } from "@sda/ui/components/data-table";
+import { dataTableColumnHelper } from "@sda/ui/lib/data-table";
+import LoadError from "../../shared/ui/LoadError";
+import { useTableText } from "../../shared/ui/useTableText";
+import { translations } from "../../translations";
+import { useLanguage } from "../../useLanguage";
+import { useSpeciesList } from "./api";
+import type { SpeciesFieldName, SpeciesRecord } from "./species";
 
-type Species = {
-  species_id: number
-  scientific_name: string
-  common_name: string
-  etymology: string
-  definition?: string
-  habitat: string
-  identification_character: string
-  leaf_type: string
-  fruit_type: string
-  phenology: string
-  seed_germination: string
-  pest: string
-}
+const column = dataTableColumnHelper<SpeciesRecord>();
 
-interface MainTableProps {
-  onRowSelect: (rowData: Species | null) => void
-  lang: "en" | "tet"
-}
+const TEXT_COLUMNS: { name: SpeciesFieldName; labelKey: string; className: string }[] = [
+  { name: "scientific_name", labelKey: "scientificName", className: "min-w-50" },
+  { name: "common_name", labelKey: "commonName", className: "min-w-37" },
+  { name: "etymology", labelKey: "etymology", className: "min-w-37" },
+  { name: "habitat", labelKey: "habitat", className: "min-w-32" },
+  { name: "identification_character", labelKey: "identificationCharacter", className: "min-w-37" },
+  { name: "leaf_type", labelKey: "leafType", className: "min-w-30" },
+  { name: "fruit_type", labelKey: "fruitType", className: "min-w-30" },
+  { name: "phenology", labelKey: "phenology", className: "min-w-30" },
+  { name: "seed_germination", labelKey: "seedGermination", className: "min-w-37" },
+  { name: "pest", labelKey: "pest", className: "min-w-32" },
+];
 
-const paginationModel = { page: 0, pageSize: 10 }
+/** Read-only table of every species field in the current admin language, sorted by ID. */
+export default function SpeciesTable() {
+  const { lang } = useLanguage();
+  const t = (key: string) => translations[key as keyof typeof translations]?.[lang] || key;
+  const { emptyLabel, labels } = useTableText();
+  const species = useSpeciesList(lang);
 
-export default function MainTableSelect({ onRowSelect, lang }: MainTableProps) {
-  const t = (key: string) =>
-    translations[key as keyof typeof translations]?.[lang] || key
-  const [speciesEn, setSpeciesEn] = useState<Species[]>([])
+  const columns = column.columns([
+    column.accessor("species_id", { header: t("id"), meta: { className: "w-16" } }),
+    ...TEXT_COLUMNS.map(({ name, labelKey, className }) =>
+      column.accessor((row) => row[name] ?? "", {
+        id: name,
+        header: t(labelKey),
+        cell: ({ getValue }) => (
+          <span className={name === "scientific_name" ? "line-clamp-1 max-w-56 italic" : "line-clamp-1 max-w-56"}>
+            {getValue()}
+          </span>
+        ),
+        meta: { className },
+      })
+    ),
+  ]);
 
-  const columns: GridColDef[] = [
-      { field: 'species_id', headerName: t("id"), width: 50 },
-      { field: 'scientific_name', headerName: t("scientificName"), width: 200 },
-      { field: 'common_name', headerName: t("commonName"), width: 150 },
-      { field: 'etymology', headerName: t("etymology"), width: 150 },
-      { field: 'habitat', headerName: t("habitat"), width: 130 },
-      { field: 'identification_character', headerName: t("identificationCharacter"), width: 150 },
-      { field: 'leaf_type', headerName: t("leafType"), width: 120 },
-      { field: 'fruit_type', headerName: t("fruitType"), width: 120 },
-      { field: 'phenology', headerName: t("phenology"), width: 120 },
-      { field: 'seed_germination', headerName: t("seedGermination"), width: 150 },
-      { field: 'pest', headerName: t("pest"), width: 130 },
-    ]
-
-  useEffect(() => {
-    async function getSpecies() {
-      try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/bundle`, {
-          credentials: "include",
-        })
-
-        if (!res.ok) {
-          throw new Error("failed to fetch species")
-        }
-
-        const data = await res.json()
-        setSpeciesEn(data.species_en ?? [])
-      } catch (err) {
-        console.error(err)
-        setSpeciesEn([])
-      }
-    }
-
-    void getSpecies()
-  }, [])
-
-  const handleRowSelection = (selectionModel: GridRowSelectionModel) => {
-    const selectedIds = Array.from(selectionModel.ids)
-
-    if (selectedIds.length > 0) {
-      const selectedId = selectedIds[0]
-      const selectedSpecies = speciesEn.find(s => s.species_id === selectedId)
-      onRowSelect(selectedSpecies || null)
-    } else {
-      onRowSelect(null)
-    }
+  if (species.isError) {
+    return <LoadError onRetry={() => species.refetch()}>{t("failedToLoadSpecies")}</LoadError>;
   }
 
   return (
-    <Paper sx={{ height: 600, width: '100%' }}>
-      <DataGrid
-        rows={speciesEn}
-        columns={columns}
-        getRowId={(row) => row.species_id}
-        initialState={{
-          pagination: { paginationModel },
-          sorting: {
-            sortModel: [{ field: 'species_id', sort: 'asc' }]
-          }
-        }}
-        pageSizeOptions={[10, 20]}
-        checkboxSelection
-        disableMultipleRowSelection
-        onRowSelectionModelChange={handleRowSelection}
-        sx={{ border: 0, backgroundColor: '#cdcdcdff' }}
-      />
-    </Paper>
-  )
+    <DataTable
+      columns={columns}
+      data={species.data ?? []}
+      getRowId={(row) => String(row.species_id)}
+      loading={species.isPending}
+      emptyLabel={emptyLabel}
+      labels={labels}
+      pageSizeOptions={[10, 20]}
+      initialSorting={[{ id: "species_id", desc: false }]}
+    />
+  );
 }
-
-export type { Species }
