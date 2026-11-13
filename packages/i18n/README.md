@@ -88,6 +88,7 @@ It also fails when `tet.json` does not have a key from `en.json`.
 ## Plurals and dates
 
 The catalog has no plural forms.
-Tetum nouns do not change in the plural, so one text per key works for Tetum.
+Tetum nouns do not change in the plural.
+One text per key works for Tetum.
 Node 24 has no `Intl` plural or number data for `tet`, and falls back to English rules.
 Test any `Intl` formatting in the browser before you use it for Tetum.
