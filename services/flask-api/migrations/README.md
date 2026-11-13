@@ -73,4 +73,8 @@ Apply to a development project before a shared or production one, and record the
 |---|---|---|---|
 | 001 | Add `species_en.definition`, `species_tet.definition`, `media.storage_version` | 2026-11-13, in the rebuild from `TableSchema.sql` | 2026-11-12 |
 
+The 001 dates come from `supabase_migrations.schema_migrations` on each project.
+Prod recorded `001_add_definition_and_storage_version` at version `20261112075901`.
+Dev recorded `rebuild_dev_from_table_schema` at version `20261113093539`, and that snapshot already held 001.
+
 > Keep this table current. A migration that exists but has not been applied anywhere is exactly the failure this folder was created to prevent.

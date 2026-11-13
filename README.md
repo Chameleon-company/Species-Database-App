@@ -312,7 +312,11 @@ Verify a migration against a throwaway local database before it goes near Supaba
 bash services/flask-api/migrations/test_migration.sh
 ```
 
-This creates its own temporary PostgreSQL cluster, seeds it with the schema currently deployed, applies the migration, checks idempotency and rollback, and cleans up. It never reads `.env` and never connects to Supabase.
+It builds a throwaway PostgreSQL cluster from `TableSchema.sql` and rolls every migration back to the baseline.
+Then it applies each migration and checks idempotency, rollback and data survival.
+It also checks that `TableSchema.sql` and the migration chain build the same schema.
+It never reads `.env` and never connects to Supabase.
+`services/flask-api/migrations/README.md` lists every step.
 
 ## Backend Tests
 

@@ -16,8 +16,7 @@ set -uo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 MIG="$REPO/services/flask-api/migrations"
 SNAPSHOT="$REPO/services/flask-api/TableSchema.sql"
-WORK="${TMPDIR:-/tmp}/sda-migration-test.$$"
-PGPORT_TEST="${PGPORT_TEST:-5599}"
+WORK=$(mktemp -d /tmp/sda-mig.XXXXXX) || { echo "!! FAIL: mktemp"; exit 1; }
 DB=sda_mig_test
 SNAPDB=sda_snapshot_test
 
@@ -41,8 +40,8 @@ for bin in psql initdb pg_ctl pg_dump createdb; do
     command -v "$bin" >/dev/null 2>&1 || fail "$bin not found on PATH"
 done
 
-pg()  { psql -h 127.0.0.1 -p "$PGPORT_TEST" -U postgres -v ON_ERROR_STOP=1 -q "$@"; }
-pgq() { psql -h 127.0.0.1 -p "$PGPORT_TEST" -U postgres -v ON_ERROR_STOP=1 -tAq "$@"; }
+pg()  { psql -h "$WORK" -U postgres -v ON_ERROR_STOP=1 -q "$@"; }
+pgq() { psql -h "$WORK" -U postgres -v ON_ERROR_STOP=1 -tAq "$@"; }
 apply() { pg -d "$DB" -f "$1" >"$WORK/apply.log" 2>&1 || { tail -5 "$WORK/apply.log"; fail "applying $(basename "$1")"; }; }
 
 counts() {
@@ -66,13 +65,13 @@ SQL
 }
 
 load_snapshot() {
-    createdb -h 127.0.0.1 -p "$PGPORT_TEST" -U postgres "$1" || fail "createdb $1"
+    createdb -h "$WORK" -U postgres "$1" || fail "createdb $1"
     supabase_like "$1"
     pg -d "$1" -f "$SNAPSHOT" >"$WORK/$1.log" 2>&1 || { tail -20 "$WORK/$1.log"; fail "TableSchema.sql does not load"; }
 }
 
 schema_dump() {
-    pg_dump -h 127.0.0.1 -p "$PGPORT_TEST" -U postgres --schema-only "$1" \
+    pg_dump -h "$WORK" -U postgres --schema-only "$1" \
         | grep -v -E '^\\(restrict|unrestrict) '
 }
 
@@ -117,11 +116,10 @@ check_001() {
     ok "re-applied for the next migration"
 }
 
-step "STEP 0 - throwaway PostgreSQL $(pg_ctl --version | awk '{print $3}') on port $PGPORT_TEST"
-mkdir -p "$WORK"
+step "STEP 0 - throwaway PostgreSQL $(pg_ctl --version | awk '{print $3}') on a private socket"
 initdb -D "$WORK/pgdata" -U postgres --auth=trust >/dev/null 2>&1 || fail "initdb"
 pg_ctl -D "$WORK/pgdata" \
-    -o "-c listen_addresses=127.0.0.1 -p $PGPORT_TEST -c unix_socket_directories=''" \
+    -o "-c listen_addresses='' -c unix_socket_directories=$WORK" \
     -l "$WORK/pg.log" start >/dev/null 2>&1 || { tail -20 "$WORK/pg.log"; fail "could not start postgres"; }
 for _ in $(seq 20); do pgq -d postgres -c "SELECT 1" >/dev/null 2>&1 && break; sleep 0.5; done
 pgq -d postgres -c "SELECT 1" >/dev/null 2>&1 || fail "cannot connect"
