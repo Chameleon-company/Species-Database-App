@@ -117,7 +117,7 @@ Two limits stay after 002:
 | # | Description | Applied to dev | Applied to shared/prod |
 |---|---|---|---|
 | 001 | Add `species_en.definition`, `species_tet.definition`, `media.storage_version` | 2026-11-13, in the rebuild from `TableSchema.sql` | 2026-11-12 |
-| 002 | Enable RLS on every public table and revoke `anon` and `authenticated` access in `public` | not yet | not yet |
+| 002 | Enable RLS on every public table and revoke `anon` and `authenticated` access in `public` | 2026-11-14 | not yet |
 
 Snapshot matches with prod, newest last.
 Add a line each time you match `TableSchema.sql` to prod again.
