@@ -44,7 +44,9 @@ function useSpeciesMutation<TVariables>(mutationFn: (variables: TVariables) => P
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: speciesKeys.all }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: speciesKeys.all });
+    },
   });
 }
 

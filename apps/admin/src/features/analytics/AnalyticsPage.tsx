@@ -43,7 +43,7 @@ function StatCard({ Icon, label, value }: { Icon: ComponentType<{ className?: st
     <Card className={cardClass}>
       <CardContent className="flex flex-col items-center gap-1 px-4 py-6 text-center">
         <Icon className="size-6 text-primary" />
-        <span className="mt-2 text-2xl font-bold">{value ?? "—"}</span>
+        <span className="mt-2 text-2xl font-bold">{value ?? "-"}</span>
         <span className="text-sm text-muted-foreground">{label}</span>
       </CardContent>
     </Card>
@@ -65,7 +65,9 @@ export default function AnalyticsPage() {
   const activity = useUserActivity();
 
   const users = activity.data ?? [];
-  const mostActive = [...users].sort((a, b) => count(b.login_count) - count(a.login_count))[0];
+  const mostActive = [...users]
+    .filter((user) => count(user.login_count) > 0)
+    .sort((a, b) => count(b.login_count) - count(a.login_count))[0];
   const loading = overview.isPending || activity.isPending;
   const minutes = (value: number | null) => `${(value ?? 0).toFixed(1)} min`;
 
@@ -128,7 +130,7 @@ export default function AnalyticsPage() {
               <Line label={t("logins")}>{count(user.login_count)}</Line>
               <Line label={t("totalDuration")}>{minutes(user.total_duration)}</Line>
               <Line label={t("avgDuration")}>{minutes(user.average_duration)}</Line>
-              <Line label={t("lastLogin")}>{user.last_login ? new Date(user.last_login).toLocaleString() : "—"}</Line>
+              <Line label={t("lastLogin")}>{user.last_login ? new Date(user.last_login).toLocaleString() : "-"}</Line>
               <p className={cn("mt-2 text-sm font-medium", user.is_active ? "text-success" : "text-destructive")}>
                 {user.is_active ? t("active") : t("inactive")}
               </p>

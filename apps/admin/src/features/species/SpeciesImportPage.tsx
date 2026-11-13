@@ -10,9 +10,9 @@ import { translations } from "../../translations";
 import { useLanguage } from "../../useLanguage";
 import { useImportSpreadsheet } from "./api";
 
-const EXCEL_EXTENSIONS = [".xlsx", ".xls"];
+const SPREADSHEET_EXTENSIONS = [".xlsx", ".csv"];
 
-const isExcel = (file: File) => EXCEL_EXTENSIONS.some((ext) => file.name.toLowerCase().endsWith(ext));
+const isSpreadsheet = (file: File) => SPREADSHEET_EXTENSIONS.some((ext) => file.name.toLowerCase().endsWith(ext));
 
 export default function SpeciesImportPage() {
   const { lang } = useLanguage();
@@ -22,7 +22,7 @@ export default function SpeciesImportPage() {
 
   const handleFile = (file: File) => {
     setFileName(file.name);
-    if (!isExcel(file)) {
+    if (!isSpreadsheet(file)) {
       toast.error(t("onlyExcelAllowed"));
       return;
     }
@@ -38,7 +38,7 @@ export default function SpeciesImportPage() {
       <Card className="gap-4 rounded-2xl py-6 shadow-card">
         <CardContent className="flex flex-col gap-4 px-6">
           <FileDropzone
-            accept={EXCEL_EXTENSIONS.join(",")}
+            accept={SPREADSHEET_EXTENSIONS.join(",")}
             onFile={handleFile}
             disabled={importSpreadsheet.isPending}
             title={t("uploadSpecies")}

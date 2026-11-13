@@ -8,7 +8,7 @@ import { useAppForm, required } from "../../shared/form/useAppForm";
 import { translations } from "../../translations";
 import { useLanguage } from "../../useLanguage";
 import { useTranslateToTetum } from "./api";
-import { MAX_LENGTH, SPECIES_FIELDS, emptySpeciesForm, type SpeciesFieldName, type SpeciesFormValues } from "./species";
+import { SPECIES_FIELDS, emptySpeciesForm, type SpeciesFieldName, type SpeciesFormValues } from "./species";
 
 type SpeciesFormProps = {
   mode: "create" | "edit";
@@ -83,7 +83,7 @@ export default function SpeciesForm({ mode, initialValues, onSubmit, onDelete, d
   const renderFields = (language: "en" | "tet") => (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-1 justify-center gap-4 sm:grid-cols-[repeat(2,minmax(0,17.5rem))]">
-        {REQUIRED_FIELDS.map(({ name, labelKey, requiredKey }) =>
+        {REQUIRED_FIELDS.map(({ name, labelKey, requiredKey, maxLength }) =>
           language === "tet" && name === "scientific_name" ? (
             <form.Subscribe key={name} selector={(state) => state.values.en.scientific_name}>
               {(scientificName) => (
@@ -95,7 +95,7 @@ export default function SpeciesForm({ mode, initialValues, onSubmit, onDelete, d
             </form.Subscribe>
           ) : (
             <form.AppField key={name} name={`${language}.${name}`} validators={{ onChange: required(requiredKey!) }}>
-              {(field) => <field.TextField label={t(labelKey)} required />}
+              {(field) => <field.TextField label={t(labelKey)} required maxLength={maxLength} />}
             </form.AppField>
           )
         )}
@@ -104,10 +104,10 @@ export default function SpeciesForm({ mode, initialValues, onSubmit, onDelete, d
       <p className="text-center text-compact font-semibold text-brand-text">{t("optional")}</p>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        {OPTIONAL_FIELDS.map(({ name, labelKey, rows }) => (
+        {OPTIONAL_FIELDS.map(({ name, labelKey, rows, maxLength }) => (
           <div key={name} className={name === "definition" ? "md:col-span-2" : undefined}>
             <form.AppField name={`${language}.${name}`}>
-              {(field) => <field.TextField label={t(labelKey)} rows={rows} maxLength={MAX_LENGTH[language]} />}
+              {(field) => <field.TextField label={t(labelKey)} rows={rows} maxLength={maxLength} />}
             </form.AppField>
           </div>
         ))}

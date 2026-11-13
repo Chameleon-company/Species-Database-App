@@ -15,6 +15,7 @@ import { useDeleteUser, useUsers, type User } from "./api";
 import UserDialog from "./UserDialog";
 
 const column = dataTableColumnHelper<User>();
+const NO_USERS: User[] = [];
 
 export default function UsersPage() {
   const { lang } = useLanguage();
@@ -113,7 +114,7 @@ export default function UsersPage() {
       ) : (
         <DataTable
           columns={columns}
-          data={users.data ?? []}
+          data={users.data ?? NO_USERS}
           getRowId={(row) => String(row.user_id)}
           loading={users.isPending}
           emptyLabel={emptyLabel}

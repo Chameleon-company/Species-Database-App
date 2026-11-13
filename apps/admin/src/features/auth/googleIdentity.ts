@@ -30,6 +30,19 @@ export function mountGoogleButton(container: HTMLElement, onCredential: (idToken
   return true;
 }
 
+/**
+ * Mounts the Google button now, or once the async GSI script loads.
+ * Returns a cleanup that drops the pending load listener.
+ */
+export function mountGoogleButtonWhenReady(container: HTMLElement, onCredential: (idToken: string) => void): () => void {
+  if (mountGoogleButton(container, onCredential)) return () => undefined;
+  const script = document.querySelector<HTMLScriptElement>('script[src*="accounts.google.com/gsi/client"]');
+  if (!script) return () => undefined;
+  const onLoad = () => mountGoogleButton(container, onCredential);
+  script.addEventListener("load", onLoad, { once: true });
+  return () => script.removeEventListener("load", onLoad);
+}
+
 /** Clicks the rendered Google button inside `container`, which opens Google's sign-in. */
 export function clickGoogleButton(container: HTMLElement | null) {
   container?.querySelector<HTMLElement>('[role="button"]')?.click();

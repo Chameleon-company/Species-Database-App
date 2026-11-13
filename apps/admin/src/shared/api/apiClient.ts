@@ -1,4 +1,4 @@
-import { adminFetch } from "./adminFetch";
+import { SessionEndedError, adminFetch } from "./adminFetch";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 const API_URL = import.meta.env.VITE_API_URL;
@@ -28,8 +28,8 @@ type RequestOptions = {
  * JSON body, or `null` when the body is not JSON.
  *
  * Throws `ApiError` on a non-2xx status, with the body's `error` or `detail`
- * text as the message (falling back to the status text), and with status 0
- * when the request fails before a response arrives.
+ * text as the message (falling back to the status text), with status 401
+ * when the session ended, and with status 0 when no response arrived.
  */
 export async function requestJson<T>(
   url: string,
@@ -42,6 +42,7 @@ export async function requestJson<T>(
       body: form ?? (json === undefined ? undefined : JSON.stringify(json)),
     });
   } catch (error) {
+    if (error instanceof SessionEndedError) throw new ApiError(401, error.message);
     throw new ApiError(0, error instanceof Error ? error.message : String(error));
   }
 

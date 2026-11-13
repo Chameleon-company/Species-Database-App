@@ -31,7 +31,7 @@ const HEIC = /\.(heic|heif)$/i;
 
 type ChosenFile = { file: File; previewUrl: string | null };
 
-function FilePreview({ chosen, onRemove }: { chosen: ChosenFile; onRemove: () => void }) {
+function FilePreview({ chosen, onRemove, removeLabel }: { chosen: ChosenFile; onRemove: () => void; removeLabel: string }) {
   const { file, previewUrl } = chosen;
   return (
     <div className="flex items-center gap-3 rounded-xl border p-2.5">
@@ -52,7 +52,7 @@ function FilePreview({ chosen, onRemove }: { chosen: ChosenFile; onRemove: () =>
         type="button"
         variant="ghost"
         size="icon-sm"
-        aria-label="remove"
+        aria-label={removeLabel}
         onClick={onRemove}
         className="rounded-full bg-destructive-soft text-destructive hover:bg-destructive-soft hover:text-destructive-hover"
       >
@@ -129,7 +129,7 @@ function MediaForm({ media, onClose }: { media: Media | null; onClose: () => voi
     if (!isImage && !isVideo) return setErrorKey("onlyImageOrVideoAllowed");
     setErrorKey(null);
     choose({ file: next, previewUrl: isImage ? URL.createObjectURL(next) : null });
-    if (!form.state.values.media_type) form.setFieldValue("media_type", isImage ? "image" : "video");
+    form.setFieldValue("media_type", isImage ? "image" : "video");
   };
 
   return (
@@ -173,7 +173,7 @@ function MediaForm({ media, onClose }: { media: Media | null; onClose: () => voi
         <Field>
           <FieldLabel>{t("file")}</FieldLabel>
           {chosen ? (
-            <FilePreview chosen={chosen} onRemove={() => choose(null)} />
+            <FilePreview chosen={chosen} onRemove={() => choose(null)} removeLabel={t("remove")} />
           ) : (
             <FileDropzone
               accept="image/*,video/*"

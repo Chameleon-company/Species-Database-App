@@ -8,8 +8,8 @@ import logo from "../../assets/logo.png";
 import LanguageSwitch from "../../shared/ui/LanguageSwitch";
 import { translations } from "../../translations";
 import { useLanguage } from "../../useLanguage";
-import { useGoogleLogin, usePasswordLogin } from "./api";
-import { clickGoogleButton, mountGoogleButton } from "./googleIdentity";
+import { LoginRejectedError, useGoogleLogin, usePasswordLogin } from "./api";
+import { clickGoogleButton, mountGoogleButtonWhenReady } from "./googleIdentity";
 
 function GoogleMark() {
   return (
@@ -47,9 +47,8 @@ export default function LoginPage() {
   });
 
   useEffect(() => {
-    if (googleRef.current && !mountGoogleButton(googleRef.current, onGoogleCredential)) {
-      console.warn("Google Identity not loaded");
-    }
+    if (!googleRef.current) return;
+    return mountGoogleButtonWhenReady(googleRef.current, onGoogleCredential);
   }, []);
 
   const submit = () => {
@@ -58,7 +57,7 @@ export default function LoginPage() {
       { name, password },
       {
         onSuccess: () => navigate("/"),
-        onError: (err) => setError(err.message || t("adminLoginFailed")),
+        onError: (err) => setError(t(err instanceof LoginRejectedError ? "adminLoginFailed" : "somethingWentWrong")),
       }
     );
   };

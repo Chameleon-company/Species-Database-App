@@ -8,6 +8,7 @@ import { useSpeciesList } from "./api";
 import type { SpeciesFieldName, SpeciesRecord } from "./species";
 
 const column = dataTableColumnHelper<SpeciesRecord>();
+const NO_SPECIES: SpeciesRecord[] = [];
 
 const TEXT_COLUMNS: { name: SpeciesFieldName; labelKey: string; className: string }[] = [
   { name: "scientific_name", labelKey: "scientificName", className: "min-w-50" },
@@ -52,7 +53,7 @@ export default function SpeciesTable() {
   return (
     <DataTable
       columns={columns}
-      data={species.data ?? []}
+      data={species.data ?? NO_SPECIES}
       getRowId={(row) => String(row.species_id)}
       loading={species.isPending}
       emptyLabel={emptyLabel}

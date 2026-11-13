@@ -31,6 +31,8 @@ export function useResolvedImage(url: string, enabled: boolean) {
         .resolved_url,
     enabled: enabled && Boolean(url) && !direct,
     staleTime: Infinity,
+    retry: false,
+    retryOnMount: false,
   });
 
   if (!enabled || !url) return { url: null, pending: false, failed: false };
