@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Box, Typography, Button } from "@mui/material";
-import { adminFetch } from "../utils/adminFetch";
-import { translations } from "../translations";
-import { useLanguage } from "../useLanguage";
+import { adminFetch } from "../../shared/api/adminFetch";
+import { translations } from "../../translations";
+import { useLanguage } from "../../useLanguage";
 
 
 interface AuditReport {

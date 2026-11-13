@@ -2,7 +2,7 @@ import { DataGrid } from '@mui/x-data-grid'
 import type { GridColDef, GridRowSelectionModel } from '@mui/x-data-grid'
 import Paper from '@mui/material/Paper'
 import { useEffect, useState } from "react"
-import { translations } from './translations'
+import { translations } from '../../translations'
 
 type Species = {
   species_id: number

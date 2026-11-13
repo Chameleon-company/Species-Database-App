@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
-import { clearAdminSession, hasAdminSession } from "../utils/adminSession";
+import { clearAdminSession, hasAdminSession } from "../../shared/api/adminSession";
 
 /** Require a stored admin token; otherwise send the user to login. */
 export default function ProtectedAdmin({ children }: { children: ReactNode }) {

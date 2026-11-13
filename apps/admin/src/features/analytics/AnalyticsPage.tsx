@@ -18,9 +18,9 @@ import ImageIcon from "@mui/icons-material/Image";
 import WarningIcon from "@mui/icons-material/Warning";
 import StarIcon from "@mui/icons-material/Star";
 
-import { adminFetch } from "../utils/adminFetch";
-import { translations } from "../translations";
-import { useLanguage } from "../useLanguage";
+import { adminFetch } from "../../shared/api/adminFetch";
+import { translations } from "../../translations";
+import { useLanguage } from "../../useLanguage";
 
 
 import {

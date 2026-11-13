@@ -3,9 +3,9 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import React, { useState } from 'react'
 import Alert from '@mui/material/Alert'
-import { adminFetch } from '../utils/adminFetch'
-import { translations } from '../translations'
-import { useLanguage } from "../useLanguage";
+import { adminFetch } from '../../shared/api/adminFetch'
+import { translations } from '../../translations'
+import { useLanguage } from "../../useLanguage";
 
 const API_URL = import.meta.env.VITE_API_URL
 const API_BASE = import.meta.env.VITE_API_BASE

@@ -21,10 +21,10 @@ import SearchIcon from "@mui/icons-material/Search";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import UploadIcon from "@mui/icons-material/CloudUpload";
-import { adminFetch } from "../utils/adminFetch";
-import { translations } from "../translations";
-import { useLanguage } from "../useLanguage";
-import { resolveErrorKey } from "../utils/errorMessages";
+import { adminFetch } from "../../shared/api/adminFetch";
+import { translations } from "../../translations";
+import { useLanguage } from "../../useLanguage";
+import { resolveErrorKey } from "./errorMessages";
 import {
   Dialog,
   DialogTitle,

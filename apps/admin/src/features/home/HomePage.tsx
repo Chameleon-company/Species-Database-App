@@ -1,8 +1,8 @@
-import TheDrawer from "../Components/drawer";
-import MainTableSelect from "../mainTableSelect";
-import MainTableSelectTetum from "../mainTableSelectTetum";
-import { translations } from "../translations";
-import { useLanguage } from "../useLanguage";
+import TheDrawer from "../../Components/drawer";
+import MainTableSelect from "../species/SpeciesTable";
+import MainTableSelectTetum from "../../mainTableSelectTetum";
+import { translations } from "../../translations";
+import { useLanguage } from "../../useLanguage";
 
 
   export function Home() {

@@ -1,8 +1,8 @@
 import React, { useState, useRef, type DragEvent } from "react";
 import { Upload } from "lucide-react";
-import { adminFetch } from "../utils/adminFetch";
-import { translations } from "../translations";
-import { useLanguage } from "../useLanguage";
+import { adminFetch } from "../../shared/api/adminFetch";
+import { translations } from "../../translations";
+import { useLanguage } from "../../useLanguage";
 
 interface UploadedFile {
   file: File;

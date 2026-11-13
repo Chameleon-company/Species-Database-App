@@ -3,16 +3,16 @@ import Button from '@mui/material/Button'
 import React, { useEffect, useEffectEvent, useState } from 'react'
 import { TextField } from '@mui/material'
 import Alert from '@mui/material/Alert'
-import type { Species } from '../mainTableSelect'
+import type { Species } from './SpeciesTable'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogContentText from '@mui/material/DialogContentText'
 import DialogTitle from '@mui/material/DialogTitle'
 import { useParams } from "react-router-dom";
-import { adminFetch } from '../utils/adminFetch'
-import { translations } from '../translations'
-import { useLanguage } from "../useLanguage";
+import { adminFetch } from '../../shared/api/adminFetch'
+import { translations } from '../../translations'
+import { useLanguage } from "../../useLanguage";
 
 
 const API_URL = import.meta.env.VITE_API_URL

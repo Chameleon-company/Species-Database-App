@@ -5,10 +5,10 @@ import UploadFileIcon from "@mui/icons-material/UploadFile";
 import SearchIcon from "@mui/icons-material/Search";
 import { Link } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
-import TableLayout from "../Components/TableLayout";
-import { adminFetch } from "../utils/adminFetch";
-import { translations } from "../translations";
-import { useLanguage } from "../useLanguage";
+import TableLayout from "../../shared/TableLayout";
+import { adminFetch } from "../../shared/api/adminFetch";
+import { translations } from "../../translations";
+import { useLanguage } from "../../useLanguage";
 
 
 const apiUrl = import.meta.env.VITE_API_URL;

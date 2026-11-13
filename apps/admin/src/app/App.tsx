@@ -1,17 +1,17 @@
-import "./App.css";
-import { Home } from "./Pages/Home";
-import Page1 from "./Pages/AddEntry";
-import { EditEntry } from "./Pages/EditEntry";
+import "../App.css";
+import { Home } from "../features/home/HomePage";
+import Page1 from "../features/species/SpeciesCreatePage";
+import { EditEntry } from "../features/species/SpeciesForm";
 import { HashRouter as Router, Routes, Route } from "react-router-dom";
-import UsersPage from "./Pages/Users";
-import Analytics from "./Pages/Analytics";
-import Audit from "./Pages/Audit";
-import AdminLoginForm from "./Pages/AdminLoginForm";
-import AdminLayout from "./Components/AdminLayout";
-import { GuestOnlyRoute } from "./Components/ProtectedAdmin";
-import MediaManager from "./Pages/MediaManager";
-import SpeciesPage from "./Pages/Species";
-import AddExcel from "./Pages/AddExcel";
+import UsersPage from "../features/users/UsersPage";
+import Analytics from "../features/analytics/AnalyticsPage";
+import Audit from "../features/audit/AuditPage";
+import AdminLoginForm from "../features/auth/LoginPage";
+import AdminLayout from "./layout/AdminLayout";
+import { GuestOnlyRoute } from "./layout/routeGuards";
+import MediaManager from "../features/media/MediaPage";
+import SpeciesPage from "../features/species/SpeciesListPage";
+import AddExcel from "../features/species/SpeciesImportPage";
 
 function App() {
   return (

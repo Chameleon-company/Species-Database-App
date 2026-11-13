@@ -16,10 +16,10 @@ import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 
-import Logo from "../assets/logo-color.png";
-import { logoutAdmin } from "../utils/adminSession";
-import { translations } from "../translations";
-import { useLanguage } from "../useLanguage";
+import Logo from "../../assets/logo-color.png";
+import { logoutAdmin } from "../../shared/api/adminSession";
+import { translations } from "../../translations";
+import { useLanguage } from "../../useLanguage";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 

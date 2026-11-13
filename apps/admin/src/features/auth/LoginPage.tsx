@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import logo from "../assets/logo.png";
-import { translations } from "../translations";
-import { useLanguage } from "../useLanguage";
+import logo from "../../assets/logo.png";
+import { translations } from "../../translations";
+import { useLanguage } from "../../useLanguage";
 
 type GoogleCredentialResponse = {
   credential: string;
