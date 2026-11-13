@@ -24,7 +24,7 @@ best=""
 best_v=""
 for d in /opt/homebrew/opt/postgresql@*/bin /usr/local/opt/postgresql@*/bin /usr/lib/postgresql/*/bin; do
     [ -x "$d/initdb" ] || continue
-    v=$("$d/initdb" --version | awk '{print $NF}')
+    v=$("$d/initdb" --version | awk '{print $3}')
     if [ -z "$best_v" ] || [ "$(printf '%s\n' "$best_v" "$v" | sort -V | tail -1)" = "$v" ]; then
         best=$d
         best_v=$v
@@ -53,15 +53,10 @@ pgq() { psql -h "$WORK" -U postgres -v ON_ERROR_STOP=1 -tAq "$@"; }
 apply() { pg -d "$DB" -f "$1" >"$WORK/apply.log" 2>&1 || { tail -5 "$WORK/apply.log"; fail "applying $(basename "$1")"; }; }
 
 fingerprint() {
-    pgq -d "$DB" -c "SELECT md5(string_agg(r, '|' ORDER BY r)) FROM (
-        SELECT 'en' || x::text r FROM species_en x
-        UNION ALL SELECT 'tet' || x::text FROM species_tet x
-        UNION ALL SELECT 'media' || x::text FROM media x
-        UNION ALL SELECT 'users' || x::text FROM users x
-        UNION ALL SELECT 'sessions' || x::text FROM admin_sessions x
-        UNION ALL SELECT 'audit' || x::text FROM admin_session_audit x
-        UNION ALL SELECT 'analytics' || x::text FROM analytics x
-        UNION ALL SELECT 'changelog' || x::text FROM changelog x) q;"
+    local union
+    union=$(pgq -d "$DB" -c "SELECT string_agg(format('SELECT %L || x::text r FROM public.%I x', relname, relname), ' UNION ALL ' ORDER BY relname)
+        FROM pg_class WHERE relnamespace = 'public'::regnamespace AND relkind IN ('r', 'p');")
+    pgq -d "$DB" -c "SELECT md5(string_agg(r, '|' ORDER BY r)) FROM ($union) q;"
 }
 
 same_rows_as() {
@@ -69,10 +64,6 @@ same_rows_as() {
     [[ "$1" =~ ^[0-9a-f]{32}$ ]] || fail "could not fingerprint the rows before the migration"
     [[ "$now" =~ ^[0-9a-f]{32}$ ]] || fail "could not fingerprint the rows after the rollback"
     [[ "$now" == "$1" ]]
-}
-
-counts() {
-    pgq -d "$DB" -c "SELECT (SELECT count(*) FROM species_en)||'/'||(SELECT count(*) FROM species_tet)||'/'||(SELECT count(*) FROM media)||'/'||(SELECT count(*) FROM users)||'/'||(SELECT count(*) FROM admin_sessions);"
 }
 
 target_columns() {
@@ -132,6 +123,8 @@ check_001() {
 
     local out; out=$(pg -d "$DB" -v VERBOSITY=verbose -c "INSERT INTO media (species_id, species_name, media_type, download_link, storage_version) VALUES (2, 'x', 'image', 'https://e.org/b.jpg', NULL);" 2>&1)
     [[ "$out" == *23502* && "$out" == *storage_version* ]] || fail "storage_version accepted NULL or failed for another reason: $out"
+    [ "$(pgq -d "$DB" -c "SELECT attnotnull FROM pg_attribute WHERE attrelid = 'public.media'::regclass AND attname = 'storage_version';")" = "t" ] \
+        || fail "storage_version is not NOT NULL in the catalog"
     ok "storage_version rejects NULL"
 
     step "001 - rollback"
