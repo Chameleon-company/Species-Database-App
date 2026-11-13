@@ -81,7 +81,7 @@ rls_on() {
 client_access() {
     pgq -d "$DB" -c "SELECT count(*) FROM pg_class c, unnest(ARRAY['anon','authenticated']) r
         WHERE c.relnamespace = 'public'::regnamespace AND c.relkind IN ('r', 'p', 'v', 'm', 'f')
-        AND (has_table_privilege(r, c.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
+        AND (has_table_privilege(r, c.oid, '$TABLE_PRIVILEGES')
              OR has_any_column_privilege(r, c.oid, 'SELECT,INSERT,UPDATE,REFERENCES'));"
 }
 
@@ -89,7 +89,19 @@ client_full_access() {
     pgq -d "$DB" -c "SELECT count(*) FROM pg_class c, unnest(ARRAY['anon','authenticated']) r
         WHERE c.relnamespace = 'public'::regnamespace AND c.relkind = 'r'
         AND (SELECT bool_and(has_table_privilege(r, c.oid, p))
-             FROM unnest(ARRAY['SELECT','INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER']) p);"
+             FROM unnest(string_to_array('$TABLE_PRIVILEGES', ',')) p);"
+}
+
+client_full_sequence_access() {
+    pgq -d "$DB" -c "SELECT count(*) FROM pg_class c, unnest(ARRAY['anon','authenticated']) r
+        WHERE c.relnamespace = 'public'::regnamespace AND c.relkind = 'S'
+        AND has_sequence_privilege(r, c.oid, 'USAGE') AND has_sequence_privilege(r, c.oid, 'SELECT')
+        AND has_sequence_privilege(r, c.oid, 'UPDATE');"
+}
+
+tables_without_rls() {
+    pgq -d "$DB" -c "SELECT count(*) FROM pg_class
+        WHERE relnamespace = 'public'::regnamespace AND relkind IN ('r', 'p') AND NOT relrowsecurity;"
 }
 
 client_sequence_and_function_access() {
@@ -110,12 +122,12 @@ client_default_grants() {
 }
 
 as_role() {
-    pgq -d "$DB" -v VERBOSITY=sqlstate -c "BEGIN" -c "SET LOCAL ROLE $1" -c "$2" -c "ROLLBACK" 2>&1
+    pgq -d "$DB" -c "BEGIN" -c "SET LOCAL lc_messages TO 'C'" -c "SET LOCAL ROLE $1" -c "$2" -c "ROLLBACK" 2>&1
 }
 
 denied() {
     local out; out=$(as_role "$1" "$2")
-    [[ "$out" == *"42501"* ]]
+    [[ "$out" == *"permission denied for"* ]]
 }
 
 supabase_like() {
@@ -235,6 +247,7 @@ assert_before_002() {
     [ "$(rls_on admin_session_audit)" = "t" ] || fail "admin_session_audit lost RLS"
     local tables; tables=$(wc -w <<< "$TABLES")
     [ "$(client_full_access)" = "$((2 * tables))" ] || fail "anon and authenticated lack full table privileges before 002"
+    [ "$(client_full_sequence_access)" = "$((2 * tables))" ] || fail "anon and authenticated lack full sequence privileges before 002"
     [ "$(client_default_grants)" = "6" ] || fail "postgres default privileges do not grant tables, sequences and functions to both client roles before 002"
     ok "before 002: RLS only on admin_session_audit, client roles hold every grant"
 }
@@ -246,6 +259,8 @@ pg_ctl -D "$WORK/pgdata" \
     -l "$WORK/pg.log" start >/dev/null 2>&1 || { tail -20 "$WORK/pg.log"; fail "could not start postgres"; }
 for _ in $(seq 20); do pgq -d postgres -c "SELECT 1" >/dev/null 2>&1 && break; sleep 0.5; done
 pgq -d postgres -c "SELECT 1" >/dev/null 2>&1 || fail "cannot connect"
+TABLE_PRIVILEGES=SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER
+[ "$(pgq -d postgres -c "SHOW server_version_num")" -ge 170000 ] && TABLE_PRIVILEGES=$TABLE_PRIVILEGES,MAINTAIN
 pg -d postgres -c "CREATE ROLE anon NOLOGIN; CREATE ROLE authenticated NOLOGIN; CREATE ROLE service_role NOLOGIN BYPASSRLS;" \
     || fail "create Supabase roles"
 ok "cluster up with anon, authenticated and service_role"
@@ -298,8 +313,7 @@ done
 step "STEP 4 - anon and authenticated have no access in schema public"
 [ "$(client_access)" = "0" ] || fail "anon or authenticated holds a privilege on a public relation"
 [ "$(client_sequence_and_function_access)" = "0" ] || fail "anon or authenticated can use a public sequence or function"
-[ "$(pgq -d "$DB" -c "SELECT count(*) FROM pg_class WHERE relnamespace = 'public'::regnamespace AND relkind IN ('r', 'p') AND NOT relrowsecurity;")" = "0" ] \
-    || fail "a public table has RLS off"
+[ "$(tables_without_rls)" = "0" ] || fail "a public table has RLS off"
 ok "every public table has RLS on, and nothing in public is open to anon or authenticated"
 
 step "STEP 5 - TableSchema.sql matches the migration chain"

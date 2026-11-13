@@ -79,54 +79,73 @@ Apply to a development project before a shared or production one, and record the
 002 removes every `anon` and `authenticated` privilege in `public`.
 The API keeps working only if its `SUPABASE_KEY` maps to `service_role`.
 
-State before 002, recorded on dev and prod on 2026-11-14:
+State before 002 on 2026-11-14:
 
-| Item | State |
-|---|---|
-| RLS | On for `admin_session_audit` only |
-| Table grants | `anon` and `authenticated` hold ALL on all 8 tables, and on nothing else |
-| Sequence grants | `anon` and `authenticated` hold ALL on all 8 sequences on dev. Prod default privileges grant the same. The 2026-11-14 check did not cover the prod sequence ACLs |
-| Default privileges of `postgres` in `public` | ALL on tables and sequences, and EXECUTE on functions, for `anon`, `authenticated` and `service_role` |
-| Default privileges of `supabase_admin` in `public` | The same grants as `postgres`. 002 leaves them unchanged |
-| Functions and views in `public` | None |
-| API key role | `service_role` on prod (JWT `role` claim), `sb_secret_` key on dev |
+| Item | Dev | Prod |
+|---|---|---|
+| RLS | On for `admin_session_audit` only | Same |
+| Table grants | ALL for `anon` and `authenticated` on all 8 tables. No other table exists | Same |
+| Sequence grants | ALL for `anon` and `authenticated` on all 8 sequences | Not read. Step 2 reads them |
+| Default privileges of `postgres` and `supabase_admin` in `public` | ALL on tables and sequences, EXECUTE on functions, for `anon`, `authenticated` and `service_role` | Same |
+| Functions and views in `public` | None | None |
+| API key | `sb_secret_` key | JWT with `role` claim `service_role` |
 
-The rollback grants back exactly these table, sequence and default privileges, by name.
+These queries produced the table:
+
+- `select relname, relrowsecurity, has_table_privilege('anon', oid, 'select') from pg_class where relnamespace = 'public'::regnamespace and relkind = 'r';`
+- `select pg_get_userbyid(defaclrole), defaclobjtype, defaclacl from pg_default_acl where defaclnamespace = 'public'::regnamespace;`
+- `select count(*) from pg_proc where pronamespace = 'public'::regnamespace;`
+
+The rollback grants back the table privileges on the 8 named tables only.
+A table created after 002 stays closed.
+It also grants back the sequence privileges and the default privileges.
 
 Steps:
 
-1. Check the API key type without printing the key.
+1. Check the API key type.
+   Never print the key.
    A legacy JWT key must carry the `role` claim `service_role`.
-   A new key must start with `sb_secret_`, which Supabase maps to `service_role`.
-2. Record the sequence grants, which the 2026-11-14 check did not cover on prod:
+   Read only that claim.
+   A new key must start with `sb_secret_`.
+   Supabase maps that prefix to `service_role`.
+   If the key is neither, stop.
+   Set a `service_role` key on Render first.
+2. Read the sequence grants on prod:
    `select relname, relacl from pg_class where relnamespace = 'public'::regnamespace and relkind = 'S';`
    Each row must show `anon=rwU` and `authenticated=rwU`.
-   If a row differs, change the sequence grants in the 002 rollback to match before you apply.
+   If a row differs, change the sequence grants in the 002 rollback to match, then apply.
 3. Take a backup in the dashboard (Database, Backups).
 4. Run the 002 file in the SQL editor.
 5. Check the security advisor.
    It must show no `rls_disabled_in_public` and no `pg_graphql_*_table_exposed` lint.
-   It shows `rls_enabled_no_policy` (INFO) on all 8 tables, which is the intended state.
+   It shows `rls_enabled_no_policy` (INFO) on all 8 tables.
+   That INFO lint is the intended state.
 6. Log in to the admin, and load `/api/bundle` from the field app.
-7. If step 6 fails, check the API key type first, because a key without `service_role` is the likely cause.
-   Set the right key on Render and repeat step 6.
-   Run the 002 rollback only when the key is right and the API still fails.
+7. If step 6 fails, the project owner decides within 15 minutes.
+   First, check the API key type again.
+   A wrong key is the likely cause.
+   If the key is right, or a key fix does not restore the API in 15 minutes, run the 002 rollback.
 
-Only the project owner runs the rollback, because it opens `users.password_hash` to the public key again.
+Only the project owner runs the rollback.
+The rollback opens `users.password_hash` to the public key again.
 
 Two limits stay after 002:
 
-- PostgreSQL grants EXECUTE on each new function to PUBLIC, and only a global default can stop that.
+- PostgreSQL grants EXECUTE on each new function to PUBLIC.
+  Only a global default can stop that.
   A global default also strips EXECUTE from new `postgres` functions in the `extensions` schema.
   For that reason, 002 does not set one.
   Each migration that adds a function in `public` must revoke EXECUTE from PUBLIC.
   Harness step 4 fails when it does not.
-  Create every function through a migration file, never by hand in the SQL editor, so the harness sees it.
+  Create every function through a migration file, never by hand in the SQL editor.
+  Then the harness sees it.
 - `postgres` is not a member of `supabase_admin`.
   A migration cannot change the `supabase_admin` default privileges.
   Create tables through migrations, which run as `postgres`.
-  An object that `supabase_admin` creates in `public` still opens to `anon`, and the harness cannot see it.
-  The security advisor is the live check, because it flags such a table as `rls_disabled_in_public`.
+  An object that `supabase_admin` creates in `public` still opens to `anon`.
+  The harness cannot see it.
+  The security advisor is the live check.
+  It flags such a table as `rls_disabled_in_public`.
   Check the advisor after any dashboard or extension change.
 
 ## Migration log
