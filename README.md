@@ -12,9 +12,9 @@ The Rai Matak Species Guide supports field staff, botanists, and community partn
 apps/
   admin/          React admin dashboard
   api/            new TypeScript API (Hono), replaces the Flask API route by route
-  field/          new field app, replaces field-legacy
+  field/          new Preact field app, not deployed yet
   field-legacy/   static field app that runs in production today
-  android/        Capacitor Android wrapper around the field app
+  android/        Capacitor Android wrapper around field-legacy
 services/
   flask-api/      Flask API that runs in production today, with its tests and migrations
 ml/
@@ -112,10 +112,10 @@ VITE_GOOGLE_CLIENT_ID=
 ```
 
 Keep these default local values unless your ports change.
-If your `.env` predates the new field app, add `http://localhost:5174` to `CORS_ORIGINS`.
+If your `.env` predates the new field app, add `http://localhost:5174` and `http://127.0.0.1:5174` to `CORS_ORIGINS`.
 
 ```bash
-CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174
+CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174
 VITE_API_BASE=http://localhost:5000
 VITE_API_URL=http://localhost:5000/api
 ```

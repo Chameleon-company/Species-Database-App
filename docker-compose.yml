@@ -5,7 +5,7 @@ services:
       dockerfile: services/flask-api/Dockerfile
     environment:
       FLASK_ENV: production
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174}
       SUPABASE_URL: ${SUPABASE_URL:-}
       SUPABASE_KEY: ${SUPABASE_KEY:-}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
