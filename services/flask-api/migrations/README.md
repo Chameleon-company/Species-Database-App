@@ -107,9 +107,11 @@ Only the project owner runs the rollback, because it opens `users.password_hash`
 Two limits stay after 002:
 
 - PostgreSQL grants EXECUTE on each new function to PUBLIC, and only a global default can stop that.
-  A global default also strips EXECUTE from functions that `postgres` adds later in the `extensions` schema, so 002 does not set one.
+  A global default also strips EXECUTE from new `postgres` functions in the `extensions` schema.
+  For that reason, 002 does not set one.
   Each migration that adds a function in `public` must revoke EXECUTE from PUBLIC, and harness step 4 fails when it does not.
-- `postgres` is not a member of `supabase_admin`, so no migration can change the `supabase_admin` default privileges.
+- `postgres` is not a member of `supabase_admin`.
+  A migration cannot change the `supabase_admin` default privileges.
   Create tables through migrations, which run as `postgres`.
 
 ## Migration log
