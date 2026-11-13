@@ -97,7 +97,8 @@ async def process_file(file_path: str):
     delete fails. Raises Exception before any insert when the file cannot be
     read or a required column is missing.
 
-    Returns {"rows_inserted": int, "error": str | None}.
+    Returns {"rows_inserted": int, "english_only": [species_id], "error": str | None}.
+    english_only lists species_en rows whose cleanup delete failed.
     """
     df = _read_rows(file_path)
     normalized_cols = {normalize(c): c for c in df.columns}
@@ -125,7 +126,7 @@ async def process_file(file_path: str):
                 raise Exception(response.text)
             species_id = response.json()[0]["species_id"]
         except Exception as e:
-            return {"rows_inserted": inserted, "error": f"Upload error at row {idx+1} (English): {e}"}
+            return {"rows_inserted": inserted, "english_only": [], "error": f"Upload error at row {idx+1} (English): {e}"}
 
         try:
             row_tet = {"species_id": species_id}
@@ -144,10 +145,12 @@ async def process_file(file_path: str):
         except Exception as e:
             error = f"Upload error at row {idx+1} (Tetum): {e}"
             cleanup_error = _remove_english_row(species_id)
+            english_only = []
             if cleanup_error:
                 error += f". The English row {species_id} could not be removed: {cleanup_error}"
-            return {"rows_inserted": inserted, "error": error}
+                english_only = [species_id]
+            return {"rows_inserted": inserted, "english_only": english_only, "error": error}
 
         inserted += 1
 
-    return {"rows_inserted": inserted, "error": None}
+    return {"rows_inserted": inserted, "english_only": [], "error": None}

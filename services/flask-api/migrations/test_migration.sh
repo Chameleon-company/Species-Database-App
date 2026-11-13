@@ -297,13 +297,21 @@ check_003() {
     out=$(pg -d "$DB" -f "$MIG/003_merge_orphan_tetum_rows.rollback.sql" 2>&1)
     [[ "$out" == *"changed or went away after 003"* ]] || fail "the rollback accepted an edited partner: $out"
     pg -d "$DB" -c "UPDATE species_tet SET common_name = 'Ai-teak' WHERE species_id = 1;" || fail "undo the partner edit"
+    pg -d "$DB" -c "DELETE FROM species_tet WHERE species_id = 2;" || fail "delete a partner"
+    out=$(pg -d "$DB" -f "$MIG/003_merge_orphan_tetum_rows.rollback.sql" 2>&1)
+    [[ "$out" == *"changed or went away after 003"* ]] || fail "the rollback accepted a deleted partner: $out"
+    pg -d "$DB" -c "INSERT INTO species_tet (species_id, scientific_name, common_name, etymology, habitat,
+            identification_character, leaf_type, fruit_type, phenology, seed_germination, pest, definition)
+        SELECT 2, scientific_name, common_name, etymology, habitat, identification_character, leaf_type,
+            fruit_type, phenology, seed_germination, pest, definition
+        FROM species_tet_s07_backup WHERE species_id = 24;" || fail "restore the deleted partner"
     pg -d "$DB" -c "INSERT INTO species_en (species_id, scientific_name, common_name, leaf_type, fruit_type) VALUES (23, 'x', 'x', 'x', 'x');" \
         || fail "reuse an orphan id in species_en"
     out=$(pg -d "$DB" -f "$MIG/003_merge_orphan_tetum_rows.rollback.sql" 2>&1)
     [[ "$out" == *"are in use again"* ]] || fail "the rollback accepted a reused orphan id: $out"
     pg -d "$DB" -c "DELETE FROM species_en WHERE species_id = 23;" || fail "free the orphan id"
     [ "$(tetum_fk)" = "1" ] || fail "a refused rollback dropped the foreign key"
-    ok "the rollback refuses an edited partner and a reused orphan id, and changes nothing"
+    ok "the rollback refuses an edited or deleted partner and a reused orphan id, and changes nothing"
 
     local applied_log; applied_log=$(changelog_rows)
     apply "$MIG/003_merge_orphan_tetum_rows.sql"

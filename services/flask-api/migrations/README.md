@@ -182,8 +182,8 @@ Steps:
 6. Open a changed species in the admin, in English and in Tetum.
 
 The rollback puts back every backed-up row and drops the foreign key.
-It refuses to run when a partner row changed after 003, because that edit would be lost.
-It also refuses when a `species_tet` row uses an orphan id again.
+It refuses to run when a partner row changed or went away after 003, because that change would be lost.
+It also refuses when a `species_tet` or `species_en` row uses an orphan id again.
 Only the project owner runs it.
 
 `species_tet_s07_backup` stays after 003, so that the rollback can work.

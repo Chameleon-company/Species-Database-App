@@ -627,6 +627,35 @@ class TestIncrementalSync(unittest.TestCase):
         })
 
 
+class TestDeleteSpecies(unittest.TestCase):
+    def setUp(self):
+        _reset()
+        self.order = []
+        real_table = FAKE.table
+
+        def recording_table(name):
+            t = real_table(name)
+            real_delete = t.delete
+
+            def delete():
+                self.order.append(name)
+                return real_delete()
+            t.delete = delete
+            return t
+
+        FAKE.table = recording_table
+
+    def tearDown(self):
+        del FAKE.table
+
+    def test_deletes_the_tetum_row_before_the_english_row(self):
+        resp = FLASK_APP.test_client().delete("/api/species/1", headers=ADMIN_HEADERS)
+        self.assertLess(resp.status_code, 300)
+        self.assertEqual(self.order, ["species_tet", "species_en"])
+        self.assertEqual(FAKE.data["species_en"], [])
+        self.assertEqual(FAKE.data["species_tet"], [])
+
+
 class TestBulkUploadTetumIds(unittest.TestCase):
     def setUp(self):
         self.calls = []
@@ -669,7 +698,7 @@ class TestBulkUploadTetumIds(unittest.TestCase):
 
     def test_each_tetum_row_takes_the_id_its_english_insert_returned(self):
         result = asyncio.run(uploader_module.process_file(self.csv.name))
-        self.assertEqual(result, {"rows_inserted": 2, "error": None})
+        self.assertEqual(result, {"rows_inserted": 2, "english_only": [], "error": None})
         tet_ids = [row["species_id"] for kind, table, row in self.calls if table == "species_tet"]
         self.assertEqual(tet_ids, [42, 43])
 
@@ -686,6 +715,7 @@ class TestBulkUploadTetumIds(unittest.TestCase):
         self.delete_status = 500
         result = asyncio.run(uploader_module.process_file(self.csv.name))
         self.assertIn("English row 42 could not be removed: delete refused", result["error"])
+        self.assertEqual(result["english_only"], [42])
 
 
 if __name__ == "__main__":

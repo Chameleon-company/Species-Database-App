@@ -586,7 +586,7 @@ def upload_species_file():
 
         result = asyncio.run(process_file(temp_path))
 
-        if result["rows_inserted"] > 0:
+        if result["rows_inserted"] > 0 or result["english_only"]:
             log_change(
                 "species",
                 None,
@@ -596,7 +596,8 @@ def upload_species_file():
         if result["error"]:
             return jsonify({
                 "error": result["error"],
-                "rows_inserted": result["rows_inserted"]
+                "rows_inserted": result["rows_inserted"],
+                "english_only": result["english_only"]
             }), 500
 
         return jsonify({
@@ -652,7 +653,10 @@ def audit_species_file():
         return jsonify({"status": "error", "error": str(e)}), 500
     finally:
         if temp_path and os.path.exists(temp_path):
-            os.remove(temp_path)
+            try:
+                os.remove(temp_path)
+            except Exception as cleanup_err:
+                print(f"Temp file cleanup failed: {cleanup_err}")
 
 
 
@@ -910,15 +914,15 @@ def delete_species(species_id):
     """
     DELETE SPECIES
 
-    -delete species from both language tables (species_tet also cascades once migration 003 runs)
+    -delete species from species_tet, then species_en, so a failure between the two never leaves a Tetum row without its English row
     -logs one row deletion for incremental sync
     """
 
     admin_id, err = get_admin_user(supabase)
     if err:
         return jsonify({"error": err[0]}), err[1]
-    supabase.table("species_en").delete().eq("species_id", species_id).execute()
     supabase.table("species_tet").delete().eq("species_id", species_id).execute()
+    supabase.table("species_en").delete().eq("species_id", species_id).execute()
 
     log_change("species", species_id, "DELETE")
 
