@@ -13,7 +13,9 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "strict": true,
+    "noUncheckedSideEffectImports": true
   },
   "include": ["vite.config.ts", "first-load-budget.ts", "first-load-budget.test.ts"]
 }

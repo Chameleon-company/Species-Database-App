@@ -4,14 +4,17 @@ import { firstLoadFiles } from "./first-load-budget.ts";
 
 const chunk = (
   fileName: string,
-  options: { isEntry?: boolean; imports?: string[]; css?: string[] } = {},
+  options: { isEntry?: boolean; imports?: string[]; css?: string[]; assets?: string[] } = {},
 ) => ({
   type: "chunk",
   fileName,
   code: "",
   isEntry: options.isEntry ?? false,
   imports: options.imports ?? [],
-  viteMetadata: { importedCss: new Set(options.css ?? []), importedAssets: new Set<string>() },
+  viteMetadata: {
+    importedCss: new Set(options.css ?? []),
+    importedAssets: new Set(options.assets ?? []),
+  },
 });
 
 const asset = (fileName: string) => ({ type: "asset", fileName, source: "" });
@@ -20,16 +23,18 @@ const outputBundle = (outputs: { fileName: string }[]) =>
   Object.fromEntries(outputs.map((output) => [output.fileName, output])) as Rolldown.OutputBundle;
 
 describe("firstLoadFiles", () => {
-  it("follows static imports from the entry and collects their CSS", () => {
+  it("follows static imports from the entry and collects their CSS and assets", () => {
     const bundle = outputBundle([
       asset("index.html"),
       chunk("index.js", { isEntry: true, imports: ["shared.js"], css: ["index.css"] }),
-      chunk("shared.js", { imports: ["vendor.js"], css: ["shared.css"] }),
+      chunk("shared.js", { imports: ["vendor.js"], css: ["shared.css"], assets: ["font.woff2"] }),
       chunk("vendor.js"),
       asset("index.css"),
       asset("shared.css"),
+      asset("font.woff2"),
     ]);
     expect(firstLoadFiles(bundle)).toEqual([
+      "font.woff2",
       "index.css",
       "index.html",
       "index.js",
@@ -39,12 +44,13 @@ describe("firstLoadFiles", () => {
     ]);
   });
 
-  it("leaves out chunks and CSS that only a dynamic import reaches", () => {
+  it("leaves out chunks, CSS and assets that only a dynamic import reaches", () => {
     const bundle = outputBundle([
       asset("index.html"),
       chunk("index.js", { isEntry: true }),
-      chunk("species-detail.js", { css: ["species-detail.css"] }),
+      chunk("species-detail.js", { css: ["species-detail.css"], assets: ["photo.webp"] }),
       asset("species-detail.css"),
+      asset("photo.webp"),
     ]);
     expect(firstLoadFiles(bundle)).toEqual(["index.html", "index.js"]);
   });
