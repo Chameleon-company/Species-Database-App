@@ -22,14 +22,13 @@ import { useOverview, useUserActivity, type UserActivity } from "./api";
 
 const count = (value: number | null | undefined) => (typeof value === "number" ? value : 0);
 
-const titleCase = (name: string) =>
-  name
-    .toLowerCase()
-    .split(" ")
-    .map((word) => (word ? word[0].toUpperCase() + word.slice(1) : word))
-    .join(" ");
+const ACTIVITY = {
+  activityInactive: "border-border bg-card text-muted-foreground",
+  activityModerate: "border-info-border bg-info-soft text-info",
+  activityActive: "border-brand-chip bg-brand-chip text-primary",
+} as const;
 
-function activityKey(user: UserActivity) {
+function activityKey(user: UserActivity): keyof typeof ACTIVITY {
   const logins = count(user.login_count);
   if (logins === 0) return "activityInactive";
   if (logins < 3) return "activityModerate";
@@ -108,7 +107,7 @@ export default function AnalyticsPage() {
             <Star className="size-8 fill-primary text-primary" />
             <div>
               <p className="text-label text-muted-foreground uppercase">{t("mostActiveUser")}</p>
-              <p className="text-lg font-bold">{titleCase(mostActive.name)}</p>
+              <p className="text-lg font-bold">{mostActive.name}</p>
               <p className="text-sm text-icon">
                 {count(mostActive.login_count)} {t("logins")}
               </p>
@@ -124,8 +123,10 @@ export default function AnalyticsPage() {
         {users.map((user) => (
           <Card key={user.user_id} className={cardClass}>
             <CardContent className="flex flex-col gap-1 px-5 py-5">
-              <p className="text-lg font-bold">{titleCase(user.name)}</p>
-              <Badge className="mb-1 bg-brand-chip text-primary">{t(activityKey(user))}</Badge>
+              <p className="text-lg font-bold">{user.name}</p>
+              <Badge variant="outline" className={cn("mb-1", ACTIVITY[activityKey(user)])}>
+                {t(activityKey(user))}
+              </Badge>
               <Line label={t("role")}>{user.role}</Line>
               <Separator className="my-2" />
               <Line label={t("logins")}>{count(user.login_count)}</Line>
