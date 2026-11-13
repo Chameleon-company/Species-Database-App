@@ -538,6 +538,27 @@ class TestIncrementalSync(unittest.TestCase):
         self.assertEqual([r["species_id"] for r in body["species_tet"]], [1])
         self.assertEqual(body["deleted_species_ids"], [5])
 
+    def test_repeated_deletes_are_listed_once_and_not_fetched(self):
+        FAKE.data["changelog"].append(
+            {"change_id": 6, "version": 6, "entity_id": 5,
+             "entity_type": "species", "operation": "DELETE"})
+        resp = self.client.get("/api/species/incremental?since_version=2")
+        body = resp.get_json()
+        self.assertEqual(resp.status_code, 200, body)
+        self.assertEqual(body["deleted_species_ids"], [5])
+        self.assertEqual(body["species_en"], [])
+        self.assertEqual(body["latest_version"], 6)
+
+    def test_bulk_insert_forces_a_bundle(self):
+        FAKE.data["changelog"].append(
+            {"change_id": 6, "version": 6, "entity_id": None,
+             "entity_type": "species", "operation": "BULK_INSERT (3 rows)"})
+        resp = self.client.get("/api/species/changes?since_version=5")
+        body = resp.get_json()
+        self.assertEqual(resp.status_code, 200, body)
+        self.assertTrue(body["force_bundle"])
+        self.assertEqual(body["reason"], "bulk_change")
+
     def test_user_and_media_changes_are_not_species_changes(self):
         resp = self.client.get("/api/species/incremental?since_version=3")
         self.assertEqual(resp.status_code, 200)

@@ -430,30 +430,30 @@ class SpeciesDB {
   }
 
   /**
-   * Delete both language rows of a species and its media metadata.
+   * Delete both language rows of a species, its media metadata and its cached image and video blobs.
    * @param {number} speciesId - Shared species_id
-   * @returns {Promise<void>}
+   * @returns {Promise<void>} Rejects when the transaction errors or aborts.
    */
   async deleteSpecies(speciesId) {
     const db = await this.init();
     const id = Number(speciesId);
+    const indexed = ['media', 'image_blobs', 'video_blobs'];
 
     return new Promise((resolve, reject) => {
-      const transaction = db.transaction(['species', 'media'], 'readwrite');
+      const transaction = db.transaction(['species', ...indexed], 'readwrite');
       const species = transaction.objectStore('species');
       species.delete(`${id}_en`);
       species.delete(`${id}_tet`);
 
-      const mediaKeys = transaction.objectStore('media').index('species_id').getAllKeys(IDBKeyRange.only(id));
-      mediaKeys.onsuccess = () => {
-        const media = transaction.objectStore('media');
-        for (const key of mediaKeys.result) {
-          media.delete(key);
-        }
-      };
+      for (const name of indexed) {
+        const store = transaction.objectStore(name);
+        const keys = store.index('species_id').getAllKeys(IDBKeyRange.only(id));
+        keys.onsuccess = () => keys.result.forEach((key) => store.delete(key));
+      }
 
       transaction.oncomplete = () => resolve();
       transaction.onerror = () => reject(new Error(`Failed to delete species ${id}: ${transaction.error}`));
+      transaction.onabort = () => reject(new Error(`Deleting species ${id} aborted: ${transaction.error}`));
     });
   }
 

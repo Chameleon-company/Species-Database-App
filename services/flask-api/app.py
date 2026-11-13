@@ -410,6 +410,14 @@ def get_species_changes():
             "latest_version": latest_version,
             "reason": "media_changed"
         })
+
+    if any(row["entity_id"] is None for row in changes.data):
+        return jsonify({
+            "up_to_date": False,
+            "force_bundle": True,
+            "latest_version": latest_version,
+            "reason": "bulk_change"
+        })
     
     changed_species_ids = {
         row["entity_id"]
@@ -472,8 +480,16 @@ def get_species_incremental():
             "deleted_species_ids": [],
             "latest_version": since_version
         })
-    #deduplicating
-    species_ids = list({row["entity_id"] for row in changes.data if row["entity_id"] is not None})
+    deleted_ids = sorted({
+        row["entity_id"]
+        for row in changes.data
+        if row["operation"] == "DELETE" and row["entity_id"] is not None
+    })
+    species_ids = list({
+        row["entity_id"]
+        for row in changes.data
+        if row["entity_id"] is not None and row["entity_id"] not in deleted_ids
+    })
     
     latest_version =max(row["version"] for row in changes.data)
 
@@ -481,7 +497,7 @@ def get_species_incremental():
         return jsonify({
             "species_en": [],
             "species_tet": [],
-            "deleted_species_ids": [],
+            "deleted_species_ids": deleted_ids,
             "latest_version": latest_version
         })
     #fetch latest en species rows
@@ -508,11 +524,6 @@ def get_species_incremental():
             "since_version":since_version
         }), 500
         
-    deleted_ids = [
-        row["entity_id"]
-        for row in changes.data
-        if row["operation"] == "DELETE"
-    ]
     return jsonify({
         "latest_version": latest_version,
         "species_en": species_en.data,
