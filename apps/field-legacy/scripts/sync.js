@@ -701,7 +701,9 @@ class SyncManager {
 
       for (const speciesId of changes.deleted_species_ids || []) {
         const urls = await this.db.deleteSpecies(speciesId);
-        navigator.serviceWorker?.controller?.postMessage({ type: 'UNCACHE_MEDIA', urls });
+        if (urls.length > 0) {
+          navigator.serviceWorker?.controller?.postMessage({ type: 'UNCACHE_MEDIA', urls });
+        }
       }
 
       // Validate row replacement worked

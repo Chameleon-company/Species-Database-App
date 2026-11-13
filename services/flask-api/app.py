@@ -474,6 +474,13 @@ def get_species_incremental():
         .execute()
     )
 
+    if changes.data is None:
+        return jsonify({
+            "error": "sync failed",
+            "stage": "changelog_fetch",
+            "since_version": since_version
+        }), 500
+
     if not changes.data:
         return jsonify({
             "species_en": [],
@@ -481,10 +488,10 @@ def get_species_incremental():
             "deleted_species_ids": [],
             "latest_version": since_version
         })
-    rows = sorted(changes.data, key=lambda r: r["version"])
-    bulk = next((i for i, row in enumerate(rows) if row["entity_id"] is None), None)
-    if bulk is not None:
-        rows = rows[:bulk]
+    rows = changes.data
+    bulk_version = next((row["version"] for row in rows if row["entity_id"] is None), None)
+    if bulk_version is not None:
+        rows = [row for row in rows if row["version"] < bulk_version]
     if not rows:
         return jsonify({
             "species_en": [],
