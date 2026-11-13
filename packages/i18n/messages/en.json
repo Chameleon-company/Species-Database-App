@@ -108,7 +108,7 @@
   "imageOrVideoFileTypes": "JPG, PNG, WEBP, GIF, MP4, WEBM, MOV",
   "onlyImageOrVideoAllowed": "Only image or video files are supported",
   "heicNotSupportedConvertFirst": "HEIC photos are not supported. Convert to JPG first, then try again.",
-  "deleteMediaConfirm": "Delete this media item ",
+  "deleteMediaConfirm": "Delete this media item",
   "deleteFailed": "Delete failed",
   "image": "Image",
   "video": "Video",
