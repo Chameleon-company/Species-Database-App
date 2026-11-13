@@ -37,7 +37,6 @@ services:
     buildFilter:
       paths:
         - apps/admin/**
-        - packages/**
         - package.json
         - pnpm-lock.yaml
         - pnpm-workspace.yaml
