@@ -1,0 +1,65 @@
+services:
+  - type: web
+    name: species-database-api
+    runtime: python
+    repo: https://github.com/Chameleon-company/Species-Database-App
+    branch: master
+    region: singapore
+    plan: starter
+    autoDeployTrigger: checksPass
+    buildFilter:
+      paths:
+        - services/flask-api/**
+        - ml/training/species_detector_mobilenetv2.tflite
+        - ml/training/class_labels.txt
+        - .python-version
+      ignoredPaths:
+        - services/flask-api/tests/**
+    buildCommand: pip install -r services/flask-api/requirements.txt
+    startCommand: gunicorn --chdir services/flask-api --bind 0.0.0.0:$PORT app:app
+    healthCheckPath: /health
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        value: 1052574621817-njpilvbmv49riq322c9vdi02pibcbbvg.apps.googleusercontent.com
+      - key: CORS_ORIGINS
+        value: https://species-database-app-123.onrender.com,https://species-database-app-1.onrender.com,https://localhost
+
+  - type: web
+    name: species-database-admin
+    runtime: static
+    repo: https://github.com/Chameleon-company/Species-Database-App
+    branch: master
+    autoDeployTrigger: checksPass
+    buildFilter:
+      paths:
+        - apps/admin/**
+        - package.json
+        - pnpm-lock.yaml
+        - pnpm-workspace.yaml
+    buildCommand: npm install -g pnpm@12.16.1 && pnpm install --frozen-lockfile --filter admin... && pnpm --filter admin build
+    staticPublishPath: apps/admin/dist
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: VITE_API_BASE
+        value: https://species-database-api.onrender.com
+      - key: VITE_API_URL
+        value: https://species-database-api.onrender.com/api
+      - key: VITE_GOOGLE_CLIENT_ID
+        value: 1052574621817-njpilvbmv49riq322c9vdi02pibcbbvg.apps.googleusercontent.com
+
+  - type: web
+    name: species-database-field
+    runtime: static
+    repo: https://github.com/Chameleon-company/Species-Database-App
+    branch: master
+    autoDeployTrigger: checksPass
+    buildFilter:
+      paths:
+        - apps/field-legacy/**
+    buildCommand: ""
+    staticPublishPath: apps/field-legacy

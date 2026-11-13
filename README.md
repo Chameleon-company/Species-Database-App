@@ -86,6 +86,13 @@ cd Species-Database-App
 
 The app needs Supabase and Google configuration values. Ask the project owner for the correct values before starting the app.
 
+| Supabase project | Ref | Use |
+| --- | --- | --- |
+| `species-database-dev` | `tdiquvydwzxmtludjmpe` | Local development. Point your `.env` here. |
+| `species-database-prod` | `oppcngtkhywxsazeqqet` | Production only. Its keys live in Render. |
+
+The backend and the admin dashboard both read the one `.env` file in the repository root.
+
 Create `.env` from the template:
 
 ```bash
@@ -104,10 +111,6 @@ Fill these values in `.env`:
 SUPABASE_URL=
 SUPABASE_KEY=
 GOOGLE_CLIENT_ID=
-VITE_SUPABASE_URL=
-VITE_SUPABASE_PUBLISHABLE_KEY=
-VITE_SUPABASE_URL_TETUM=
-VITE_SUPABASE_PUBLISHABLE_KEY_TETUM=
 VITE_GOOGLE_CLIENT_ID=
 ```
 
@@ -324,13 +327,49 @@ python -m pytest tests -v
 
 The suite runs fully offline. Supabase is stubbed, so it makes no network calls and can't touch shared data. It covers app startup and route registration, the admin authentication surface, the guard on `POST /upload-species`, and the search-filter and media-URL validation.
 
+## Deployment
+
+Production runs on Render, and `render.yaml` defines every service.
+
+| Service | URL | Source |
+| --- | --- | --- |
+| API | `https://species-database-api.onrender.com` | `services/flask-api` and the model in `ml/training` |
+| Admin dashboard | `https://species-database-app-123.onrender.com` | `apps/admin` |
+| Field web app | `https://species-database-app-1.onrender.com` | `apps/field-legacy` |
+
+Each service deploys from `master` when every GitHub check on the commit passes.
+A failed check stops the deploy, and the last good deploy stays live.
+Each service rebuilds only when a file in its own source paths changes.
+
+`SUPABASE_URL` and `SUPABASE_KEY` are marked `sync: false` in `render.yaml`.
+Their values live only in the Render dashboard, never in git.
+Every other value in `render.yaml` is public.
+Keep the admin origin first in `CORS_ORIGINS`, because the API links to the first origin.
+`https://localhost` in `CORS_ORIGINS` is the origin of the Capacitor Android app.
+`GOOGLE_CLIENT_ID` and `VITE_GOOGLE_CLIENT_ID` must hold the same OAuth client ID.
+
+Render links each service to its Blueprint entry by service name.
+Renaming a service does not change its `onrender.com` URL.
+The Android app and the field app hardcode these URLs.
+A new service URL needs a new app release.
+
+The API runs in Render's `singapore` region, beside the Supabase projects in `ap-southeast-1`.
+Render has no Australian region.
+Render cannot move a service to another region.
+A region change needs a new service.
+
 ## Security and CI/CD
 
 The project includes security scanning for dependencies and secrets. See `SECURITY.md` for vulnerability reporting guidance.
 
+The backend tests run on every pull request and every push to `master` that changes `services/flask-api` or `ml/training`.
+
 Known unauthenticated endpoints that should require an admin session are listed under **Known gaps** in [`docs/backend/API.md`](docs/backend/API.md).
 
-> **Working with `.env`:** the Supabase key used by the backend is a `service_role` key, which bypasses row-level security and can run schema changes. Treat any populated Supabase project the team shares as production: never point local tests at it, and never run `ALTER`/`DELETE` against it while developing.
+> **Working with `.env`:** the backend's `SUPABASE_KEY` is a secret key with `service_role` rights.
+> It bypasses row-level security and can run schema changes.
+> Point your `.env` at `species-database-dev` only.
+> Never put the production key on your machine.
 
 ## Troubleshooting
 

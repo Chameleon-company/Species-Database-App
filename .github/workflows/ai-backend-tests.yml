@@ -1,17 +1,18 @@
-name: AI Backend Tests
+name: Backend Tests
 
 on:
   workflow_dispatch:
+  push:
+    branches: ["master"]
+    paths:
+      - "ml/training/**"
+      - "services/flask-api/**"
+      - ".github/workflows/ai-backend-tests.yml"
   pull_request:
     branches: ["master"]
     paths:
       - "ml/training/**"
-      - "services/flask-api/ai_routes.py"
-      - "services/flask-api/ai_service.py"
-      - "services/flask-api/app.py"
-      - "services/flask-api/tests/**"
-      - "services/flask-api/requirements-test.txt"
-      - "services/flask-api/requirements.txt"
+      - "services/flask-api/**"
       - ".github/workflows/ai-backend-tests.yml"
 
 jobs:

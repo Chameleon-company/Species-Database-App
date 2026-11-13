@@ -64,7 +64,7 @@ class SyncManager {
         location.hostname === "localhost" ||
           location.hostname === "127.0.0.1"
           ? "http://127.0.0.1:5000"
-          : "https://species-database-app.onrender.com",
+          : "https://species-database-api.onrender.com",
 
       endpoints: {
         bundle: '/api/bundle',

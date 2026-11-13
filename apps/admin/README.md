@@ -66,33 +66,24 @@ src/
 ```
 ---
 
-## For Local ENV 
-```
-VITE_API_BASE=http://127.0.0.1:5000
-VITE_API_URL=http://127.0.0.1:5000/api
-VITE_GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID
-```
+## Local environment
+
+The admin dashboard reads the `.env` file in the repository root.
+It uses `VITE_API_BASE`, `VITE_API_URL` and `VITE_GOOGLE_CLIENT_ID`.
+See the root `README.md` for the values.
+
 ## Running the project locally
 
-Ensure the backend API is running locally:
+Start the backend API first, then run from the repository root:
 ```
-http://127.0.0.1:5000
-```
-Set the required frontend environment variables (see above)
-
-Install dependencies and start the dashboard:
-```
-npm install
-npm run dev
+pnpm install
+pnpm run dev:admin
 ```
 
----
-# Deploymnet Notes
-When deployed on Render:
-- Build command: ``` npm run build ```
-- Publish directory: ``` dist ```
+## Deployment
 
-Currently, 3 render services are used due to late-stage integration and time constraints. Consolidation recommended.
+`render.yaml` in the repository root defines the admin build.
+See the Deployment section of the root `README.md`.
 
 # React + TypeScript + Vite
 

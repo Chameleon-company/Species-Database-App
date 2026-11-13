@@ -3,6 +3,7 @@ venv/
 .venv/
 __pycache__/
 .env
+.env.local
 services/flask-api/.sonar/
 node_modules/
 *.tsbuildinfo
@@ -10,6 +11,5 @@ node_modules/
 testData.xlsx
 .DS_Store
 .idea/
-.idea/caches/
-**/.idea/deploymentTargetSelector.xml
+.vscode/
 dist/
