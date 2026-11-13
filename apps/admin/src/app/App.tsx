@@ -1,4 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import { Toaster } from "@sda/ui/components/sonner";
+import { useLanguage } from "../useLanguage";
 import AdminLayout from "./layout/AdminLayout";
 import { GuestOnly } from "./layout/routeGuards";
 import HomePage from "../features/home/HomePage";
@@ -12,28 +14,39 @@ import AuditPage from "../features/audit/AuditPage";
 import LoginPage from "../features/auth/LoginPage";
 
 export default function App() {
+  const { t } = useLanguage();
+
   return (
-    <Routes>
-      <Route
-        path="/admin-login"
-        element={
-          <GuestOnly>
-            <LoginPage />
-          </GuestOnly>
-        }
+    <>
+      <Routes>
+        <Route
+          path="/admin-login"
+          element={
+            <GuestOnly>
+              <LoginPage />
+            </GuestOnly>
+          }
+        />
+        <Route element={<AdminLayout />}>
+          <Route index element={<HomePage />} />
+          <Route path="species" element={<SpeciesListPage />} />
+          <Route path="species/new" element={<SpeciesFormPage />} />
+          <Route path="species/import" element={<SpeciesImportPage />} />
+          <Route path="species/:id" element={<SpeciesFormPage />} />
+          <Route path="media" element={<MediaPage />} />
+          <Route path="users" element={<UsersPage />} />
+          <Route path="analytics" element={<AnalyticsPage />} />
+          <Route path="audit" element={<AuditPage />} />
+        </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+      <Toaster
+        position="bottom-center"
+        richColors
+        closeButton
+        closeLabel={t("close")}
+        containerAriaLabel={t("notifications")}
       />
-      <Route element={<AdminLayout />}>
-        <Route index element={<HomePage />} />
-        <Route path="species" element={<SpeciesListPage />} />
-        <Route path="species/new" element={<SpeciesFormPage />} />
-        <Route path="species/import" element={<SpeciesImportPage />} />
-        <Route path="species/:id" element={<SpeciesFormPage />} />
-        <Route path="media" element={<MediaPage />} />
-        <Route path="users" element={<UsersPage />} />
-        <Route path="analytics" element={<AnalyticsPage />} />
-        <Route path="audit" element={<AuditPage />} />
-      </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    </>
   );
 }

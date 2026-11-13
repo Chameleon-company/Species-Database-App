@@ -9,7 +9,10 @@ import {
 } from "lucide-react";
 import { Toaster as Sonner, type ToasterProps } from "sonner";
 
-const Toaster = ({ ...props }: ToasterProps) => {
+const Toaster = ({
+  closeLabel = "Close toast",
+  ...props
+}: ToasterProps & { closeLabel?: string }) => {
   return (
     <Sonner
       theme="light"
@@ -22,6 +25,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
         loading: <Loader2Icon className="size-4 animate-spin" />,
       }}
       toastOptions={{
+        closeButtonAriaLabel: closeLabel,
         classNames: {
           toast: "pr-10! font-sans!",
           closeButton:
