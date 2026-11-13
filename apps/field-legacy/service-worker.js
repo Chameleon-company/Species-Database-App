@@ -1,5 +1,5 @@
 // service-worker.js - PWA Offline Support
-const CACHE_NAME = "species-app-v11";
+const CACHE_NAME = "species-app-v12";
 const MEDIA_CACHE = "media-cache-v10";
 
 const CORE_ASSETS = [

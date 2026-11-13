@@ -430,6 +430,34 @@ class SpeciesDB {
   }
 
   /**
+   * Delete both language rows of a species and its media metadata.
+   * @param {number} speciesId - Shared species_id
+   * @returns {Promise<void>}
+   */
+  async deleteSpecies(speciesId) {
+    const db = await this.init();
+    const id = Number(speciesId);
+
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(['species', 'media'], 'readwrite');
+      const species = transaction.objectStore('species');
+      species.delete(`${id}_en`);
+      species.delete(`${id}_tet`);
+
+      const mediaKeys = transaction.objectStore('media').index('species_id').getAllKeys(IDBKeyRange.only(id));
+      mediaKeys.onsuccess = () => {
+        const media = transaction.objectStore('media');
+        for (const key of mediaKeys.result) {
+          media.delete(key);
+        }
+      };
+
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(new Error(`Failed to delete species ${id}: ${transaction.error}`));
+    });
+  }
+
+  /**
    * Store media metadata array in IndexedDB
    * @param {Array} mediaArray - Array of media metadata objects (must have 'media_id')
    * @returns {Promise<void>}

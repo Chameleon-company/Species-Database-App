@@ -520,24 +520,31 @@ class TestIncrementalSync(unittest.TestCase):
              "entity_type": "species", "operation": "CREATE"},
             {"change_id": 2, "version": 2, "entity_id": 1,
              "entity_type": "species", "operation": "UPDATE"},
-            {"change_id": 3, "version": 3, "entity_id": 7,
+            {"change_id": 3, "version": 3, "entity_id": 5,
              "entity_type": "species", "operation": "DELETE"},
+            {"change_id": 4, "version": 4, "entity_id": 7,
+             "entity_type": "users", "operation": "DELETE"},
+            {"change_id": 5, "version": 5, "entity_id": 9,
+             "entity_type": "media", "operation": "DELETE"},
         ]
         self.client = FLASK_APP.test_client()
 
-    def test_returns_changed_rows_and_deleted_ids(self):
+    def test_returns_changed_rows_and_deleted_species(self):
         resp = self.client.get("/api/species/incremental?since_version=1")
         self.assertEqual(resp.status_code, 200, resp.get_json())
         body = resp.get_json()
         self.assertEqual(body["latest_version"], 3)
         self.assertEqual([r["species_id"] for r in body["species_en"]], [1])
         self.assertEqual([r["species_id"] for r in body["species_tet"]], [1])
-        self.assertEqual(body["deleted_species_ids"], [7])
+        self.assertEqual(body["deleted_species_ids"], [5])
 
-    def test_up_to_date_client_gets_no_rows(self):
+    def test_user_and_media_changes_are_not_species_changes(self):
         resp = self.client.get("/api/species/incremental?since_version=3")
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.get_json()["species_en"], [])
+        self.assertEqual(resp.get_json(), {
+            "species_en": [], "species_tet": [],
+            "deleted_species_ids": [], "latest_version": 3,
+        })
 
 
 if __name__ == "__main__":

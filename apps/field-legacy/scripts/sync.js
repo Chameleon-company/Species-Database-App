@@ -698,6 +698,10 @@ class SyncManager {
         }
       }
 
+      for (const speciesId of changes.deleted_species_ids || []) {
+        await this.db.deleteSpecies(speciesId);
+      }
+
       // Validate row replacement worked
       const finalVersion = await this.db.getSyncMetadata();
       if (finalVersion.version !== newVersion && newVersion > 0) {

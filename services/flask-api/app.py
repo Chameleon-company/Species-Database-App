@@ -459,7 +459,9 @@ def get_species_incremental():
     changes = (
         supabase.table("changelog")
         .select("entity_id, version, operation")
+        .eq("entity_type", "species")
         .gt("version", since_version)
+        .order("version")
         .execute()
     )
 
@@ -467,6 +469,7 @@ def get_species_incremental():
         return jsonify({
             "species_en": [],
             "species_tet": [],
+            "deleted_species_ids": [],
             "latest_version": since_version
         })
     #deduplicating
@@ -478,6 +481,7 @@ def get_species_incremental():
         return jsonify({
             "species_en": [],
             "species_tet": [],
+            "deleted_species_ids": [],
             "latest_version": latest_version
         })
     #fetch latest en species rows
