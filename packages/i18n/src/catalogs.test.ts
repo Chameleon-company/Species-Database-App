@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import {
   catalogs,
   interpolate,
@@ -70,22 +70,32 @@ describe("translate", () => {
 });
 
 describe("interpolate", () => {
+  const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+  afterEach(() => {
+    warn.mockClear();
+  });
+
   test("replaces placeholders with params", () => {
     expect(interpolate("{count} records in {place}", { count: 12, place: "Dili" })).toBe(
       "12 records in Dili",
     );
+    expect(warn).not.toHaveBeenCalled();
   });
 
   test("keeps a placeholder that has no param", () => {
     expect(interpolate("{count} records", {})).toBe("{count} records");
+    expect(warn).toHaveBeenCalledOnce();
   });
 
   test("returns the message unchanged without params", () => {
     expect(interpolate("{count} records")).toBe("{count} records");
+    expect(warn).not.toHaveBeenCalled();
   });
 
   test("ignores inherited properties", () => {
     expect(interpolate("{toString}", {})).toBe("{toString}");
+    expect(warn).toHaveBeenCalledOnce();
   });
 
   test("reads a params object with no prototype", () => {
@@ -100,5 +110,6 @@ describe("interpolate", () => {
   test("keeps a placeholder whose param is undefined or null", () => {
     const params = { count: undefined, place: null } as unknown as MessageParams;
     expect(interpolate("{count} records in {place}", params)).toBe("{count} records in {place}");
+    expect(warn).toHaveBeenCalledTimes(2);
   });
 });

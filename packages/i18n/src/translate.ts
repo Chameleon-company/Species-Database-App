@@ -14,13 +14,16 @@ export const isLocale = (value: unknown): value is Locale => locales.includes(va
 
 /**
  * Replaces each `{name}` in `message` with the own property `params[name]`.
- * A placeholder stays as written when that own property is missing, `undefined` or `null`.
+ * A placeholder stays as written, with a `console.warn`, when that own property is missing,
+ * `undefined` or `null`. Without `params`, returns `message` unchanged and does not warn.
  */
 export const interpolate = (message: string, params?: MessageParams): string => {
   if (!params) return message;
   return message.replace(/\{(\w+)\}/g, (placeholder, name: string) => {
     const value = Object.prototype.hasOwnProperty.call(params, name) ? params[name] : undefined;
-    return value == null ? placeholder : String(value);
+    if (value != null) return String(value);
+    console.warn(`@sda/i18n: no value for ${placeholder} in "${message}"`);
+    return placeholder;
   });
 };
 

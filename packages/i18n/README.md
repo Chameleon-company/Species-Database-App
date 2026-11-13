@@ -90,6 +90,7 @@ t("photoCount", { count: 12 });
 The call gives "12 photos" in English and "Foto 12" in Tetum.
 A param value must be a string or a number.
 TypeScript rejects `undefined` or `null`, so check the value before the call.
+If a value is missing at runtime, the text keeps `{count}` and the console shows a warning.
 
 If you do not know the Tetum text, do not copy the English text into `tet.json`.
 Ask a Tetum speaker on the team first.
