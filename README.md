@@ -314,6 +314,7 @@ bash services/flask-api/migrations/test_migration.sh
 
 It builds a throwaway PostgreSQL cluster from `TableSchema.sql` and rolls every migration back to the baseline.
 Then it applies each migration and checks idempotency, rollback and data survival.
+It checks that `anon` and `authenticated` have no access to any table, sequence or function in `public`.
 It also checks that `TableSchema.sql` and the migration chain build the same schema.
 It needs local PostgreSQL server binaries.
 It uses the newest installed version.

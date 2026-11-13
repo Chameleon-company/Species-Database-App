@@ -78,11 +78,18 @@ rls_on() {
     pgq -d "$DB" -c "SELECT relrowsecurity FROM pg_class WHERE oid = 'public.$1'::regclass;"
 }
 
-client_privileges() {
-    pgq -d "$DB" -c "SELECT count(*) FROM pg_class c, unnest(ARRAY['anon','authenticated']) r,
-        unnest(ARRAY['SELECT','INSERT','UPDATE','DELETE']) p
+client_access() {
+    pgq -d "$DB" -c "SELECT count(*) FROM pg_class c, unnest(ARRAY['anon','authenticated']) r
         WHERE c.relnamespace = 'public'::regnamespace AND c.relkind IN ('r', 'p', 'v', 'm', 'f')
-        AND has_table_privilege(r, c.oid, p);"
+        AND (has_table_privilege(r, c.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
+             OR has_any_column_privilege(r, c.oid, 'SELECT,INSERT,UPDATE,REFERENCES'));"
+}
+
+client_full_access() {
+    pgq -d "$DB" -c "SELECT count(*) FROM pg_class c, unnest(ARRAY['anon','authenticated']) r
+        WHERE c.relnamespace = 'public'::regnamespace AND c.relkind = 'r'
+        AND (SELECT bool_and(has_table_privilege(r, c.oid, p))
+             FROM unnest(ARRAY['SELECT','INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER']) p);"
 }
 
 client_sequence_and_function_access() {
@@ -103,12 +110,12 @@ client_default_grants() {
 }
 
 as_role() {
-    pgq -d "$DB" -c "BEGIN" -c "SET LOCAL ROLE $1" -c "$2" -c "ROLLBACK" 2>&1
+    pgq -d "$DB" -v VERBOSITY=sqlstate -c "BEGIN" -c "SET LOCAL ROLE $1" -c "$2" -c "ROLLBACK" 2>&1
 }
 
 denied() {
     local out; out=$(as_role "$1" "$2")
-    [[ "$out" == *"permission denied"* ]]
+    [[ "$out" == *"42501"* ]]
 }
 
 supabase_like() {
@@ -178,13 +185,14 @@ check_001() {
 }
 
 check_002() {
+    local before; before=$(fingerprint)
     step "002 - apply"
     apply "$MIG/002_enable_rls_and_revoke_client_roles.sql"
     for t in $TABLES; do
         [ "$(rls_on "$t")" = "t" ] || fail "RLS is off on $t"
     done
     ok "RLS on for all 8 tables"
-    [ "$(client_privileges)" = "0" ] || fail "anon or authenticated keeps table privileges"
+    [ "$(client_access)" = "0" ] || fail "anon or authenticated keeps table privileges"
     ok "anon and authenticated have no table privileges"
     [ "$(client_default_grants)" = "0" ] || fail "postgres default privileges still grant to anon or authenticated"
     ok "new tables from postgres grant nothing to anon or authenticated"
@@ -206,16 +214,15 @@ check_002() {
     ok "service_role reads every row and can write"
 
     apply "$MIG/002_enable_rls_and_revoke_client_roles.sql"
-    [ "$(client_privileges)" = "0" ] || fail "re-apply changed privileges"
+    [ "$(client_access)" = "0" ] || fail "re-apply changed privileges"
     ok "re-apply is a no-op"
 
     step "002 - rollback"
-    local before; before=$(counts)
     apply "$MIG/002_enable_rls_and_revoke_client_roles.rollback.sql"
     apply "$MIG/002_enable_rls_and_revoke_client_roles.rollback.sql"
     assert_before_002
-    [ "$(counts)" = "$before" ] || fail "row counts changed across rollback"
-    ok "rollback restores the old access, is a no-op on re-run and keeps every row"
+    same_rows_as "$before" || fail "rows differ from the state before 002"
+    ok "rollback restores the old access, is a no-op on re-run and restores every row exactly"
 
     apply "$MIG/002_enable_rls_and_revoke_client_roles.sql"
     ok "re-applied"
@@ -226,8 +233,9 @@ assert_before_002() {
         [ "$(rls_on "$t")" = "f" ] || fail "RLS is on for $t before 002"
     done
     [ "$(rls_on admin_session_audit)" = "t" ] || fail "admin_session_audit lost RLS"
-    [ "$(client_privileges)" = "64" ] || fail "anon and authenticated lack full table privileges before 002"
-    [ "$(client_default_grants)" = "6" ] || fail "postgres default privileges do not grant to anon and authenticated before 002"
+    local tables; tables=$(wc -w <<< "$TABLES")
+    [ "$(client_full_access)" = "$((2 * tables))" ] || fail "anon and authenticated lack full table privileges before 002"
+    [ "$(client_default_grants)" = "6" ] || fail "postgres default privileges do not grant tables, sequences and functions to both client roles before 002"
     ok "before 002: RLS only on admin_session_audit, client roles hold every grant"
 }
 
@@ -288,7 +296,7 @@ for f in "$MIG"/[0-9][0-9][0-9]_*.sql; do
 done
 
 step "STEP 4 - anon and authenticated have no access in schema public"
-[ "$(client_privileges)" = "0" ] || fail "anon or authenticated holds a privilege on a public relation"
+[ "$(client_access)" = "0" ] || fail "anon or authenticated holds a privilege on a public relation"
 [ "$(client_sequence_and_function_access)" = "0" ] || fail "anon or authenticated can use a public sequence or function"
 ok "no public relation, sequence or function is open to anon or authenticated"
 

@@ -9,9 +9,10 @@
 --   Only the project owner runs it, and only to undo a failed apply.
 --
 -- Restores the state recorded on dev and prod on 2026-11-14 (README.md,
--- "Applying 002"): RLS on admin_session_audit only, ALL on every public table
--- and sequence for anon and authenticated, and the matching postgres default
--- privileges. Public had no functions then, so no function grant comes back.
+-- "Applying 002"): RLS on admin_session_audit only, ALL on the 8 tables and
+-- their 8 sequences for anon and authenticated, and the matching postgres
+-- default privileges. Public had no functions then, so no function grant
+-- comes back. Objects created after 002 get no grant.
 -- Idempotent.
 -- =============================================================================
 
@@ -24,8 +25,27 @@ ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
     GRANT EXECUTE ON FUNCTIONS TO anon, authenticated;
 
-GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;
-GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated;
+GRANT ALL ON SEQUENCE
+    public.users_user_id_seq,
+    public.species_en_species_id_seq,
+    public.species_tet_species_id_seq,
+    public.changelog_change_id_seq,
+    public.analytics_event_id_seq,
+    public.media_media_id_seq,
+    public.admin_sessions_session_id_seq,
+    public.admin_session_audit_audit_id_seq
+TO anon, authenticated;
+
+GRANT ALL ON TABLE
+    public.users,
+    public.species_en,
+    public.species_tet,
+    public.changelog,
+    public.analytics,
+    public.media,
+    public.admin_sessions,
+    public.admin_session_audit
+TO anon, authenticated;
 
 ALTER TABLE public.users DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.species_en DISABLE ROW LEVEL SECURITY;

@@ -84,23 +84,28 @@ State before 002, recorded on dev and prod on 2026-11-14:
 | Item | State |
 |---|---|
 | RLS | On for `admin_session_audit` only |
-| Table grants | `anon` and `authenticated` hold ALL on all 8 tables |
+| Table grants | `anon` and `authenticated` hold ALL on all 8 tables, and on nothing else |
 | Sequence grants | `anon` and `authenticated` hold ALL on all 8 sequences on dev. Prod default privileges grant the same. The 2026-11-14 check did not cover the prod sequence ACLs |
 | Default privileges of `postgres` in `public` | ALL on tables and sequences, and EXECUTE on functions, for `anon`, `authenticated` and `service_role` |
 | Functions and views in `public` | None |
 | API key role | `service_role` on prod (JWT `role` claim), `sb_secret_` key on dev |
 
-The rollback restores exactly this state.
+The rollback grants back exactly these table, sequence and default privileges, by name.
 
 Steps:
 
-1. Check that the API key is a `service_role` JWT or an `sb_secret_` key.
-   Read only the `role` claim, never the key.
+1. Check the API key type without printing the key.
+   A legacy JWT key must carry the `role` claim `service_role`.
+   A new key must start with `sb_secret_`, which Supabase maps to `service_role`.
 2. Take a backup in the dashboard (Database, Backups).
 3. Run the 002 file in the SQL editor.
-4. Check that the security advisor shows no `rls_disabled_in_public` and no `pg_graphql_*_table_exposed` lint.
+4. Check the security advisor.
+   It must show no `rls_disabled_in_public` and no `pg_graphql_*_table_exposed` lint.
+   It shows `rls_enabled_no_policy` (INFO) on all 8 tables, which is the intended state.
 5. Log in to the admin, and load `/api/bundle` from the field app.
-6. If step 5 fails, run the 002 rollback at once, then find the cause.
+6. If step 5 fails, check the API key type first, because a key without `service_role` is the likely cause.
+   Set the right key on Render and repeat step 5.
+   Run the 002 rollback only when the key is right and the API still fails.
 
 Only the project owner runs the rollback, because it opens `users.password_hash` to the public key again.
 
@@ -109,7 +114,9 @@ Two limits stay after 002:
 - PostgreSQL grants EXECUTE on each new function to PUBLIC, and only a global default can stop that.
   A global default also strips EXECUTE from new `postgres` functions in the `extensions` schema.
   For that reason, 002 does not set one.
-  Each migration that adds a function in `public` must revoke EXECUTE from PUBLIC, and harness step 4 fails when it does not.
+  Each migration that adds a function in `public` must revoke EXECUTE from PUBLIC.
+  Harness step 4 fails when it does not.
+  Create every function through a migration file, never by hand in the SQL editor, so the harness sees it.
 - `postgres` is not a member of `supabase_admin`.
   A migration cannot change the `supabase_admin` default privileges.
   Create tables through migrations, which run as `postgres`.
