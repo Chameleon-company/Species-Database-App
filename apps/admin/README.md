@@ -55,12 +55,14 @@ src/
 │   ├── analytics/           usage counters and per-user activity
 │   ├── audit/               spreadsheet audit report
 │   └── auth/                login page and Google Identity
-├── translations.ts          English and Tetum strings
+├── translations.ts          { key: { en, tet } } view of the @sda/i18n catalogs
 ├── LanguageContext.tsx      language provider
-└── useLanguage.ts           language hook
+└── useLanguage.ts           language hook that gives lang, setLang and t
 ```
 
 Each feature folder holds its own `api.ts` with the queries and mutations for that feature.
+Pages take `t` from `useLanguage()`.
+The English and Tetum text lives in `packages/i18n/messages`.
 Pages import shadcn components from `@sda/ui/components/<name>` and never through an index file.
 
 Shared components live in `packages/ui`.
@@ -68,6 +70,7 @@ Other apps in the workspace can use them too.
 To add a shadcn component, run `pnpm dlx shadcn@latest add <name>` in `apps/admin`.
 The CLI writes the component into `packages/ui/src/components`.
 After that, change its `import { cn } from "cn"` line to `import { cn } from "#lib/utils"`.
+Then run `pnpm format` from the repository root, so Oxfmt formats the new file.
 The `cn` in `#lib/utils` knows the theme's custom font sizes.
 
 ## Local environment
