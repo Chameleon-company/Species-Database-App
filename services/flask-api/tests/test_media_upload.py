@@ -80,7 +80,11 @@ class FakeSupabase:
 
 def create_image(image_format="PNG", size=(32, 32), mode="RGB"):
     output = BytesIO()
-    Image.new(mode, size).save(output, format=image_format)
+    image = Image.new(mode, size)
+    if image_format == "MPO":
+        image.save(output, format="MPO", save_all=True, append_images=[image])
+    else:
+        image.save(output, format=image_format)
     return output.getvalue()
 
 
@@ -128,6 +132,7 @@ def upload(client, data, filename="upload.bin", media_type="image", species="tec
     ("image_format", "extension", "content_type"),
     [
         ("JPEG", "jpg", "image/jpeg"),
+        ("MPO", "jpg", "image/jpeg"),
         ("PNG", "png", "image/png"),
         ("WEBP", "webp", "image/webp"),
         ("GIF", "gif", "image/gif"),
