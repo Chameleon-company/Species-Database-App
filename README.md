@@ -6,12 +6,32 @@ English-Tetum bilingual field application for offline species guidance and Rai M
 
 The Rai Matak Species Guide supports field staff, botanists, and community partners working in Timor-Leste. The app provides offline access to species identification data, ecological notes, photos, and learning resources.
 
-The repository includes:
+## Repository Layout
 
-- A Flask backend API in `backend`
-- A React admin dashboard in `ReactDash`
-- A static field-user frontend in `Frontend`
-- A Capacitor Android wrapper in `capacitor-wrapper`
+```
+apps/
+  admin/          React admin dashboard
+  api/            new TypeScript API (Hono), replaces the Flask API route by route
+  field/          new field app, replaces field-legacy
+  field-legacy/   static field app that runs in production today
+  android/        Capacitor Android wrapper around the field app
+services/
+  flask-api/      Flask API that runs in production today, with its tests and migrations
+ml/
+  training/       species identification model, training code and results
+  data/           species data files
+  species-cli/    command-line tool for the species data
+docs/
+  backend/        API reference and backend notes
+  testing/        T2 testing reports
+tests/
+  e2e/            T2 automation suites
+  api/            T2 API test collections
+packages/         shared workspace packages
+scripts/          OS install scripts
+```
+
+The JavaScript apps share one pnpm workspace, defined in `pnpm-workspace.yaml`. Shared dependency versions live in its `catalog:` section, and `pnpm-lock.yaml` is the only lockfile.
 
 ## Recommended Setup with Docker
 
@@ -23,7 +43,8 @@ Install these before running project commands:
 
 - Git
 - Docker Desktop, or Docker Engine with Docker Compose v2
-- Node.js 22 or newer, including npm
+- Node.js 22 or newer
+- pnpm, installed with `npm install -g pnpm`
 
 Windows 11:
 
@@ -59,7 +80,6 @@ Linux:
 ```bash
 git clone https://github.com/Chameleon-company/Species-Database-App.git
 cd Species-Database-App
-git checkout DevSecOps
 ```
 
 ### 3. Create the Environment File
@@ -106,7 +126,7 @@ Do not commit `.env`.
 From the repository root:
 
 ```bash
-npm run dev
+pnpm run dev
 ```
 
 This builds and starts:
@@ -143,18 +163,18 @@ The setup is working when the dashboard opens and `/api/bundle` returns JSON.
 ### 6. Stop the App
 
 ```bash
-npm run docker:down
+pnpm run docker:down
 ```
 
 ## Common Commands
 
 ```bash
-npm run dev           # Build and start Docker containers
-npm run docker:down   # Stop Docker containers
-npm run docker:logs   # Follow container logs
-npm run docker:build  # Build Docker images only
-npm run build         # Build the React admin dashboard
-npm run lint          # Run React admin linting
+pnpm run dev           # Build and start Docker containers
+pnpm run docker:down   # Stop Docker containers
+pnpm run docker:logs   # Follow container logs
+pnpm run docker:build  # Build Docker images only
+pnpm run build         # Build every app in the workspace
+pnpm run lint          # Lint every app in the workspace
 ```
 
 ## Optional Local Development
@@ -166,7 +186,7 @@ Use this path only when you need to run services outside Docker.
 Install:
 
 - Node.js 22 or newer
-- npm
+- pnpm, installed with `npm install -g pnpm`
 - Python 3.12 or newer
 
 ### 2. Run the OS Install Script
@@ -174,25 +194,27 @@ Install:
 From the repository root, run the command for your OS:
 
 ```bash
-npm run install:linux
-npm run install:macos
-npm run install:windows11
+pnpm run install:linux
+pnpm run install:macos
+pnpm run install:windows11
 ```
 
-The script installs Node dependencies, creates `backend/venv`, installs Python requirements, and creates `.env` from `.env.example` if it does not exist.
+The script installs Node dependencies, creates `services/flask-api/venv`, installs Python requirements, and creates `.env` from `.env.example` if it does not exist.
 
 ### 3. Start Local Services
 
-Start the backend:
+Activate the backend virtual environment, then start the backend:
 
 ```bash
-npm run dev:backend
+source services/flask-api/venv/bin/activate        # Linux and macOS
+services\flask-api\venv\Scripts\Activate.ps1   # Windows PowerShell
+pnpm run dev:backend
 ```
 
 Start the admin dashboard in another terminal:
 
 ```bash
-npm run dev:admin
+pnpm run dev:admin
 ```
 
 Local URLs:
@@ -202,7 +224,7 @@ Local URLs:
 
 ## Static Field-User Frontend
 
-The field-user frontend is the static HTML app in `Frontend`.
+The field-user frontend is the static HTML app in `apps/field-legacy`.
 
 Prerequisite:
 
@@ -211,12 +233,12 @@ Prerequisite:
 Procedure:
 
 1. Open the repository folder in Visual Studio Code.
-2. Open `Frontend/index.html`.
+2. Open `apps/field-legacy/index.html`.
 3. Use Live Server to open the page in a browser.
 
 ## Android App
 
-The Android project is managed through Capacitor in `capacitor-wrapper`.
+The Android project is managed through Capacitor in `apps/android`.
 
 ### 1. Install Prerequisites
 
@@ -230,9 +252,9 @@ Install:
 ### 2. Open the Android Project
 
 ```bash
-cd capacitor-wrapper
-npx cap sync android
-npx cap open android
+cd apps/android
+pnpm exec cap sync android
+pnpm exec cap open android
 ```
 
 ### 3. Run from Android Studio
@@ -241,7 +263,7 @@ npx cap open android
 2. Select a connected Android device or emulator.
 3. Run the app from Android Studio.
 
-Repeat `npx cap sync android` after changing static frontend files.
+Repeat `pnpm exec cap sync android` after changing static frontend files.
 
 ## Key Features
 
@@ -269,9 +291,46 @@ Main authentication endpoints:
 - `POST /api/auth/admin-refresh`
 - `GET /api/admin/session-audit`
 
+## Backend API Reference
+
+Endpoint-by-endpoint documentation, including which endpoints require an admin session, is in [`docs/backend/API.md`](docs/backend/API.md).
+
+## Database Schema Changes
+
+`services/flask-api/TableSchema.sql` is a **snapshot of the full intended schema**, and it's how you create a new database from scratch. It is not a change history, and it can't tell you what state an existing database is in.
+
+Changes to an existing database go in `services/flask-api/migrations/` as numbered SQL files, each with a matching rollback. Read [`services/flask-api/migrations/README.md`](services/flask-api/migrations/README.md) before adding one.
+
+Two rules matter most:
+
+1. **Apply the migration before merging the code that needs it.** New code that reads a column which does not exist yet fails immediately. Reverse the order when rolling back.
+2. **Never edit a migration that has already been applied anywhere.** Supersede it with a new one.
+
+Verify a migration against a throwaway local database before it goes near Supabase:
+
+```bash
+bash services/flask-api/migrations/test_migration.sh
+```
+
+This creates its own temporary PostgreSQL cluster, seeds it with the schema currently deployed, applies the migration, checks idempotency and rollback, and cleans up. It never reads `.env` and never connects to Supabase.
+
+## Backend Tests
+
+```bash
+cd services/flask-api
+python -m pip install -r requirements.txt -r requirements-test.txt
+python -m pytest tests -v
+```
+
+The suite runs fully offline. Supabase is stubbed, so it makes no network calls and can't touch shared data. It covers app startup and route registration, the admin authentication surface, the guard on `POST /upload-species`, and the search-filter and media-URL validation.
+
 ## Security and CI/CD
 
 The project includes security scanning for dependencies and secrets. See `SECURITY.md` for vulnerability reporting guidance.
+
+Known unauthenticated endpoints that should require an admin session are listed under **Known gaps** in [`docs/backend/API.md`](docs/backend/API.md).
+
+> **Working with `.env`:** the Supabase key used by the backend is a `service_role` key, which bypasses row-level security and can run schema changes. Treat any populated Supabase project the team shares as production: never point local tests at it, and never run `ALTER`/`DELETE` against it while developing.
 
 ## Troubleshooting
 
@@ -284,19 +343,19 @@ Docker is not running:
 Port already in use:
 
 1. Stop any existing service using ports `5000` or `5173`.
-2. Run `npm run docker:down`.
-3. Run `npm run dev` again.
+2. Run `pnpm run docker:down`.
+3. Run `pnpm run dev` again.
 
 Environment values missing:
 
 1. Confirm `.env` exists in the repository root.
 2. Confirm all Supabase and Google values are filled.
-3. Restart Docker with `npm run docker:down` and `npm run dev`.
+3. Restart Docker with `pnpm run docker:down` and `pnpm run dev`.
 
 Admin dashboard opens but data does not load:
 
 1. Check backend status with `docker compose ps`.
-2. Check logs with `npm run docker:logs`.
+2. Check logs with `pnpm run docker:logs`.
 3. Confirm `VITE_API_BASE` and `VITE_API_URL` point to `http://localhost:5000`.
 
 ---

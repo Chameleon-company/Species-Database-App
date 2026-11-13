@@ -11,7 +11,7 @@ function Require-Command {
 }
 
 Require-Command "node" "Node.js 22+ is required."
-Require-Command "npm" "npm is required."
+Require-Command "pnpm" "pnpm is required. Install it with: npm install -g pnpm"
 
 $Python = Get-Command "py" -ErrorAction SilentlyContinue
 if ($Python) {
@@ -24,16 +24,14 @@ if ($Python) {
     throw "Python 3.12+ is required."
 }
 
-npm install
-npm --prefix ReactDash install
-npm --prefix capacitor-wrapper install
+pnpm install
 
-& $PythonExe @PythonArgs -m venv backend\venv
-& backend\venv\Scripts\python.exe -m pip install --upgrade pip
-& backend\venv\Scripts\python.exe -m pip install -r requirements.txt
+& $PythonExe @PythonArgs -m venv services\flask-api\venv
+& services\flask-api\venv\Scripts\python.exe -m pip install --upgrade pip
+& services\flask-api\venv\Scripts\python.exe -m pip install -r services\flask-api\requirements.txt
 
 if (-not (Test-Path ".env")) {
     Copy-Item ".env.example" ".env"
 }
 
-Write-Host "Install complete. Fill .env, then run: npm run dev"
+Write-Host "Install complete. Fill .env, then run: pnpm dev"

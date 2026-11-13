@@ -1,9 +1,9 @@
-backend/venv/
+services/flask-api/venv/
 venv/
 .venv/
 __pycache__/
 .env
-backend/.sonar/
+services/flask-api/.sonar/
 node_modules/
 *.tsbuildinfo
 *-server*.log
@@ -12,3 +12,4 @@ testData.xlsx
 .idea/
 .idea/caches/
 **/.idea/deploymentTargetSelector.xml
+dist/

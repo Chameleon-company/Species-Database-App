@@ -2,7 +2,7 @@ services:
   backend:
     build:
       context: .
-      dockerfile: backend/Dockerfile
+      dockerfile: services/flask-api/Dockerfile
     environment:
       FLASK_ENV: production
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
@@ -21,7 +21,7 @@ services:
   admin:
     build:
       context: .
-      dockerfile: ReactDash/Dockerfile
+      dockerfile: apps/admin/Dockerfile
       args:
         VITE_API_BASE: ${VITE_API_BASE:-http://localhost:5000}
         VITE_API_URL: ${VITE_API_URL:-http://localhost:5000/api}
