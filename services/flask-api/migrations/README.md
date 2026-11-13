@@ -53,7 +53,7 @@ The harness runs these steps on a throwaway cluster:
 | 2 | Apply every rollback in reverse order, then assert the pre-migration baseline |
 | 3 | Seed representative rows |
 | per migration | Run `check_NNN`: apply, verify, re-apply, roll back, roll back again, check that every row is back exactly, apply again |
-| 4 | Fail if `anon` or `authenticated` can use any relation, sequence or function in `public` |
+| 4 | Fail if a `public` table has RLS off, or if `anon` or `authenticated` can use any relation, sequence or function in `public` |
 | 5 | Build a second database from `TableSchema.sql` and require an identical `pg_dump --schema-only` |
 
 Step 5 proves that the snapshot and the migration chain build the same schema.
@@ -97,14 +97,18 @@ Steps:
 1. Check the API key type without printing the key.
    A legacy JWT key must carry the `role` claim `service_role`.
    A new key must start with `sb_secret_`, which Supabase maps to `service_role`.
-2. Take a backup in the dashboard (Database, Backups).
-3. Run the 002 file in the SQL editor.
-4. Check the security advisor.
+2. Record the sequence grants, which the 2026-11-14 check did not cover on prod:
+   `select relname, relacl from pg_class where relnamespace = 'public'::regnamespace and relkind = 'S';`
+   Each row must show `anon=rwU` and `authenticated=rwU`.
+   If a row differs, change the sequence grants in the 002 rollback to match before you apply.
+3. Take a backup in the dashboard (Database, Backups).
+4. Run the 002 file in the SQL editor.
+5. Check the security advisor.
    It must show no `rls_disabled_in_public` and no `pg_graphql_*_table_exposed` lint.
    It shows `rls_enabled_no_policy` (INFO) on all 8 tables, which is the intended state.
-5. Log in to the admin, and load `/api/bundle` from the field app.
-6. If step 5 fails, check the API key type first, because a key without `service_role` is the likely cause.
-   Set the right key on Render and repeat step 5.
+6. Log in to the admin, and load `/api/bundle` from the field app.
+7. If step 6 fails, check the API key type first, because a key without `service_role` is the likely cause.
+   Set the right key on Render and repeat step 6.
    Run the 002 rollback only when the key is right and the API still fails.
 
 Only the project owner runs the rollback, because it opens `users.password_hash` to the public key again.

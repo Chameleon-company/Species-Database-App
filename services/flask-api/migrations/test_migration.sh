@@ -298,7 +298,9 @@ done
 step "STEP 4 - anon and authenticated have no access in schema public"
 [ "$(client_access)" = "0" ] || fail "anon or authenticated holds a privilege on a public relation"
 [ "$(client_sequence_and_function_access)" = "0" ] || fail "anon or authenticated can use a public sequence or function"
-ok "no public relation, sequence or function is open to anon or authenticated"
+[ "$(pgq -d "$DB" -c "SELECT count(*) FROM pg_class WHERE relnamespace = 'public'::regnamespace AND relkind IN ('r', 'p') AND NOT relrowsecurity;")" = "0" ] \
+    || fail "a public table has RLS off"
+ok "every public table has RLS on, and nothing in public is open to anon or authenticated"
 
 step "STEP 5 - TableSchema.sql matches the migration chain"
 load_snapshot "$SNAPDB"
