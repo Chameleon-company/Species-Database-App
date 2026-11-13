@@ -1,49 +1,33 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Migration 001 verification harness
-# =============================================================================
-# Author: Byron Ehrhardt (s224341683) - Backend Lead
+# Migration verification harness. See README.md for the checks it runs.
 #
-# Runs the checklist from README.md against a THROWAWAY local PostgreSQL
-# database. It never connects to Supabase and never reads services/flask-api/.env, so it
-# cannot touch the shared project.
+# Runs against a throwaway local PostgreSQL cluster. It never connects to
+# Supabase and never reads .env.
 #
-# What it proves:
-#   - the migration applies to a database shaped like the CURRENT live one
-#   - existing rows backfill correctly
-#   - it is idempotent (safe to re-run when you are unsure whether it ran)
-#   - the new columns actually work the way the feature code needs
-#   - the rollback fully reverses it, and is itself idempotent
-#   - no data is lost across apply -> rollback
-#   - TableSchema.sql still builds a correct database from scratch
-#
-# Requires: postgresql client + server binaries (psql, initdb, pg_ctl) and git.
-#   macOS:  brew install postgresql@14
+# Requires PostgreSQL server binaries (initdb, pg_ctl, pg_dump, psql).
+#   macOS:  brew install postgresql@16
 #   Ubuntu: sudo apt install postgresql
 #
-# Usage:
-#   bash services/flask-api/migrations/test_migration.sh
-#   BASE_REF=origin/master bash services/flask-api/migrations/test_migration.sh
+# Usage: bash services/flask-api/migrations/test_migration.sh
 # =============================================================================
 set -uo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 MIG="$REPO/services/flask-api/migrations"
+SNAPSHOT="$REPO/services/flask-api/TableSchema.sql"
 WORK="${TMPDIR:-/tmp}/sda-migration-test.$$"
 PGPORT_TEST="${PGPORT_TEST:-5599}"
-# The branch whose schema represents the CURRENTLY DEPLOYED database.
-BASE_REF="${BASE_REF:-upstream/master}"
 DB=sda_mig_test
 SNAPDB=sda_snapshot_test
 
-# postgres server binaries are not always on PATH even when psql is
-for d in /opt/homebrew/opt/postgresql@*/bin /usr/lib/postgresql/*/bin \
-         /usr/local/opt/postgresql@*/bin; do
-    [ -x "$d/initdb" ] && export PATH="$d:$PATH" && break
-done
+PGBIN=$(ls -d /opt/homebrew/opt/postgresql@*/bin /usr/local/opt/postgresql@*/bin \
+    /usr/lib/postgresql/*/bin 2>/dev/null | sort -V | tail -1)
+[ -n "$PGBIN" ] && [ -x "$PGBIN/initdb" ] && export PATH="$PGBIN:$PATH"
 
-fail() { echo "!! FAIL: $*"; cleanup; exit 1; }
+fail() { echo "!! FAIL: $*"; exit 1; }
 ok()   { echo "   ok: $*"; }
+step() { echo; echo "=== $* ==="; }
 
 cleanup() {
     if [ -d "$WORK/pgdata" ]; then
@@ -53,49 +37,110 @@ cleanup() {
 }
 trap cleanup EXIT
 
-for bin in psql initdb pg_ctl createdb dropdb git; do
+for bin in psql initdb pg_ctl pg_dump createdb; do
     command -v "$bin" >/dev/null 2>&1 || fail "$bin not found on PATH"
 done
 
-pg()  { psql -h 127.0.0.1 -p "$PGPORT_TEST" -U postgres -v ON_ERROR_STOP=1 "$@"; }
-pgq() { psql -h 127.0.0.1 -p "$PGPORT_TEST" -U postgres -tAq "$@"; }
+pg()  { psql -h 127.0.0.1 -p "$PGPORT_TEST" -U postgres -v ON_ERROR_STOP=1 -q "$@"; }
+pgq() { psql -h 127.0.0.1 -p "$PGPORT_TEST" -U postgres -v ON_ERROR_STOP=1 -tAq "$@"; }
+apply() { pg -d "$DB" -f "$1" >"$WORK/apply.log" 2>&1 || { tail -5 "$WORK/apply.log"; fail "applying $(basename "$1")"; }; }
 
-# --- throwaway cluster -------------------------------------------------------
-echo "=== STEP 0 - start throwaway PostgreSQL on port $PGPORT_TEST ============"
+counts() {
+    pgq -d "$DB" -c "SELECT (SELECT count(*) FROM species_en)||'/'||(SELECT count(*) FROM species_tet)||'/'||(SELECT count(*) FROM media)||'/'||(SELECT count(*) FROM users)||'/'||(SELECT count(*) FROM admin_sessions);"
+}
+
+target_columns() {
+    pgq -d "$DB" -c "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND column_name IN ('definition','storage_version');"
+}
+
+supabase_like() {
+    pg -d "$1" <<'SQL' || fail "role setup in $1"
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+    GRANT ALL ON TABLES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+    GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+    GRANT EXECUTE ON FUNCTIONS TO anon, authenticated, service_role;
+SQL
+}
+
+load_snapshot() {
+    createdb -h 127.0.0.1 -p "$PGPORT_TEST" -U postgres "$1" || fail "createdb $1"
+    supabase_like "$1"
+    pg -d "$1" -f "$SNAPSHOT" >"$WORK/$1.log" 2>&1 || { tail -20 "$WORK/$1.log"; fail "TableSchema.sql does not load"; }
+}
+
+schema_dump() {
+    pg_dump -h 127.0.0.1 -p "$PGPORT_TEST" -U postgres --schema-only "$1" \
+        | grep -v -E '^\\(restrict|unrestrict) '
+}
+
+check_001() {
+    step "001 - apply"
+    apply "$MIG/001_add_definition_and_storage_version.sql"
+    [ "$(target_columns)" = "3" ] || fail "expected 3 target columns after 001"
+    ok "all 3 columns created"
+
+    [ "$(pgq -d "$DB" -c "SELECT count(*) FROM media WHERE storage_version IS DISTINCT FROM 1;")" = "0" ] \
+        || fail "media rows did not backfill to storage_version = 1"
+    [ "$(pgq -d "$DB" -c "SELECT count(*) FROM species_en WHERE definition IS NOT NULL;")" = "0" ] \
+        || fail "definition is not NULL on existing rows"
+    ok "existing rows backfilled: storage_version = 1, definition NULL"
+
+    apply "$MIG/001_add_definition_and_storage_version.sql"
+    [ "$(target_columns)" = "3" ] || fail "re-apply changed the column count"
+    ok "re-apply is a no-op"
+
+    pg -d "$DB" -c "UPDATE species_en SET definition = 'A large deciduous timber tree.' WHERE species_id = 1;" \
+        || fail "write to definition"
+    pg -d "$DB" -c "UPDATE media SET storage_version = storage_version + 1 WHERE media_id = 1;" \
+        || fail "increment storage_version"
+    [ "$(pgq -d "$DB" -c "SELECT storage_version FROM media WHERE media_id = 1;")" = "2" ] \
+        || fail "storage_version did not increment to 2"
+    ok "definition is writable and storage_version increments"
+
+    if pg -d "$DB" -c "INSERT INTO media (species_id, species_name, media_type, download_link, storage_version) VALUES (2, 'x', 'image', 'https://e.org/b.jpg', NULL);" >/dev/null 2>&1; then
+        fail "storage_version accepted NULL"
+    fi
+    ok "storage_version rejects NULL"
+
+    step "001 - rollback"
+    local before; before=$(counts)
+    apply "$MIG/001_add_definition_and_storage_version.rollback.sql"
+    [ "$(target_columns)" = "0" ] || fail "rollback left target columns"
+    apply "$MIG/001_add_definition_and_storage_version.rollback.sql"
+    [ "$(counts)" = "$before" ] || fail "row counts changed across rollback"
+    ok "rollback removes the columns, is a no-op on re-run and keeps every row"
+
+    apply "$MIG/001_add_definition_and_storage_version.sql"
+    ok "re-applied for the next migration"
+}
+
+step "STEP 0 - throwaway PostgreSQL $(pg_ctl --version | awk '{print $3}') on port $PGPORT_TEST"
 mkdir -p "$WORK"
-initdb -D "$WORK/pgdata" -U postgres --auth=trust >/dev/null 2>&1 \
-    || fail "initdb"
-# TCP only: unix socket paths under TMPDIR can exceed the 103-byte limit
+initdb -D "$WORK/pgdata" -U postgres --auth=trust >/dev/null 2>&1 || fail "initdb"
 pg_ctl -D "$WORK/pgdata" \
     -o "-c listen_addresses=127.0.0.1 -p $PGPORT_TEST -c unix_socket_directories=''" \
-    -l "$WORK/pg.log" start >/dev/null 2>&1 || {
-        tail -20 "$WORK/pg.log"; fail "could not start postgres"; }
-sleep 2
-pgq -d postgres -c "select 1" >/dev/null 2>&1 || fail "cannot connect"
-ok "cluster up (throwaway, removed on exit)"
+    -l "$WORK/pg.log" start >/dev/null 2>&1 || { tail -20 "$WORK/pg.log"; fail "could not start postgres"; }
+for _ in $(seq 20); do pgq -d postgres -c "SELECT 1" >/dev/null 2>&1 && break; sleep 0.5; done
+pgq -d postgres -c "SELECT 1" >/dev/null 2>&1 || fail "cannot connect"
+pg -d postgres -c "CREATE ROLE anon NOLOGIN; CREATE ROLE authenticated NOLOGIN; CREATE ROLE service_role NOLOGIN BYPASSRLS;" \
+    || fail "create Supabase roles"
+ok "cluster up with anon, authenticated and service_role"
 
-createdb -h 127.0.0.1 -p "$PGPORT_TEST" -U postgres "$DB" || fail "createdb"
+step "STEP 1 - load TableSchema.sql"
+load_snapshot "$DB"
+ok "$(pgq -d "$DB" -c "SELECT count(*) FROM information_schema.tables WHERE table_schema='public';") tables"
 
-echo
-echo "=== STEP 1 - seed scratch DB with $BASE_REF schema ======================"
-cd "$REPO" || fail "cd repo"
-git rev-parse --verify "$BASE_REF" >/dev/null 2>&1 \
-    || fail "ref '$BASE_REF' not found (try: git fetch upstream)"
-if ! { git show "$BASE_REF:services/flask-api/TableSchema.sql" 2>/dev/null || git show "$BASE_REF:services/flask-api/TableSchema.sql"; } | pg -d "$DB" -q >"$WORK/seed.log" 2>&1; then
-    tail -20 "$WORK/seed.log"; fail "seeding $BASE_REF schema"
-fi
-ok "$BASE_REF schema loaded - $(pgq -d "$DB" -c "SELECT count(*) FROM information_schema.tables WHERE table_schema='public';") tables"
+step "STEP 2 - roll back every migration to reach the pre-migration baseline"
+ROLLBACKS=$(ls "$MIG"/[0-9][0-9][0-9]_*.rollback.sql | sort -r)
+for f in $ROLLBACKS; do apply "$f"; ok "rolled back $(basename "$f")"; done
+[ "$(target_columns)" = "0" ] || fail "001 columns present at the baseline"
+ok "baseline has no 001 columns"
 
-echo
-echo "=== STEP 2 - confirm target columns ABSENT (reproduces live drift) ======"
-PRE=$(pgq -d "$DB" -c "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND column_name IN ('definition','storage_version');")
-[ "$PRE" = "0" ] || fail "expected 0 target columns before migration, found $PRE"
-ok "0 target columns - matches the live-database state"
-
-echo
-echo "=== STEP 3 - seed representative rows ==================================="
-# an empty table will accept a migration that would fail against real rows
-if ! pg -d "$DB" -q >"$WORK/rows.log" 2>&1 <<'SQL'
+step "STEP 3 - seed representative rows"
+pg -d "$DB" >"$WORK/rows.log" 2>&1 <<'SQL' || { tail -20 "$WORK/rows.log"; fail "seeding rows"; }
 INSERT INTO public.species_en (species_id, scientific_name, common_name, habitat, leaf_type, fruit_type)
 VALUES (1,'Tectona grandis','Ai-teak','lowland','simple','drupe'),
        (2,'Casuarina equisetifolia','Ai-kamii','coastal','needle','samara');
@@ -105,95 +150,25 @@ VALUES (1,'Tectona grandis','Ai-teak','rai-kraik','simples','drupe'),
 INSERT INTO public.media (species_id, species_name, media_type, download_link)
 VALUES (1,'Tectona grandis','video','https://example.org/a.mp4'),
        (1,'Tectona grandis','image','https://example.org/a.jpg');
+INSERT INTO public.users (name, password_hash, role) VALUES ('admin', 'x', 'admin');
+INSERT INTO public.admin_sessions (user_id, access_token, expires_at)
+VALUES (1, 'token', now() + interval '1 hour');
 SQL
-then
-    tail -20 "$WORK/rows.log"; fail "seeding representative rows"
+ok "seeded species_en/species_tet/media/users/admin_sessions = $(counts)"
+
+for f in $(ls "$MIG"/[0-9][0-9][0-9]_*.sql | grep -v '\.rollback\.sql$' | sort); do
+    n=$(basename "$f" | cut -c1-3)
+    declare -F "check_$n" >/dev/null || fail "no checks for migration $n in test_migration.sh"
+    "check_$n"
+done
+
+step "STEP 4 - TableSchema.sql matches the migration chain"
+load_snapshot "$SNAPDB"
+if ! diff <(schema_dump "$SNAPDB") <(schema_dump "$DB") >"$WORK/schema.diff"; then
+    head -40 "$WORK/schema.diff"
+    fail "TableSchema.sql and the migration chain build different schemas"
 fi
-ROWS=$(pgq -d "$DB" -c "SELECT (SELECT count(*) FROM species_en)||'/'||(SELECT count(*) FROM species_tet)||'/'||(SELECT count(*) FROM media);")
-[ "$ROWS" = "2/2/2" ] || fail "expected 2/2/2 seeded rows, got $ROWS"
-ok "seeded species_en/species_tet/media = $ROWS"
+ok "pg_dump --schema-only is identical"
 
 echo
-echo "=== STEP 4 - APPLY migration 001 ========================================"
-pg -d "$DB" -q -f "$MIG/001_add_definition_and_storage_version.sql" >/dev/null 2>&1 \
-    || fail "applying 001"
-ok "migration applied"
-echo
-pg -d "$DB" -c "SELECT table_name, column_name, data_type, is_nullable, column_default
-  FROM information_schema.columns WHERE table_schema='public'
-  AND column_name IN ('definition','storage_version') ORDER BY table_name, column_name;"
-POST=$(pgq -d "$DB" -c "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND column_name IN ('definition','storage_version');")
-[ "$POST" = "3" ] || fail "expected 3 target columns, found $POST"
-ok "all 3 columns created"
-
-echo
-echo "=== STEP 5 - existing rows backfilled correctly ========================="
-BAD=$(pgq -d "$DB" -c "SELECT count(*) FROM media WHERE storage_version IS DISTINCT FROM 1;")
-[ "$BAD" = "0" ] || fail "$BAD media rows did not backfill to storage_version=1"
-ok "pre-existing media rows backfilled to storage_version = 1"
-NOTNULL=$(pgq -d "$DB" -c "SELECT count(*) FROM species_en WHERE definition IS NOT NULL;")
-[ "$NOTNULL" = "0" ] || fail "definition should be NULL on existing rows"
-ok "definition NULL on existing rows (nullable, as designed)"
-
-echo
-echo "=== STEP 6 - IDEMPOTENCY: re-apply must be a clean no-op ================"
-pg -d "$DB" -q -f "$MIG/001_add_definition_and_storage_version.sql" >/dev/null 2>&1 \
-    || fail "re-apply was not idempotent"
-AGAIN=$(pgq -d "$DB" -c "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND column_name IN ('definition','storage_version');")
-[ "$AGAIN" = "3" ] || fail "column count changed on re-apply: $AGAIN"
-ok "re-apply succeeded, still 3 columns"
-
-echo
-echo "=== STEP 7 - the new columns actually work =============================="
-pg -d "$DB" -q -c "UPDATE species_en SET definition='A large deciduous timber tree.' WHERE species_id=1;" >/dev/null 2>&1 \
-    || fail "write to definition"
-pg -d "$DB" -q -c "UPDATE media SET storage_version = storage_version + 1 WHERE media_id=1;" >/dev/null 2>&1 \
-    || fail "increment storage_version"
-V=$(pgq -d "$DB" -c "SELECT storage_version FROM media WHERE media_id=1;")
-[ "$V" = "2" ] || fail "storage_version increment gave '$V', expected 2"
-ok "definition writable; storage_version increments 1 -> 2 as offline sync needs"
-
-echo
-echo "=== STEP 8 - NOT NULL constraint enforced ==============================="
-if pg -d "$DB" -q -c "INSERT INTO media (species_id, species_name, media_type, download_link, storage_version) VALUES (2,'x','image','https://e.org/b.jpg',NULL);" >/dev/null 2>&1; then
-    fail "NULL accepted into storage_version - NOT NULL not enforced"
-fi
-ok "NULL rejected by storage_version NOT NULL constraint"
-
-echo
-echo "=== STEP 9 - ROLLBACK ==================================================="
-pg -d "$DB" -q -f "$MIG/001_add_definition_and_storage_version.rollback.sql" >/dev/null 2>&1 \
-    || fail "rollback failed"
-BACK=$(pgq -d "$DB" -c "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND column_name IN ('definition','storage_version');")
-[ "$BACK" = "0" ] || fail "rollback left $BACK columns behind"
-ok "rollback removed all 3 columns"
-
-echo
-echo "=== STEP 10 - rollback is idempotent ===================================="
-pg -d "$DB" -q -f "$MIG/001_add_definition_and_storage_version.rollback.sql" >/dev/null 2>&1 \
-    || fail "rollback not idempotent"
-ok "re-running rollback is a clean no-op"
-
-echo
-echo "=== STEP 11 - data survived the round trip =============================="
-SURV=$(pgq -d "$DB" -c "SELECT (SELECT count(*) FROM species_en)||'/'||(SELECT count(*) FROM species_tet)||'/'||(SELECT count(*) FROM media);")
-[ "$SURV" = "$ROWS" ] || fail "row counts changed: $ROWS -> $SURV"
-ok "row counts unchanged through apply+rollback ($SURV)"
-
-echo
-echo "=== STEP 12 - TableSchema.sql builds a correct DB from scratch =========="
-createdb -h 127.0.0.1 -p "$PGPORT_TEST" -U postgres "$SNAPDB" || fail "createdb snapshot"
-if ! pg -d "$SNAPDB" -q -f "$REPO/services/flask-api/TableSchema.sql" >"$WORK/snap.log" 2>&1; then
-    tail -20 "$WORK/snap.log"; fail "TableSchema.sql does not load"
-fi
-SNAP=$(pgq -d "$SNAPDB" -c "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND column_name IN ('definition','storage_version');")
-[ "$SNAP" = "3" ] || fail "fresh DB from TableSchema.sql has $SNAP/3 target columns"
-ok "fresh database has all 3 columns"
-AUDIT=$(pgq -d "$SNAPDB" -c "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_name='admin_session_audit';")
-[ "$AUDIT" = "1" ] || fail "admin_session_audit missing - master's auth schema regressed"
-ok "admin_session_audit present - master's auth schema intact"
-
-echo
-echo "========================================================================="
 echo "ALL MIGRATION CHECKS PASSED"
-echo "========================================================================="

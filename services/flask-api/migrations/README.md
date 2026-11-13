@@ -6,7 +6,10 @@ Every change to the SDA database schema goes in this folder, as a numbered SQL f
 
 Schema changes used to live entirely in `services/flask-api/TableSchema.sql`, partly as `CREATE TABLE` statements and partly as commented-out `ALTER TABLE` lines somebody had to spot and run by hand. Nothing recorded which changes had reached which database.
 
-That has failed in production. Three columns (`species_en.definition`, `species_tet.definition`, `media.storage_version`) exist in the schema file and are read and written by application code, but do not exist in the live database. Nobody noticed for three months, because nothing checks.
+That failed in production.
+Three columns were in the schema file and the application code but not in the live database.
+They were `species_en.definition`, `species_tet.definition` and `media.storage_version`.
+The gap lasted three months, because nothing checked for it.
 
 `TableSchema.sql` is still useful as a **snapshot of the intended full schema**, and it's how you create a brand new database from scratch. What it can't do is tell you what state an existing database is in. That's what this folder is for.
 
@@ -31,36 +34,32 @@ NNN_short_description.rollback.sql     -- matching rollback
 
 ## Testing a migration before applying it
 
-The whole checklist is automated. It builds a throwaway PostgreSQL cluster, seeds it with the schema **currently deployed** (`upstream/master`), applies the migration, and tears everything down again:
+Run the harness before you apply a migration anywhere:
 
 ```bash
 bash services/flask-api/migrations/test_migration.sh
 ```
 
-It requires local PostgreSQL binaries (`brew install postgresql@14`, or `apt install postgresql`). It never reads `services/flask-api/.env` and never connects to Supabase, so it cannot touch the shared project.
+It needs local PostgreSQL server binaries (`brew install postgresql@16`, or `apt install postgresql`).
+It uses the newest installed version.
+It never reads `.env` and never connects to Supabase.
 
-The twelve checks it runs:
+The harness runs these steps on a throwaway cluster:
 
-| # | Check |
+| Step | Check |
 |---|---|
-| 0-1 | Throwaway cluster up; seeded from `upstream/master`'s `TableSchema.sql` |
-| 2 | Target columns confirmed **absent** first, reproducing the live drift |
-| 3 | Representative rows seeded (an empty table hides failures that real rows expose) |
-| 4 | Migration applies; all 3 columns created with the intended types |
-| 5 | Existing rows backfill correctly (`storage_version = 1`, `definition` NULL) |
-| 6 | **Idempotent**, re-applying is a clean no-op |
-| 7 | Columns actually work: `definition` writable, `storage_version` increments |
-| 8 | `NOT NULL` on `storage_version` is enforced |
-| 9 | Rollback removes all three columns |
-| 10 | Rollback is itself idempotent |
-| 11 | **No data lost** across apply then rollback |
-| 12 | `TableSchema.sql` still builds a correct database from scratch, with `admin_session_audit` intact |
+| 0 | Start the cluster and create the Supabase roles `anon`, `authenticated` and `service_role` |
+| 1 | Load `TableSchema.sql`, with the default grants that Supabase gives those roles |
+| 2 | Apply every rollback in reverse order, then assert the pre-migration baseline |
+| 3 | Seed representative rows |
+| per migration | Run `check_NNN`: apply, verify, re-apply, roll back, roll back again, keep every row, apply again |
+| 4 | Build a second database from `TableSchema.sql` and require an identical `pg_dump --schema-only` |
 
-Point it at a different baseline with `BASE_REF=origin/master bash services/flask-api/migrations/test_migration.sh`.
+Step 4 proves that the snapshot and the migration chain build the same schema.
+The baseline asserts in step 2 stop a wrong rollback and a wrong snapshot from hiding each other.
 
-Last run: **all 12 passed** against PostgreSQL 14.22 on 2026-08-10.
-
-If you add a migration, extend the script with checks for it. A migration that has never been run against a database shaped like the real one has not been tested.
+A new migration needs a `check_NNN` function in `test_migration.sh`.
+The harness fails when that function is missing.
 
 ## Applying to Supabase
 
@@ -72,6 +71,6 @@ Apply to a development project before a shared or production one, and record the
 
 | # | Description | Applied to dev | Applied to shared/prod |
 |---|---|---|---|
-| 001 | Add `species_en.definition`, `species_tet.definition`, `media.storage_version` | not yet | not yet |
+| 001 | Add `species_en.definition`, `species_tet.definition`, `media.storage_version` | 2026-11-13, in the rebuild from `TableSchema.sql` | 2026-11-12 |
 
 > Keep this table current. A migration that exists but has not been applied anywhere is exactly the failure this folder was created to prevent.
