@@ -375,6 +375,7 @@ def get_species_changes():
         .select("entity_id, version, operation, entity_type")
         .in_("entity_type", ["species", "media"])
         .gt("version", since_version)
+        .order("version")
         .execute()
     )
 
