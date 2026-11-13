@@ -50,3 +50,7 @@ jobs:
       - name: Run AI backend tests
         working-directory: services/flask-api
         run: python -m pytest tests -v
+
+      - name: Run migration harness
+        if: always()
+        run: bash services/flask-api/migrations/test_migration.sh
