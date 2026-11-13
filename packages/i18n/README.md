@@ -88,7 +88,8 @@ t("photoCount", { count: 12 });
 ```
 
 The call gives "12 photos" in English and "Foto 12" in Tetum.
-A placeholder with no param, or with an `undefined` or `null` param, stays as `{count}`.
+A param value must be a string or a number.
+TypeScript rejects `undefined` or `null`, so check the value before the call.
 
 If you do not know the Tetum text, do not copy the English text into `tet.json`.
 Ask a Tetum speaker on the team first.
