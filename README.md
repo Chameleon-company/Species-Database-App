@@ -24,9 +24,6 @@ ml/
 docs/
   backend/        API reference and backend notes
   testing/        T2 testing reports
-tests/
-  e2e/            T2 automation suites
-  api/            T2 API test collections
 packages/         shared workspace packages
 scripts/          OS install scripts
 ```

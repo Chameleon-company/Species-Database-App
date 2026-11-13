@@ -53,7 +53,10 @@ def create_image(
 
     image = Image.new(mode, (32, 32), colour)
     output = BytesIO()
-    image.save(output, format=image_format)
+    if image_format == "MPO":
+        image.save(output, format="MPO", save_all=True, append_images=[image])
+    else:
+        image.save(output, format=image_format)
     output.seek(0)
     return output
 
@@ -270,14 +273,9 @@ def test_non_rgb_images_are_accepted(client, mode):
 
 
 def test_camera_jpeg_with_extra_frames_is_accepted(client, service):
-    image = Image.new("RGB", (32, 32), (20, 120, 60))
-    output = BytesIO()
-    image.save(output, format="MPO", save_all=True, append_images=[image])
-    output.seek(0)
-
     response = client.post(
         "/api/ai/identify",
-        data={"image": (output, "IMG_0001.JPG")},
+        data={"image": (create_image(image_format="MPO"), "IMG_0001.JPG")},
         content_type="multipart/form-data",
     )
 

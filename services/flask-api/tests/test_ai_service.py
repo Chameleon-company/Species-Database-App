@@ -35,7 +35,10 @@ def create_image(mode="RGB", image_format="PNG"):
 
     image = Image.new(mode, (40, 60), colour)
     output = BytesIO()
-    image.save(output, format=image_format)
+    if image_format == "MPO":
+        image.save(output, format="MPO", save_all=True, append_images=[image])
+    else:
+        image.save(output, format=image_format)
     output.seek(0)
     return output
 
@@ -80,6 +83,18 @@ def test_preprocess_image_creates_expected_batch(mode):
     assert batch.dtype == np.float32
     assert float(batch.min()) >= 0.0
     assert float(batch.max()) <= 1.0
+
+
+def test_preprocess_image_reads_a_camera_jpeg_with_extra_frames():
+    camera_jpeg = create_image(image_format="MPO")
+    with Image.open(camera_jpeg) as opened:
+        assert opened.format == "MPO"
+    camera_jpeg.seek(0)
+
+    np.testing.assert_array_equal(
+        preprocess_image(camera_jpeg),
+        preprocess_image(create_image(image_format="JPEG")),
+    )
 
 
 def test_preprocess_image_rejects_corrupted_data():
