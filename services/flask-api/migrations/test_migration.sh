@@ -122,12 +122,12 @@ client_default_grants() {
 }
 
 as_role() {
-    pgq -d "$DB" -c "BEGIN" -c "SET LOCAL lc_messages TO 'C'" -c "SET LOCAL ROLE $1" -c "$2" -c "ROLLBACK" 2>&1
+    pgq -d "$DB" -v VERBOSITY=verbose -c "BEGIN" -c "SET LOCAL lc_messages TO 'C'" -c "SET LOCAL ROLE $1" -c "$2" -c "ROLLBACK" 2>&1
 }
 
 denied() {
     local out; out=$(as_role "$1" "$2")
-    [[ "$out" == *"permission denied for"* ]]
+    [[ "$out" == *"42501: permission denied for"* ]]
 }
 
 supabase_like() {
@@ -230,8 +230,13 @@ check_002() {
     ok "re-apply is a no-op"
 
     step "002 - rollback"
+    pg -d "$DB" -c "CREATE TABLE public.after_002 (id int);" || fail "create a table after 002"
     apply "$MIG/002_enable_rls_and_revoke_client_roles.rollback.sql"
     apply "$MIG/002_enable_rls_and_revoke_client_roles.rollback.sql"
+    [ "$(pgq -d "$DB" -c "SELECT has_table_privilege('anon', 'public.after_002', 'SELECT') OR has_table_privilege('authenticated', 'public.after_002', 'SELECT');")" = "f" ] \
+        || fail "the rollback opened a table created after 002"
+    pg -d "$DB" -c "DROP TABLE public.after_002;" || fail "drop the table created after 002"
+    ok "a table created after 002 stays closed after the rollback"
     assert_before_002
     same_rows_as "$before" || fail "rows differ from the state before 002"
     ok "rollback restores the old access, is a no-op on re-run and restores every row exactly"
@@ -247,7 +252,8 @@ assert_before_002() {
     [ "$(rls_on admin_session_audit)" = "t" ] || fail "admin_session_audit lost RLS"
     local tables; tables=$(wc -w <<< "$TABLES")
     [ "$(client_full_access)" = "$((2 * tables))" ] || fail "anon and authenticated lack full table privileges before 002"
-    [ "$(client_full_sequence_access)" = "$((2 * tables))" ] || fail "anon and authenticated lack full sequence privileges before 002"
+    local sequences; sequences=$(pgq -d "$DB" -c "SELECT count(*) FROM pg_class WHERE relnamespace = 'public'::regnamespace AND relkind = 'S';")
+    [ "$(client_full_sequence_access)" = "$((2 * sequences))" ] || fail "anon and authenticated lack full sequence privileges before 002"
     [ "$(client_default_grants)" = "6" ] || fail "postgres default privileges do not grant tables, sequences and functions to both client roles before 002"
     ok "before 002: RLS only on admin_session_audit, client roles hold every grant"
 }

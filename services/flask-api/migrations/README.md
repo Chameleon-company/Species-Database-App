@@ -90,15 +90,22 @@ State before 002 on 2026-11-14:
 | Functions and views in `public` | None | None |
 | API key | `sb_secret_` key | JWT with `role` claim `service_role` |
 
-These queries produced the table:
+These queries produce the table:
 
-- `select relname, relrowsecurity, has_table_privilege('anon', oid, 'select') from pg_class where relnamespace = 'public'::regnamespace and relkind = 'r';`
-- `select pg_get_userbyid(defaclrole), defaclobjtype, defaclacl from pg_default_acl where defaclnamespace = 'public'::regnamespace;`
-- `select count(*) from pg_proc where pronamespace = 'public'::regnamespace;`
+- RLS and table grants:
+  `select relname, relkind, relrowsecurity, relacl from pg_class where relnamespace = 'public'::regnamespace and relkind in ('r', 'p', 'v', 'm', 'f');`
+- Sequence grants:
+  `select relname, relacl from pg_class where relnamespace = 'public'::regnamespace and relkind = 'S';`
+- Default privileges:
+  `select pg_get_userbyid(defaclrole), defaclobjtype, defaclacl from pg_default_acl where defaclnamespace = 'public'::regnamespace;`
+- Functions:
+  `select count(*) from pg_proc where pronamespace = 'public'::regnamespace;`
 
 The rollback grants back the table privileges on the 8 named tables only.
 A table created after 002 stays closed.
-It also grants back the sequence privileges and the default privileges.
+It grants back the sequence privileges on every sequence in `public`.
+A sequence created after 002 opens again, which exposes no rows.
+It also grants back the default privileges.
 
 Steps:
 
@@ -113,7 +120,9 @@ Steps:
 2. Read the sequence grants on prod:
    `select relname, relacl from pg_class where relnamespace = 'public'::regnamespace and relkind = 'S';`
    Each row must show `anon=rwU` and `authenticated=rwU`.
-   If a row differs, change the sequence grants in the 002 rollback to match, then apply.
+   Save the output with the backup.
+   If a row differs, a rollback grants more on that sequence than prod had.
+   After such a rollback, restore that sequence's grants from the saved output.
 3. Take a backup in the dashboard (Database, Backups).
 4. Run the 002 file in the SQL editor.
 5. Check the security advisor.
@@ -121,10 +130,12 @@ Steps:
    It shows `rls_enabled_no_policy` (INFO) on all 8 tables.
    That INFO lint is the intended state.
 6. Log in to the admin, and load `/api/bundle` from the field app.
-7. If step 6 fails, the project owner decides within 15 minutes.
+7. If step 6 fails, the project owner takes over.
+   The 15 minutes start when step 6 fails.
    First, check the API key type again.
    A wrong key is the likely cause.
-   If the key is right, or a key fix does not restore the API in 15 minutes, run the 002 rollback.
+   If the key is right, run the 002 rollback.
+   If the API still fails 15 minutes after a key fix, run the 002 rollback.
 
 Only the project owner runs the rollback.
 The rollback opens `users.password_hash` to the public key again.

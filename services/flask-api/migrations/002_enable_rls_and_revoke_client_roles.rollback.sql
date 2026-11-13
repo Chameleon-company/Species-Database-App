@@ -8,11 +8,12 @@
 --   users.password_hash and admin_sessions.access_token.
 --   Only the project owner runs it, and only to undo a failed apply.
 --
--- Restores the state recorded on dev and prod on 2026-11-14 (README.md,
--- "Applying 002"): RLS on admin_session_audit only, ALL on the 8 named tables
--- and on every public sequence for anon and authenticated, and the matching
--- postgres default privileges. Tables are named, so a table created after 002
--- stays closed. Public had no functions then, so no function grant comes back.
+-- Restores the state recorded on dev on 2026-11-14 (README.md, "Applying
+-- 002"): RLS on admin_session_audit only, ALL on the 8 named tables and on
+-- every public sequence for anon and authenticated, and the matching postgres
+-- default privileges. A table created after 002 stays closed. A sequence
+-- created after 002 opens again, which exposes no rows. Public had no
+-- functions then, so no function grant comes back.
 -- Idempotent.
 -- =============================================================================
 
