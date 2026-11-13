@@ -20,10 +20,17 @@ WORK=$(mktemp -d /tmp/sda-mig.XXXXXX) || { echo "!! FAIL: mktemp"; exit 1; }
 DB=sda_mig_test
 SNAPDB=sda_snapshot_test
 
-for d in $(ls -d /opt/homebrew/opt/postgresql@*/bin /usr/local/opt/postgresql@*/bin \
-    /usr/lib/postgresql/*/bin 2>/dev/null | sort -rV); do
-    [ -x "$d/initdb" ] && export PATH="$d:$PATH" && break
+best=""
+best_v=""
+for d in /opt/homebrew/opt/postgresql@*/bin /usr/local/opt/postgresql@*/bin /usr/lib/postgresql/*/bin; do
+    [ -x "$d/initdb" ] || continue
+    v=$("$d/initdb" --version | awk '{print $NF}')
+    if [ -z "$best_v" ] || [ "$(printf '%s\n' "$best_v" "$v" | sort -V | tail -1)" = "$v" ]; then
+        best=$d
+        best_v=$v
+    fi
 done
+[ -n "$best" ] && export PATH="$best:$PATH"
 
 fail() { echo "!! FAIL: $*"; exit 1; }
 ok()   { echo "   ok: $*"; }
@@ -51,12 +58,17 @@ fingerprint() {
         UNION ALL SELECT 'tet' || x::text FROM species_tet x
         UNION ALL SELECT 'media' || x::text FROM media x
         UNION ALL SELECT 'users' || x::text FROM users x
-        UNION ALL SELECT 'sessions' || x::text FROM admin_sessions x) q;"
+        UNION ALL SELECT 'sessions' || x::text FROM admin_sessions x
+        UNION ALL SELECT 'audit' || x::text FROM admin_session_audit x
+        UNION ALL SELECT 'analytics' || x::text FROM analytics x
+        UNION ALL SELECT 'changelog' || x::text FROM changelog x) q;"
 }
 
 same_rows_as() {
     local now; now=$(fingerprint)
-    [[ "$1" =~ ^[0-9a-f]{32}$ && "$now" == "$1" ]]
+    [[ "$1" =~ ^[0-9a-f]{32}$ ]] || fail "could not fingerprint the rows before the migration"
+    [[ "$now" =~ ^[0-9a-f]{32}$ ]] || fail "could not fingerprint the rows after the rollback"
+    [[ "$now" == "$1" ]]
 }
 
 counts() {
@@ -118,8 +130,8 @@ check_001() {
         || fail "storage_version did not increment to 2"
     ok "definition is writable and storage_version increments"
 
-    local out; out=$(pg -d "$DB" -c "INSERT INTO media (species_id, species_name, media_type, download_link, storage_version) VALUES (1, 'x', 'image', 'https://e.org/b.jpg', NULL);" 2>&1)
-    [[ "$out" == *'null value in column "storage_version"'* ]] || fail "storage_version accepted NULL or failed for another reason: $out"
+    local out; out=$(pg -d "$DB" -v VERBOSITY=verbose -c "INSERT INTO media (species_id, species_name, media_type, download_link, storage_version) VALUES (2, 'x', 'image', 'https://e.org/b.jpg', NULL);" 2>&1)
+    [[ "$out" == *23502* && "$out" == *storage_version* ]] || fail "storage_version accepted NULL or failed for another reason: $out"
     ok "storage_version rejects NULL"
 
     step "001 - rollback"
@@ -171,8 +183,11 @@ VALUES (1,'Tectona grandis','video','https://example.org/a.mp4'),
 INSERT INTO public.users (name, password_hash, role) VALUES ('admin', 'x', 'admin');
 INSERT INTO public.admin_sessions (user_id, access_token, expires_at)
 VALUES (1, 'token', now() + interval '1 hour');
+INSERT INTO public.admin_session_audit (session_id, user_id, event_type) VALUES (1, 1, 'login');
+INSERT INTO public.analytics (user_id, login_time, duration) VALUES (1, now(), 60);
+INSERT INTO public.changelog (version, entity_id, entity_type, operation) VALUES (1, 1, 'species', 'CREATE');
 SQL
-ok "seeded species_en/species_tet/media/users/admin_sessions = $(counts)"
+ok "seeded rows in all 8 tables"
 
 for f in "$MIG"/[0-9][0-9][0-9]_*.sql; do
     [[ "$f" == *.rollback.sql ]] && continue

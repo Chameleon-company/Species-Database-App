@@ -57,9 +57,12 @@ The harness runs these steps on a throwaway cluster:
 
 Step 4 proves that the snapshot and the migration chain build the same schema.
 The baseline asserts in step 2 stop a wrong rollback and a wrong snapshot from hiding each other.
-The baseline is the snapshot with every migration rolled back, so it is only as accurate as the snapshot.
-Commit `1f094ce` matched `TableSchema.sql` to prod on 2026-11-13.
-The harness cannot see the live database, so a change made outside a migration still needs a new snapshot match.
+The baseline is the snapshot with every migration rolled back.
+It is only as accurate as the snapshot.
+The harness cannot see the live database.
+After any change made outside a migration, match `TableSchema.sql` to prod again.
+
+CI runs the harness in the `migration-harness` job of `.github/workflows/ai-backend-tests.yml`.
 
 A new migration needs a `check_NNN` function in `test_migration.sh`.
 The harness fails when that function is missing.
