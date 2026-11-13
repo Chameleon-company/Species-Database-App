@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, test } from "vitest";
-import { catalogs, format, locales, translate, type Locale } from "./translate.ts";
+import { catalogs, interpolate, locales, translate, type Locale } from "./translate.ts";
 
 const placeholders = (message: string) =>
   [...message.matchAll(/\{(\w+)\}/g)].map(([, name]) => name).sort();
@@ -62,18 +62,22 @@ describe("translate", () => {
   });
 });
 
-describe("format", () => {
+describe("interpolate", () => {
   test("replaces placeholders with params", () => {
-    expect(format("{count} records in {place}", { count: 12, place: "Dili" })).toBe(
+    expect(interpolate("{count} records in {place}", { count: 12, place: "Dili" })).toBe(
       "12 records in Dili",
     );
   });
 
   test("keeps a placeholder that has no param", () => {
-    expect(format("{count} records", {})).toBe("{count} records");
+    expect(interpolate("{count} records", {})).toBe("{count} records");
+  });
+
+  test("returns the message unchanged without params", () => {
+    expect(interpolate("{count} records")).toBe("{count} records");
   });
 
   test("ignores inherited properties", () => {
-    expect(format("{toString}", {})).toBe("{toString}");
+    expect(interpolate("{toString}", {})).toBe("{toString}");
   });
 });

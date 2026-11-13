@@ -49,6 +49,7 @@ Keep these rules:
 Use a camelCase key that names what the text is for, such as `deleteEntry`.
 Write a variable as `{name}` in the text, and pass its value as a param.
 For example, a key `photoCount` with the text `"{count} photos"` takes `{ count: 12 }`.
+`photoCount` is only an example and is not in the catalog.
 
 In the admin, `useLanguage()` gives `t` for the current language:
 
@@ -56,7 +57,6 @@ In the admin, `useLanguage()` gives `t` for the current language:
 const { t } = useLanguage();
 
 t("deleteEntry");
-t("photoCount", { count: 12 });
 ```
 
 Outside React, call `translate` directly:
