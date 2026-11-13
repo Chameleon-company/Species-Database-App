@@ -1,10 +1,6 @@
 {
   "name": "species-database-app",
   "private": true,
-  "packageManager": "pnpm@12.16.1",
-  "engines": {
-    "node": ">=22.12.0"
-  },
   "scripts": {
     "install:linux": "bash scripts/install-linux.sh",
     "install:macos": "bash scripts/install-macos.sh",
@@ -19,10 +15,17 @@
     "docker:build": "docker compose build",
     "docker:up": "docker compose up --build",
     "docker:down": "docker compose down",
-    "docker:logs": "docker compose logs -f"
+    "docker:logs": "docker compose logs -f",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check"
   },
   "devDependencies": {
+    "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:"
-  }
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "packageManager": "pnpm@12.16.1"
 }
