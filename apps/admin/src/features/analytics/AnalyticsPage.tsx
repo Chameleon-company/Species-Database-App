@@ -87,8 +87,8 @@ export default function AnalyticsPage() {
       {(overview.isError || activity.isError) && (
         <LoadError
           onRetry={() => {
-            overview.refetch();
-            activity.refetch();
+            void overview.refetch();
+            void activity.refetch();
           }}
         >
           {t("errorGeneric")}

@@ -10,6 +10,6 @@ export function useLogout() {
   return async () => {
     await logoutAdmin(import.meta.env.VITE_API_BASE);
     queryClient.clear();
-    navigate("/admin-login");
+    void navigate("/admin-login");
   };
 }

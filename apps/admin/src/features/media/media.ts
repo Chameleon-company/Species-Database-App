@@ -3,7 +3,7 @@ export type MediaType = "image" | "video";
 export type Media = {
   media_id: number;
   species_name: string;
-  media_type: MediaType | string;
+  media_type: string;
   download_link: string;
   alt_text?: string | null;
 };

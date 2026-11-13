@@ -33,7 +33,7 @@ export default function SpeciesFormPage() {
       createSpecies.mutateAsync(values).then(
         () => {
           toast.success(t("uploadSuccessful"));
-          navigate("/species");
+          void navigate("/species");
         },
         (error) => toast.error(messageOf(error, t("databaseUploadFailed")))
       );
@@ -50,7 +50,7 @@ export default function SpeciesFormPage() {
     updateSpecies.mutateAsync(values).then(
       () => {
         toast.success(t("speciesUpdatedSuccessfully"));
-        navigate("/species");
+        void navigate("/species");
       },
       (error) => toast.error(messageOf(error, t("databaseUploadFailed")))
     );
@@ -59,7 +59,7 @@ export default function SpeciesFormPage() {
     deleteSpecies.mutate(speciesId, {
       onSuccess: () => {
         toast.success(t("speciesDeletedSuccessfully"));
-        navigate("/species");
+        void navigate("/species");
       },
       onError: (error) => {
         setConfirmDelete(false);

@@ -45,7 +45,7 @@ function UserForm({ user, onClose }: { user: User | null; onClose: () => void })
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        form.handleSubmit();
+        void form.handleSubmit();
       }}
       noValidate
       className="flex flex-col gap-4"

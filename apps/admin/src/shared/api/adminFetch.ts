@@ -27,15 +27,10 @@ export async function adminFetch(input: RequestInfo, init: RequestInit = {}) {
   const token = readAdminToken();
   if (!token) endSession();
 
-  const isFormData = init.body instanceof FormData;
-  const res = await fetch(input, {
-    ...init,
-    headers: {
-      ...(init.headers || {}),
-      ...(isFormData ? {} : { "Content-Type": "application/json" }),
-      Authorization: token,
-    },
-  });
+  const headers = new Headers(init.headers);
+  if (!(init.body instanceof FormData)) headers.set("Content-Type", "application/json");
+  headers.set("Authorization", token);
+  const res = await fetch(input, { ...init, headers });
 
   if (res.status === 401 || res.status === 403) endSession();
   return res;

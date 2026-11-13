@@ -59,7 +59,7 @@ export default function SpeciesForm({ mode, initialValues, onSubmit, onDelete, d
     const errors = await Promise.all(
       REQUIRED_FIELDS.map(({ name }) => {
         form.setFieldMeta(`en.${name}`, (meta) => ({ ...meta, isBlurred: true, isDirty: true }));
-        return form.validateField(`en.${name}`, "change");
+        return Promise.resolve(form.validateField(`en.${name}`, "change"));
       })
     );
     if (errors.some((fieldErrors) => fieldErrors.length > 0)) return;
@@ -121,7 +121,7 @@ export default function SpeciesForm({ mode, initialValues, onSubmit, onDelete, d
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        form.handleSubmit();
+        void form.handleSubmit();
       }}
       noValidate
       className="flex flex-col gap-6"

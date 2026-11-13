@@ -17,7 +17,7 @@ export default function AdminLayout() {
     () =>
       onSessionEnd(() => {
         queryClient.clear();
-        navigate("/admin-login", { replace: true });
+        void navigate("/admin-login", { replace: true });
       }),
     [navigate, queryClient]
   );

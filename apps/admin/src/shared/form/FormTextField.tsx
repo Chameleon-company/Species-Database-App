@@ -59,7 +59,7 @@ export default function FormTextField({
     "aria-invalid": invalid,
     onBlur: () => {
       field.handleBlur();
-      field.validate("change");
+      void field.validate("change");
     },
   };
 
