@@ -4,7 +4,7 @@ import { firstLoadBudget } from "./first-load-budget.ts";
 
 export default defineConfig({
   envDir: "../..",
-  plugins: [preact(), firstLoadBudget(50 * 1024)],
+  plugins: [preact(), firstLoadBudget({ maxGzipKiB: 50 })],
   build: {
     target: "chrome71",
   },

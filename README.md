@@ -112,10 +112,10 @@ VITE_GOOGLE_CLIENT_ID=
 ```
 
 Keep these default local values unless your ports change.
-If your `.env` predates the new field app, add the two `5174` origins to `CORS_ORIGINS`.
+If your `.env` predates the new field app, add `http://localhost:5174` to `CORS_ORIGINS`.
 
 ```bash
-CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174
+CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174
 VITE_API_BASE=http://localhost:5000
 VITE_API_URL=http://localhost:5000/api
 ```

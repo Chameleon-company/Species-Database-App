@@ -2,12 +2,12 @@ import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import Paper from "@mui/material/Paper";
 
 export default function TableLayout({
-  rows = [],
+  rows,
   columns,
   loading = false,
   paginationModel = { page: 0, pageSize: 5 },
 }: {
-  rows?: unknown[];
+  rows: unknown[];
   columns: GridColDef[];
   loading?: boolean;
   paginationModel?: { page: number; pageSize: number };

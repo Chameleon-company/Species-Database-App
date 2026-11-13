@@ -9,12 +9,16 @@ export type Bundle = {
   species_en: Species[];
 };
 
-/** GETs `${apiBase}/api/bundle`. Rejects with the HTTP status when the response is not OK. */
+/**
+ * GETs `${apiBase}/api/bundle`. Rejects when `apiBase` is empty, and with the HTTP status when
+ * the response is not OK.
+ */
 export async function fetchBundle(
-  apiBase: string,
+  apiBase: string | undefined,
   init?: RequestInit,
   fetchFn: typeof fetch = fetch,
 ): Promise<Bundle> {
+  if (!apiBase) throw new Error("VITE_API_BASE is not set");
   const res = await fetchFn(`${apiBase.replace(/\/+$/, "")}/api/bundle`, init);
   if (!res.ok) throw new Error(`GET /api/bundle failed with ${res.status}`);
   return (await res.json()) as Bundle;

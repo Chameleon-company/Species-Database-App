@@ -38,6 +38,18 @@ describe("fetchBundle", () => {
     expect(result.species_en[0]?.species_id).toBe(4);
   });
 
+  it("rejects without a request when the API base is missing", async () => {
+    let calls = 0;
+    const fetchFn = () => {
+      calls += 1;
+      return respond(200, bundle([1]))();
+    };
+    await expect(fetchBundle(undefined, undefined, fetchFn)).rejects.toThrow(
+      "VITE_API_BASE is not set",
+    );
+    expect(calls).toBe(0);
+  });
+
   it("rejects with the status when the response is not OK", async () => {
     await expect(fetchBundle("http://api.test", undefined, respond(503, {}))).rejects.toThrow(
       "GET /api/bundle failed with 503",

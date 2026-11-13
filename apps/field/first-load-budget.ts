@@ -33,9 +33,10 @@ const kib = (bytes: number) => `${(bytes / 1024).toFixed(1)} KiB`;
 /**
  * Build-only plugin. After the bundle is written, sums the gzip size (zlib default level, as in
  * Vite's own size report) of `firstLoadFiles` and fails the build when the sum exceeds
- * `limitBytes`.
+ * `maxGzipKiB` KiB.
  */
-export function firstLoadBudget(limitBytes: number): Plugin {
+export function firstLoadBudget({ maxGzipKiB }: { maxGzipKiB: number }): Plugin {
+  const limitBytes = maxGzipKiB * 1024;
   return {
     name: "first-load-budget",
     apply: "build",
