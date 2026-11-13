@@ -88,7 +88,7 @@ The app needs Supabase and Google configuration values. Ask the project owner fo
 | `species-database-dev` | `tdiquvydwzxmtludjmpe` | Local development. Point your `.env` here. |
 | `species-database-prod` | `oppcngtkhywxsazeqqet` | Production only. Its keys live in Render. |
 
-The backend and the admin dashboard both read the one `.env` file in the repository root.
+The backend, the admin dashboard and the field app all read the one `.env` file in the repository root.
 
 Create `.env` from the template:
 
@@ -114,7 +114,7 @@ VITE_GOOGLE_CLIENT_ID=
 Keep these default local values unless your ports change:
 
 ```bash
-CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174
 VITE_API_BASE=http://localhost:5000
 VITE_API_URL=http://localhost:5000/api
 ```
@@ -174,8 +174,15 @@ pnpm run docker:down   # Stop Docker containers
 pnpm run docker:logs   # Follow container logs
 pnpm run docker:build  # Build Docker images only
 pnpm run build         # Build every app in the workspace
-pnpm run lint          # Lint every app in the workspace
+pnpm run lint          # Lint the workspace with Oxlint
+pnpm run test          # Run the unit tests of every app
+pnpm run format        # Format the workspace with Oxfmt
+pnpm run format:check  # Check formatting without changing files
 ```
+
+`pnpm run lint` runs Oxlint from the repository root with the rules in `.oxlintrc.json`.
+It uses type-aware rules, which need TypeScript 7.
+`pnpm run format` uses `.oxfmtrc.json`, and its `ignorePatterns` list the folders it skips.
 
 ## Optional Local Development
 
@@ -217,10 +224,20 @@ Start the admin dashboard in another terminal:
 pnpm run dev:admin
 ```
 
+Start the new field app in another terminal:
+
+```bash
+pnpm run dev:field
+```
+
 Local URLs:
 
 - Admin dashboard: `http://localhost:5173`
+- Field app: `http://localhost:5174`
 - Backend API: `http://localhost:5000`
+
+The field app in `apps/field` uses Preact and Vite.
+Its build fails when the first load is over the brotli budget in `apps/field/vite.config.ts`.
 
 ## Static Field-User Frontend
 
