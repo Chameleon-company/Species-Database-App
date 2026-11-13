@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { useSelector } from "@tanstack/react-form";
 import { Field, FieldError, FieldLabel } from "@sda/ui/components/field";
 import { Input } from "@sda/ui/components/input";
@@ -26,7 +26,9 @@ type FormTextFieldProps = {
  *
  * Validators return translation keys. Blur runs the field's `onChange`
  * validators. The first error shows after a submit attempt, or once the
- * field was edited and then blurred. A `withinLength` error shows as "<length> / <max>". `options` renders a Select; `rows` a Textarea.
+ * field was edited and then blurred. A `withinLength` error shows as "<length> / <max>". `options` renders a Select.
+ * `rows` renders a Textarea that grows with its text from `rows` lines to 20 lines
+ * where `field-sizing: content` is supported, and keeps `rows` lines elsewhere.
  */
 export default function FormTextField({
   label,
@@ -88,7 +90,8 @@ export default function FormTextField({
           placeholder={placeholder}
           value={field.state.value}
           onChange={(e) => field.handleChange(e.target.value)}
-          className="field-sizing-fixed resize-y bg-card"
+          style={{ "--rows": rows } as CSSProperties}
+          className="max-h-[calc(20lh_+_1rem_+_2px)] min-h-[calc(var(--rows)*1lh_+_1rem_+_2px)] resize-y bg-card"
         />
       ) : (
         <Input
