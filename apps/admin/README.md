@@ -1,70 +1,73 @@
-This repository contains the **Admin Dashboard frontend** for the Species Database App.
+# Admin dashboard
 
-The Admin Dashboard is used by authorised admins to manage all backend data that powers the mobile app and PWA used by the Rai Matak reforestation program.
+This app is the admin dashboard for the Species Database App.
+Authorised admins use it to manage the data behind the field app and PWA for the Rai Matak reforestation program.
+General users and field users have no access to it.
 
-This dashboard is not accessible to general users or field users
+## What admins do here
 
-## What This Dashboard Is Used For
+- Add, edit and delete species in English and Tetum.
+- Upload species data in bulk from an Excel file.
+- Manage media records (images and videos for each species).
+- Manage admin users and roles.
+- Read usage analytics.
+- Audit a spreadsheet before an import.
 
-Admins can use this dahboard to:
-- Add, edit and delete plant species both in English and Tetum
-- Upload species data in bulk via Excel files
-- Manage media metadata (images and videos linked to species)
-- Manage admin users and roles
-- View basic system analytics
-- Audit datasets before importing them
+## Tech stack
 
----
+| Part | Choice |
+| --- | --- |
+| UI | React 19, TypeScript, Vite |
+| Components | shadcn/ui (Radix, `new-york` style) from the `@sda/ui` workspace package |
+| Styling | Tailwind CSS v4 with the theme tokens in `packages/ui/src/styles/globals.css` |
+| Forms | TanStack Form |
+| Server data | TanStack Query |
+| Tables | TanStack Table v9, through `@sda/ui/components/data-table` |
+| Icons | lucide-react |
+| Toasts | sonner |
+| Sign-in | Username and password, or Google Identity |
+| API | The Flask API in `services/flask-api` |
 
-## Tech Stack
+## Overview diagram
 
-- React +TypeScript
-- Vite
-- Material UI (MUI)
-- Google Sign-In (admin only)
-- REST API (Flask backend)
+<img width="970" height="469" alt="Admin dashboard overview" src="https://github.com/user-attachments/assets/3d3b65ca-b421-492c-a820-b4712aa422f5" />
 
----
-
-## Admin Dashboard Overview Diagram
-<img width="970" height="469" alt="Untitled drawing (1)" src="https://github.com/user-attachments/assets/3d3b65ca-b421-492c-a820-b4712aa422f5" />
-
-
-## Project Structure
+## Project structure
 
 ```text
 src/
- ├── Components/
- │   ├── AdminLayout.tsx           # wraps all admin pages
- │   ├── drawer.tsx                # side navigation
- │   ├── ProtectedAdmin.tsx        # route protection
- │   ├── DrawerComponent.tsx       # renders the side navigation drawer
- │   ├── TableLayout.tsx           # shared layout wrapper for table-based pages
- │   ├── DeleteConfirmModal.tsx    # reusable confirmation dialog for deletions
- │   ├── UserForm.tsx              # Form component for creating and editing admin users
- │   └── UserTable.tsx             # table component displaying admin users
- │
- ├── Pages/
- │   ├── Home.tsx                  # dashboard landing page
- │   ├── AdminLoginForm.tsx        # login page (Supports local admin login (username + password) and Google Sign-In
- │   ├── Species.tsx               # species table (delete, edit entry point)
- │   ├── AddEntry.tsx              # add species
- │   ├── EditEntry.tsx             # edit species (allows updates, re-translation, and deletion)
- │   ├── AddExcel.tsx              # Bulk upload page for species data
- │   ├── MediaManager.tsx          # Used to add, edit, and delete media metadata
- │   ├── Users.tsx                 # Allows creation, editing, activation/deactivation and deletion of admin user accounts
- │   ├── Analytics.tsx             # Analytics overview #Displays high-level system usage metrics
- │   └── Audit.tsx                 # Allows admins to upload Excel or CSV files for validation and quality checks before or after data import.
- │
- ├── utils/
- │   └── adminFetch.ts             # authenticated API helper
- │
- ├── types/                        # Shared TypeScript types
- ├── App.tsx                       # Routing + layout wiring
- └── main.tsx                      # App entry point
-
+├── main.tsx                 entry: providers, router, toaster
+├── index.css                font and the shared @sda/ui theme
+├── app/
+│   ├── App.tsx              routes
+│   ├── queryClient.ts       TanStack Query defaults
+│   └── layout/              auth guards, sidebar, top bar, logout
+├── shared/
+│   ├── api/                 adminFetch, session, requestJson and ApiError
+│   ├── form/                useAppForm and the shadcn-bound text field
+│   └── ui/                  Page, SearchField, ConfirmDialog, LoadError,
+│                            FileDropzone, LanguageSwitch, table texts
+├── features/
+│   ├── home/                dashboard with the species table
+│   ├── species/             list, create and edit form, spreadsheet import
+│   ├── media/               media table, add and edit dialog, preview
+│   ├── users/               user table and dialog
+│   ├── analytics/           usage counters and per-user activity
+│   ├── audit/               spreadsheet audit report
+│   └── auth/                login page and Google Identity
+├── translations.ts          English and Tetum strings
+├── LanguageContext.tsx      language provider
+└── useLanguage.ts           language hook
 ```
----
+
+Each feature folder holds its own `api.ts` with the queries and mutations for that feature.
+Pages import shadcn components from `@sda/ui/components/<name>` and never through an index file.
+
+Shared components live in `packages/ui`, so other apps in the workspace can use them.
+To add a shadcn component, run `pnpm dlx shadcn@latest add <name>` in `apps/admin`.
+The CLI writes the component into `packages/ui/src/components`.
+After that, change its `import { cn } from "cn"` line to `import { cn } from "#lib/utils"`.
+The `cn` in `#lib/utils` knows the theme's custom font sizes.
 
 ## Local environment
 
@@ -74,7 +77,9 @@ See the root `README.md` for the values.
 
 ## Running the project locally
 
-Start the backend API first, then run from the repository root:
+Start the backend API first.
+Then run these commands from the repository root:
+
 ```
 pnpm install
 pnpm run dev:admin
