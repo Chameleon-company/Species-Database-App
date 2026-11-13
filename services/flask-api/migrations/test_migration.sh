@@ -33,6 +33,9 @@ for d in /opt/homebrew/opt/postgresql@*/bin /usr/local/opt/postgresql@*/bin /usr
 done
 [ -n "$best" ] && export PATH="$best:$PATH"
 
+TABLES="users species_en species_tet changelog analytics media admin_sessions admin_session_audit"
+TABLES_RLS_BEFORE_002="users species_en species_tet changelog analytics media admin_sessions"
+
 fail() { echo "!! FAIL: $*"; exit 1; }
 ok()   { echo "   ok: $*"; }
 step() { echo; echo "=== $* ==="; }
@@ -69,6 +72,33 @@ same_rows_as() {
 
 target_columns() {
     pgq -d "$DB" -c "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND column_name IN ('definition','storage_version');"
+}
+
+rls_on() {
+    pgq -d "$DB" -c "SELECT relrowsecurity FROM pg_class WHERE oid = 'public.$1'::regclass;"
+}
+
+client_privileges() {
+    pgq -d "$DB" -c "SELECT count(*) FROM pg_class c, unnest(ARRAY['anon','authenticated']) r,
+        unnest(ARRAY['SELECT','INSERT','UPDATE','DELETE']) p
+        WHERE c.relnamespace = 'public'::regnamespace AND c.relkind = 'r'
+        AND has_table_privilege(r, c.oid, p);"
+}
+
+client_default_grants() {
+    pgq -d "$DB" -c "SELECT count(DISTINCT (d.defaclobjtype, a.grantee)) FROM pg_default_acl d, aclexplode(d.defaclacl) a
+        WHERE d.defaclnamespace = 'public'::regnamespace
+        AND pg_get_userbyid(d.defaclrole) = 'postgres'
+        AND pg_get_userbyid(a.grantee) IN ('anon','authenticated');"
+}
+
+as_role() {
+    pgq -d "$DB" -c "BEGIN" -c "SET LOCAL ROLE $1" -c "$2" -c "ROLLBACK" 2>&1
+}
+
+denied() {
+    local out; out=$(as_role "$1" "$2")
+    [[ "$out" == *"permission denied"* ]]
 }
 
 supabase_like() {
@@ -137,6 +167,60 @@ check_001() {
     ok "re-applied for the next migration"
 }
 
+check_002() {
+    step "002 - apply"
+    apply "$MIG/002_enable_rls_and_revoke_client_roles.sql"
+    for t in $TABLES; do
+        [ "$(rls_on "$t")" = "t" ] || fail "RLS is off on $t"
+    done
+    ok "RLS on for all 8 tables"
+    [ "$(client_privileges)" = "0" ] || fail "anon or authenticated keeps table privileges"
+    ok "anon and authenticated have no table privileges"
+    [ "$(client_default_grants)" = "0" ] || fail "postgres default privileges still grant to anon or authenticated"
+    ok "new tables from postgres grant nothing to anon or authenticated"
+
+    denied anon "SELECT password_hash FROM users" || fail "anon can read users"
+    denied authenticated "SELECT access_token FROM admin_sessions" || fail "authenticated can read admin_sessions"
+    denied anon "INSERT INTO changelog (version, entity_type, operation) VALUES (1, 'species', 'CREATE')" \
+        || fail "anon can insert into changelog"
+    ok "anon and authenticated get permission denied"
+
+    [ "$(pgq -d "$DB" -c "BEGIN" -c "GRANT SELECT ON users TO anon" -c "SET LOCAL ROLE anon" -c "SELECT count(*) FROM users" -c "ROLLBACK")" = "0" ] \
+        || fail "RLS alone does not hide users rows from anon"
+    ok "RLS alone hides every row from anon, even with a grant"
+
+    local svc; svc=$(as_role service_role "SELECT count(*) FROM users")
+    [ "$svc" = "$(pgq -d "$DB" -c "SELECT count(*) FROM users;")" ] || fail "service_role sees $svc users"
+    local out; out=$(as_role service_role "INSERT INTO changelog (version, entity_type, operation) VALUES (1, 'species', 'CREATE')")
+    [[ "$out" == *ERROR* ]] && fail "service_role cannot insert: $out"
+    ok "service_role reads every row and can write"
+
+    apply "$MIG/002_enable_rls_and_revoke_client_roles.sql"
+    [ "$(client_privileges)" = "0" ] || fail "re-apply changed privileges"
+    ok "re-apply is a no-op"
+
+    step "002 - rollback"
+    local before; before=$(counts)
+    apply "$MIG/002_enable_rls_and_revoke_client_roles.rollback.sql"
+    apply "$MIG/002_enable_rls_and_revoke_client_roles.rollback.sql"
+    assert_before_002
+    [ "$(counts)" = "$before" ] || fail "row counts changed across rollback"
+    ok "rollback restores the old access, is a no-op on re-run and keeps every row"
+
+    apply "$MIG/002_enable_rls_and_revoke_client_roles.sql"
+    ok "re-applied"
+}
+
+assert_before_002() {
+    for t in $TABLES_RLS_BEFORE_002; do
+        [ "$(rls_on "$t")" = "f" ] || fail "RLS is on for $t before 002"
+    done
+    [ "$(rls_on admin_session_audit)" = "t" ] || fail "admin_session_audit lost RLS"
+    [ "$(client_privileges)" = "64" ] || fail "anon and authenticated lack full table privileges before 002"
+    [ "$(client_default_grants)" = "6" ] || fail "postgres default privileges do not grant to anon and authenticated before 002"
+    ok "before 002: RLS only on admin_session_audit, client roles hold every grant"
+}
+
 step "STEP 0 - throwaway PostgreSQL $(pg_ctl --version | awk '{print $3}') on a private socket"
 initdb -D "$WORK/pgdata" -U postgres --auth=trust >/dev/null 2>&1 || fail "initdb"
 pg_ctl -D "$WORK/pgdata" \
@@ -159,6 +243,7 @@ for ((i = ${#ROLLBACKS[@]} - 1; i >= 0; i--)); do
     ok "rolled back $(basename "${ROLLBACKS[i]}")"
 done
 [ "$(target_columns)" = "0" ] || fail "001 columns present at the baseline"
+assert_before_002
 ok "baseline has no 001 columns"
 
 step "STEP 3 - seed representative rows"

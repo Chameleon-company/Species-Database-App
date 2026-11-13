@@ -78,6 +78,7 @@ Apply to a development project before a shared or production one, and record the
 | # | Description | Applied to dev | Applied to shared/prod |
 |---|---|---|---|
 | 001 | Add `species_en.definition`, `species_tet.definition`, `media.storage_version` | 2026-11-13, in the rebuild from `TableSchema.sql` | 2026-11-12 |
+| 002 | Enable RLS on every public table and revoke `anon` and `authenticated` access | not yet | not yet |
 
 Snapshot matches with prod, newest last.
 Add a line each time you match `TableSchema.sql` to prod again.
