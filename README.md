@@ -350,7 +350,8 @@ Keep the admin origin first in `CORS_ORIGINS`, because the API links to the firs
 
 Render links each service to its Blueprint entry by service name.
 Renaming a service does not change its `onrender.com` URL.
-The Android app and the field app hardcode these URLs, so a new service URL needs an app release.
+The Android app and the field app hardcode these URLs.
+A new service URL needs a new app release.
 
 The API runs in Render's `singapore` region, beside the Supabase projects in `ap-southeast-1`.
 Render has no Australian region.
