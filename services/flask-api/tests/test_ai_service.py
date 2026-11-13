@@ -2,7 +2,7 @@ from io import BytesIO
 
 import numpy as np
 import pytest
-from PIL import Image, UnidentifiedImageError
+from PIL import Image
 
 import ai_service
 from ai_service import (
@@ -36,7 +36,8 @@ def create_image(mode="RGB", image_format="PNG"):
     image = Image.new(mode, (40, 60), colour)
     output = BytesIO()
     if image_format == "MPO":
-        image.save(output, format="MPO", save_all=True, append_images=[image])
+        preview = Image.new("RGB", (16, 24), (200, 10, 10))
+        image.save(output, format="MPO", save_all=True, append_images=[preview])
     else:
         image.save(output, format=image_format)
     output.seek(0)
@@ -99,9 +100,14 @@ def test_preprocess_image_reads_a_camera_jpeg_with_extra_frames():
     )
 
 
-def test_preprocess_image_rejects_corrupted_data():
-    with pytest.raises(UnidentifiedImageError):
-        preprocess_image(BytesIO(b"not an image"))
+@pytest.mark.parametrize(
+    "data",
+    [b"not an image", create_image(image_format="JPEG").getvalue()[:200]],
+    ids=["not-an-image", "truncated-jpeg"],
+)
+def test_preprocess_image_rejects_corrupted_data(data):
+    with pytest.raises(OSError):
+        preprocess_image(BytesIO(data))
 
 
 TENSORFLOW_RESIZE_REFERENCE = [
