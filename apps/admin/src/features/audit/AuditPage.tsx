@@ -1,253 +1,111 @@
-import { useState } from "react";
-import { Box, Typography, Button } from "@mui/material";
-import { adminFetch } from "../../shared/api/adminFetch";
+import { useRef, useState, type ReactNode } from "react";
+import { Button } from "@sda/ui/components/button";
+import { Card, CardContent } from "@sda/ui/components/card";
+import { Spinner } from "@sda/ui/components/spinner";
+import Page from "../../shared/ui/Page";
 import { translations } from "../../translations";
 import { useLanguage } from "../../useLanguage";
+import { useAuditSpreadsheet } from "./api";
 
-
-interface AuditReport {
-  rows: number;
-  empty_rows: number;
-  total_missing_values: number;
-  has_blockers: boolean;
-  missing_values_by_column: Record<string, number>;
-  duplicates_count: number;
-  duplicate_scientific_names: string[];
-  leaf_type_invalid_values: string[];
-  fruit_type_invalid_values: string[];
+function Section({ title, items, empty }: { title: string; items: ReactNode[]; empty?: string }) {
+  return (
+    <section className="mt-6 first:mt-0">
+      <h2 className="mb-2 text-lg font-bold">{title}</h2>
+      {items.length ? (
+        <ul className="list-disc space-y-1 pl-6 text-sm">{items}</ul>
+      ) : (
+        <p className="text-sm">{empty}</p>
+      )}
+    </section>
+  );
 }
 
-type AuditApiResponse = {
-  status: "success" | "error";
-  report?: AuditReport;
-  error?: string;
-};
-
-export default function Audit() {
+export default function AuditPage() {
   const { lang } = useLanguage();
-
   const t = (key: string) => translations[key as keyof typeof translations]?.[lang] || key;
-
-  const [file, setFile] = useState<File | null>(null);
-  const [result, setResult] = useState<AuditApiResponse | null>(null);
-  const [loading, setLoading] = useState(false);
-  const API_URL = import.meta.env.VITE_API_BASE;
-
-  async function runAudit() {
-    if (!file) return;
-
-    setLoading(true);
-    setResult(null);
-
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const res = await adminFetch(`${API_URL}/audit-species`, {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = (await res.json()) as AuditApiResponse;
-      setResult(data);
-    } catch (e: unknown) {
-      setResult({ status: "error", error: e instanceof Error ? e.message : t("unknownError") });
-    } finally {
-      setLoading(false);
-    }
-  }
+  const audit = useAuditSpreadsheet();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const report = audit.data;
 
   return (
-    <Box
-      sx={{
-        p: "28px 36px",
-        backgroundColor: "#f7fbf2",
-        fontFamily: "'DM Sans', sans-serif",
-        minHeight: "100vh",
-      }}
-    >
-      <Box
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-        mb={4}
-        flexWrap="wrap"
-        gap={2}
-      >
-        <Box>
-          <Box
-            sx={{
-              width: 36,
-              height: 4,
-              borderRadius: 4,
-              background: "linear-gradient(90deg,#2d6a0a,#86b85a)",
-              mb: 1,
-            }}
-          />
-  
-          <Typography
-            variant="h4"
-            fontWeight="bold"
-            sx={{ color: "#1a2e10", fontSize: { xs: "1.8rem", md: "2.5rem" } }}
-          >
-            {t("auditReport")}
-          </Typography>
-        </Box>
-  
-      </Box>
-  
-      <Box
-        sx={{
-          backgroundColor: "#ffffff",
-          border: "1px solid #d8edbd",
-          borderRadius: 3,
-          p: 3,
-          boxShadow: "0 2px 12px rgba(45,106,10,0.07)",
-          mb: 3,
-        }}
-      >
-        <Box
-  display="flex"
-  alignItems="center"
-  gap={2}
-  flexWrap="wrap"
->
-  <Typography sx={{ color: "#4b5563", fontSize: 14 }}>
-    {file ? file.name : (t("noFileSelected"))}
-  </Typography>
-
-  <Button
-    variant="contained"
-    component="label"
-    sx={{
-      backgroundColor: "#2d6a0a",
-      borderRadius: 2,
-      fontWeight: 600,
-      "&:hover": {
-        backgroundColor: "#245508",
-      },
-    }}
-  >
-    {loading ? t("running") : t("runAudit")}
-
-    <input
-      hidden
-      type="file"
-      accept=".xlsx,.csv"
-      onChange={(e) => {
-        const selected = e.target.files?.[0] ?? null;
-        setFile(selected);
-
-        if (selected) {
-          setTimeout(() => {
-            void runAudit();
-          }, 100);
-        }
-      }}
-    />
-  </Button>
-</Box>
-  
-        {result?.status === "error" && (
-          <Typography sx={{ mt: 2, color: "#b91c1c", fontWeight: 500 }}>
-            {t("error")}: {result.error}
-          </Typography>
-        )}
-      </Box>
-  
-      {result?.status === "success" && result.report && (
-        <Box
-          sx={{
-            backgroundColor: "#ffffff",
-            border: "1px solid #d8edbd",
-            borderRadius: 3,
-            p: 3,
-            boxShadow: "0 2px 12px rgba(45,106,10,0.07)",
-          }}
-        >
-          <Typography variant="h6" mb={1} sx={{ color: "#1a2e10", fontWeight: 700 }}>
-            {t("summary")}
-          </Typography>
-  
-          <ul>
-            <li>{t("totalRows")}: {result.report.rows}</li>
-            <li>{t("emptyRows")}: {result.report.empty_rows}</li>
-            <li>{t("totalMissingValues")}: {result.report.total_missing_values}</li>
-            <li>{t("blockers")}: {result.report.has_blockers ? t("yes") : t("no")}</li>
-          </ul>
-  
-          <Typography variant="h6" mt={3} mb={1} sx={{ color: "#1a2e10", fontWeight: 700 }}>
-            {t("missingValuesByColumn")}
-          </Typography>
-  
-          <ul>
-            {Object.entries(result.report.missing_values_by_column)
-              .filter(([, v]) => v > 0)
-              .map(([col, count]) => (
-                <li key={col}>
-                  {col}: {count}
-                </li>
-              ))}
-          </ul>
-  
-          <Typography variant="h6" mt={3} mb={1} sx={{ color: "#1a2e10", fontWeight: 700 }}>
-            {t("duplicateScientificNames")}
-          </Typography>
-  
-          {result.report.duplicates_count > 0 ? (
-            <ul>
-              {result.report.duplicate_scientific_names.map((n: string) => (
-                <li key={n}>{n}</li>
-              ))}
-            </ul>
-          ) : (
-            <Typography>{t("noDuplicateScientificNames")}</Typography>
-          )}
-  
-          <Typography variant="h6" mt={3} mb={1} sx={{ color: "#1a2e10", fontWeight: 700 }}>
-            {t("invalidLeafTypes")}
-          </Typography>
-  
-          {result.report.leaf_type_invalid_values.length > 0 ? (
-            <ul>
-              {result.report.leaf_type_invalid_values.map((v: string) => (
-                <li key={v}>{v}</li>
-              ))}
-            </ul>
-          ) : (
-            <Typography>{t("noInvalidLeafType")}</Typography>
-          )}
-  
-          <Typography variant="h6" mt={3} mb={1} sx={{ color: "#1a2e10", fontWeight: 700 }}>
-            {t("invalidFruitTypes")}
-          </Typography>
-  
-          {result.report.fruit_type_invalid_values.length > 0 ? (
-            <ul>
-              {result.report.fruit_type_invalid_values.map((v: string) => (
-                <li key={v}>{v}</li>
-              ))}
-            </ul>
-          ) : (
-            <Typography>{t("noInvalidFruitType")}</Typography>
-          )}
-  
-          <details style={{ marginTop: 16 }}>
-            <summary>{t("showRawJson")}</summary>
-            <pre
-              style={{
-                whiteSpace: "pre-wrap",
-                background: "#111",
-                color: "#ffffff",
-                padding: 12,
-                borderRadius: 8,
+    <Page title={t("auditReport")}>
+      <Card className="gap-0 rounded-xl py-0 shadow-card">
+        <CardContent className="flex flex-col gap-4 px-6 py-6">
+          <div className="flex flex-wrap items-center gap-4">
+            <span className="text-sm text-body">{fileName ?? t("noFileSelected")}</span>
+            <Button onClick={() => inputRef.current?.click()} disabled={audit.isPending}>
+              {audit.isPending && <Spinner />}
+              {audit.isPending ? t("running") : t("runAudit")}
+            </Button>
+            <input
+              ref={inputRef}
+              type="file"
+              accept=".xlsx,.csv"
+              hidden
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = "";
+                if (!file) return;
+                setFileName(file.name);
+                audit.mutate(file);
               }}
-            >
-              {JSON.stringify(result.report, null, 2)}
-            </pre>
-          </details>
-        </Box>
+            />
+          </div>
+          {audit.isError && (
+            <p className="text-sm font-medium text-destructive">
+              {t("error")}: {audit.error.message || t("unknownError")}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {report && (
+        <Card className="gap-0 rounded-xl py-0 shadow-card">
+          <CardContent className="px-6 py-6">
+            <Section
+              title={t("summary")}
+              items={[
+                <li key="rows">{t("totalRows")}: {report.rows}</li>,
+                <li key="empty">{t("emptyRows")}: {report.empty_rows}</li>,
+                <li key="missing">{t("totalMissingValues")}: {report.total_missing_values}</li>,
+                <li key="blockers">{t("blockers")}: {report.has_blockers ? t("yes") : t("no")}</li>,
+              ]}
+            />
+            <Section
+              title={t("missingValuesByColumn")}
+              items={Object.entries(report.missing_values_by_column)
+                .filter(([, missing]) => missing > 0)
+                .map(([column, missing]) => (
+                  <li key={column}>
+                    {column}: {missing}
+                  </li>
+                ))}
+            />
+            <Section
+              title={t("duplicateScientificNames")}
+              items={report.duplicates_count > 0 ? report.duplicate_scientific_names.map((name) => <li key={name}>{name}</li>) : []}
+              empty={t("noDuplicateScientificNames")}
+            />
+            <Section
+              title={t("invalidLeafTypes")}
+              items={report.leaf_type_invalid_values.map((value) => <li key={value}>{value}</li>)}
+              empty={t("noInvalidLeafType")}
+            />
+            <Section
+              title={t("invalidFruitTypes")}
+              items={report.fruit_type_invalid_values.map((value) => <li key={value}>{value}</li>)}
+              empty={t("noInvalidFruitType")}
+            />
+            <details className="mt-4">
+              <summary className="cursor-pointer text-sm">{t("showRawJson")}</summary>
+              <pre className="mt-2 rounded-lg bg-foreground p-3 text-label font-normal tracking-normal whitespace-pre-wrap text-card">
+                {JSON.stringify(report, null, 2)}
+              </pre>
+            </details>
+          </CardContent>
+        </Card>
       )}
-    </Box>
+    </Page>
   );
 }

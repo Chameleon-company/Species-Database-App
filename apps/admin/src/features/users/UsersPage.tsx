@@ -1,474 +1,138 @@
-import { useEffect, useEffectEvent, useState } from "react";
-import { DataGrid, GridActionsCellItem, GridRowModes } from "@mui/x-data-grid";
-import type {
-  GridColDef,
-  GridRowModesModel,
-  GridRowId,
-} from "@mui/x-data-grid";
-import { Stack, Button, Alert, Snackbar } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
-import SaveIcon from "@mui/icons-material/Save";
-import CancelIcon from "@mui/icons-material/Close";
-import { adminFetch } from "../../shared/api/adminFetch";
+import { useState } from "react";
+import { Check, Pencil, Plus, Trash2, X } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@sda/ui/components/button";
+import { DataTable } from "@sda/ui/components/data-table";
+import { dataTableColumnHelper } from "@sda/ui/lib/data-table";
+import { ApiError } from "../../shared/api/apiClient";
+import ConfirmDialog from "../../shared/ui/ConfirmDialog";
+import LoadError from "../../shared/ui/LoadError";
+import Page from "../../shared/ui/Page";
+import { useTableText } from "../../shared/ui/useTableText";
 import { translations } from "../../translations";
 import { useLanguage } from "../../useLanguage";
+import { useDeleteUser, useUsers, type User } from "./api";
+import UserDialog from "./UserDialog";
 
+const column = dataTableColumnHelper<User>();
 
-const API_BASE = import.meta.env.VITE_API_URL;
-
-export interface User {
-  user_id: number;
-  name: string;
-  role: string;
-  is_active: boolean;
-  auth_provider: "local" | "google";
-  created_at?: string;
-  password?: string;
-}
-
-type UserPayload = Pick<User, "name" | "role" | "is_active" | "auth_provider"> & {
-  password?: string;
-};
-
-interface SnackbarState {
-  open: boolean;
-  message: string;
-  severity: "success" | "error" | "info" | "warning";
-}
-
-export default function Users() {
+export default function UsersPage() {
   const { lang } = useLanguage();
+  const t = (key: string) => translations[key as keyof typeof translations]?.[lang] || key;
+  const { emptyLabel, labels } = useTableText();
 
-  const t = (key: string) =>
-    translations[key as keyof typeof translations]?.[lang] || key;
+  const users = useUsers();
+  const deleteUser = useDeleteUser();
+  const [dialog, setDialog] = useState<{ open: boolean; user: User | null }>({ open: false, user: null });
+  const [toDelete, setToDelete] = useState<User | null>(null);
 
-  const [rows, setRows] = useState<User[]>([]);
-  const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
-  const [loading, setLoading] = useState(true);
-  const [snackbar, setSnackbar] = useState<SnackbarState>({
-    open: false,
-    message: "",
-    severity: "info",
-  });
-
-  const showSnackbar = (
-    message: string,
-    severity: "success" | "error" | "info" | "warning" = "info"
-  ) => {
-    setSnackbar({ open: true, message, severity });
+  const confirmDelete = () => {
+    if (!toDelete) return;
+    deleteUser.mutate(toDelete.user_id, {
+      onSuccess: () => toast.success(t("userDeletedSuccessfully")),
+      onError: (error) =>
+        toast.error(error instanceof ApiError && error.message ? error.message : t("failedToDeleteUser")),
+      onSettled: () => setToDelete(null),
+    });
   };
 
-  const handleCloseSnackbar = () => {
-    setSnackbar((prev) => ({ ...prev, open: false }));
-  };
-
-  function fetchUsers() {
-    return adminFetch(`${API_BASE}/users`)
-      .then(async (res) => {
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err.error || err.detail || res.statusText);
-        }
-
-        const data: User[] = await res.json();
-        setRows(data);
-      })
-      .catch((e) => {
-        const errorMsg =
-        e instanceof Error ? e.message : t("networkErrorFetchingUsers");
-        showSnackbar(errorMsg, "error");
-        console.error("Failed to fetch users:", e);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }
-
-  const loadInitialUsers = useEffectEvent(fetchUsers);
-
-  useEffect(() => {
-    void loadInitialUsers();
-  }, []);
-
-  const handleAdd = () => {
-    const tempId = -Date.now();
-
-    const newUser: User = {
-      user_id: tempId,
-      name: "",
-      role: "",
-      is_active: true,
-      auth_provider: "local",
-      password: "",
-    };
-
-    setRows((prev) => [newUser, ...prev]);
-
-    setRowModesModel((prev) => ({
-      ...prev,
-      [tempId]: { mode: GridRowModes.Edit, fieldToFocus: "name" },
-    }));
-  };
-
-  const handleSave = async (id: GridRowId) => {
-    setRowModesModel((prev) => ({
-      ...prev,
-      [id]: { mode: GridRowModes.View },
-    }));
-  };
-
-  const handleSaveActual = async (user: User) => {
-    const numericId = user.user_id;
-    const isNew = numericId < 0;
-
-    if (!user.name?.trim()) {
-      showSnackbar(t("nameRequired"), "error");
-      return;
-    }
-
-    if (!user.role?.trim()) {
-      showSnackbar(t("roleRequired"), "error");
-      return;
-    }
-
-    if (isNew && user.auth_provider === "local" && !user.password?.trim()) {
-      showSnackbar(t("passwordRequiredForNewLocalUsers"), "error");
-      return;
-    }
-
-    const url = isNew ? `${API_BASE}/users` : `${API_BASE}/users/${numericId}`;
-
-    const payload: UserPayload = {
-      name: user.name.trim(),
-      role: user.role.trim(),
-      is_active: user.is_active,
-      auth_provider: user.auth_provider,
-    };
-
-    if (user.auth_provider === "local" && user.password?.trim()) {
-      payload.password = user.password;
-    }
-
-    setLoading(true);
-    try {
-      const res = await adminFetch(url, {
-        method: isNew ? "POST" : "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || err.detail || res.statusText);
-      }
-
-      showSnackbar(
-        isNew ? t("userCreatedSuccessfully") : t("userUpdatedSuccessfully"),
-        "success"
-      );
-
-      await fetchUsers();
-    } catch (e) {
-      const errorMsg = e instanceof Error ? e.message : t("failedToSaveUser");
-      showSnackbar(errorMsg, "error");
-      console.error("Save error:", e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleEdit = (id: GridRowId) => {
-    setRowModesModel((prev) => ({
-      ...prev,
-      [id]: { mode: GridRowModes.Edit },
-    }));
-  };
-
-  const handleDelete = async (id: GridRowId) => {
-    const numericId = Number(id);
-    const user = rows.find((r) => r.user_id === numericId);
-
-    if (!user) return;
-
-    const confirmed = window.confirm(
-      `${t("areYouSureDeleteUser")} "${user.name}"?`
-    );
-
-    if (!confirmed) return;
-
-    setLoading(true);
-    try {
-      const res = await adminFetch(`${API_BASE}/users/${numericId}`, {
-        method: "DELETE",
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || err.detail || res.statusText);
-      }
-
-      setRows((prev) => prev.filter((r) => r.user_id !== numericId));
-      showSnackbar(t("userDeletedSuccessfully"), "success");
-    } catch (e) {
-      const errorMsg = e instanceof Error ? e.message : t("failedToDeleteUser");
-      showSnackbar(errorMsg, "error");
-      console.error("Delete error:", e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCancel = (id: GridRowId) => {
-    const numericId = Number(id);
-
-    setRowModesModel((prev) => ({
-      ...prev,
-      [id]: { mode: GridRowModes.View, ignoreModifications: true },
-    }));
-
-    if (numericId < 0) {
-      setRows((prev) => prev.filter((r) => r.user_id !== numericId));
-    }
-  };
-
-  const processRowUpdate = async (newRow: User) => {
-    setRows((prev) =>
-      prev.map((row) => (row.user_id === newRow.user_id ? newRow : row))
-    );
-
-    await handleSaveActual(newRow);
-
-    return newRow;
-  };
-
-  const columns: GridColDef[] = [
-    {
-      field: "user_id",
-      headerName: t("id"),
-      width: 80,
-      valueGetter: (params) => (params < 0 ? t("new") : params),
-    },
-    {
-      field: "name",
-      headerName: t("name"),
-      width: 200,
-      editable: true,
-    },
-    {
-      field: "role",
-      headerName: t("role"),
-      width: 150,
-      editable: true,
-    },
-    {
-      field: "password",
-      headerName: t("password"),
-      width: 180,
-      editable: true,
-      renderCell: (params) => {
-        const isNewRow = params.row.user_id < 0;
-        const isEditMode =
-          rowModesModel[params.row.user_id]?.mode === GridRowModes.Edit;
-
-        if (isNewRow || (isEditMode && params.value)) {
-          return params.value || "";
-        }
-        return "••••••••";
-      },
-    },
-    {
-      field: "is_active",
-      headerName: t("active"),
-      type: "boolean",
-      width: 100,
-      editable: true,
-    },
-    {
-      field: "auth_provider",
-      headerName: t("auth"),
-      width: 140,
-      type: "singleSelect",
-      valueOptions: ["local", "google"],
-      editable: true,
-      valueFormatter: (value) =>
-        value === "google" ? t("google") : t("local"),
-    },
-    {
-      field: "created_at",
-      headerName: t("created"),
-      width: 180,
-      valueGetter: (params) => {
-        if (!params) return "";
-        const date = new Date(params);
-        return date.toLocaleString();
-      },
-    },
-    {
-      field: "actions",
-      type: "actions",
-      headerName: t("actions"),
-      width: 120,
-      getActions: ({ id }) => {
-        const isEditing = rowModesModel[id]?.mode === GridRowModes.Edit;
-
-        if (isEditing) {
-          return [
-            <GridActionsCellItem
-              icon={<SaveIcon />}
-              label={t("save")}
-              onClick={() => handleSave(id)}
-              disabled={loading}
-            />,
-            <GridActionsCellItem
-              icon={<CancelIcon />}
-              label={t("cancel")}
-              onClick={() => handleCancel(id)}
-              disabled={loading}
-            />,
-          ];
-        }
-
-        return [
-          <GridActionsCellItem
-            icon={<EditIcon />}
-            label={t("edit")}
-            onClick={() => handleEdit(id)}
-            disabled={loading}
-          />,
-          <GridActionsCellItem
-            icon={<DeleteIcon />}
-            label={t("delete")}
-            onClick={() => handleDelete(id)}
-            disabled={loading}
-          />,
-        ];
-      },
-    },
-  ];
+  const columns = column.columns([
+    column.accessor("user_id", { header: t("id"), meta: { className: "w-20" } }),
+    column.accessor("name", { header: t("name"), meta: { className: "min-w-50" } }),
+    column.accessor("role", { header: t("role"), meta: { className: "min-w-37" } }),
+    column.display({
+      id: "password",
+      header: t("password"),
+      cell: () => <span aria-hidden="true">••••••••</span>,
+      meta: { className: "min-w-45" },
+    }),
+    column.accessor("is_active", {
+      header: t("active"),
+      cell: ({ getValue }) =>
+        getValue() ? (
+          <Check aria-label={t("active")} className="size-4.5 text-body" />
+        ) : (
+          <X aria-label={t("inactive")} className="size-4.5 text-faint" />
+        ),
+      meta: { className: "w-25" },
+    }),
+    column.accessor("auth_provider", {
+      header: t("auth"),
+      cell: ({ getValue }) => (getValue() === "google" ? t("google") : t("local")),
+      meta: { className: "w-35" },
+    }),
+    column.accessor((row) => row.created_at ?? "", {
+      id: "created_at",
+      header: t("created"),
+      cell: ({ getValue }) => (getValue() ? new Date(getValue()).toLocaleString() : ""),
+      meta: { className: "min-w-45" },
+    }),
+    column.display({
+      id: "actions",
+      header: t("actions"),
+      cell: ({ row }) => (
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={t("edit")}
+            className="text-icon hover:bg-accent hover:text-primary"
+            onClick={() => setDialog({ open: true, user: row.original })}
+          >
+            <Pencil />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={t("delete")}
+            className="text-icon hover:bg-destructive-soft hover:text-destructive"
+            onClick={() => setToDelete(row.original)}
+          >
+            <Trash2 />
+          </Button>
+        </div>
+      ),
+      meta: { className: "w-30" },
+    }),
+  ]);
 
   return (
-    <div
-      style={{
-        padding: "28px 36px",
-        backgroundColor: "#f7fbf2",
-        fontFamily: "'DM Sans', sans-serif",
-        minHeight: "100vh",
-      }}
+    <Page
+      title={t("userManagement")}
+      actions={
+        <Button onClick={() => setDialog({ open: true, user: null })} disabled={users.isPending}>
+          <Plus />
+          {t("createUser")}
+        </Button>
+      }
     >
-      <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        mb={3}
-        flexWrap="wrap"
-        gap={2}
-      >
-        <div>
-          <div
-            style={{
-              width: 36,
-              height: 4,
-              borderRadius: 4,
-              background: "linear-gradient(90deg,#2d6a0a,#86b85a)",
-              marginBottom: 8,
-            }}
-          />
-  
-          <h2 className="text-3xl font-bold" style={{ margin: 0, color: "#1a2e10" }}>
-            {t("userManagement")}
-          </h2>
-        </div>
-  
-        <Stack direction="row" spacing={2} alignItems="center">  
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleAdd}
-            disabled={loading}
-            sx={{
-              backgroundColor: "#2d6a0a",
-              borderRadius: 2,
-              fontWeight: 600,
-              "&:hover": { backgroundColor: "#245508" },
-            }}
-          >
-            {t("createUser")}
-          </Button>
-        </Stack>
-      </Stack>
-  
-      <div
-        style={{
-          backgroundColor: "#ffffff",
-          border: "1px solid #d8edbd",
-          borderRadius: 16,
-          overflow: "hidden",
-          boxShadow: "0 2px 12px rgba(45,106,10,0.07)",
-        }}
-      >
-        <DataGrid
-          rows={rows}
+      {users.isError ? (
+        <LoadError onRetry={() => users.refetch()}>
+          {users.error instanceof ApiError && users.error.message ? users.error.message : t("networkErrorFetchingUsers")}
+        </LoadError>
+      ) : (
+        <DataTable
           columns={columns}
-          getRowId={(row) => row.user_id}
-          editMode="row"
-          rowModesModel={rowModesModel}
-          onRowModesModelChange={setRowModesModel}
-          processRowUpdate={processRowUpdate}
-          loading={loading}
+          data={users.data ?? []}
+          getRowId={(row) => String(row.user_id)}
+          loading={users.isPending}
+          emptyLabel={emptyLabel}
+          labels={labels}
           pageSizeOptions={[10, 20, 50]}
-          initialState={{
-            pagination: { paginationModel: { pageSize: 10 } },
-          }}
-          sx={{
-            border: "none",
-            backgroundColor: "#fff",
-            fontFamily: "'DM Sans', sans-serif",
-            "& .MuiDataGrid-columnHeaders": {
-              backgroundColor: "#eef6e6",
-              borderBottom: "1px solid #d8edbd",
-            },
-            "& .MuiDataGrid-columnHeaderTitle": {
-              fontWeight: 700,
-              fontSize: 11,
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
-              color: "#3d5a2a",
-            },
-            "& .MuiDataGrid-row:hover": {
-              backgroundColor: "#f7fbf2",
-            },
-            "& .MuiDataGrid-row--editing": {
-              backgroundColor: "#f5f5f5",
-            },
-            "& .MuiDataGrid-cell": {
-              borderBottom: "1px solid #f0f9e8",
-              fontSize: 13,
-            },
-            "& .MuiDataGrid-footerContainer": {
-              backgroundColor: "#eef6e6",
-              borderTop: "1px solid #d8edbd",
-            },
-          }}
-          disableRowSelectionOnClick
         />
-      </div>
-  
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      )}
+
+      <UserDialog open={dialog.open} user={dialog.user} onClose={() => setDialog({ open: false, user: null })} />
+      <ConfirmDialog
+        open={toDelete !== null}
+        title={t("delete")}
+        confirmLabel={t("delete")}
+        pending={deleteUser.isPending}
+        onConfirm={confirmDelete}
+        onClose={() => setToDelete(null)}
       >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity={snackbar.severity}
-          sx={{ width: "100%" }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </div>
+        {t("areYouSureDeleteUser")} <strong className="text-foreground">"{toDelete?.name}"</strong>?
+      </ConfirmDialog>
+    </Page>
   );
 }

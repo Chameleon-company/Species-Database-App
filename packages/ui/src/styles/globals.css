@@ -38,6 +38,9 @@
   --brand-line: #f0f9e8;
   --brand-text: #3d5a2a;
   --brand-subtle: #f9fdf5;
+  --brand-soft: #c8e6b0;
+  --brand-light: #a8d580;
+  --brand-leaf: #7ab84a;
 
   --body: #4b5563;
   --icon: #6b7280;
@@ -101,6 +104,9 @@
   --color-brand-line: var(--brand-line);
   --color-brand-text: var(--brand-text);
   --color-brand-subtle: var(--brand-subtle);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-light: var(--brand-light);
+  --color-brand-leaf: var(--brand-leaf);
 
   --color-body: var(--body);
   --color-icon: var(--icon);
