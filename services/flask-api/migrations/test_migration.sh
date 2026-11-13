@@ -127,7 +127,7 @@ as_role() {
 
 denied() {
     local out; out=$(as_role "$1" "$2")
-    [[ "$out" == *"42501: permission denied for"* ]]
+    [[ "$out" == *"42501: permission denied for table"* ]]
 }
 
 supabase_like() {

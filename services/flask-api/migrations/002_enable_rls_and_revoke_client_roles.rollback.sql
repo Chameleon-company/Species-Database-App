@@ -4,16 +4,19 @@
 -- Created: 2026-11-14
 --
 -- WARNING: this restores the insecure state.
---   The anon key can then read and write every public table again, including
+--   The anon key can then read and write the 8 public tables again, including
 --   users.password_hash and admin_sessions.access_token.
 --   Only the project owner runs it, and only to undo a failed apply.
 --
 -- Restores the state recorded on dev on 2026-11-14 (README.md, "Applying
--- 002"): RLS on admin_session_audit only, ALL on the 8 named tables and on
--- every public sequence for anon and authenticated, and the matching postgres
--- default privileges. A table created after 002 stays closed. A sequence
--- created after 002 opens again, which exposes no rows. Public had no
--- functions then, so no function grant comes back.
+-- 002").
+--   - RLS stays on for admin_session_audit only.
+--   - anon and authenticated get ALL on the 8 named tables.
+--   - anon and authenticated get ALL on every public sequence.
+--   - The postgres default privileges in public grant to them again.
+-- A table created after 002 stays closed. A sequence created after 002 opens
+-- again. A sequence holds no rows. Public had no functions on 2026-11-14.
+-- The rollback grants EXECUTE on no function.
 -- Idempotent.
 -- =============================================================================
 
