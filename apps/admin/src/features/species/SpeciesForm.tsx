@@ -21,6 +21,7 @@ type SpeciesFormProps = {
 
 const REQUIRED_FIELDS = SPECIES_FIELDS.filter((field) => field.requiredKey);
 const OPTIONAL_FIELDS = SPECIES_FIELDS.filter((field) => !field.requiredKey);
+const FIELD_GRID = "grid grid-cols-1 gap-4 md:grid-cols-2";
 
 function Section({ title, subtitle, children }: { title: string; subtitle?: string; children: ReactNode }) {
   return (
@@ -83,7 +84,7 @@ export default function SpeciesForm({ mode, initialValues, onSubmit, onDelete, d
 
   const renderFields = (language: "en" | "tet") => (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-1 justify-center gap-4 sm:grid-cols-[repeat(2,minmax(0,17.5rem))]">
+      <div className={FIELD_GRID}>
         {REQUIRED_FIELDS.map(({ name, labelKey, requiredKey, maxLength }) =>
           language === "tet" && name === "scientific_name" ? (
             <form.Subscribe key={name} selector={(state) => state.values.en.scientific_name}>
@@ -104,7 +105,7 @@ export default function SpeciesForm({ mode, initialValues, onSubmit, onDelete, d
 
       <p className="text-center text-compact font-semibold text-brand-text">{t("optional")}</p>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className={FIELD_GRID}>
         {OPTIONAL_FIELDS.map(({ name, labelKey, rows, maxLength }) => (
           <div key={name} className={name === "definition" ? "md:col-span-2" : undefined}>
             <form.AppField name={`${language}.${name}`} validators={{ onChange: withinLength(maxLength) }}>
