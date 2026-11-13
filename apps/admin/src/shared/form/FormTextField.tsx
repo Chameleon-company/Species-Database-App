@@ -67,7 +67,7 @@ export default function FormTextField({
         {required && " *"}
       </FieldLabel>
       {options ? (
-        <Select value={field.state.value || undefined} onValueChange={field.handleChange} disabled={disabled}>
+        <Select value={field.state.value} onValueChange={field.handleChange} disabled={disabled}>
           <SelectTrigger {...common} className="w-full">
             <SelectValue placeholder={placeholder} />
           </SelectTrigger>
