@@ -1,0 +1,17 @@
+{
+  "name": "@sda/i18n",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    "./translate": "./src/translate.ts"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "node --experimental-strip-types --test"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "typescript": "catalog:"
+  }
+}
