@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS public.analytics (
     event_id SERIAL PRIMARY KEY,
     user_id INT NOT NULL,
     login_time TIMESTAMP NOT NULL,
-    duration INT,
+    duration INT NOT NULL,
     location VARCHAR(255),
     event_type VARCHAR(50) DEFAULT 'login',
     CONSTRAINT analytics_user_id_fkey
@@ -133,3 +133,5 @@ CREATE TABLE IF NOT EXISTS public.admin_session_audit (
       REFERENCES public.users(user_id)
       ON DELETE CASCADE
 );
+
+ALTER TABLE public.admin_session_audit ENABLE ROW LEVEL SECURITY;
