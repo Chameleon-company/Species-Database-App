@@ -3,9 +3,16 @@ import { Button } from "@sda/ui/components/button";
 import { Card, CardContent } from "@sda/ui/components/card";
 import { Spinner } from "@sda/ui/components/spinner";
 import Page from "../../shared/ui/Page";
+import { SPECIES_FIELDS } from "../species/species";
 import { translations } from "../../translations";
 import { useLanguage } from "../../useLanguage";
 import { useAuditSpreadsheet } from "./api";
+
+/** The audit API names this column in the plural. Every other audit column matches a species field name. */
+const AUDIT_COLUMN_ALIASES: Record<string, string> = { identification_characters: "identification_character" };
+
+const auditColumnLabelKey = (column: string) =>
+  SPECIES_FIELDS.find(({ name }) => name === (AUDIT_COLUMN_ALIASES[column] ?? column))?.labelKey ?? column;
 
 function Section({ title, items, empty }: { title: string; items: ReactNode[]; empty?: string }) {
   return (
@@ -72,16 +79,18 @@ export default function AuditPage() {
                 <li key="blockers">{t("blockers")}: {report.has_blockers ? t("yes") : t("no")}</li>,
               ]}
             />
-            <Section
-              title={t("missingValuesByColumn")}
-              items={Object.entries(report.missing_values_by_column)
-                .filter(([, missing]) => missing > 0)
-                .map(([column, missing]) => (
-                  <li key={column}>
-                    {column}: {missing}
-                  </li>
-                ))}
-            />
+            {report.total_missing_values > 0 && (
+              <Section
+                title={t("missingValuesByColumn")}
+                items={Object.entries(report.missing_values_by_column)
+                  .filter(([, missing]) => missing > 0)
+                  .map(([column, missing]) => (
+                    <li key={column}>
+                      {t(auditColumnLabelKey(column))}: {missing}
+                    </li>
+                  ))}
+              />
+            )}
             <Section
               title={t("duplicateScientificNames")}
               items={report.duplicates_count > 0 ? report.duplicate_scientific_names.map((name) => <li key={name}>{name}</li>) : []}
