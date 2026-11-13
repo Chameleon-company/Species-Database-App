@@ -38,6 +38,7 @@ services:
       paths:
         - apps/admin/**
         - packages/i18n/**
+        - packages/ui/**
         - package.json
         - pnpm-lock.yaml
         - pnpm-workspace.yaml
