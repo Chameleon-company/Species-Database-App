@@ -15,7 +15,6 @@ export const isLocale = (value: unknown): value is Locale => locales.includes(va
 /**
  * Replaces each `{name}` in `message` with the own property `params[name]`.
  * A placeholder stays as written when that own property is missing, `undefined` or `null`.
- * Uses no API newer than Chrome 71.
  */
 export const interpolate = (message: string, params?: MessageParams): string => {
   if (!params) return message;
