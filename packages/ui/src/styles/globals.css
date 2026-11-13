@@ -1,0 +1,141 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@source "../components";
+@source "../hooks";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --radius: 0.625rem;
+
+  --background: #f7fbf2;
+  --foreground: #1a2e10;
+  --card: #ffffff;
+  --card-foreground: #1a2e10;
+  --popover: #ffffff;
+  --popover-foreground: #1a2e10;
+  --primary: #2d6a0a;
+  --primary-hover: #245508;
+  --primary-foreground: #ffffff;
+  --secondary: #eef6e6;
+  --secondary-foreground: #2d6a0a;
+  --muted: #eef6e6;
+  --muted-foreground: #7a9464;
+  --accent: #f0f9e8;
+  --accent-foreground: #2d6a0a;
+  --destructive: #dc2626;
+  --destructive-hover: #b91c1c;
+  --destructive-soft: #fef2f2;
+  --border: #d8edbd;
+  --input: #d8edbd;
+  --ring: #86b85a;
+
+  --brand-mid: #4a8f1f;
+  --brand-accent: #86b85a;
+  --brand-selected: #dff0c8;
+  --brand-chip: #c2e29a;
+  --brand-line: #f0f9e8;
+  --brand-text: #3d5a2a;
+  --brand-subtle: #f9fdf5;
+
+  --body: #4b5563;
+  --icon: #6b7280;
+  --faint: #9ca3af;
+
+  --success: #16a34a;
+  --info: #1d4ed8;
+  --info-soft: #eff6ff;
+  --info-border: #bfdbfe;
+
+  --sidebar: #ffffff;
+  --sidebar-foreground: #6b7280;
+  --sidebar-primary: #2d6a0a;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #dff0c8;
+  --sidebar-accent-foreground: #2d6a0a;
+  --sidebar-border: #e8f5db;
+  --sidebar-ring: #86b85a;
+}
+
+@theme inline {
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+
+  --text-label: 0.6875rem;
+  --text-label--line-height: 1.5;
+  --text-label--letter-spacing: 0.06em;
+  --text-label--font-weight: 700;
+  --text-compact: 0.8125rem;
+  --text-compact--line-height: 1.5;
+  --text-title: 1.625rem;
+  --text-title--line-height: 1.2;
+  --text-title--letter-spacing: -0.02em;
+  --text-title--font-weight: 700;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-hover: var(--destructive-hover);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-brand-mid: var(--brand-mid);
+  --color-brand-accent: var(--brand-accent);
+  --color-brand-selected: var(--brand-selected);
+  --color-brand-chip: var(--brand-chip);
+  --color-brand-line: var(--brand-line);
+  --color-brand-text: var(--brand-text);
+  --color-brand-subtle: var(--brand-subtle);
+
+  --color-body: var(--body);
+  --color-icon: var(--icon);
+  --color-faint: var(--faint);
+
+  --color-success: var(--success);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-info-border: var(--info-border);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 6px);
+
+  --shadow-card: 0 2px 12px rgb(45 106 10 / 0.07);
+  --shadow-button: 0 2px 8px rgb(45 106 10 / 0.2);
+  --shadow-button-hover: 0 4px 14px rgb(45 106 10 / 0.35);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}

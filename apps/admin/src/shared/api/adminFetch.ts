@@ -1,43 +1,34 @@
-//This is an Admin-only fetch wrapper
-///it attaches admin tokens, detects expired / invalid tokens
-// forces logout on 401
+import { clearAdminSession, readAdminToken } from "./adminSession";
 
-import { clearAdminSession } from "./adminSession"
+const LOGIN_URL = "/#/admin-login";
 
-export async function adminFetch(input:RequestInfo, init: RequestInit = {}) {
-    const token = localStorage.getItem("admin_token")
-    
-    if(!token)
-    {
-        //admin not authenticated so clear stale auth state
-        clearAdminSession()
-        //must not be logged in so redirect
-        window.location.href = "/#/admin-login"
-        throw new Error("Admin not authenticated")
-    }
-    //for file upload etc
-    const isFormData = init.body instanceof FormData
+function endSession(reason: string): never {
+  clearAdminSession();
+  window.location.href = LOGIN_URL;
+  throw new Error(reason);
+}
 
-    const headers = new Headers(init.headers)
-    if (!isFormData) headers.set("Content-Type", "application/json")
-    headers.set("Authorization", token)
+/**
+ * `fetch` with the stored admin token in `Authorization`.
+ *
+ * Sets `Content-Type: application/json` unless the body is `FormData`.
+ * With no stored token, or on a 401 or 403 response, it clears the session,
+ * navigates to the login route and throws.
+ */
+export async function adminFetch(input: RequestInfo, init: RequestInit = {}) {
+  const token = readAdminToken();
+  if (!token) endSession("Admin not authenticated");
 
-    const res = await fetch(input, { ...init, headers })
-    
-    //401 returned when:
-    ///- token expired
-    ///- token revoked
-    ///- token invalid / missing
-    if(res.status === 401 || res.status === 403)
-    {
-        //clear stale auth state
-        clearAdminSession()
+  const isFormData = init.body instanceof FormData;
+  const res = await fetch(input, {
+    ...init,
+    headers: {
+      ...(init.headers || {}),
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
+      Authorization: token,
+    },
+  });
 
-        //redirect to login
-        window.location.href = "/#/admin-login"
-
-        throw new Error("admin seesion exppired")
-
-    }
-    return res
+  if (res.status === 401 || res.status === 403) endSession("Admin session expired");
+  return res;
 }
