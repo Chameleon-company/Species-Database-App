@@ -43,7 +43,11 @@ CREATE TABLE IF NOT EXISTS public.species_tet (
     phenology VARCHAR(1000),
     seed_germination VARCHAR(2000),
     pest VARCHAR(2000),
-    definition VARCHAR(2000)
+    definition VARCHAR(2000),
+    CONSTRAINT species_tet_species_id_fkey
+      FOREIGN KEY (species_id)
+      REFERENCES public.species_en(species_id)
+      ON DELETE CASCADE
 );
 
 -- NOTE: species_en.definition / species_tet.definition are added to EXISTING
@@ -135,6 +139,16 @@ CREATE TABLE IF NOT EXISTS public.admin_session_audit (
       REFERENCES public.users(user_id)
       ON DELETE CASCADE
 );
+
+-- Backup of the species_tet rows that migration 003 changed. The 003 rollback
+-- reads it. Existing databases get this from
+-- services/flask-api/migrations/003_merge_orphan_tetum_rows.sql.
+CREATE TABLE IF NOT EXISTS public.species_tet_s07_backup (
+    LIKE public.species_tet,
+    PRIMARY KEY (species_id)
+);
+ALTER TABLE public.species_tet_s07_backup ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON TABLE public.species_tet_s07_backup FROM anon, authenticated;
 
 -- Row level security and client-role access. Existing databases get this from
 -- services/flask-api/migrations/002_enable_rls_and_revoke_client_roles.sql.

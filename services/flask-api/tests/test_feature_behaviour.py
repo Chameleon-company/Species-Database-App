@@ -19,10 +19,13 @@ reach the shared Supabase project.
 Run:  python -m unittest discover -s services/flask-api/tests -v
 """
 
+import asyncio
 import datetime
 import ipaddress
+import json
 import os
 import sys
+import tempfile
 import types
 import unittest
 
@@ -219,6 +222,7 @@ _install_stubs()
 
 import app as app_module  # noqa: E402
 import media as media_module  # noqa: E402
+import uploader as uploader_module  # noqa: E402
 
 FLASK_APP = app_module.app
 FLASK_APP.config["TESTING"] = True
@@ -621,6 +625,50 @@ class TestIncrementalSync(unittest.TestCase):
             "species_en": [], "species_tet": [],
             "deleted_species_ids": [], "latest_version": 3,
         })
+
+
+class TestBulkUploadTetumIds(unittest.TestCase):
+    def setUp(self):
+        self.posted = []
+        self.english = {"Tectona grandis": [{"species_id": 41}]}
+
+        def fake_get(url, headers=None, params=None):
+            name = params["scientific_name"].removeprefix("eq.")
+            return types.SimpleNamespace(status_code=200, json=lambda: self.english.get(name, []))
+
+        def fake_post(url, headers=None, data=None):
+            self.posted.append((url, json.loads(data)))
+            return types.SimpleNamespace(status_code=201, text="")
+
+        async def fake_translate(text):
+            return text
+
+        self.saved = (uploader_module.requests, uploader_module.translate_to_tetum, uploader_module.time.sleep)
+        uploader_module.requests = types.SimpleNamespace(get=fake_get, post=fake_post)
+        uploader_module.translate_to_tetum = fake_translate
+        uploader_module.time.sleep = lambda *_: None
+
+        fields = uploader_module.db_cols
+        self.csv = tempfile.NamedTemporaryFile("w", suffix=".csv", delete=False)
+        self.csv.write(",".join(fields) + "\n")
+        self.csv.write(",".join("Tectona grandis" if f == "scientific_name" else "x" for f in fields) + "\n")
+        self.csv.close()
+
+    def tearDown(self):
+        uploader_module.requests, uploader_module.translate_to_tetum, uploader_module.time.sleep = self.saved
+        os.unlink(self.csv.name)
+
+    def test_tetum_rows_take_the_english_species_id(self):
+        asyncio.run(uploader_module.process_file(self.csv.name, translate=True))
+        url, row = self.posted[0]
+        self.assertTrue(url.endswith("/rest/v1/species_tet"))
+        self.assertEqual(row["species_id"], 41)
+
+    def test_a_tetum_row_without_an_english_row_is_refused(self):
+        self.english = {}
+        with self.assertRaises(Exception):
+            asyncio.run(uploader_module.process_file(self.csv.name, translate=True))
+        self.assertEqual(self.posted, [])
 
 
 if __name__ == "__main__":

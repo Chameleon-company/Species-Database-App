@@ -57,14 +57,15 @@ pgq() { psql -h "$WORK" -U postgres -v ON_ERROR_STOP=1 -tAq "$@"; }
 apply() { pg -d "$DB" -f "$1" >"$WORK/apply.log" 2>&1 || { tail -5 "$WORK/apply.log"; fail "applying $(basename "$1")"; }; }
 
 fingerprint() {
-    local union
+    local skip="''" union
+    [ $# -gt 0 ] && skip=$(printf "'%s'," "$@") && skip=${skip%,}
     union=$(pgq -d "$DB" -c "SELECT string_agg(format('SELECT %L || x::text r FROM public.%I x', relname, relname), ' UNION ALL ' ORDER BY relname)
-        FROM pg_class WHERE relnamespace = 'public'::regnamespace AND relkind IN ('r', 'p');")
+        FROM pg_class WHERE relnamespace = 'public'::regnamespace AND relkind IN ('r', 'p') AND relname NOT IN ($skip);")
     pgq -d "$DB" -c "SELECT md5(string_agg(r, '|' ORDER BY r)) FROM ($union) q;" 2>&1
 }
 
 same_rows_as() {
-    local now; now=$(fingerprint)
+    local now; now=$(fingerprint "${@:2}")
     [[ "$1" =~ ^[0-9a-f]{32}$ ]] || fail "could not fingerprint the rows before the migration: $1"
     [[ "$now" =~ ^[0-9a-f]{32}$ ]] || fail "could not fingerprint the rows after the rollback: $now"
     [[ "$now" == "$1" ]]
@@ -242,6 +243,76 @@ check_002() {
     ok "rollback restores the old access, is a no-op on re-run and restores every row exactly"
 
     apply "$MIG/002_enable_rls_and_revoke_client_roles.sql"
+    ok "re-applied"
+}
+
+tetum_fk() {
+    pgq -d "$DB" -c "SELECT count(*) FROM pg_constraint WHERE conname = 'species_tet_species_id_fkey' AND conrelid = 'public.species_tet'::regclass;"
+}
+
+changelog_rows() {
+    pgq -d "$DB" -c "SELECT count(*) FROM changelog;"
+}
+
+check_003() {
+    [ "$(tetum_fk)" = "0" ] || fail "species_tet_species_id_fkey exists before 003"
+    [ -z "$(pgq -d "$DB" -c "SELECT to_regclass('public.species_tet_s07_backup');")" ] || fail "backup table exists before 003"
+    pg -d "$DB" -c "INSERT INTO species_tet (species_id, scientific_name, common_name, habitat, leaf_type, fruit_type)
+        VALUES (23, 'Tectona grandis', 'Ai-teak', 'rai-kraik foun', 'simples', 'drupa'),
+               (24, 'Casuarina equisetifolia', 'Ai-kamii', 'tasi-ibun foun', 'agulla', 'samara');" \
+        || fail "seed orphan Tetum rows"
+    local before; before=$(fingerprint changelog)
+    local log; log=$(changelog_rows)
+
+    step "003 - guard"
+    pg -d "$DB" -c "INSERT INTO species_tet (species_id, scientific_name, common_name, leaf_type, fruit_type)
+        VALUES (25, 'No partner', 'x', 'x', 'x');" || fail "seed an orphan with no partner"
+    local out; out=$(pg -d "$DB" -f "$MIG/003_merge_orphan_tetum_rows.sql" 2>&1)
+    [[ "$out" == *"do not each match exactly one partner"* ]] || fail "003 accepted an orphan with no partner: $out"
+    pg -d "$DB" -c "DELETE FROM species_tet WHERE species_id = 25;" || fail "remove the unmatched orphan"
+    same_rows_as "$before" changelog || fail "a refused 003 changed rows"
+    [ "$(tetum_fk)" = "0" ] || fail "a refused 003 added the foreign key"
+    ok "003 refuses an orphan with no partner and changes nothing"
+
+    step "003 - apply"
+    apply "$MIG/003_merge_orphan_tetum_rows.sql"
+    [ "$(pgq -d "$DB" -c "SELECT habitat || '/' || fruit_type FROM species_tet WHERE species_id = 1;")" = "rai-kraik foun/drupa" ] \
+        || fail "species_tet 1 did not take the orphan text"
+    [ "$(pgq -d "$DB" -c "SELECT habitat FROM species_tet WHERE species_id = 2;")" = "tasi-ibun foun" ] \
+        || fail "species_tet 2 did not take the orphan text"
+    [ "$(pgq -d "$DB" -c "SELECT count(*) FROM species_tet WHERE species_id IN (23, 24);")" = "0" ] || fail "orphans remain"
+    [ "$(pgq -d "$DB" -c "SELECT count(*) FROM species_tet_s07_backup;")" = "4" ] || fail "backup does not hold the 4 old rows"
+    [ "$(pgq -d "$DB" -c "SELECT string_agg(operation || ' ' || entity_id, ',' ORDER BY version) FROM changelog WHERE change_id > (SELECT max(change_id) - 4 FROM changelog);")" = "UPDATE 1,UPDATE 2,DELETE 23,DELETE 24" ] \
+        || fail "003 did not log UPDATE for the partners and DELETE for the orphans"
+    ok "partners take the orphan text, orphans are gone, backup and changelog hold the change"
+
+    [ "$(tetum_fk)" = "1" ] || fail "foreign key missing"
+    out=$(pg -d "$DB" -v VERBOSITY=sqlstate -c "INSERT INTO species_tet (species_id, scientific_name, common_name, leaf_type, fruit_type) VALUES (99, 'x', 'x', 'x', 'x');" 2>&1)
+    [[ "$out" == *23503* ]] || fail "species_tet accepted a row with no species_en row: $out"
+    [ "$(pgq -d "$DB" -c "BEGIN" -c "DELETE FROM media WHERE species_id = 2" -c "DELETE FROM species_en WHERE species_id = 2" \
+        -c "SELECT count(*) FROM species_tet WHERE species_id = 2" -c "ROLLBACK")" = "0" ] || fail "a species_en delete did not cascade"
+    ok "species_tet needs a species_en row, and a species_en delete cascades"
+
+    local applied_log; applied_log=$(changelog_rows)
+    apply "$MIG/003_merge_orphan_tetum_rows.sql"
+    [ "$(changelog_rows)" = "$applied_log" ] || fail "re-applying 003 wrote changelog rows"
+    [ "$(pgq -d "$DB" -c "SELECT count(*) FROM species_tet_s07_backup;")" = "4" ] || fail "re-applying 003 changed the backup"
+    ok "re-apply is a no-op"
+
+    step "003 - rollback"
+    apply "$MIG/003_merge_orphan_tetum_rows.rollback.sql"
+    same_rows_as "$before" changelog || fail "rows differ from the state before 003"
+    [ "$(pgq -d "$DB" -c "SELECT string_agg(operation || ' ' || entity_id, ',' ORDER BY version) FROM changelog WHERE change_id > (SELECT max(change_id) - 4 FROM changelog);")" = "UPDATE 1,UPDATE 2,CREATE 23,CREATE 24" ] \
+        || fail "the rollback did not log UPDATE for the partners and CREATE for the orphans"
+    [ "$(tetum_fk)" = "0" ] || fail "the rollback kept the foreign key"
+    [ -z "$(pgq -d "$DB" -c "SELECT to_regclass('public.species_tet_s07_backup');")" ] || fail "the rollback kept the backup table"
+    local rolled_log; rolled_log=$(changelog_rows)
+    apply "$MIG/003_merge_orphan_tetum_rows.rollback.sql"
+    [ "$(changelog_rows)" = "$rolled_log" ] || fail "re-running the rollback wrote changelog rows"
+    [ "$((rolled_log - log))" = "8" ] || fail "apply and rollback wrote $((rolled_log - log)) changelog rows, expected 8"
+    ok "rollback restores every row exactly, logs the change and is a no-op on re-run"
+
+    apply "$MIG/003_merge_orphan_tetum_rows.sql"
     ok "re-applied"
 }
 

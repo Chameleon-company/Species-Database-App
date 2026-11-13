@@ -44,6 +44,27 @@ async def translate_to_tetum(text):
         return ""
 
 
+def english_species_id(scientific_name):
+    """
+    Return the newest species_en.species_id with this scientific_name.
+
+    Raises Exception when no species_en row has that scientific_name.
+    """
+    response = requests.get(
+        f"{SUPABASE_URL.rstrip('/')}/rest/v1/species_en",
+        headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}"},
+        params={
+            "select": "species_id",
+            "scientific_name": f"eq.{scientific_name}",
+            "order": "species_id.desc",
+            "limit": "1",
+        },
+    )
+    if response.status_code >= 300 or not response.json():
+        raise Exception(f"No English row for '{scientific_name}', so its Tetum row cannot be stored")
+    return response.json()[0]["species_id"]
+
+
 def normalize(col):
     return col.strip().lower().replace(" ", "_")
 
@@ -99,7 +120,7 @@ async def process_file(file_path: str, translate: bool = True):
             row_raw[col] = "" if not src_col else str(df.at[idx, src_col])
 
         if translate:
-            row_data = {}
+            row_data = {"species_id": english_species_id(row_raw["scientific_name"])}
             for col in db_cols:
                 if col == "scientific_name":
                     row_data[col] = row_raw[col]  

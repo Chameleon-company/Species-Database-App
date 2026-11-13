@@ -158,12 +158,35 @@ Two limits stay after 002:
   It flags such a table as `rls_disabled_in_public`.
   Check the advisor after any dashboard or extension change.
 
+## Applying 003
+
+003 merges the orphan Tetum rows and adds a foreign key from `species_tet.species_id` to `species_en.species_id`.
+On dev and prod on 2026-11-14, `species_tet` rows 23 to 27 had no English row.
+Each one was a cleaner Tetum translation of rows 1 to 5, with the same `scientific_name`.
+
+Steps:
+
+1. Check that the orphans are the 5 rows above:
+   `select t.species_id, t.scientific_name from species_tet t where not exists (select 1 from species_en e where e.species_id = t.species_id);`
+2. Take a backup in the dashboard (Database, Backups).
+3. Run the 003 file in the SQL editor.
+   It stops with an error and changes nothing when an orphan has no single partner.
+4. Check that `species_tet_s07_backup` holds 10 rows and the orphan query returns nothing.
+5. Open a changed species in the admin, in English and in Tetum.
+
+The rollback restores every backed-up row exactly and drops the foreign key.
+Run it before a new `species_tet` row takes an orphan's id.
+
+The bulk upload (`/upload-species`) now stores each Tetum row with the id of its English row.
+Without that, the foreign key refuses the Tetum rows.
+
 ## Migration log
 
 | # | Description | Applied to dev | Applied to shared/prod |
 |---|---|---|---|
 | 001 | Add `species_en.definition`, `species_tet.definition`, `media.storage_version` | 2026-11-13, in the rebuild from `TableSchema.sql` | 2026-11-12 |
 | 002 | Enable RLS on every public table and revoke `anon` and `authenticated` access in `public` | 2026-11-14 | not yet |
+| 003 | Merge the orphan `species_tet` rows and require an English row for each Tetum row | not yet | not yet |
 
 Snapshot matches with prod, newest last.
 Add a line each time you match `TableSchema.sql` to prod again.
