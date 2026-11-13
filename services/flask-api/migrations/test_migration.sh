@@ -81,8 +81,18 @@ rls_on() {
 client_privileges() {
     pgq -d "$DB" -c "SELECT count(*) FROM pg_class c, unnest(ARRAY['anon','authenticated']) r,
         unnest(ARRAY['SELECT','INSERT','UPDATE','DELETE']) p
-        WHERE c.relnamespace = 'public'::regnamespace AND c.relkind = 'r'
+        WHERE c.relnamespace = 'public'::regnamespace AND c.relkind IN ('r', 'p', 'v', 'm', 'f')
         AND has_table_privilege(r, c.oid, p);"
+}
+
+client_sequence_and_function_access() {
+    pgq -d "$DB" -c "SELECT
+        (SELECT count(*) FROM pg_class c, unnest(ARRAY['anon','authenticated']) r
+         WHERE c.relnamespace = 'public'::regnamespace AND c.relkind = 'S'
+         AND has_sequence_privilege(r, c.oid, 'USAGE,SELECT,UPDATE'))
+      + (SELECT count(*) FROM pg_proc f, unnest(ARRAY['anon','authenticated']) r
+         WHERE f.pronamespace = 'public'::regnamespace
+         AND has_function_privilege(r, f.oid, 'EXECUTE'));"
 }
 
 client_default_grants() {
@@ -277,7 +287,12 @@ for f in "$MIG"/[0-9][0-9][0-9]_*.sql; do
     "check_$n"
 done
 
-step "STEP 4 - TableSchema.sql matches the migration chain"
+step "STEP 4 - anon and authenticated have no access in schema public"
+[ "$(client_privileges)" = "0" ] || fail "anon or authenticated holds a privilege on a public relation"
+[ "$(client_sequence_and_function_access)" = "0" ] || fail "anon or authenticated can use a public sequence or function"
+ok "no public relation, sequence or function is open to anon or authenticated"
+
+step "STEP 5 - TableSchema.sql matches the migration chain"
 load_snapshot "$SNAPDB"
 schema_dump "$SNAPDB"
 schema_dump "$DB"

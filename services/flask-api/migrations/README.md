@@ -53,9 +53,10 @@ The harness runs these steps on a throwaway cluster:
 | 2 | Apply every rollback in reverse order, then assert the pre-migration baseline |
 | 3 | Seed representative rows |
 | per migration | Run `check_NNN`: apply, verify, re-apply, roll back, roll back again, check that every row is back exactly, apply again |
-| 4 | Build a second database from `TableSchema.sql` and require an identical `pg_dump --schema-only` |
+| 4 | Fail if `anon` or `authenticated` can use any relation, sequence or function in `public` |
+| 5 | Build a second database from `TableSchema.sql` and require an identical `pg_dump --schema-only` |
 
-Step 4 proves that the snapshot and the migration chain build the same schema.
+Step 5 proves that the snapshot and the migration chain build the same schema.
 The baseline asserts in step 2 stop a wrong rollback and a wrong snapshot from hiding each other.
 The baseline is the snapshot with every migration rolled back.
 It is only as accurate as the snapshot.
@@ -73,12 +74,50 @@ Supabase Dashboard, SQL Editor, paste the migration, Run. Take a backup first (D
 
 Apply to a development project before a shared or production one, and record the date and target in the project knowledge base.
 
+## Applying 002
+
+002 removes every `anon` and `authenticated` privilege in `public`.
+The API keeps working only if its `SUPABASE_KEY` maps to `service_role`.
+
+State before 002, recorded on dev and prod on 2026-11-14:
+
+| Item | State |
+|---|---|
+| RLS | On for `admin_session_audit` only |
+| Table grants | `anon` and `authenticated` hold ALL on all 8 tables |
+| Sequence grants | `anon` and `authenticated` hold ALL on all 8 sequences on dev. Prod default privileges grant the same. The 2026-11-14 check did not cover the prod sequence ACLs |
+| Default privileges of `postgres` in `public` | ALL on tables and sequences, and EXECUTE on functions, for `anon`, `authenticated` and `service_role` |
+| Functions and views in `public` | None |
+| API key role | `service_role` on prod (JWT `role` claim), `sb_secret_` key on dev |
+
+The rollback restores exactly this state.
+
+Steps:
+
+1. Check that the API key is a `service_role` JWT or an `sb_secret_` key.
+   Read only the `role` claim, never the key.
+2. Take a backup in the dashboard (Database, Backups).
+3. Run the 002 file in the SQL editor.
+4. Check that the security advisor shows no `rls_disabled_in_public` and no `pg_graphql_*_table_exposed` lint.
+5. Log in to the admin, and load `/api/bundle` from the field app.
+6. If step 5 fails, run the 002 rollback at once, then find the cause.
+
+Only the project owner runs the rollback, because it opens `users.password_hash` to the public key again.
+
+Two limits stay after 002:
+
+- PostgreSQL grants EXECUTE on each new function to PUBLIC, and only a global default can stop that.
+  A global default also strips EXECUTE from functions that `postgres` adds later in the `extensions` schema, so 002 does not set one.
+  Each migration that adds a function in `public` must revoke EXECUTE from PUBLIC, and harness step 4 fails when it does not.
+- `postgres` is not a member of `supabase_admin`, so no migration can change the `supabase_admin` default privileges.
+  Create tables through migrations, which run as `postgres`.
+
 ## Migration log
 
 | # | Description | Applied to dev | Applied to shared/prod |
 |---|---|---|---|
 | 001 | Add `species_en.definition`, `species_tet.definition`, `media.storage_version` | 2026-11-13, in the rebuild from `TableSchema.sql` | 2026-11-12 |
-| 002 | Enable RLS on every public table and revoke `anon` and `authenticated` access | not yet | not yet |
+| 002 | Enable RLS on every public table and revoke `anon` and `authenticated` access in `public` | not yet | not yet |
 
 Snapshot matches with prod, newest last.
 Add a line each time you match `TableSchema.sql` to prod again.

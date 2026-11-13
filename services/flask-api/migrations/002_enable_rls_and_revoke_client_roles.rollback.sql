@@ -6,9 +6,12 @@
 -- WARNING: this restores the insecure state.
 --   The anon key can then read and write every public table again, including
 --   users.password_hash and admin_sessions.access_token.
---   Run it only to undo a failed apply, and apply 002 again at once.
+--   Only the project owner runs it, and only to undo a failed apply.
 --
--- admin_session_audit keeps RLS on, because it had RLS on before 002.
+-- Restores the state recorded on dev and prod on 2026-11-14 (README.md,
+-- "Applying 002"): RLS on admin_session_audit only, ALL on every public table
+-- and sequence for anon and authenticated, and the matching postgres default
+-- privileges. Public had no functions then, so no function grant comes back.
 -- Idempotent.
 -- =============================================================================
 
@@ -22,17 +25,7 @@ ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
     GRANT EXECUTE ON FUNCTIONS TO anon, authenticated;
 
 GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;
-
-GRANT ALL ON TABLE
-    public.users,
-    public.species_en,
-    public.species_tet,
-    public.changelog,
-    public.analytics,
-    public.media,
-    public.admin_sessions,
-    public.admin_session_audit
-TO anon, authenticated;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated;
 
 ALTER TABLE public.users DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.species_en DISABLE ROW LEVEL SECURITY;

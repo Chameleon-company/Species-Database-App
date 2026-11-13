@@ -1,18 +1,23 @@
 -- =============================================================================
--- Migration 002: enable RLS and revoke client-role access on every public table
+-- Migration 002: enable RLS and revoke client-role access in schema public
 -- =============================================================================
 -- Created: 2026-11-14
 --
 -- Effect:
 --   - RLS on for all 8 public tables, with no policies.
---   - anon and authenticated lose every privilege on those tables and on the
---     public sequences.
---   - Tables, sequences and functions that postgres creates later in public
---     no longer grant anything to anon or authenticated.
---   - service_role keeps its grants and has BYPASSRLS, so the Flask API is
---     unaffected.
+--   - anon and authenticated lose every privilege on every table, view,
+--     sequence and function in public. PUBLIC loses EXECUTE on every existing
+--     function in public.
+--   - The postgres default privileges in public stop granting new tables,
+--     sequences and functions to anon and authenticated.
+--   - service_role keeps its grants and has BYPASSRLS.
 --
--- Idempotent. See README.md for the reason and the apply order.
+-- Limits:
+--   - PUBLIC still gets EXECUTE on functions created later. Each new function
+--     needs its own REVOKE EXECUTE ... FROM PUBLIC.
+--   - Default privileges of supabase_admin stay as they are.
+--
+-- Idempotent. See README.md, "Applying 002".
 -- =============================================================================
 
 BEGIN;
@@ -26,18 +31,9 @@ ALTER TABLE public.media ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.admin_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.admin_session_audit ENABLE ROW LEVEL SECURITY;
 
-REVOKE ALL ON TABLE
-    public.users,
-    public.species_en,
-    public.species_tet,
-    public.changelog,
-    public.analytics,
-    public.media,
-    public.admin_sessions,
-    public.admin_session_audit
-FROM anon, authenticated;
-
+REVOKE ALL ON ALL TABLES IN SCHEMA public FROM anon, authenticated;
 REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM anon, authenticated;
+REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA public FROM PUBLIC, anon, authenticated;
 
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
     REVOKE ALL ON TABLES FROM anon, authenticated;

@@ -1,4 +1,6 @@
---run this in supabase SQL editor to recreate the structure
+-- Full schema snapshot. Run it in the Supabase SQL editor to build a new database.
+-- It needs the Supabase roles anon, authenticated and service_role.
+-- services/flask-api/migrations/test_migration.sh creates those roles to load it into plain PostgreSQL.
 
 --users for admin login
 CREATE TABLE IF NOT EXISTS public.users (
@@ -145,18 +147,9 @@ ALTER TABLE public.media ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.admin_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.admin_session_audit ENABLE ROW LEVEL SECURITY;
 
-REVOKE ALL ON TABLE
-    public.users,
-    public.species_en,
-    public.species_tet,
-    public.changelog,
-    public.analytics,
-    public.media,
-    public.admin_sessions,
-    public.admin_session_audit
-FROM anon, authenticated;
-
+REVOKE ALL ON ALL TABLES IN SCHEMA public FROM anon, authenticated;
 REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM anon, authenticated;
+REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA public FROM PUBLIC, anon, authenticated;
 
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
     REVOKE ALL ON TABLES FROM anon, authenticated;
