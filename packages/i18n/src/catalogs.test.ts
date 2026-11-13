@@ -3,12 +3,14 @@ import { readFileSync } from "node:fs";
 import { describe, test } from "node:test";
 import { catalogs, locales, translate, type Locale } from "./translate.ts";
 
-const placeholders = (message: string) => [...message.matchAll(/\{(\w+)\}/g)].map(([, name]) => name).sort();
+const placeholders = (message: string) =>
+  [...message.matchAll(/\{(\w+)\}/g)].map(([, name]) => name).sort();
 
 const readCatalogText = (locale: Locale) =>
   readFileSync(new URL(`../messages/${locale}.json`, import.meta.url), "utf8");
 
-const readCatalog = (locale: Locale): Record<string, unknown> => JSON.parse(readCatalogText(locale));
+const readCatalog = (locale: Locale): Record<string, unknown> =>
+  JSON.parse(readCatalogText(locale));
 
 const duplicateKeys = (text: string) => {
   const keys = [...text.matchAll(/^\s*"((?:[^"\\]|\\.)*)"\s*:/gm)].map(([, key]) => key);
@@ -23,16 +25,23 @@ describe("catalogs", () => {
     const catalog = readCatalog(locale);
 
     test(`${locale} has every English key`, () => {
-      assert.deepEqual(englishKeys.filter((key) => !(key in catalog)), []);
+      assert.deepEqual(
+        englishKeys.filter((key) => !(key in catalog)),
+        [],
+      );
     });
 
     test(`${locale} has no key that English lacks`, () => {
-      assert.deepEqual(Object.keys(catalog).filter((key) => !(key in english)), []);
+      assert.deepEqual(
+        Object.keys(catalog).filter((key) => !(key in english)),
+        [],
+      );
     });
 
     test(`${locale} uses the same {placeholders} as English`, () => {
       const mismatched = englishKeys.filter(
-        (key) => typeof catalog[key] === "string" &&
+        (key) =>
+          typeof catalog[key] === "string" &&
           placeholders(catalog[key]).join() !== placeholders(String(english[key])).join(),
       );
       assert.deepEqual(mismatched, []);
@@ -60,7 +69,10 @@ describe("translate", () => {
   });
 
   test("replaces placeholders with params", () => {
-    assert.equal(translate("en", "speciesRecordCount", { count: 12 }), "12 species records in the English Database");
+    assert.equal(
+      translate("en", "speciesRecordCount", { count: 12 }),
+      "12 species records in the English Database",
+    );
   });
 
   test("keeps a placeholder that has no param", () => {

@@ -11,7 +11,8 @@ packages/i18n/
 ```
 
 `en.json` is the source.
-Its keys set the `MessageKey` type, so an unknown key fails the TypeScript build.
+Its keys set the `MessageKey` type.
+An unknown key fails the TypeScript build.
 
 ## Fix or add a Tetum translation
 
@@ -19,9 +20,11 @@ You only edit `messages/tet.json`.
 You do not need to read or change any TypeScript.
 
 1. Open `packages/i18n/messages/tet.json` on GitHub and select the pencil icon.
-2. Find the key. The English text for the same key is in `messages/en.json`.
+2. Find the key.
+   `messages/en.json` has the English text for the same key.
 3. Change only the text on the right of the colon.
-4. Keep each `{name}` placeholder exactly as it is in English. You can move it inside the sentence.
+4. Keep each `{name}` placeholder exactly as it is in English.
+   You can move it inside the sentence.
 5. Commit the change to a new branch and open a pull request.
 
 The CI check tells you if the file has a problem.
@@ -32,7 +35,8 @@ Keep these rules:
 - Do not change or remove a key, the text on the left of the colon.
 - Keep the straight double quotes around the key and the text.
 - Put a comma after each line, except the last one.
-- Do not leave a value empty. Ask for help if you do not know the Tetum text.
+- Do not leave a value empty.
+  Ask for help if you do not know the Tetum text.
 
 ## Add a string
 

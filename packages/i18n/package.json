@@ -1,7 +1,7 @@
 {
   "name": "@sda/i18n",
-  "private": true,
   "version": "0.0.0",
+  "private": true,
   "type": "module",
   "exports": {
     "./translate": "./src/translate.ts"
