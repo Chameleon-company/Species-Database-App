@@ -1,4 +1,4 @@
-import { DataTable } from "@sda/ui/components/data-table";
+import { DataTable, DataTableText } from "@sda/ui/components/data-table";
 import { dataTableColumnHelper } from "@sda/ui/lib/data-table";
 import LoadError from "../../shared/ui/LoadError";
 import { useTableText } from "../../shared/ui/useTableText";
@@ -37,9 +37,7 @@ export default function SpeciesTable() {
         id: name,
         header: t(labelKey),
         cell: ({ getValue }) => (
-          <span className={name === "scientific_name" ? "line-clamp-1 max-w-56 italic" : "line-clamp-1 max-w-56"}>
-            {getValue()}
-          </span>
+          <DataTableText className={name === "scientific_name" ? "max-w-56 italic" : "max-w-56"}>{getValue()}</DataTableText>
         ),
         meta: { className },
       })

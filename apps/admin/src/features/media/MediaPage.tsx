@@ -3,7 +3,7 @@ import { Image as ImageIcon, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@sda/ui/components/button";
 import { Card, CardContent } from "@sda/ui/components/card";
-import { DataTable } from "@sda/ui/components/data-table";
+import { DataTable, DataTableText } from "@sda/ui/components/data-table";
 import { dataTableColumnHelper } from "@sda/ui/lib/data-table";
 import { ApiError } from "../../shared/api/apiClient";
 import ConfirmDialog from "../../shared/ui/ConfirmDialog";
@@ -84,7 +84,7 @@ export default function MediaPage() {
     column.accessor("download_link", {
       header: t("mediaUrl"),
       enableSorting: false,
-      cell: ({ getValue }) => <span className="block max-w-105 truncate text-body">{getValue()}</span>,
+      cell: ({ getValue }) => <DataTableText className="max-w-105 text-body">{getValue()}</DataTableText>,
       meta: { className: "min-w-65" },
     }),
     column.accessor((row) => row.alt_text ?? "", {

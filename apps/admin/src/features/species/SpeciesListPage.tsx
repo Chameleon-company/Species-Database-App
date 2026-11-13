@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { FileUp, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@sda/ui/components/button";
-import { DataTable } from "@sda/ui/components/data-table";
+import { DataTable, DataTableText } from "@sda/ui/components/data-table";
 import { dataTableColumnHelper } from "@sda/ui/lib/data-table";
 import { ApiError } from "../../shared/api/apiClient";
 import ConfirmDialog from "../../shared/ui/ConfirmDialog";
@@ -59,13 +59,13 @@ export default function SpeciesListPage() {
     column.accessor((row) => row.identification_character ?? "", {
       id: "identification_character",
       header: t("identificationCharacter"),
-      cell: ({ getValue }) => <span className="line-clamp-1">{getValue()}</span>,
+      cell: ({ getValue }) => <DataTableText className="max-w-80">{getValue()}</DataTableText>,
       meta: { className: "min-w-50 max-w-80" },
     }),
     column.accessor((row) => row.habitat ?? "", {
       id: "habitat",
       header: t("habitat"),
-      cell: ({ getValue }) => <span className="line-clamp-1">{getValue()}</span>,
+      cell: ({ getValue }) => <DataTableText className="max-w-80">{getValue()}</DataTableText>,
       meta: { className: "min-w-40 max-w-80" },
     }),
     column.display({

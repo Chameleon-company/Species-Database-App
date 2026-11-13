@@ -37,6 +37,15 @@ type DataTableProps<TData extends RowData> = {
 
 const SKELETON_ROWS = 5
 
+/** One-line cell text that ends in an ellipsis past its width. The `title` shows the full text. */
+function DataTableText({ children, className }: { children: string; className?: string }) {
+  return (
+    <span title={children} className={cn("block truncate", className)}>
+      {children}
+    </span>
+  )
+}
+
 /**
  * shadcn data table on TanStack Table v9 with client-side sorting and
  * pagination. Sortable column headers toggle ascending and descending.
@@ -187,4 +196,4 @@ function DataTable<TData extends RowData>({
   )
 }
 
-export { DataTable }
+export { DataTable, DataTableText }
