@@ -78,7 +78,7 @@ export default function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarSeparator className="mx-4 bg-brand-line" />
+      <SidebarSeparator className="mx-4 bg-brand-line data-[orientation=horizontal]:w-auto" />
       <SidebarFooter className="px-2.5 pb-4">
         <SidebarMenu>
           <SidebarMenuItem>

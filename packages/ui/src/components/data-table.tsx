@@ -1,7 +1,7 @@
 import type { ReactNode } from "react"
 import { useTable, type ColumnDef, type RowData, type SortingState } from "@tanstack/react-table"
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight } from "lucide-react"
-import { cn } from "cn"
+import { cn } from "#lib/utils"
 
 import { Button } from "#components/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#components/select"
@@ -159,8 +159,9 @@ function DataTable<TData extends RowData>({
             </SelectContent>
           </Select>
         </div>
-        <span className="tabular-nums">{text.range(from, to, total)}</span>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-4">
+          <span className="tabular-nums">{text.range(from, to, total)}</span>
+          <div className="flex items-center gap-1">
           <Button
             variant="ghost"
             size="icon"
@@ -177,8 +178,9 @@ function DataTable<TData extends RowData>({
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
           >
-            <ChevronRight />
-          </Button>
+              <ChevronRight />
+            </Button>
+          </div>
         </div>
       </div>
     </div>

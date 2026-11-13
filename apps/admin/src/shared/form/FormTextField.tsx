@@ -64,7 +64,7 @@ export default function FormTextField({
     <Field data-invalid={invalid} data-disabled={disabled}>
       <FieldLabel htmlFor={id}>
         {label}
-        {required && <span aria-hidden="true">*</span>}
+        {required && " *"}
       </FieldLabel>
       {options ? (
         <Select value={field.state.value || undefined} onValueChange={field.handleChange} disabled={disabled}>
