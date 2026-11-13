@@ -29,10 +29,9 @@ const API_CONFIG = {
 
 
 // Approved Supabase projects that may contain species videos
-SUPABASE_VIDEO_HOSTS: [
-  "oppcngtkhywxsazeqqet.supabase.co",
-  "tdiquvydwzxmtludjmpe.supabase.co",
-],
+SUPABASE_VIDEO_HOSTS: isLocalDevelopment
+  ? ["oppcngtkhywxsazeqqet.supabase.co", "tdiquvydwzxmtludjmpe.supabase.co"]
+  : ["oppcngtkhywxsazeqqet.supabase.co"],
 
 // Current and legacy video storage paths
 SUPABASE_VIDEO_PATHS: [

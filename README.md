@@ -344,6 +344,9 @@ Each service rebuilds only when a file in its own source paths changes.
 `SUPABASE_URL` and `SUPABASE_KEY` are marked `sync: false` in `render.yaml`.
 Their values live only in the Render dashboard, never in git.
 Every other value in `render.yaml` is public.
+Keep the admin origin first in `CORS_ORIGINS`, because the API links to the first origin.
+`https://localhost` in `CORS_ORIGINS` is the origin of the Capacitor Android app.
+`GOOGLE_CLIENT_ID` and `VITE_GOOGLE_CLIENT_ID` must hold the same OAuth client ID.
 
 Render links each service to its Blueprint entry by service name.
 The live services already carry the names in `render.yaml`.
@@ -357,7 +360,10 @@ The backend tests run on every pull request and every push to `master` that chan
 
 Known unauthenticated endpoints that should require an admin session are listed under **Known gaps** in [`docs/backend/API.md`](docs/backend/API.md).
 
-> **Working with `.env`:** the Supabase key used by the backend is a secret key, which bypasses row-level security and can run schema changes. Point your `.env` at `species-database-dev` only. Never put the production key on your machine.
+> **Working with `.env`:** the backend's `SUPABASE_KEY` is a secret key with `service_role` rights.
+> It bypasses row-level security and can run schema changes.
+> Point your `.env` at `species-database-dev` only.
+> Never put the production key on your machine.
 
 ## Troubleshooting
 

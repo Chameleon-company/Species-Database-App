@@ -69,6 +69,7 @@ src/
 ## Local environment
 
 The admin dashboard reads the `.env` file in the repository root.
+It uses `VITE_API_BASE`, `VITE_API_URL` and `VITE_GOOGLE_CLIENT_ID`.
 See the root `README.md` for the values.
 
 ## Running the project locally
