@@ -185,6 +185,8 @@ The rollback puts back every backed-up row and drops the foreign key.
 It refuses to run when a partner row changed or went away after 003, because that change would be lost.
 It also refuses when a `species_tet` or `species_en` row uses an orphan id again.
 Only the project owner runs it.
+Deleting a merged species through the admin removes its partner row, so the rollback then refuses.
+To roll back anyway, first delete that pair from `species_tet_s07_backup`, so the deleted species stays deleted.
 
 `species_tet_s07_backup` stays after 003, so that the rollback can work.
 It is in `TableSchema.sql` for that reason.

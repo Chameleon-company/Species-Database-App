@@ -559,6 +559,14 @@ and processes it to populate the species_en and species_tet tables in the databa
 There is a species.xlsx sample file within the backend folder for testing.
 Or you can also run > curl -X POST http://127.0.0.1:5000/upload-species -F "file=@species.xlsx"
 """
+def remove_temp_file(path):
+    if path and os.path.exists(path):
+        try:
+            os.remove(path)
+        except Exception:
+            app.logger.exception("Temp file cleanup failed: %s", path)
+
+
 @app.route("/upload-species", methods=["POST"])
 def upload_species_file():
     """
@@ -609,11 +617,7 @@ def upload_species_file():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     finally:
-        if temp_path and os.path.exists(temp_path):
-            try:
-                os.remove(temp_path)
-            except Exception as cleanup_err:
-                print(f"Temp file cleanup failed: {cleanup_err}")  
+        remove_temp_file(temp_path)
 
 
 @app.post("/audit-species")
@@ -652,11 +656,7 @@ def audit_species_file():
     except Exception as e:
         return jsonify({"status": "error", "error": str(e)}), 500
     finally:
-        if temp_path and os.path.exists(temp_path):
-            try:
-                os.remove(temp_path)
-            except Exception as cleanup_err:
-                print(f"Temp file cleanup failed: {cleanup_err}")
+        remove_temp_file(temp_path)
 
 
 

@@ -304,7 +304,7 @@ check_003() {
             identification_character, leaf_type, fruit_type, phenology, seed_germination, pest, definition)
         SELECT 2, scientific_name, common_name, etymology, habitat, identification_character, leaf_type,
             fruit_type, phenology, seed_germination, pest, definition
-        FROM species_tet_s07_backup WHERE species_id = 24;" || fail "restore the deleted partner"
+        FROM species_tet_s07_backup WHERE merged_into = 2;" || fail "restore the deleted partner"
     pg -d "$DB" -c "INSERT INTO species_en (species_id, scientific_name, common_name, leaf_type, fruit_type) VALUES (23, 'x', 'x', 'x', 'x');" \
         || fail "reuse an orphan id in species_en"
     out=$(pg -d "$DB" -f "$MIG/003_merge_orphan_tetum_rows.rollback.sql" 2>&1)

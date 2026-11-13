@@ -655,6 +655,22 @@ class TestDeleteSpecies(unittest.TestCase):
         self.assertEqual(FAKE.data["species_en"], [])
         self.assertEqual(FAKE.data["species_tet"], [])
 
+    def test_a_failed_english_delete_keeps_the_english_row(self):
+        real_table = FAKE.table
+
+        def failing_table(name):
+            t = real_table(name)
+            if name == "species_en":
+                def delete():
+                    raise RuntimeError("species_en delete failed")
+                t.delete = delete
+            return t
+
+        FAKE.table = failing_table
+        resp = FLASK_APP.test_client().delete("/api/species/1", headers=ADMIN_HEADERS)
+        self.assertGreaterEqual(resp.status_code, 500)
+        self.assertEqual([r["species_id"] for r in FAKE.data["species_en"]], [1])
+
 
 class TestBulkUploadTetumIds(unittest.TestCase):
     def setUp(self):
