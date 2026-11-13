@@ -36,6 +36,7 @@ export function MediaThumb({ media, onPreview }: { media: Media; onPreview: () =
   const isVideo = media.media_type === "video";
   const image = useResolvedImage(media.download_link, !isVideo);
   const [broken, setBroken] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   if (!media.download_link || !media.media_type) {
     return (
@@ -79,6 +80,7 @@ export function MediaThumb({ media, onPreview }: { media: Media; onPreview: () =
         title={t("retry")}
         onClick={() => {
           setBroken(false);
+          setAttempt((count) => count + 1);
           image.retry();
         }}
         className={cn(tileClass, "flex-col gap-0.5 border-dashed border-destructive/40 bg-destructive-soft p-1 text-center text-label leading-tight font-normal tracking-normal text-destructive hover:bg-destructive/15")}
@@ -91,7 +93,7 @@ export function MediaThumb({ media, onPreview }: { media: Media; onPreview: () =
 
   return (
     <button type="button" onClick={onPreview} aria-label={t("mediaPreview")} className={cn(tileClass, "cursor-zoom-in transition-transform hover:scale-108")}>
-      <img src={image.url} alt={media.alt_text || t("mediaPreview")} onError={() => setBroken(true)} className="size-full object-cover" />
+      <img key={attempt} src={image.url} alt={media.alt_text || t("mediaPreview")} onError={() => setBroken(true)} className="size-full object-cover" />
     </button>
   );
 }

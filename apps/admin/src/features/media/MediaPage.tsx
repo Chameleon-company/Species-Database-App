@@ -90,7 +90,7 @@ export default function MediaPage() {
     column.accessor((row) => row.alt_text ?? "", {
       id: "alt_text",
       header: t("altText"),
-      cell: ({ getValue }) => <span className="text-icon">{getValue() || <span className="text-faint">{t("notAvailable")}</span>}</span>,
+      cell: ({ getValue }) => <span className="text-icon">{getValue().trim() || <span className="text-faint">{t("notAvailable")}</span>}</span>,
       meta: { className: "min-w-45" },
     }),
     column.display({

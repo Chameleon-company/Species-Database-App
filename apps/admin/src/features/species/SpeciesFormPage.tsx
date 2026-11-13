@@ -69,7 +69,7 @@ export default function SpeciesFormPage() {
 
   return (
     <Page title={t("editExistingEntry")}>
-      {pair.isPending || deleteSpecies.isSuccess ? (
+      {pair.isPending || deleteSpecies.isSuccess || (!english && deleteSpecies.isPending) ? (
         <Skeleton className="h-96 w-full rounded-2xl" />
       ) : pair.isError || !english ? (
         <LoadError onRetry={() => pair.refetch()}>{t("failedToLoadSpecies")}</LoadError>

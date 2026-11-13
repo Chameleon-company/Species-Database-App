@@ -5,7 +5,7 @@ import { Input } from "@sda/ui/components/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@sda/ui/components/select";
 import { Textarea } from "@sda/ui/components/textarea";
 import { useFieldContext } from "./formContext";
-import { TOO_LONG } from "./validators";
+import { tooLongLimit } from "./validators";
 import { translations } from "../../translations";
 import { useLanguage } from "../../useLanguage";
 
@@ -26,7 +26,7 @@ type FormTextFieldProps = {
  *
  * Validators return translation keys. Blur runs the field's `onChange`
  * validators. The first error shows after a submit attempt, or once the
- * field was edited and then blurred. `options` renders a Select; `rows` a Textarea.
+ * field was edited and then blurred. A `withinLength` error shows as "<length> / <max>". `options` renders a Select; `rows` a Textarea.
  */
 export default function FormTextField({
   label,
@@ -104,7 +104,9 @@ export default function FormTextField({
       )}
       {invalid && (
         <FieldError>
-          {error === TOO_LONG && maxLength ? `${field.state.value.length} / ${maxLength}` : t(String(error))}
+          {tooLongLimit(String(error)) !== null
+            ? `${field.state.value.length} / ${tooLongLimit(String(error))}`
+            : t(String(error))}
         </FieldError>
       )}
     </Field>

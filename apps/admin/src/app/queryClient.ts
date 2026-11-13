@@ -1,8 +1,9 @@
 import { QueryClient } from "@tanstack/react-query";
+import { SessionEndedError } from "../shared/api/adminFetch";
 import { ApiError } from "../shared/api/apiClient";
 
 const isClientError = (error: unknown) =>
-  error instanceof ApiError && error.status >= 400 && error.status < 500;
+  error instanceof SessionEndedError || (error instanceof ApiError && error.status >= 400 && error.status < 500);
 
 /**
  * Queries stay fresh for 30 s, never refetch on window focus, and retry once

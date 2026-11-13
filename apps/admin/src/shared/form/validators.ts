@@ -4,14 +4,17 @@ export const required =
   ({ value }: { value: string }) =>
     value.trim() ? undefined : errorKey;
 
-/** Error value of `withinLength`. FormTextField shows it as "<length> / <max>". */
-export const TOO_LONG = "tooLong";
+const TOO_LONG_PREFIX = "tooLong:";
 
-/** Field validator that fails when the value is longer than `max` characters. */
+/** Field validator that fails with `tooLong:<max>` when the value is longer than `max` characters. */
 export const withinLength =
   (max: number) =>
   ({ value }: { value: string }) =>
-    value.length > max ? TOO_LONG : undefined;
+    value.length > max ? `${TOO_LONG_PREFIX}${max}` : undefined;
+
+/** The limit inside a `withinLength` error, or null for any other error. */
+export const tooLongLimit = (error: string): number | null =>
+  error.startsWith(TOO_LONG_PREFIX) ? Number(error.slice(TOO_LONG_PREFIX.length)) : null;
 
 /** Runs validators in order and returns the first error. */
 export const firstError =

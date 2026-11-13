@@ -24,8 +24,9 @@ export function clearAdminSession(): void {
 type SessionEndListener = () => void;
 const sessionEndListeners = new Set<SessionEndListener>();
 
-/** Subscribes to forced session ends. Returns the unsubscribe function. */
+/** Subscribes to forced session ends and re-arms the once-per-session notice. Returns the unsubscribe function. */
 export function onSessionEnd(listener: SessionEndListener): () => void {
+  sessionEnded = false;
   sessionEndListeners.add(listener);
   return () => {
     sessionEndListeners.delete(listener);
@@ -34,7 +35,7 @@ export function onSessionEnd(listener: SessionEndListener): () => void {
 
 /**
  * Clears the session and notifies `onSessionEnd` listeners once per session:
- * later calls before the next `saveAdminToken` notify nobody. Returns false
+ * later calls before the next `saveAdminToken` or `onSessionEnd` notify nobody. Returns false
  * when nothing listens, so the caller must navigate itself.
  */
 export function endAdminSession(): boolean {
