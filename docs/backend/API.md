@@ -46,13 +46,13 @@ The **Auth** column below means:
 | GET | `/api/species/incremental` | Public | Species rows changed since a given version, and the ids of deleted species |
 | GET | `/api/species/search` | Public | **New.** Search by common or scientific name |
 | GET | `/api/species/<species_id>` | Admin | Single species record |
-| POST | `/species` | Public | Create a species |
+| POST | `/species` | Admin | Create a species |
 | PUT | `/api/species/<species_id>` | Admin | Update a species |
-| DELETE | `/api/species/<species_id>` | Admin | Delete a species |
+| DELETE | `/api/species/<species_id>` | Admin | Delete a species. Deletes the Tetum row, then the English row. Media rows follow by cascade |
 | PUT | `/api/species/<species_id>/english` | Admin | Update the English record only |
 | PUT | `/api/species/<species_id>/tetum` | Admin | Update the Tetum record only |
-| POST | `/upload-species` | Admin | Bulk upload species from a spreadsheet |
-| POST | `/audit-species` | Public | Validate a spreadsheet without importing |
+| POST | `/upload-species` | Admin | Bulk upload species from a spreadsheet. Each row goes into `species_en`, then into `species_tet` with the same `species_id`. Stops at the first failing row, keeps the rows before it, and returns HTTP 500 with `error`, `rows_inserted` and `english_only` (English rows that could not be removed) |
+| POST | `/audit-species` | Admin | Validate a spreadsheet without importing |
 
 ### `GET /api/species/search`
 
@@ -221,9 +221,6 @@ Six endpoints and one bug fix reached the `backend` branch but not `master`:
 
 Recorded so they are not mistaken for intended behaviour. All of these exist on `master` today and are **not** introduced by the pending merge:
 
-- **User management is unauthenticated.** `POST`, `GET`, `PUT`, `DELETE` on `/api/users` perform no authentication. `GET` discloses every user's name, role and active status; `DELETE` removes accounts.
-- **Analytics endpoints are unauthenticated** and disclose per-user activity.
-- **`POST /species` and `POST /audit-species` are unauthenticated.**
 - **`GET /api/auth/user-state` takes `user_id` from the query string** with no authorisation, so any user's state can be polled.
 - **`GET /api/health` is unauthenticated and returns raw exception text** for any table it cannot reach, which can name the host, database and driver. This is the same problem `/health` had before it was fixed on this branch. It came in from `master` with the status dashboard work, so it is left alone here for the same reason as the rows above.
 

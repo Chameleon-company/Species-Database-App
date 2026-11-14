@@ -50,3 +50,14 @@ jobs:
       - name: Run AI backend tests
         working-directory: services/flask-api
         run: python -m pytest tests -v
+
+  migration-harness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run migration harness
+        run: bash services/flask-api/migrations/test_migration.sh

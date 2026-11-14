@@ -19,10 +19,13 @@ reach the shared Supabase project.
 Run:  python -m unittest discover -s services/flask-api/tests -v
 """
 
+import asyncio
 import datetime
 import ipaddress
+import json
 import os
 import sys
+import tempfile
 import types
 import unittest
 
@@ -219,6 +222,7 @@ _install_stubs()
 
 import app as app_module  # noqa: E402
 import media as media_module  # noqa: E402
+import uploader as uploader_module  # noqa: E402
 
 FLASK_APP = app_module.app
 FLASK_APP.config["TESTING"] = True
@@ -621,6 +625,113 @@ class TestIncrementalSync(unittest.TestCase):
             "species_en": [], "species_tet": [],
             "deleted_species_ids": [], "latest_version": 3,
         })
+
+
+class TestDeleteSpecies(unittest.TestCase):
+    def setUp(self):
+        _reset()
+        self.order = []
+        real_table = FAKE.table
+
+        def recording_table(name):
+            t = real_table(name)
+            real_delete = t.delete
+
+            def delete():
+                self.order.append(name)
+                return real_delete()
+            t.delete = delete
+            return t
+
+        FAKE.table = recording_table
+
+    def tearDown(self):
+        del FAKE.table
+
+    def test_deletes_the_tetum_row_before_the_english_row(self):
+        resp = FLASK_APP.test_client().delete("/api/species/1", headers=ADMIN_HEADERS)
+        self.assertLess(resp.status_code, 300)
+        self.assertEqual(self.order, ["species_tet", "species_en"])
+        self.assertEqual(FAKE.data["species_en"], [])
+        self.assertEqual(FAKE.data["species_tet"], [])
+
+    def test_a_failed_english_delete_keeps_the_english_row(self):
+        real_table = FAKE.table
+
+        def failing_table(name):
+            t = real_table(name)
+            if name == "species_en":
+                def delete():
+                    raise RuntimeError("species_en delete failed")
+                t.delete = delete
+            return t
+
+        FAKE.table = failing_table
+        resp = FLASK_APP.test_client().delete("/api/species/1", headers=ADMIN_HEADERS)
+        self.assertGreaterEqual(resp.status_code, 500)
+        self.assertEqual([r["species_id"] for r in FAKE.data["species_en"]], [1])
+
+
+class TestBulkUploadTetumIds(unittest.TestCase):
+    def setUp(self):
+        self.calls = []
+        self.next_id = 41
+        self.tet_status = 201
+
+        def fake_post(url, headers=None, data=None, timeout=None):
+            row = json.loads(data)
+            self.calls.append(("post", url.rsplit("/", 1)[-1], row))
+            if url.endswith("/species_en"):
+                self.next_id += 1
+                body = [dict(row, species_id=self.next_id)]
+                return types.SimpleNamespace(status_code=201, json=lambda: body, text="")
+            return types.SimpleNamespace(status_code=self.tet_status, text="tet refused")
+
+        self.delete_status = 204
+
+        def fake_delete(url, headers=None, params=None, timeout=None):
+            self.calls.append(("delete", url.rsplit("/", 1)[-1], params))
+            return types.SimpleNamespace(status_code=self.delete_status, text="delete refused")
+
+        async def fake_translate(text):
+            return text
+
+        self.saved = (uploader_module.requests, uploader_module.translate_to_tetum, uploader_module.time.sleep)
+        uploader_module.requests = types.SimpleNamespace(post=fake_post, delete=fake_delete)
+        uploader_module.translate_to_tetum = fake_translate
+        uploader_module.time.sleep = lambda *_: None
+
+        fields = uploader_module.db_cols
+        self.csv = tempfile.NamedTemporaryFile("w", suffix=".csv", delete=False)
+        self.csv.write(",".join(fields) + "\n")
+        for name in ("Tectona grandis", "Tectona grandis"):
+            self.csv.write(",".join(name if f == "scientific_name" else "x" for f in fields) + "\n")
+        self.csv.close()
+
+    def tearDown(self):
+        uploader_module.requests, uploader_module.translate_to_tetum, uploader_module.time.sleep = self.saved
+        os.unlink(self.csv.name)
+
+    def test_each_tetum_row_takes_the_id_its_english_insert_returned(self):
+        result = asyncio.run(uploader_module.process_file(self.csv.name))
+        self.assertEqual(result, {"rows_inserted": 2, "english_only": [], "error": None})
+        tet_ids = [row["species_id"] for kind, table, row in self.calls if table == "species_tet"]
+        self.assertEqual(tet_ids, [42, 43])
+
+    def test_a_refused_tetum_row_removes_its_english_row_and_stops(self):
+        self.tet_status = 409
+        result = asyncio.run(uploader_module.process_file(self.csv.name))
+        self.assertEqual(result["rows_inserted"], 0)
+        self.assertIn("row 1 (Tetum)", result["error"])
+        self.assertEqual(self.calls[-1], ("delete", "species_en", {"species_id": "eq.42"}))
+        self.assertEqual(sum(1 for c in self.calls if c[1] == "species_en" and c[0] == "post"), 1)
+
+    def test_a_failed_cleanup_is_named_in_the_error(self):
+        self.tet_status = 409
+        self.delete_status = 500
+        result = asyncio.run(uploader_module.process_file(self.csv.name))
+        self.assertIn("English row 42 could not be removed: delete refused", result["error"])
+        self.assertEqual(result["english_only"], [42])
 
 
 if __name__ == "__main__":

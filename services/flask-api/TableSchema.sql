@@ -1,4 +1,6 @@
---run this in supabase SQL editor to recreate the structure
+-- Full schema snapshot. Run it in the Supabase SQL editor to build a new database.
+-- It needs the Supabase roles anon, authenticated and service_role.
+-- services/flask-api/migrations/test_migration.sh creates those roles to load it into plain PostgreSQL.
 
 --users for admin login
 CREATE TABLE IF NOT EXISTS public.users (
@@ -41,7 +43,11 @@ CREATE TABLE IF NOT EXISTS public.species_tet (
     phenology VARCHAR(1000),
     seed_germination VARCHAR(2000),
     pest VARCHAR(2000),
-    definition VARCHAR(2000)
+    definition VARCHAR(2000),
+    CONSTRAINT species_tet_species_id_fkey
+      FOREIGN KEY (species_id)
+      REFERENCES public.species_en(species_id)
+      ON DELETE CASCADE
 );
 
 -- NOTE: species_en.definition / species_tet.definition are added to EXISTING
@@ -134,4 +140,36 @@ CREATE TABLE IF NOT EXISTS public.admin_session_audit (
       ON DELETE CASCADE
 );
 
+-- Backup of the species_tet rows that migration 003 changed. The 003 rollback
+-- reads it. merged_into holds the partner id of each merged orphan.
+-- Existing databases get this from
+-- services/flask-api/migrations/003_merge_orphan_tetum_rows.sql.
+CREATE TABLE IF NOT EXISTS public.species_tet_s07_backup (
+    LIKE public.species_tet,
+    merged_into INT,
+    PRIMARY KEY (species_id)
+);
+ALTER TABLE public.species_tet_s07_backup ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON TABLE public.species_tet_s07_backup FROM anon, authenticated;
+
+-- Row level security and client-role access. Existing databases get this from
+-- services/flask-api/migrations/002_enable_rls_and_revoke_client_roles.sql.
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.species_en ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.species_tet ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.changelog ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.analytics ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.media ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.admin_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.admin_session_audit ENABLE ROW LEVEL SECURITY;
+
+REVOKE ALL ON ALL TABLES IN SCHEMA public FROM anon, authenticated;
+REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM anon, authenticated;
+REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA public FROM PUBLIC, anon, authenticated;
+
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+    REVOKE ALL ON TABLES FROM anon, authenticated;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+    REVOKE ALL ON SEQUENCES FROM anon, authenticated;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+    REVOKE EXECUTE ON FUNCTIONS FROM anon, authenticated;
