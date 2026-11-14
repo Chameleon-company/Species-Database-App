@@ -11,6 +11,8 @@ MAX_IMAGE_PIXELS = 40_000_000
 def detect_image_format(data: bytes) -> str:
     """Return the format Pillow detects in the bytes, such as "JPEG" or "PNG".
 
+    A multi-picture JPEG, which Pillow labels "MPO", returns "JPEG".
+
     The check reads the header and verifies the file without decoding the
     pixels, so a small file that claims huge dimensions is cheap to reject.
 
@@ -30,5 +32,8 @@ def detect_image_format(data: bytes) -> str:
 
     if width * height > MAX_IMAGE_PIXELS:
         raise ValueError("image_too_large")
+
+    if detected_format == "MPO":
+        return "JPEG"
 
     return detected_format

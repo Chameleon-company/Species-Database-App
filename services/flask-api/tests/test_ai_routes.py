@@ -2,11 +2,11 @@ from io import BytesIO
 
 import pytest
 from flask import Flask
-from PIL import Image
 
 import ai_routes
 from ai_routes import register_ai_routes
-from ai_service import ModelConfigurationError
+from ai_service import ModelConfigurationError, preprocess_image
+from conftest import create_image
 
 
 LABELS = [
@@ -38,24 +38,6 @@ class FailingService:
 
     def identify(self, image_source):
         raise RuntimeError("Private model failure detail")
-
-
-def create_image(
-    mode="RGB",
-    image_format="PNG",
-):
-    if mode == "RGBA":
-        colour = (20, 120, 60, 180)
-    elif mode == "L":
-        colour = 128
-    else:
-        colour = (20, 120, 60)
-
-    image = Image.new(mode, (32, 32), colour)
-    output = BytesIO()
-    image.save(output, format=image_format)
-    output.seek(0)
-    return output
 
 
 def create_test_app(
@@ -106,7 +88,7 @@ def test_valid_images_return_prediction(
         "/api/ai/identify",
         data={
             "image": (
-                create_image(image_format=image_format),
+                BytesIO(create_image(image_format=image_format)),
                 filename,
             )
         },
@@ -161,7 +143,7 @@ def test_missing_filename_returns_400(client):
         "/api/ai/identify",
         data={
             "image": (
-                create_image(),
+                BytesIO(create_image()),
                 "",
             )
         },
@@ -188,12 +170,34 @@ def test_corrupted_image_returns_400(client):
     assert response.get_json()["error"]["code"] == "invalid_image"
 
 
+def test_truncated_pixel_data_returns_400():
+    class PreprocessingService:
+        labels = LABELS
+
+        def identify(self, image_source):
+            preprocess_image(image_source)
+
+    jpeg = create_image(image_format="JPEG")
+    truncated = jpeg[: jpeg.rindex(b"\xff\xda") + 16]
+    app = create_test_app(PreprocessingService())
+
+    with app.test_client() as client:
+        response = client.post(
+            "/api/ai/identify",
+            data={"image": (BytesIO(truncated), "truncated.jpg")},
+            content_type="multipart/form-data",
+        )
+
+    assert response.status_code == 400
+    assert response.get_json()["error"]["code"] == "invalid_image"
+
+
 def test_unsupported_decoded_format_returns_415(client):
     response = client.post(
         "/api/ai/identify",
         data={
             "image": (
-                create_image(image_format="GIF"),
+                BytesIO(create_image(image_format="GIF")),
                 "misleading-name.jpg",
             )
         },
@@ -237,13 +241,9 @@ def test_oversized_upload_returns_413():
     ],
 )
 def test_image_over_pixel_limit_returns_413(client, service, size):
-    output = BytesIO()
-    Image.new("1", size).save(output, format="PNG")
-    output.seek(0)
-
     response = client.post(
         "/api/ai/identify",
-        data={"image": (output, "huge.png")},
+        data={"image": (BytesIO(create_image(size=size, mode="1")), "huge.png")},
         content_type="multipart/form-data",
     )
 
@@ -258,7 +258,7 @@ def test_non_rgb_images_are_accepted(client, mode):
         "/api/ai/identify",
         data={
             "image": (
-                create_image(mode=mode),
+                BytesIO(create_image(mode=mode)),
                 "plant.png",
             )
         },
@@ -267,6 +267,17 @@ def test_non_rgb_images_are_accepted(client, mode):
 
     assert response.status_code == 200
     assert response.get_json()["status"] == "success"
+
+
+def test_camera_jpeg_with_extra_frames_is_accepted(client, service):
+    response = client.post(
+        "/api/ai/identify",
+        data={"image": (BytesIO(create_image(image_format="MPO")), "IMG_0001.JPG")},
+        content_type="multipart/form-data",
+    )
+
+    assert response.status_code == 200
+    assert service.call_count == 1
 
 
 def test_uncertain_prediction_returns_message():
@@ -283,7 +294,7 @@ def test_uncertain_prediction_returns_message():
             "/api/ai/identify",
             data={
                 "image": (
-                    create_image(),
+                    BytesIO(create_image()),
                     "plant.png",
                 )
             },
@@ -309,7 +320,7 @@ def test_inference_failure_returns_safe_500():
             "/api/ai/identify",
             data={
                 "image": (
-                    create_image(),
+                    BytesIO(create_image()),
                     "plant.png",
                 )
             },
