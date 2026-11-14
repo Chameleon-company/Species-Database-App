@@ -12,9 +12,9 @@ The Rai Matak Species Guide supports field staff, botanists, and community partn
 apps/
   admin/          React admin dashboard
   api/            new TypeScript API (Hono), replaces the Flask API route by route
-  field/          new field app, replaces field-legacy
+  field/          new Preact field app, not deployed yet
   field-legacy/   static field app that runs in production today
-  android/        Capacitor Android wrapper around the field app
+  android/        Capacitor Android wrapper around field-legacy
 services/
   flask-api/      Flask API that runs in production today, with its tests and migrations
 ml/
@@ -40,14 +40,14 @@ Install these before running project commands:
 
 - Git
 - Docker Desktop, or Docker Engine with Docker Compose v2
-- Node.js 22 or newer
+- Node.js 22.12 or newer
 - pnpm, installed with `npm install -g pnpm`
 
 Windows 11:
 
 1. Install Git for Windows.
 2. Install Docker Desktop.
-3. Install Node.js 22 LTS or newer.
+3. Install Node.js 22.12 LTS or newer.
 4. Open Docker Desktop and wait until the engine is running.
 5. Open PowerShell from the repository root.
 
@@ -55,7 +55,7 @@ macOS:
 
 1. Install Git.
 2. Install Docker Desktop for Mac.
-3. Install Node.js 22 LTS or newer.
+3. Install Node.js 22.12 LTS or newer.
 4. Open Docker Desktop and wait until it is running.
 5. Open Terminal from the repository root.
 
@@ -63,7 +63,7 @@ Linux:
 
 1. Install Git.
 2. Install Docker Engine with Docker Compose v2, or Docker Desktop for Linux.
-3. Install Node.js 22 LTS or newer.
+3. Install Node.js 22.12 LTS or newer.
 4. Confirm Docker is running:
 
    ```bash
@@ -88,7 +88,7 @@ The app needs Supabase and Google configuration values. Ask the project owner fo
 | `species-database-dev` | `tdiquvydwzxmtludjmpe` | Local development. Point your `.env` here. |
 | `species-database-prod` | `oppcngtkhywxsazeqqet` | Production only. Its keys live in Render. |
 
-The backend and the admin dashboard both read the one `.env` file in the repository root.
+The backend, the admin dashboard and the field app all read the one `.env` file in the repository root.
 
 Create `.env` from the template:
 
@@ -111,13 +111,8 @@ GOOGLE_CLIENT_ID=
 VITE_GOOGLE_CLIENT_ID=
 ```
 
-Keep these default local values unless your ports change:
-
-```bash
-CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
-VITE_API_BASE=http://localhost:5000
-VITE_API_URL=http://localhost:5000/api
-```
+Keep the local `CORS_ORIGINS`, `VITE_API_BASE` and `VITE_API_URL` values from `.env.example` unless your ports change.
+If your `.env` predates the new field app, add `http://localhost:5174` and `http://127.0.0.1:5174` to `CORS_ORIGINS`.
 
 Do not commit `.env`.
 
@@ -174,8 +169,15 @@ pnpm run docker:down   # Stop Docker containers
 pnpm run docker:logs   # Follow container logs
 pnpm run docker:build  # Build Docker images only
 pnpm run build         # Build every app in the workspace
-pnpm run lint          # Lint every app in the workspace
+pnpm run lint          # Lint the workspace with Oxlint
+pnpm run test          # Run the unit tests of every app
+pnpm run format        # Format the workspace with Oxfmt
+pnpm run format:check  # Check formatting without changing files
 ```
+
+`pnpm run lint` runs Oxlint from the repository root with the rules in `.oxlintrc.json`.
+It uses type-aware rules, which need TypeScript 7.
+`pnpm run format` uses `.oxfmtrc.json`, and its `ignorePatterns` list the folders it skips.
 
 ## Optional Local Development
 
@@ -185,7 +187,7 @@ Use this path only when you need to run services outside Docker.
 
 Install:
 
-- Node.js 22 or newer
+- Node.js 22.12 or newer
 - pnpm, installed with `npm install -g pnpm`
 - Python 3.12 or newer
 
@@ -217,14 +219,27 @@ Start the admin dashboard in another terminal:
 pnpm run dev:admin
 ```
 
+Start the new field app in another terminal:
+
+```bash
+pnpm run dev:field
+```
+
 Local URLs:
 
 - Admin dashboard: `http://localhost:5173`
+- Field app: `http://127.0.0.1:5174`
 - Backend API: `http://localhost:5000`
+
+The field app in `apps/field` is the Preact rebuild of the field app.
+Production and the Android app still use `apps/field-legacy`.
+`render.yaml` does not deploy `apps/field`.
+The `apps/field` build fails when its first load is over 50 KiB gzip.
+The budget is in `apps/field/vite.config.ts`.
 
 ## Static Field-User Frontend
 
-The field-user frontend is the static HTML app in `apps/field-legacy`.
+The live field-user frontend is the static HTML app in `apps/field-legacy`.
 
 Prerequisite:
 
@@ -246,7 +261,7 @@ Install:
 
 - Android Studio
 - Android SDK through Android Studio
-- Node.js 22 or newer
+- Node.js 22.12 or newer
 - Project dependencies through one of the OS install scripts
 
 ### 2. Open the Android Project
