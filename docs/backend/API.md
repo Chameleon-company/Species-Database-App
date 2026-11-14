@@ -43,7 +43,7 @@ The **Auth** column below means:
 |---|---|---|---|
 | GET | `/api/bundle` | Public | Full species bundle for initial offline sync |
 | GET | `/api/species/changes` | Public | Changelog entries for incremental sync |
-| GET | `/api/species/incremental` | Public | Species changed since a given version |
+| GET | `/api/species/incremental` | Public | Species rows changed since a given version, and the ids of deleted species |
 | GET | `/api/species/search` | Public | **New.** Search by common or scientific name |
 | GET | `/api/species/<species_id>` | Admin | Single species record |
 | POST | `/species` | Public | Create a species |

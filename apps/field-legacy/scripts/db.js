@@ -430,6 +430,61 @@ class SpeciesDB {
   }
 
   /**
+   * Delete one language row of a species.
+   * @param {number} speciesId - Shared species_id
+   * @param {'en'|'tet'} language
+   * @returns {Promise<void>}
+   */
+  async deleteSpeciesLanguage(speciesId, language) {
+    const db = await this.init();
+
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(['species'], 'readwrite');
+      transaction.objectStore('species').delete(`${Number(speciesId)}_${language}`);
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(new Error(`Failed to delete species ${speciesId} ${language}: ${transaction.error}`));
+      transaction.onabort = () => reject(new Error(`Deleting species ${speciesId} ${language} aborted: ${transaction.error}`));
+    });
+  }
+
+  /**
+   * Delete both language rows of a species, its media metadata and its cached image and video blobs.
+   * Matches species_id as a number and as a string, because callers store both forms.
+   * @param {number|string} speciesId - Shared species_id
+   * @returns {Promise<string[]>} Media URLs of the deleted rows. Rejects when the transaction errors or aborts.
+   */
+  async deleteSpecies(speciesId) {
+    const db = await this.init();
+    const ids = [Number(speciesId), String(speciesId)];
+    const indexed = ['media', 'image_blobs', 'video_blobs'];
+    const urls = new Set();
+
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(['species', ...indexed], 'readwrite');
+      const species = transaction.objectStore('species');
+      species.delete(`${ids[0]}_en`);
+      species.delete(`${ids[0]}_tet`);
+
+      for (const name of indexed) {
+        const store = transaction.objectStore(name);
+        for (const id of ids) {
+          const rows = store.index('species_id').getAll(IDBKeyRange.only(id));
+          rows.onsuccess = () => {
+            for (const row of rows.result) {
+              [row.download_link, row.streaming_link, row.url].filter(Boolean).forEach((url) => urls.add(url));
+              store.delete(row[store.keyPath]);
+            }
+          };
+        }
+      }
+
+      transaction.oncomplete = () => resolve([...urls]);
+      transaction.onerror = () => reject(new Error(`Failed to delete species ${ids[0]}: ${transaction.error}`));
+      transaction.onabort = () => reject(new Error(`Deleting species ${ids[0]} aborted: ${transaction.error}`));
+    });
+  }
+
+  /**
    * Store media metadata array in IndexedDB
    * @param {Array} mediaArray - Array of media metadata objects (must have 'media_id')
    * @returns {Promise<void>}

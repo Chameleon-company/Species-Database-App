@@ -43,6 +43,8 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 # Used for the Admin Dashboard link and the /api/health reachability check.
 FRONTEND_URL = cors_origins[0] if cors_origins else None
+INCREMENTAL_SYNC_LIMIT = 20
+CHANGELOG_PAGE = 1000
 
 print("Supabase URL:", SUPABASE_URL)
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -375,6 +377,9 @@ def get_species_changes():
         .select("entity_id, version, operation, entity_type")
         .in_("entity_type", ["species", "media"])
         .gt("version", since_version)
+        .order("version")
+        .order("change_id")
+        .limit(CHANGELOG_PAGE)
         .execute()
     )
 
@@ -410,6 +415,22 @@ def get_species_changes():
             "latest_version": latest_version,
             "reason": "media_changed"
         })
+
+    if len(changes.data) >= CHANGELOG_PAGE:
+        return jsonify({
+            "up_to_date": False,
+            "force_bundle": True,
+            "latest_version": latest_version,
+            "reason": "too_many_changes"
+        })
+
+    if any(row["entity_id"] is None for row in changes.data):
+        return jsonify({
+            "up_to_date": False,
+            "force_bundle": True,
+            "latest_version": latest_version,
+            "reason": "bulk_change"
+        })
     
     changed_species_ids = {
         row["entity_id"]
@@ -419,11 +440,7 @@ def get_species_changes():
 
     row_count = len(changed_species_ids)
 
-    #threshold: if too many changes, no point having incremental syncing
-    #will just pull the bundle
-    THRESHOLD = 20
-
-    if row_count > THRESHOLD:
+    if row_count > INCREMENTAL_SYNC_LIMIT:
         return jsonify({
             "up_to_date": False,
             "force_bundle": True,
@@ -458,26 +475,49 @@ def get_species_incremental():
     #find ewhich species ids changed
     changes = (
         supabase.table("changelog")
-        .select("entity_id, version")
+        .select("entity_id, version, operation")
+        .eq("entity_type", "species")
         .gt("version", since_version)
+        .order("version")
+        .order("change_id")
+        .limit(CHANGELOG_PAGE)
         .execute()
     )
+
+    if changes.data is None:
+        return jsonify({
+            "error": "sync_failed",
+            "stage": "changelog_fetch",
+            "message": "changelog data fail to fetch it",
+            "since_version": since_version
+        }), 500
 
     if not changes.data:
         return jsonify({
             "species_en": [],
             "species_tet": [],
+            "deleted_species_ids": [],
             "latest_version": since_version
         })
-    #deduplicating
-    species_ids = list({row["entity_id"] for row in changes.data if row["entity_id"] is not None})
-    
-    latest_version =max(row["version"] for row in changes.data)
+    rows = changes.data
+    last_operation = {row["entity_id"]: row["operation"] for row in rows}
+    deleted_ids = sorted(i for i, op in last_operation.items() if i is not None and op == "DELETE")
+    species_ids = [i for i, op in last_operation.items() if i is not None and op != "DELETE"]
+
+    if None in last_operation or len(last_operation) > INCREMENTAL_SYNC_LIMIT or len(rows) >= CHANGELOG_PAGE:
+        return jsonify({
+            "force_bundle": True,
+            "reason": "bulk_change" if None in last_operation else "too_many_changes",
+            "latest_version": since_version
+        })
+
+    latest_version = rows[-1]["version"]
 
     if not species_ids:
         return jsonify({
             "species_en": [],
             "species_tet": [],
+            "deleted_species_ids": deleted_ids,
             "latest_version": latest_version
         })
     #fetch latest en species rows
@@ -504,11 +544,9 @@ def get_species_incremental():
             "since_version":since_version
         }), 500
         
-    deleted_ids = [
-        row["entity_id"]
-        for row in changes.data
-        if row["operation"] == "DELETE"
-    ]
+    live_ids = {r["species_id"] for r in species_en.data + species_tet.data}
+    deleted_ids = sorted(set(deleted_ids) | (set(species_ids) - live_ids))
+
     return jsonify({
         "latest_version": latest_version,
         "species_en": species_en.data,

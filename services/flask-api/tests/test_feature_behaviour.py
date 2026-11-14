@@ -46,6 +46,8 @@ class _Table:
         self.db = db
         self.name = name
         self._filters = {}
+        self._predicates = []
+        self._columns = None
         self._payload = None
         self._op = None
         self._limit = None
@@ -58,8 +60,10 @@ class _Table:
         self._op, self._payload = "update", payload
         return self
 
-    def select(self, *_a, **_k):
+    def select(self, columns="*", *_a, **_k):
         self._op = "select"
+        names = [c.strip() for c in columns.split(",")]
+        self._columns = None if "*" in names else names
         return self
 
     def delete(self):
@@ -68,6 +72,14 @@ class _Table:
 
     def eq(self, col, val):
         self._filters[col] = val
+        return self
+
+    def gt(self, col, val):
+        self._predicates.append(lambda r: r.get(col) is not None and r[col] > val)
+        return self
+
+    def in_(self, col, vals):
+        self._predicates.append(lambda r: r.get(col) in vals)
         return self
 
     def or_(self, *a, **_k):
@@ -101,7 +113,8 @@ class _Table:
             return _Resp(written)
 
         matched = [r for r in rows
-                   if all(r.get(c) == v for c, v in self._filters.items())]
+                   if all(r.get(c) == v for c, v in self._filters.items())
+                   and all(p(r) for p in self._predicates)]
 
         if self._op == "update":
             for r in matched:
@@ -114,7 +127,10 @@ class _Table:
                 rows.remove(r)
             return _Resp(matched)
 
-        return _Resp(matched[:self._limit] if self._limit else matched)
+        selected = matched[:self._limit] if self._limit else matched
+        if self._columns:
+            selected = [{c: r.get(c) for c in self._columns} for r in selected]
+        return _Resp(selected)
 
 
 class FakeSupabase:
@@ -494,6 +510,117 @@ class TestVideoLinkDestination(unittest.TestCase):
                   "alt_text": "clip"})
         self.assertEqual(resp.status_code, 201)
         self.assertTrue(FAKE.writes_to("media", "insert"))
+
+
+class TestIncrementalSync(unittest.TestCase):
+    def setUp(self):
+        _reset()
+        FAKE.data["changelog"] = [
+            {"change_id": 1, "version": 1, "entity_id": 1,
+             "entity_type": "species", "operation": "CREATE"},
+            {"change_id": 2, "version": 2, "entity_id": 1,
+             "entity_type": "species", "operation": "UPDATE"},
+            {"change_id": 3, "version": 3, "entity_id": 5,
+             "entity_type": "species", "operation": "DELETE"},
+            {"change_id": 4, "version": 4, "entity_id": 7,
+             "entity_type": "users", "operation": "DELETE"},
+            {"change_id": 5, "version": 5, "entity_id": 9,
+             "entity_type": "media", "operation": "DELETE"},
+        ]
+        self.client = FLASK_APP.test_client()
+
+    def test_returns_changed_rows_and_deleted_species(self):
+        resp = self.client.get("/api/species/incremental?since_version=1")
+        self.assertEqual(resp.status_code, 200, resp.get_json())
+        body = resp.get_json()
+        self.assertEqual(body["latest_version"], 3)
+        self.assertEqual([r["species_id"] for r in body["species_en"]], [1])
+        self.assertEqual([r["species_id"] for r in body["species_tet"]], [1])
+        self.assertEqual(body["deleted_species_ids"], [5])
+
+    def test_repeated_deletes_are_listed_once_and_not_fetched(self):
+        FAKE.data["changelog"].append(
+            {"change_id": 6, "version": 6, "entity_id": 5,
+             "entity_type": "species", "operation": "DELETE"})
+        resp = self.client.get("/api/species/incremental?since_version=2")
+        body = resp.get_json()
+        self.assertEqual(resp.status_code, 200, body)
+        self.assertEqual(body["deleted_species_ids"], [5])
+        self.assertEqual(body["species_en"], [])
+        self.assertEqual(body["latest_version"], 6)
+
+    def test_a_species_written_after_its_delete_is_not_deleted(self):
+        FAKE.data["species_en"].append({"species_id": 5, "scientific_name": "Back again"})
+        FAKE.data["changelog"].append(
+            {"change_id": 6, "version": 6, "entity_id": 5,
+             "entity_type": "species", "operation": "UPDATE"})
+        resp = self.client.get("/api/species/incremental?since_version=2")
+        body = resp.get_json()
+        self.assertEqual(resp.status_code, 200, body)
+        self.assertEqual(body["deleted_species_ids"], [])
+        self.assertEqual([r["species_id"] for r in body["species_en"]], [5])
+
+    def test_a_bulk_insert_makes_incremental_ask_for_a_bundle(self):
+        FAKE.data["changelog"] += [
+            {"change_id": 6, "version": 6, "entity_id": 1,
+             "entity_type": "species", "operation": "UPDATE"},
+            {"change_id": 7, "version": 6, "entity_id": None,
+             "entity_type": "species", "operation": "BULK_INSERT (3 rows)"},
+        ]
+        resp = self.client.get("/api/species/incremental?since_version=5")
+        self.assertEqual(resp.get_json(), {
+            "force_bundle": True, "reason": "bulk_change", "latest_version": 5,
+        })
+
+    def test_too_many_species_make_incremental_ask_for_a_bundle(self):
+        FAKE.data["changelog"] += [
+            {"change_id": 100 + i, "version": 100 + i, "entity_id": 100 + i,
+             "entity_type": "species", "operation": "UPDATE"}
+            for i in range(21)
+        ]
+        resp = self.client.get("/api/species/incremental?since_version=99")
+        body = resp.get_json()
+        self.assertTrue(body["force_bundle"])
+        self.assertEqual(body["reason"], "too_many_changes")
+
+    def test_a_full_changelog_page_makes_both_endpoints_ask_for_a_bundle(self):
+        FAKE.data["changelog"] += [
+            {"change_id": 100 + i, "version": 100 + i, "entity_id": 1,
+             "entity_type": "species", "operation": "UPDATE"}
+            for i in range(1000)
+        ]
+        for path in ("incremental", "changes"):
+            resp = self.client.get(f"/api/species/{path}?since_version=99")
+            body = resp.get_json()
+            self.assertTrue(body["force_bundle"], path)
+            self.assertEqual(body["reason"], "too_many_changes", path)
+
+    def test_a_changed_species_with_no_rows_counts_as_deleted(self):
+        FAKE.data["changelog"].append(
+            {"change_id": 6, "version": 6, "entity_id": 8,
+             "entity_type": "species", "operation": "UPDATE"})
+        resp = self.client.get("/api/species/incremental?since_version=5")
+        body = resp.get_json()
+        self.assertEqual(resp.status_code, 200, body)
+        self.assertEqual(body["deleted_species_ids"], [8])
+
+    def test_bulk_insert_forces_a_bundle(self):
+        FAKE.data["changelog"].append(
+            {"change_id": 6, "version": 6, "entity_id": None,
+             "entity_type": "species", "operation": "BULK_INSERT (3 rows)"})
+        resp = self.client.get("/api/species/changes?since_version=5")
+        body = resp.get_json()
+        self.assertEqual(resp.status_code, 200, body)
+        self.assertTrue(body["force_bundle"])
+        self.assertEqual(body["reason"], "bulk_change")
+
+    def test_user_and_media_changes_are_not_species_changes(self):
+        resp = self.client.get("/api/species/incremental?since_version=3")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.get_json(), {
+            "species_en": [], "species_tet": [],
+            "deleted_species_ids": [], "latest_version": 3,
+        })
 
 
 if __name__ == "__main__":

@@ -9,6 +9,25 @@
  * - scripts/db.js (must be loaded first)
  */
 
+/**
+ * Delete URLs from every service worker media cache (names starting with "media-cache").
+ * Runs in the page, so it works without a service worker controller. Never throws.
+ * @param {string[]} urls
+ * @returns {Promise<void>}
+ */
+async function uncacheMedia(urls) {
+  if (!urls.length || !('caches' in self)) return;
+  try {
+    for (const name of await caches.keys()) {
+      if (!name.startsWith('media-cache')) continue;
+      const cache = await caches.open(name);
+      await Promise.all(urls.map((url) => cache.delete(url)));
+    }
+  } catch (error) {
+    console.warn('[Sync] Could not clear cached media', error);
+  }
+}
+
 //send image URLs to the sw for background cachjing
 //after bundle sync and incremental updates
 function sendIMGToSW(images = [], timeoutMs = 60000) {
@@ -470,6 +489,11 @@ class SyncManager {
 
       const changes = await response.json();
 
+      if (changes.force_bundle) {
+        this.reportProgress('Server asked for a full download...');
+        return await this.performInitialSync();
+      }
+
       // Validate response
       if (typeof changes.latest_version === 'undefined') {
         throw new Error('Invalid incremental response: missing latest_version');
@@ -515,6 +539,7 @@ class SyncManager {
           en: changes.species_en?.length || 0,
           tet: changes.species_tet?.length || 0
         },
+        deletedCount: changes.deleted_species_ids?.length || 0,
         mediaStatus: mediaResult.failed.length > 0 ? 'partial' : 'complete',
         pendingMediaCount: mediaResult.failed.length
       };
@@ -696,6 +721,18 @@ class SyncManager {
           // Use put() to replace entire row (not operation replay)
           await this.db.putSpecies(species);
         }
+      }
+
+      const enIds = new Set((changes.species_en || []).map((s) => Number(s.species_id)));
+      const tetIds = new Set((changes.species_tet || []).map((s) => Number(s.species_id)));
+      for (const id of new Set([...enIds, ...tetIds])) {
+        if (!enIds.has(id)) await this.db.deleteSpeciesLanguage(id, 'en');
+        if (!tetIds.has(id)) await this.db.deleteSpeciesLanguage(id, 'tet');
+      }
+
+      for (const speciesId of changes.deleted_species_ids || []) {
+        const urls = await this.db.deleteSpecies(speciesId);
+        await uncacheMedia(urls);
       }
 
       // Validate row replacement worked
