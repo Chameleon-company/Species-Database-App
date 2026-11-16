@@ -1,7 +1,7 @@
 DO $$
 BEGIN
   IF current_setting('app.settings.jwt_secret', true) IS DISTINCT FROM 'super-secret-jwt-token-with-at-least-32-characters-long' THEN
-    RAISE EXCEPTION 'supabase/seed.sql runs only on the local Supabase stack';
+    RAISE EXCEPTION 'supabase/seed.sql runs only on the local Supabase stack, where app.settings.jwt_secret is the CLI default';
   END IF;
 END $$;
 

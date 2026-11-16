@@ -58,11 +58,14 @@ class FakeBucket:
             raise RuntimeError("storage down")
         self.db.uploads.append((self.name, path, data, options))
 
-    def get_public_url(self, path):
-        return f"http://host.docker.internal:54321/storage/v1/object/public/{self.name}/{path}"
-
     def remove(self, paths):
         self.db.removed.append((self.name, paths))
+
+
+PUBLIC_BASE = "http://127.0.0.1:54321/storage/v1/object/public"
+PUBLIC_STORAGE = SimpleNamespace(
+    from_=lambda name: SimpleNamespace(get_public_url=lambda path: f"{PUBLIC_BASE}/{name}/{path}")
+)
 
 
 class FakeSupabase:
@@ -99,7 +102,7 @@ def changes(monkeypatch):
 def client(db, changes):
     app = Flask(__name__)
     app.config["TESTING"] = True
-    media.register_media_routes(app, db)
+    media.register_media_routes(app, db, PUBLIC_STORAGE)
 
     with app.test_client() as test_client:
         yield test_client
@@ -276,21 +279,11 @@ def test_failed_insert_removes_the_stored_file(client, db, changes):
     assert changes == []
 
 
-@pytest.mark.parametrize(
-    ("public_url", "expected_base"),
-    [
-        ("http://127.0.0.1:54321", "http://127.0.0.1:54321"),
-        ("", "http://host.docker.internal:54321"),
-    ],
-)
-def test_upload_stores_the_public_storage_url(client, db, monkeypatch, public_url, expected_base):
-    monkeypatch.setenv("SUPABASE_URL", "http://host.docker.internal:54321/")
-    monkeypatch.setenv("SUPABASE_PUBLIC_URL", public_url)
-
+def test_upload_stores_the_url_from_the_public_storage(client, db):
     response = upload(client, create_image("PNG"))
 
-    path = db.uploads[0][1]
-    expected = f"{expected_base}/storage/v1/object/public/species_images/{path}"
+    expected = f"{PUBLIC_BASE}/species_images/{db.uploads[0][1]}"
     assert response.status_code == 201
     assert response.get_json()["url"] == expected
     assert db.inserted[0]["download_link"] == expected
+    assert db.inserted[0]["streaming_link"] == expected

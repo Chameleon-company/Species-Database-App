@@ -4,7 +4,6 @@ consists of media endpoints.
 manages metadata aand version signalling
 """
 
-import os
 import re
 from uuid import uuid4
 
@@ -167,24 +166,11 @@ def _storage_folder(scientific_name: str) -> str:
     return re.sub(r"[^A-Za-z0-9_-]", "", scientific_name.strip().replace(" ", "_"))
 
 
-def _public_object_url(storage, path: str) -> str:
-    """
-    Public URL of a Storage object from ``storage.get_public_url``.
-
-    When SUPABASE_PUBLIC_URL is set, a leading SUPABASE_URL is replaced with it.
-    Otherwise the SDK URL is returned unchanged.
-    """
-    url = storage.get_public_url(path)
-    internal = os.getenv("SUPABASE_URL", "").rstrip("/")
-    public = os.getenv("SUPABASE_PUBLIC_URL", "").rstrip("/")
-    if public and internal and url.startswith(f"{internal}/"):
-        return public + url[len(internal):]
-    return url
-
-
-def register_media_routes(app, supabase):
+def register_media_routes(app, supabase, public_storage):
     """
     attach all media related routes to main flask app
+
+    public_storage builds the stored public URL of an uploaded object.
     """
 
     ALLOWED_MEDIA_TYPES = ["image", "video"]
@@ -389,7 +375,7 @@ def register_media_routes(app, supabase):
             app.logger.exception("Media upload to storage failed.")
             return jsonify({"error": "the file could not be stored"}), 502
 
-        public_url = _public_object_url(storage, path)
+        public_url = public_storage.from_(bucket).get_public_url(path)
 
         try:
             res = (

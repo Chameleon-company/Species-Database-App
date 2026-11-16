@@ -190,6 +190,14 @@ It uploads the photos in `apps/field-legacy/Assets/Images/toona-ciliata` to `spe
 The backend uses the local secret key, so RLS behaves as it does on the hosted projects.
 The `anon` and `authenticated` roles have no access to any table.
 
+`supabase/seed.sql` stops with an error on any database that does not use the CLI default JWT secret.
+This stops the seed from creating the `admin` user on a hosted project.
+
+The app containers listen on `127.0.0.1` only.
+The Supabase CLI publishes ports `54321` to `54324` on every network interface.
+On a shared network, other devices can reach Studio and the API with the public local keys.
+Run `pnpm run docker:down` when you do not use the stack.
+
 To rebuild the database from the files, run:
 
 ```bash

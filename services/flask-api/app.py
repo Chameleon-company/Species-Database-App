@@ -91,7 +91,9 @@ register_auth_routes(app, supabase)
 
 #register media routes
 from media import register_media_routes
-register_media_routes(app, supabase)
+SUPABASE_PUBLIC_URL = os.getenv("SUPABASE_PUBLIC_URL")
+public_storage = create_client(SUPABASE_PUBLIC_URL, SUPABASE_KEY).storage if SUPABASE_PUBLIC_URL else supabase.storage
+register_media_routes(app, supabase, public_storage)
 
 # Register AI species identification routes
 from ai_routes import register_ai_routes
