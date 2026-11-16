@@ -16,10 +16,12 @@ function getSafeVideoUrl(rawUrl) {
             "/storage/v1/object/public/species_videos/",
         ];
 
-        const allowedProtocols = API_CONFIG.SUPABASE_VIDEO_PROTOCOLS || ["https:"];
+        const httpHosts = API_CONFIG.SUPABASE_VIDEO_HTTP_HOSTS || [];
+        const secure = url.protocol === "https:";
+        const localHttp = url.protocol === "http:" && httpHosts.includes(url.hostname);
 
-        if (!allowedProtocols.includes(url.protocol)) {
-            console.warn("[Video] Rejected media protocol:", url.protocol);
+        if (!secure && !localHttp) {
+            console.warn("[Video] Rejected media URL protocol:", url.protocol);
             return null;
         }
 

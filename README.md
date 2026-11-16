@@ -293,6 +293,9 @@ The live field-user frontend is the static HTML app in `apps/field-legacy`.
 The app calls the API at `http://127.0.0.1:5000` when you open it over HTTP on `localhost` or `127.0.0.1`.
 Otherwise it calls the production API.
 
+The app's service worker serves its own files from a cache first.
+After you change a file in `apps/field-legacy`, unregister the service worker in the browser developer tools, then reload.
+
 ## Android App
 
 The Android project is managed through Capacitor in `apps/android`.

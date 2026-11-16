@@ -13,7 +13,6 @@
     "lint": "oxlint",
     "preview": "pnpm --filter admin preview",
     "docker:build": "docker compose build",
-    "docker:up": "docker compose up --build",
     "docker:down": "docker compose down && supabase stop",
     "docker:logs": "docker compose logs -f",
     "format": "oxfmt",

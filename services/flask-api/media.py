@@ -167,10 +167,19 @@ def _storage_folder(scientific_name: str) -> str:
     return re.sub(r"[^A-Za-z0-9_-]", "", scientific_name.strip().replace(" ", "_"))
 
 
-def _public_object_url(bucket: str, path: str) -> str:
-    """Browser-facing Storage URL of a public object, based on SUPABASE_PUBLIC_URL or else SUPABASE_URL."""
-    base = os.getenv("SUPABASE_PUBLIC_URL") or os.getenv("SUPABASE_URL", "")
-    return f"{base.rstrip('/')}/storage/v1/object/public/{bucket}/{path}"
+def _public_object_url(storage, path: str) -> str:
+    """
+    Public URL of a Storage object from ``storage.get_public_url``.
+
+    When SUPABASE_PUBLIC_URL is set, a leading SUPABASE_URL is replaced with it.
+    Otherwise the SDK URL is returned unchanged.
+    """
+    url = storage.get_public_url(path)
+    internal = os.getenv("SUPABASE_URL", "").rstrip("/")
+    public = os.getenv("SUPABASE_PUBLIC_URL", "").rstrip("/")
+    if public and internal and url.startswith(f"{internal}/"):
+        return public + url[len(internal):]
+    return url
 
 
 def register_media_routes(app, supabase):
@@ -380,7 +389,7 @@ def register_media_routes(app, supabase):
             app.logger.exception("Media upload to storage failed.")
             return jsonify({"error": "the file could not be stored"}), 502
 
-        public_url = _public_object_url(bucket, path)
+        public_url = _public_object_url(storage, path)
 
         try:
             res = (

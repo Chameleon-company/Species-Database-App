@@ -13,7 +13,7 @@ services:
     extra_hosts:
       - "host.docker.internal=host-gateway"
     ports:
-      - "5000:5000"
+      - "127.0.0.1:5000:5000"
     healthcheck:
       test: ["CMD", "python", "-c", "import socket; s=socket.create_connection(('127.0.0.1', 5000), 5); s.close()"]
       interval: 30s
@@ -32,7 +32,7 @@ services:
     depends_on:
       - backend
     ports:
-      - "5173:80"
+      - "127.0.0.1:5173:80"
 
   field:
     image: nginx:1.27-alpine
@@ -41,4 +41,4 @@ services:
     depends_on:
       - backend
     ports:
-      - "5500:80"
+      - "127.0.0.1:5500:80"

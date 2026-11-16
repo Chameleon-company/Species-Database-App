@@ -58,6 +58,9 @@ class FakeBucket:
             raise RuntimeError("storage down")
         self.db.uploads.append((self.name, path, data, options))
 
+    def get_public_url(self, path):
+        return f"http://host.docker.internal:54321/storage/v1/object/public/{self.name}/{path}"
+
     def remove(self, paths):
         self.db.removed.append((self.name, paths))
 
@@ -274,16 +277,20 @@ def test_failed_insert_removes_the_stored_file(client, db, changes):
 
 
 @pytest.mark.parametrize(
-    ("public_url", "url", "expected"),
+    ("public_url", "expected_base"),
     [
-        ("http://127.0.0.1:54321", "http://host.docker.internal:54321", "http://127.0.0.1:54321"),
-        ("", "https://ref.supabase.co/", "https://ref.supabase.co"),
+        ("http://127.0.0.1:54321", "http://127.0.0.1:54321"),
+        ("", "http://host.docker.internal:54321"),
     ],
 )
-def test_public_object_url_prefers_the_public_base(monkeypatch, public_url, url, expected):
+def test_upload_stores_the_public_storage_url(client, db, monkeypatch, public_url, expected_base):
+    monkeypatch.setenv("SUPABASE_URL", "http://host.docker.internal:54321/")
     monkeypatch.setenv("SUPABASE_PUBLIC_URL", public_url)
-    monkeypatch.setenv("SUPABASE_URL", url)
 
-    assert media._public_object_url("species_images", "Photos/Tectona_grandis/a.png") == (
-        f"{expected}/storage/v1/object/public/species_images/Photos/Tectona_grandis/a.png"
-    )
+    response = upload(client, create_image("PNG"))
+
+    path = db.uploads[0][1]
+    expected = f"{expected_base}/storage/v1/object/public/species_images/{path}"
+    assert response.status_code == 201
+    assert response.get_json()["url"] == expected
+    assert db.inserted[0]["download_link"] == expected

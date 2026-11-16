@@ -34,7 +34,7 @@ const API_CONFIG = {
     ? [PROD_SUPABASE_HOST, LOCAL_SUPABASE_HOST]
     : [PROD_SUPABASE_HOST],
 
-  SUPABASE_VIDEO_PROTOCOLS: isLocalDevelopment ? ["https:", "http:"] : ["https:"],
+  SUPABASE_VIDEO_HTTP_HOSTS: isLocalDevelopment ? [LOCAL_SUPABASE_HOST] : [],
 
   // Current and legacy video storage paths
   SUPABASE_VIDEO_PATHS: [
