@@ -110,6 +110,7 @@ You need no key from the project owner.
 
 `SUPABASE_URL` is the address that browsers use.
 `SUPABASE_INTERNAL_URL` is the address that the backend container uses.
+If you point `SUPABASE_URL` at another project, delete `SUPABASE_INTERNAL_URL`.
 
 Google sign-in works only if `http://localhost:5173` is an authorized origin of the OAuth client.
 Password sign-in works without Google.
