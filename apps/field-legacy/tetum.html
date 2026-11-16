@@ -167,7 +167,10 @@
           if(navigator.onLine && window.syncManager)
           {
             syncManager.checkAndSync({forceBundle: false})
-              .then(() => console.log("TET background sync complete"))
+              .then(async (res) => {
+                if (res?.synced) window.setSpeciesData(await dataService.getAllSpecies(PAGE_LANGUAGE))
+                console.log("TET background sync complete")
+              })
               .catch(() => console.warn("Tet background sync skipped...."))
           }
         }
