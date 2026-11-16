@@ -58,9 +58,6 @@ class FakeBucket:
             raise RuntimeError("storage down")
         self.db.uploads.append((self.name, path, data, options))
 
-    def get_public_url(self, path):
-        return f"https://example.supabase.co/storage/v1/object/public/{self.name}/{path}"
-
     def remove(self, paths):
         self.db.removed.append((self.name, paths))
 
@@ -274,3 +271,19 @@ def test_failed_insert_removes_the_stored_file(client, db, changes):
 
     assert db.removed == [("species_images", [db.uploads[0][1]])]
     assert changes == []
+
+
+@pytest.mark.parametrize(
+    ("public_url", "url", "expected"),
+    [
+        ("http://127.0.0.1:54321", "http://host.docker.internal:54321", "http://127.0.0.1:54321"),
+        ("", "https://ref.supabase.co/", "https://ref.supabase.co"),
+    ],
+)
+def test_public_object_url_prefers_the_public_base(monkeypatch, public_url, url, expected):
+    monkeypatch.setenv("SUPABASE_PUBLIC_URL", public_url)
+    monkeypatch.setenv("SUPABASE_URL", url)
+
+    assert media._public_object_url("species_images", "Photos/Tectona_grandis/a.png") == (
+        f"{expected}/storage/v1/object/public/species_images/Photos/Tectona_grandis/a.png"
+    )

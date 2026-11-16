@@ -5,10 +5,13 @@ services:
       dockerfile: services/flask-api/Dockerfile
     environment:
       FLASK_ENV: production
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174}
-      SUPABASE_URL: ${SUPABASE_URL:-}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174,http://localhost:5500,http://127.0.0.1:5500}
+      SUPABASE_URL: ${SUPABASE_INTERNAL_URL:-${SUPABASE_URL:-}}
+      SUPABASE_PUBLIC_URL: ${SUPABASE_URL:-}
       SUPABASE_KEY: ${SUPABASE_KEY:-}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+    extra_hosts:
+      - "host.docker.internal=host-gateway"
     ports:
       - "5000:5000"
     healthcheck:
@@ -30,3 +33,12 @@ services:
       - backend
     ports:
       - "5173:80"
+
+  field:
+    image: nginx:1.27-alpine
+    volumes:
+      - ./apps/field-legacy:/usr/share/nginx/html:ro
+    depends_on:
+      - backend
+    ports:
+      - "5500:80"

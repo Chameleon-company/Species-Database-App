@@ -16,8 +16,10 @@ function getSafeVideoUrl(rawUrl) {
             "/storage/v1/object/public/species_videos/",
         ];
 
-        if (url.protocol !== "https:") {
-            console.warn("[Video] Rejected non-HTTPS media URL");
+        const allowedProtocols = API_CONFIG.SUPABASE_VIDEO_PROTOCOLS || ["https:"];
+
+        if (!allowedProtocols.includes(url.protocol)) {
+            console.warn("[Video] Rejected media protocol:", url.protocol);
             return null;
         }
 

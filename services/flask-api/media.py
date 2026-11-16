@@ -4,6 +4,7 @@ consists of media endpoints.
 manages metadata aand version signalling
 """
 
+import os
 import re
 from uuid import uuid4
 
@@ -164,6 +165,12 @@ def _detect_file_type(media_type: str, data: bytes) -> tuple[str, str]:
 def _storage_folder(scientific_name: str) -> str:
     """Turn a scientific name into a safe folder name, such as "Tectona_grandis"."""
     return re.sub(r"[^A-Za-z0-9_-]", "", scientific_name.strip().replace(" ", "_"))
+
+
+def _public_object_url(bucket: str, path: str) -> str:
+    """Browser-facing Storage URL of a public object, based on SUPABASE_PUBLIC_URL or else SUPABASE_URL."""
+    base = os.getenv("SUPABASE_PUBLIC_URL") or os.getenv("SUPABASE_URL", "")
+    return f"{base.rstrip('/')}/storage/v1/object/public/{bucket}/{path}"
 
 
 def register_media_routes(app, supabase):
@@ -373,7 +380,7 @@ def register_media_routes(app, supabase):
             app.logger.exception("Media upload to storage failed.")
             return jsonify({"error": "the file could not be stored"}), 502
 
-        public_url = storage.get_public_url(path)
+        public_url = _public_object_url(bucket, path)
 
         try:
             res = (

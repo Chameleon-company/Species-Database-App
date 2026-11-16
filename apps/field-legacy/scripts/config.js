@@ -8,7 +8,7 @@
 const isNativeApp = Boolean(window.Capacitor?.isNativePlatform?.());
 
 const PROD_SUPABASE_HOST = "oppcngtkhywxsazeqqet.supabase.co";
-const DEV_SUPABASE_HOST = "tdiquvydwzxmtludjmpe.supabase.co";
+const LOCAL_SUPABASE_HOST = "127.0.0.1";
 
 const isLocalDevelopment =
   !isNativeApp &&
@@ -26,13 +26,15 @@ const API_CONFIG = {
     : "https://species-database-api.onrender.com",
 
   // Ensure it is from an allowed Supabase host
-  SUPABASE_HOST: isLocalDevelopment ? DEV_SUPABASE_HOST : PROD_SUPABASE_HOST,
+  SUPABASE_HOST: isLocalDevelopment ? LOCAL_SUPABASE_HOST : PROD_SUPABASE_HOST,
 
 
   // Approved Supabase projects that may contain species videos
   SUPABASE_VIDEO_HOSTS: isLocalDevelopment
-    ? [PROD_SUPABASE_HOST, DEV_SUPABASE_HOST]
+    ? [PROD_SUPABASE_HOST, LOCAL_SUPABASE_HOST]
     : [PROD_SUPABASE_HOST],
+
+  SUPABASE_VIDEO_PROTOCOLS: isLocalDevelopment ? ["https:", "http:"] : ["https:"],
 
   // Current and legacy video storage paths
   SUPABASE_VIDEO_PATHS: [
