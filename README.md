@@ -26,6 +26,7 @@ docs/
   testing/        T2 testing reports
 packages/         shared workspace packages
 scripts/          OS install scripts
+supabase/         Supabase CLI config and seed data for the local database
 ```
 
 The JavaScript apps share one pnpm workspace, defined in `pnpm-workspace.yaml`. Shared dependency versions live in its `catalog:` section, and `pnpm-lock.yaml` is the only lockfile.
@@ -79,14 +80,15 @@ git clone https://github.com/Chameleon-company/Species-Database-App.git
 cd Species-Database-App
 ```
 
-### 3. Create the Environment File
+### 3. Install Dependencies
 
-The app needs Supabase and Google configuration values. Ask the project owner for the correct values before starting the app.
+```bash
+pnpm install
+```
 
-| Supabase project | Ref | Use |
-| --- | --- | --- |
-| `species-database-dev` | `tdiquvydwzxmtludjmpe` | Local development. Point your `.env` here. |
-| `species-database-prod` | `oppcngtkhywxsazeqqet` | Production only. Its keys live in Render. |
+This installs the Supabase CLI that the next steps use.
+
+### 4. Create the Environment File
 
 The backend, the admin dashboard and the field app all read the one `.env` file in the repository root.
 
@@ -102,21 +104,19 @@ Windows PowerShell:
 Copy-Item .env.example .env
 ```
 
-Fill these values in `.env`:
+The template works as it is.
+It points the app at the local Supabase stack, and its keys are the fixed defaults of the Supabase CLI.
+You need no key from the project owner.
 
-```bash
-SUPABASE_URL=
-SUPABASE_KEY=
-GOOGLE_CLIENT_ID=
-VITE_GOOGLE_CLIENT_ID=
-```
+`SUPABASE_URL` is the address that browsers use.
+`SUPABASE_INTERNAL_URL` is the address that the backend container uses.
 
-Keep the local `CORS_ORIGINS`, `VITE_API_BASE` and `VITE_API_URL` values from `.env.example` unless your ports change.
-If your `.env` predates the new field app, add `http://localhost:5174` and `http://127.0.0.1:5174` to `CORS_ORIGINS`.
+Google sign-in works only if `http://localhost:5173` is an authorized origin of the OAuth client.
+Password sign-in works without Google.
 
 Do not commit `.env`.
 
-### 4. Start the App
+### 5. Start the App
 
 From the repository root:
 
@@ -124,14 +124,31 @@ From the repository root:
 pnpm run dev
 ```
 
-This builds and starts:
+This starts the local Supabase stack, then builds and starts the app containers.
+The first start downloads the Supabase images, which takes a few minutes.
 
-- Admin dashboard: `http://localhost:5173`
-- Backend API: `http://localhost:5000`
+| Service | URL |
+| --- | --- |
+| Admin dashboard | `http://localhost:5173` |
+| Field app (`apps/field-legacy`) | `http://localhost:5500` |
+| Backend API | `http://localhost:5000` |
+| Supabase API | `http://127.0.0.1:54321` |
+| Supabase Studio | `http://127.0.0.1:54323` |
 
 Leave the terminal open while the app is running.
 
-### 5. Check That It Works
+### 6. Sign In to the Local Admin
+
+Open `http://localhost:5173` and sign in with these values:
+
+| Field | Value |
+| --- | --- |
+| Name | `admin` |
+| Password | `admin` |
+
+This account exists only in your local database.
+
+### 7. Check That It Works
 
 Check container status:
 
@@ -147,25 +164,49 @@ Check the backend API:
 curl http://localhost:5000/api/bundle
 ```
 
-Open the admin dashboard:
+The setup is working when `/api/bundle` returns 22 species in `species_en` and 22 in `species_tet`.
 
-```text
-http://localhost:5173
-```
-
-The setup is working when the dashboard opens and `/api/bundle` returns JSON.
-
-### 6. Stop the App
+### 8. Stop the App
 
 ```bash
 pnpm run docker:down
 ```
 
+This stops the app containers and the Supabase stack.
+The local database keeps its data until the next `pnpm supabase db reset`.
+
+## Local Database
+
+`pnpm run dev` runs `supabase start`, which uses `supabase/config.toml`.
+On the first start, and on each `pnpm supabase db reset`, the CLI loads these files in this order:
+
+1. `services/flask-api/TableSchema.sql`, the full schema with RLS on every table
+2. `supabase/seed.sql`, the 22 species in English and Tetum, 4 sample photos of Toona ciliata and the `admin` user
+
+The CLI also creates the public Storage buckets `species_images`, `media` and `species_videos`.
+It uploads the photos in `apps/field-legacy/Assets/Images/toona-ciliata` to `species_images`.
+
+The backend uses the local secret key, so RLS behaves as it does on the hosted projects.
+The `anon` and `authenticated` roles have no access to any table.
+
+To rebuild the database from the files, run:
+
+```bash
+pnpm supabase db reset
+```
+
+Run it after a change to `TableSchema.sql` or `supabase/seed.sql`.
+It deletes every local change, such as uploaded photos and edited species.
+
+`supabase/migrations/` stays empty.
+`TableSchema.sql` and `services/flask-api/migrations/` stay the only schema source.
+
 ## Common Commands
 
 ```bash
-pnpm run dev           # Build and start Docker containers
-pnpm run docker:down   # Stop Docker containers
+pnpm run dev           # Start Supabase, then build and start Docker containers
+pnpm run docker:down   # Stop Docker containers and Supabase
+pnpm supabase db reset # Rebuild the local database from the schema and seed
 pnpm run docker:logs   # Follow container logs
 pnpm run docker:build  # Build Docker images only
 pnpm run build         # Build every app in the workspace
@@ -205,6 +246,12 @@ The script installs Node dependencies, creates `services/flask-api/venv`, instal
 
 ### 3. Start Local Services
 
+Start the local Supabase stack:
+
+```bash
+pnpm supabase start
+```
+
 Activate the backend virtual environment, then start the backend:
 
 ```bash
@@ -240,16 +287,10 @@ The budget is in `apps/field/vite.config.ts`.
 ## Static Field-User Frontend
 
 The live field-user frontend is the static HTML app in `apps/field-legacy`.
+`pnpm run dev` serves it at `http://localhost:5500`.
 
-Prerequisite:
-
-- Visual Studio Code with the Live Server extension
-
-Procedure:
-
-1. Open the repository folder in Visual Studio Code.
-2. Open `apps/field-legacy/index.html`.
-3. Use Live Server to open the page in a browser.
+The app calls the API at `http://127.0.0.1:5000` when you open it over HTTP on `localhost` or `127.0.0.1`.
+Otherwise it calls the production API.
 
 ## Android App
 
@@ -321,6 +362,8 @@ Two rules matter most:
 1. **Apply the migration before merging the code that needs it.** New code that reads a column which does not exist yet fails immediately. Reverse the order when rolling back.
 2. **Never edit a migration that has already been applied anywhere.** Supersede it with a new one.
 
+After a change to `TableSchema.sql`, run `pnpm supabase db reset` to rebuild your local database.
+
 Verify a migration against a throwaway local database before it goes near Supabase:
 
 ```bash
@@ -350,6 +393,11 @@ The suite runs fully offline. Supabase is stubbed, so it makes no network calls 
 ## Deployment
 
 Production runs on Render, and `render.yaml` defines every service.
+
+| Supabase project | Ref | Use |
+| --- | --- | --- |
+| `species-database-dev` | `tdiquvydwzxmtludjmpe` | Shared test project. Local development does not use it. |
+| `species-database-prod` | `oppcngtkhywxsazeqqet` | Production only. Its keys live in Render. |
 
 | Service | URL | Source |
 | --- | --- | --- |
@@ -388,8 +436,8 @@ Known unauthenticated endpoints that should require an admin session are listed 
 
 > **Working with `.env`:** the backend's `SUPABASE_KEY` is a secret key with `service_role` rights.
 > It bypasses row-level security and can run schema changes.
-> Point your `.env` at `species-database-dev` only.
-> Never put the production key on your machine.
+> The key in `.env.example` is the public default of the local Supabase stack.
+> Never put a hosted project key on your machine.
 
 ## Troubleshooting
 
@@ -401,14 +449,14 @@ Docker is not running:
 
 Port already in use:
 
-1. Stop any existing service using ports `5000` or `5173`.
+1. Stop any existing service using ports `5000`, `5173`, `5500` or `54321` to `54324`.
 2. Run `pnpm run docker:down`.
 3. Run `pnpm run dev` again.
 
 Environment values missing:
 
 1. Confirm `.env` exists in the repository root.
-2. Confirm all Supabase and Google values are filled.
+2. Compare `.env` with `.env.example`, and copy any missing line.
 3. Restart Docker with `pnpm run docker:down` and `pnpm run dev`.
 
 Admin dashboard opens but data does not load:
@@ -416,6 +464,7 @@ Admin dashboard opens but data does not load:
 1. Check backend status with `docker compose ps`.
 2. Check logs with `pnpm run docker:logs`.
 3. Confirm `VITE_API_BASE` and `VITE_API_URL` point to `http://localhost:5000`.
+4. Run `pnpm supabase status` and confirm the local stack is running.
 
 ---
 
