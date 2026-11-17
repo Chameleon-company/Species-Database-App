@@ -463,7 +463,6 @@ Port already in use:
 
 1. Stop any existing service using ports `5000`, `5173`, `5500` or `54321` to `54324`.
 2. Run `pnpm run docker:down`.
-   If it stops with an error, run `pnpm supabase stop`.
 3. Run `pnpm run dev` again.
 
 Environment values missing:
