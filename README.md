@@ -194,8 +194,9 @@ The `anon` and `authenticated` roles have no access to any table.
 This stops the seed from creating the `admin` user on a hosted project.
 
 The app containers listen on `127.0.0.1` only.
-The Supabase CLI publishes ports `54321` to `54324` on every network interface.
-On a shared network, other devices can reach Studio and the API with the public local keys.
+The Supabase CLI publishes its ports on every network interface.
+These are the API on `54321`, Postgres on `54322` with the password `postgres`, and Studio on `54323`.
+On a shared network, other devices can reach all three with the public local keys.
 Run `pnpm run docker:down` when you do not use the stack.
 
 To rebuild the database from the files, run:
@@ -461,7 +462,7 @@ Docker is not running:
 
 Port already in use:
 
-1. Stop any existing service using ports `5000`, `5173`, `5500` or `54321` to `54324`.
+1. Stop any existing service using ports `5000`, `5173`, `5500` or `54321` to `54323`.
 2. Run `pnpm run docker:down`.
 3. Run `pnpm run dev` again.
 

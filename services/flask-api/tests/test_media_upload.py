@@ -287,3 +287,17 @@ def test_upload_stores_the_url_from_the_public_storage(client, db):
     assert response.get_json()["url"] == expected
     assert db.inserted[0]["download_link"] == expected
     assert db.inserted[0]["streaming_link"] == expected
+
+
+@pytest.mark.parametrize("public_url", ["http://127.0.0.1:54321", "http://127.0.0.1:54321/"])
+def test_public_storage_client_builds_urls_on_the_public_host(db, public_url):
+    storage = media.public_storage_client(db, public_url)
+
+    assert storage.from_("species_images").get_public_url("Photos/Tectona_grandis/a.png") == (
+        f"{PUBLIC_BASE}/species_images/Photos/Tectona_grandis/a.png"
+    )
+
+
+@pytest.mark.parametrize("public_url", [None, ""])
+def test_public_storage_client_falls_back_to_the_api_client(db, public_url):
+    assert media.public_storage_client(db, public_url) is db.storage

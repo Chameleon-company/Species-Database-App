@@ -7,6 +7,8 @@ manages metadata aand version signalling
 import re
 from uuid import uuid4
 
+from storage3 import SyncStorageClient
+
 from flask import request, jsonify
 
 from datetime import datetime, timezone
@@ -164,6 +166,18 @@ def _detect_file_type(media_type: str, data: bytes) -> tuple[str, str]:
 def _storage_folder(scientific_name: str) -> str:
     """Turn a scientific name into a safe folder name, such as "Tectona_grandis"."""
     return re.sub(r"[^A-Za-z0-9_-]", "", scientific_name.strip().replace(" ", "_"))
+
+
+def public_storage_client(supabase, public_url: str | None):
+    """
+    Storage client that builds browser-facing object URLs.
+
+    Returns ``supabase.storage`` when ``public_url`` is empty. Otherwise returns a
+    keyless client on ``{public_url}/storage/v1/``, used only for ``get_public_url``.
+    """
+    if not public_url:
+        return supabase.storage
+    return SyncStorageClient(f"{public_url.rstrip('/')}/storage/v1/", {})
 
 
 def register_media_routes(app, supabase, public_storage):
