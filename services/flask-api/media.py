@@ -180,12 +180,14 @@ def public_storage_client(supabase, public_url: str | None):
     return SyncStorageClient(f"{public_url.rstrip('/')}/storage/v1/", {})
 
 
-def register_media_routes(app, supabase, public_storage):
+def register_media_routes(app, supabase, public_storage=None):
     """
     attach all media related routes to main flask app
 
     public_storage builds the stored public URL of an uploaded object.
+    It defaults to supabase.storage.
     """
+    public_storage = public_storage or supabase.storage
 
     ALLOWED_MEDIA_TYPES = ["image", "video"]
 
