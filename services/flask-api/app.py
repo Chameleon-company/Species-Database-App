@@ -90,8 +90,8 @@ register_auth_routes(app, supabase)
 #     return require_role(supabase, roles)
 
 #register media routes
-from media import register_media_routes
-register_media_routes(app, supabase)
+from media import public_storage_client, register_media_routes
+register_media_routes(app, supabase, public_storage_client(supabase, os.getenv("SUPABASE_PUBLIC_URL")))
 
 # Register AI species identification routes
 from ai_routes import register_ai_routes

@@ -1,0 +1,38 @@
+#:schema https://supabase.com/schemas/config/v1.json
+# Local stack for development. Keys not set here use the CLI defaults:
+# https://supabase.com/docs/guides/local-development/cli/config
+project_id = "species-database-app"
+
+[db]
+major_version = 17
+
+[db.seed]
+sql_paths = ["../services/flask-api/TableSchema.sql", "./seed.sql"]
+
+[storage.buckets.species_images]
+public = true
+objects_path = "../apps/field-legacy/Assets/Images/toona-ciliata"
+
+[storage.buckets.media]
+public = true
+
+[storage.buckets.species_videos]
+public = true
+
+[storage.vector]
+enabled = false
+
+[auth]
+enabled = false
+
+[realtime]
+enabled = false
+
+[local_smtp]
+enabled = false
+
+[edge_runtime]
+enabled = false
+
+[analytics]
+enabled = false

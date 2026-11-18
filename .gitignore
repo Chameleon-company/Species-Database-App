@@ -13,3 +13,5 @@ testData.xlsx
 .idea/
 .vscode/
 dist/
+supabase/.branches/
+supabase/.temp/

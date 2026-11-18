@@ -7,6 +7,8 @@ manages metadata aand version signalling
 import re
 from uuid import uuid4
 
+from storage3 import SyncStorageClient
+
 from flask import request, jsonify
 
 from datetime import datetime, timezone
@@ -166,10 +168,26 @@ def _storage_folder(scientific_name: str) -> str:
     return re.sub(r"[^A-Za-z0-9_-]", "", scientific_name.strip().replace(" ", "_"))
 
 
-def register_media_routes(app, supabase):
+def public_storage_client(supabase, public_url: str | None):
+    """
+    Storage client that builds browser-facing object URLs.
+
+    Returns ``supabase.storage`` when ``public_url`` is empty. Otherwise returns a
+    keyless client on ``{public_url}/storage/v1/``, used only for ``get_public_url``.
+    """
+    if not public_url:
+        return supabase.storage
+    return SyncStorageClient(f"{public_url.rstrip('/')}/storage/v1/", {})
+
+
+def register_media_routes(app, supabase, public_storage=None):
     """
     attach all media related routes to main flask app
+
+    public_storage builds the stored public URL of an uploaded object.
+    It defaults to supabase.storage.
     """
+    public_storage = public_storage or supabase.storage
 
     ALLOWED_MEDIA_TYPES = ["image", "video"]
 
@@ -373,7 +391,7 @@ def register_media_routes(app, supabase):
             app.logger.exception("Media upload to storage failed.")
             return jsonify({"error": "the file could not be stored"}), 502
 
-        public_url = storage.get_public_url(path)
+        public_url = public_storage.from_(bucket).get_public_url(path)
 
         try:
             res = (
