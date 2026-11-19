@@ -18,3 +18,7 @@ allowBuilds:
   esbuild: true
 
 engineStrict: true
+
+auditConfig:
+  ignoreGhsas:
+    - GHSA-fc5q-39xc-vjpf
