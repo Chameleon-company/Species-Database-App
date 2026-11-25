@@ -1,7 +1,8 @@
 # Admin route audit (SDA-S04)
 
 Every route in the Flask API (`services/flask-api`), who can call it and why.
-Audited on `master`, November 2026.
+Audited on `master`, November 2026. Decisions on `/api/health` and
+`/api/ai/identify` from the backend lead (Omar).
 
 **Admin check** = the route calls `get_admin_user()` and returns 401 without a
 valid, unexpired, unrevoked admin session token in the `Authorization` header.
@@ -27,6 +28,7 @@ valid, unexpired, unrevoked admin session token in the `Authorization` header.
 | PUT | `/api/users/<id>` | app.py | Admin | Edits accounts and roles | test_user_routes_auth |
 | DELETE | `/api/users/<id>` | app.py | Admin | Deletes accounts | test_user_routes_auth |
 | GET | `/api/admin/session-audit` | auth_authz.py | Admin | Admin login history | test_admin_routes_auth |
+| GET | `/api/admin/health` | app.py | Admin | Per-table status, moved here from `/api/health` in SDA-S04 | test_admin_routes_auth |
 | POST | `/api/auth/admin-logout` | auth_authz.py | Admin (own token) | Validates the token itself before revoking it | test_user_routes_auth |
 | POST | `/upload-media` | media.py | Admin | Registers a media item | test_admin_routes_auth |
 | POST | `/upload-media/file` | media.py | Admin | Uploads an image or video file | test_admin_routes_auth, test_media_upload |
@@ -44,6 +46,7 @@ valid, unexpired, unrevoked admin session token in the `Authorization` header.
 | GET | `/` | app.py | Anyone | Status page |
 | GET | `/privacy` | app.py | Anyone | Privacy policy must be public |
 | GET | `/health` | app.py | Anyone | Liveness ping for Render, returns no data |
+| GET | `/api/health` | app.py | Anyone | Returns only `{"status": "ok"}`, same as the Hono API (SDA-B01, SDA-B02). Per-table status moved to `/api/admin/health` |
 | GET | `/api/bundle` | app.py | Field app | Offline species bundle; field users have no admin token |
 | GET | `/api/species/changes` | app.py | Field app | Offline sync |
 | GET | `/api/species/incremental` | app.py | Field app | Offline sync |
@@ -53,11 +56,10 @@ valid, unexpired, unrevoked admin session token in the `Authorization` header.
 | POST | `/api/auth/admin-login` | auth_authz.py | Admin (before login) | Login has to work without a session |
 | POST | `/api/auth/google-admin` | auth_authz.py | Admin (before login) | Google sign-in |
 | POST | `/api/auth/admin-refresh` | auth_authz.py | Admin | Uses the refresh token, not the access token |
+| POST | `/api/ai/identify` | ai_routes.py | Field app | Field app feature. Rate limiting is a separate ticket |
 
-## Pending a decision from the team lead
+## Open question
 
 | Method | Route | File | Current state | Question |
 |---|---|---|---|---|
-| GET | `/api/health` | app.py | No check | Queries every table, including `users` and `admin_sessions`, and reports their status. Should this be admin only, since `/health` already covers liveness? |
-| GET | `/api/species/search` | app.py | No check | No app in the repo calls it. Admin only, or public for the field app? |
-| POST | `/api/ai/identify` | ai_routes.py | No check | Looks like a field app feature. Confirm it stays public (and whether it needs rate limiting). |
+| GET | `/api/species/search` | app.py | No check | No app in the repo calls it. Asked in the SDA stream whether the admin or the field app uses it. Left unchanged until someone confirms, so the field app cannot break offline. |
