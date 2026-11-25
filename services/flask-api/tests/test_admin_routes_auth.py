@@ -39,6 +39,9 @@ ADMIN_ROUTES = [
 
     # admin session audit log
     ("get", "/api/admin/session-audit", None),
+    
+    # per-table health status (moved from /api/health in SDA-S04)
+    ("get", "/api/admin/health", None),
 
     # media library
     ("post", "/upload-media",
@@ -100,5 +103,17 @@ class TestAdminRoutesRequireAdminSession(unittest.TestCase):
         self.assertNotEqual(resp.status_code, 401)
 
 
+class TestPublicHealthStaysSimple(unittest.TestCase):
+
+    def test_health_returns_only_ok(self):
+        resp = FLASK_APP.test_client().get("/api/health")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.get_json(), {"status": "ok"})
+
+    def test_health_does_not_name_any_table(self):
+        resp = FLASK_APP.test_client().get("/api/health")
+        self.assertNotIn(b"users", resp.data)
+        self.assertNotIn(b"admin_sessions", resp.data)
+    
 if __name__ == "__main__":
     unittest.main(verbosity=2)
