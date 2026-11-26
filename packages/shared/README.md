@@ -1,8 +1,6 @@
 # @sda/shared
 
 Species, media and bundle types for the admin and the field app.
-The Hono API in `apps/api` starts to use them in SDA-B01, with the `Database` type for its Supabase client.
-The Flask API is Python and does not use this package.
 
 ```
 packages/shared/
