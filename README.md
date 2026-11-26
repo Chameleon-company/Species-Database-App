@@ -452,7 +452,8 @@ Each service rebuilds only when a file in its own source paths changes.
 
 `SUPABASE_URL` and `SUPABASE_KEY` are marked `sync: false` in `render.yaml`.
 They belong to the Flask API.
-The Hono API reads only `DATABASE_URL`, and it has no Render service yet.
+The Hono API runs as the `species-database-hono-api` service and reads only `DATABASE_URL`, which is also `sync: false`.
+No traffic goes to it yet. The admin and the field app still call the Flask API.
 Their values live only in the Render dashboard, never in git.
 Every other value in `render.yaml` is public.
 Keep the admin origin first in `CORS_ORIGINS`, because the API links to the first origin.
