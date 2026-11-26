@@ -337,6 +337,9 @@ def register_media_routes(app, supabase, public_storage=None):
         largest_upload = max(MAX_UPLOAD_BYTES.values()) + MULTIPART_OVERHEAD_BYTES
         if request.content_length and request.content_length > largest_upload:
             return jsonify({"error": "the file is too large"}), 413
+        # the app-wide MAX_CONTENT_LENGTH (app.py) is sized for 10 MB images;
+        # videos here may be 50 MB. Must be set before request.files is read.
+        request.max_content_length = largest_upload
 
         uploaded_file = request.files.get("file")
         species_name = (request.form.get("species_name") or "").strip()

@@ -274,3 +274,24 @@ def test_invalid_confidence_threshold(value, monkeypatch):
 
     with pytest.raises(ModelConfigurationError):
         get_configured_confidence_threshold()
+
+
+def test_decoding_happens_inside_the_inference_lock(monkeypatch):
+    # one full-size decode at a time per worker keeps memory bounded
+    service = SpeciesIdentificationService.__new__(SpeciesIdentificationService)
+    service.labels = ["a", "b", "c"]
+    service.model = object()
+    service.confidence_threshold = 0.5
+    service._inference_lock = ai_service.Lock()
+    seen = {}
+
+    def fake_preprocess(_source):
+        seen["locked"] = service._inference_lock.locked()
+        return np.zeros((1, 224, 224, 3), dtype=np.float32)
+
+    monkeypatch.setattr(ai_service, "preprocess_image", fake_preprocess)
+    monkeypatch.setattr(ai_service, "run_inference", lambda *_a: np.array([0.1, 0.2, 0.7]))
+
+    service.identify(BytesIO(b""))
+
+    assert seen["locked"] is True

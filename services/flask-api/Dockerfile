@@ -15,4 +15,5 @@ WORKDIR /app/services/flask-api
 
 EXPOSE 5000
 
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]
+# same worker settings as render.yaml; see the comment there
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--worker-class", "gthread", "--workers", "1", "--threads", "8", "--timeout", "120", "app:app"]

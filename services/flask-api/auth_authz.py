@@ -8,6 +8,8 @@ import secrets
 from datetime import datetime, timedelta, timezone
 from postgrest.exceptions import APIError
 
+from rate_limit import FailedAttemptLimiter, too_many_attempts_message
+
 """
 IMPORTANT AUTH NOTES!!
 
@@ -229,9 +231,75 @@ def revoke_existing_admin_sessions(supabase, user_id, ip=None, ua=None):
             "Session was revoked because this admin account was logged in elsewhere"
             )
 
+#### SIGN-IN FAILURE HANDLING ####
+# Every failed password check answers the same 401, whether the name is
+# unknown, the password is wrong or the account is Google-only, so the
+# response does not say which accounts exist. Disabled / not-admin answers
+# only come after a correct password.
+INVALID_CREDENTIALS = "invalid credentials"
+
+# bcrypt hash (cost 12, same as bcrypt.gensalt()) of a random string nobody
+# knows. Checked when there is no real hash, so an unknown name takes as long
+# as a wrong password.
+_DUMMY_PASSWORD_HASH = b"$2b$12$5lPbcyDdOkM020ytkt69ZuBL/6xTz0DOh3Wh5dEHfIFnpv9OsjF6y"
+
+# bcrypt only uses the first 72 bytes, and bcrypt 5 refuses anything longer
+BCRYPT_MAX_PASSWORD_BYTES = 72
+
+# Failed attempts allowed inside the window before the API answers 429.
+# Per name is the tight control; per IP is a loose backstop, because field
+# staff can share one carrier or office IP. The per-IP block is only enforced
+# once TRUSTED_PROXY_HOPS is set (app.py), except on admin-refresh.
+LOGIN_FAILURE_WINDOW_SECONDS = 15 * 60
+LOGIN_FAILURE_LIMITS = {"name": 5, "ip": 30}
+
+
+def _password_matches(password, stored_hash):
+    """bcrypt check that never raises and always costs one bcrypt run."""
+    password_bytes = password.encode("utf-8")
+    if len(password_bytes) > BCRYPT_MAX_PASSWORD_BYTES:
+        return False
+    if not stored_hash:
+        bcrypt.checkpw(password_bytes, _DUMMY_PASSWORD_HASH)
+        return False
+    try:
+        return bcrypt.checkpw(password_bytes, stored_hash.encode("utf-8"))
+    except ValueError:
+        # malformed hash in the users table
+        return False
+
+
 #### REGISTERING AUTH ROUTES ####
 def register_auth_routes(app, supabase):
     """attaching routes to flask app"""
+
+    limiter = FailedAttemptLimiter(LOGIN_FAILURE_LIMITS, LOGIN_FAILURE_WINDOW_SECONDS)
+    app.extensions["auth_rate_limiter"] = limiter
+
+    def record_failure(**values):
+        limiter.record_failure(ip=request.remote_addr, **values)
+        # access_route is the X-Forwarded-For chain; it shows whether
+        # TRUSTED_PROXY_HOPS picks the real client address on this host
+        app.logger.warning(
+            "sign-in failed: path=%s ip=%s route=%s",
+            request.path, request.remote_addr, request.access_route,
+        )
+
+    def ip_to_limit():
+        # failures are always counted per IP, but the per-IP block is only
+        # enforced once TRUSTED_PROXY_HOPS is set (app.py): until then
+        # remote_addr may be a proxy address that every client shares
+        return request.remote_addr if app.config.get("SIGN_IN_IP_LIMIT") else None
+
+    def too_many_attempts(seconds):
+        app.logger.warning(
+            "sign-in rate limit hit: path=%s ip=%s route=%s",
+            request.path, request.remote_addr, request.access_route,
+        )
+        resp = jsonify({"error": too_many_attempts_message(seconds)})
+        resp.headers["Retry-After"] = str(seconds)
+        return resp, 429
+
     @app.post("/api/auth/login")
     def login():
         """
@@ -241,14 +309,18 @@ def register_auth_routes(app, supabase):
         """
 
         data = request.json
-        if not data:
+        if not data or not isinstance(data, dict):
             return jsonify({"error": "request body missing"}), 400
         name = data.get("name")
         password = data.get("password")
 
-        if not name or not password:
+        if not name or not password or not isinstance(name, str) or not isinstance(password, str):
             return jsonify({"error": "name and password required"}), 400
-        
+
+        wait = limiter.blocked_for(ip=ip_to_limit(), name=name)
+        if wait:
+            return too_many_attempts(wait)
+
         #fecthing user from Supabase
         resp = (
             supabase.table("users")
@@ -258,28 +330,19 @@ def register_auth_routes(app, supabase):
             .execute()
         )
 
-        #for user not found
-        if not resp.data:
-            return jsonify({"error": "invalid credentials"}), 401
-        
-        user = resp.data[0]
+        user = resp.data[0] if resp.data else None
 
-        if not user.get("password_hash"):
-            return jsonify({
-                "error": "This account doesnt support password login. Try using google."
-            }), 401
+        #unknown name, Google-only account and wrong password all look the same
+        if not _password_matches(password, user.get("password_hash") if user else None):
+            record_failure(name=name)
+            return jsonify({"error": INVALID_CREDENTIALS}), 401
+
+        limiter.reset(name=name)
 
         #admin can disable users... applies when device is online
         if not user["is_active"]:
             return jsonify({"error": "account disabled"}), 403
-        
-        #comparing inputted password with stored hash
-        if not bcrypt.checkpw(
-            password.encode("utf-8"),
-            user["password_hash"].encode("utf-8")
-        ):
-            return jsonify({"error": "credentials invalid"}), 401
-        
+
         #succcessful login... client uses this for provisioning lcoal auth
         return jsonify({
             "user_id": user["user_id"],
@@ -300,7 +363,7 @@ def register_auth_routes(app, supabase):
         ##client_version = request.args.get("account_version", type=int)
 
         if not user_id:
-            return jsonify({"error": "user_id needed"})
+            return jsonify({"error": "user_id needed"}), 400
         
         resp = (
             supabase.table("users")
@@ -338,15 +401,19 @@ def register_auth_routes(app, supabase):
         """
 
         data = request.json
-        if not data:
+        if not data or not isinstance(data, dict):
             return jsonify({"error": "missing request body"}), 400
-        
+
         name = data.get("name")
         password = data.get("password")
 
-        if not name or not password:
+        if not name or not password or not isinstance(name, str) or not isinstance(password, str):
             return jsonify({"error": "missing fields"}), 400
-        
+
+        wait = limiter.blocked_for(ip=ip_to_limit(), name=name)
+        if wait:
+            return too_many_attempts(wait)
+
         resp = (
             supabase.table("users")
             .select("user_id, password_hash, role, is_active")
@@ -354,31 +421,35 @@ def register_auth_routes(app, supabase):
             .execute()
         )
 
-        if not resp.data:
-            return jsonify({"error": "invalid creds"}), 401
+        user = resp.data[0] if resp.data else None
 
-        user = resp.data[0]
+        #unknown name, Google-only account and wrong password all look the same;
+        #role and disabled state are only revealed after a correct password
+        if not _password_matches(password, user.get("password_hash") if user else None):
+            record_failure(name=name)
+            failed = jsonify({"error": INVALID_CREDENTIALS})
+            if user:
+                # audit only after the 401 is sent: an insert made only for
+                # real names would make them slower to answer than unknown ones
+                user_id, ip, ua = user["user_id"], request.remote_addr, request.headers.get("User-Agent")
+
+                def audit_failed_login():
+                    try:
+                        log_event(supabase, "failed_login", user_id, ip=ip, ua=ua)
+                    except Exception:
+                        app.logger.exception("failed_login audit insert failed")
+
+                failed.call_on_close(audit_failed_login)
+            return failed, 401
+
+        limiter.reset(name=name)
 
         if user["role"] != "admin":
             return jsonify({"error": "not an admin"}), 403
-        
+
         if not user["is_active"]:
             return jsonify({"error": "account disabled"}), 403
-        
-        #guard
-        if not user.get("password_hash"):
-            return jsonify({
-                "error": "this account does not support password login. try using google"
-            }), 401
 
-        #comparing inputted password with stored hash
-        if not bcrypt.checkpw(
-            password.encode("utf-8"),
-            user["password_hash"].encode("utf-8")
-        ):
-            log_event(supabase, "failed_login", user["user_id"], ip=request.remote_addr, ua=request.headers.get("User-Agent"))
-            return jsonify({"error": "credentials invalid"}), 401
-        
         token = generate_token()
         refresh_token = generate_token()
         refresh_hash = hash_refresh_token(refresh_token)
@@ -420,21 +491,38 @@ def register_auth_routes(app, supabase):
         - roles and permissions in users table
         """
 
+        # without a client id google-auth skips the audience check and would
+        # accept a token minted for any Google app, so refuse to run at all
+        client_id = (os.getenv("GOOGLE_CLIENT_ID") or "").strip()
+        if not client_id:
+            app.logger.error("GOOGLE_CLIENT_ID is not set; Google admin sign-in is disabled")
+            return jsonify({"error": "google sign-in is not configured"}), 503
+
         # googlee id token from frontend side
         data = request.json
-        if not data or "id_token" not in data:
+        if not data or not isinstance(data, dict) or "id_token" not in data:
             return jsonify({"error": "google id_token missing"}), 400
-        
+
+        wait = limiter.blocked_for(ip=ip_to_limit())
+        if wait:
+            return too_many_attempts(wait)
+
         #verifying token with google
         try:
             idinfo = id_token.verify_oauth2_token(
                 data["id_token"],
                 google_requests.Request(),
-                os.getenv("GOOGLE_CLIENT_ID")
+                client_id
             )
         except Exception:
+            record_failure()
             return jsonify({"error": "invalid google token"}), 401
-        
+
+        # the users row is matched on the email, so Google must vouch for it
+        if idinfo.get("email_verified") not in (True, "true"):
+            record_failure()
+            return jsonify({"error": "google account email is not verified"}), 401
+
         #pulling basic info from google response
         email = idinfo.get("email")
 
@@ -568,21 +656,31 @@ def register_auth_routes(app, supabase):
         """
 
         data = request.json
-        if not data or "refresh_token" not in data:
+        if not data or not isinstance(data, dict) or not isinstance(data.get("refresh_token"), str):
             return jsonify({"error": "refresh_token required"}), 400
 
         refresh_token = data["refresh_token"]
+
+        # every wrong token costs one bcrypt check per open session below.
+        # The per-IP block stays on here even before TRUSTED_PROXY_HOPS is
+        # set: nothing calls this route today, and a blocked refresh only
+        # means signing in again, which until then is not blocked per IP.
+        wait = limiter.blocked_for(ip=request.remote_addr)
+        if wait:
+            return too_many_attempts(wait)
 
         # Find session with matching hash
         sess_resp = supabase.table("admin_sessions").select("session_id, user_id, refresh_token_hash, refresh_expires_at, revoked, ip_address, user_agent").eq("revoked", False).execute()
 
         session = None
-        for s in sess_resp.data:
-            if s.get("refresh_token_hash") and bcrypt.checkpw(refresh_token.encode(), s["refresh_token_hash"].encode()):
-                session = s
-                break
+        if len(refresh_token.encode("utf-8")) <= BCRYPT_MAX_PASSWORD_BYTES:
+            for s in sess_resp.data:
+                if s.get("refresh_token_hash") and bcrypt.checkpw(refresh_token.encode(), s["refresh_token_hash"].encode()):
+                    session = s
+                    break
 
         if not session:
+            record_failure()
             return jsonify({"error": "invalid refresh token"}), 401
 
         if session["revoked"]:

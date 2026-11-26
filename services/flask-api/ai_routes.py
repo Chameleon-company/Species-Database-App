@@ -2,6 +2,7 @@ from io import BytesIO
 
 from flask import jsonify, request
 from PIL import UnidentifiedImageError
+from werkzeug.exceptions import RequestEntityTooLarge
 
 from ai_service import (
     ModelConfigurationError,
@@ -12,7 +13,16 @@ from upload_validation import detect_image_format
 
 
 DEFAULT_MAX_UPLOAD_BYTES = 10 * 1024 * 1024
+MULTIPART_OVERHEAD_BYTES = 64 * 1024
 SUPPORTED_IMAGE_FORMATS = {"JPEG", "PNG"}
+
+# Decoding costs about 10 bytes of RAM per pixel at its peak (measured: a
+# 12 MP photo adds ~120 MB, 24 MP ~240 MB, 40 MP ~390 MB on top of the
+# ~165 MB worker). The API runs on a 512 MB instance, so this route takes at
+# most 16 MP: every common phone default (12-13 MP, 16 MP 4:3) and far more
+# than the model's 224 x 224 input needs. The 40 MP cap shared with media
+# uploads stays for those routes, which never decode the full image.
+AI_MAX_IMAGE_PIXELS = 16_000_000
 
 
 def _error_response(code: str, message: str, status_code: int):
@@ -39,7 +49,7 @@ def _read_and_validate_upload(
     if len(image_bytes) > max_upload_bytes:
         raise ValueError("image_too_large")
 
-    if detect_image_format(image_bytes) not in SUPPORTED_IMAGE_FORMATS:
+    if detect_image_format(image_bytes, max_pixels=AI_MAX_IMAGE_PIXELS) not in SUPPORTED_IMAGE_FORMATS:
         raise ValueError("unsupported_image_type")
 
     return image_bytes
@@ -80,7 +90,18 @@ def register_ai_routes(
                 503,
             )
 
-        if "image" not in request.files:
+        # refuse an oversized body before Werkzeug parses or spools it
+        request.max_content_length = max_upload_bytes + MULTIPART_OVERHEAD_BYTES
+        try:
+            has_image = "image" in request.files
+        except RequestEntityTooLarge:
+            return _error_response(
+                "image_too_large",
+                "The uploaded image exceeds the maximum allowed size.",
+                413,
+            )
+
+        if not has_image:
             return _error_response(
                 "missing_image",
                 "An image file is required.",

@@ -8,7 +8,7 @@ from PIL import Image, UnidentifiedImageError
 MAX_IMAGE_PIXELS = 40_000_000
 
 
-def detect_image_format(data: bytes) -> str:
+def detect_image_format(data: bytes, max_pixels: int = MAX_IMAGE_PIXELS) -> str:
     """Return the format Pillow detects in the bytes, such as "JPEG" or "PNG".
 
     A multi-picture JPEG, which Pillow labels "MPO", returns "JPEG".
@@ -18,7 +18,7 @@ def detect_image_format(data: bytes) -> str:
 
     Raises ValueError("invalid_image") when the bytes are not a readable image,
     and ValueError("image_too_large") when the image has more than
-    MAX_IMAGE_PIXELS pixels.
+    max_pixels pixels (MAX_IMAGE_PIXELS unless the caller sets a lower cap).
     """
     try:
         with Image.open(BytesIO(data)) as image:
@@ -30,7 +30,7 @@ def detect_image_format(data: bytes) -> str:
     except (UnidentifiedImageError, OSError, SyntaxError, ValueError) as exc:
         raise ValueError("invalid_image") from exc
 
-    if width * height > MAX_IMAGE_PIXELS:
+    if width * height > max_pixels:
         raise ValueError("image_too_large")
 
     if detected_format == "MPO":

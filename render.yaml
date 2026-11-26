@@ -16,8 +16,26 @@ services:
       ignoredPaths:
         - services/flask-api/tests/**
     buildCommand: pip install -r services/flask-api/requirements.txt
-    startCommand: gunicorn --chdir services/flask-api --bind 0.0.0.0:$PORT app:app
+    # Sized for the starter plan (512 MB, 0.5 CPU). One worker process holds
+    # pandas, numpy, the Supabase client and the TFLite model, about 165 MB
+    # (working set measured on a Windows dev machine; check Render's memory
+    # metrics), so a second worker would leave too little room for a 50 MB
+    # video upload or an image decode (~120 MB for a 12 MP photo). Requests
+    # mostly wait on Supabase, so 8 threads serve sync, bundle and login in
+    # parallel; AI decoding is serialised inside the worker. One worker also
+    # makes the in-memory sign-in rate limit exact. For gthread workers
+    # --timeout is a heartbeat, not a per-request limit: the worker is killed
+    # when its main loop is silent that long, which happens while it imports
+    # the app at boot (4-5 s on a full desktop core, longer on 0.5 CPU) and
+    # during a long C call that holds the GIL. 120 s instead of the default
+    # 30 s keeps a slow boot or such a step from killing the only worker.
+    startCommand: gunicorn --chdir services/flask-api --bind 0.0.0.0:$PORT --worker-class gthread --workers 1 --threads 8 --timeout 120 app:app
     healthCheckPath: /health
+    # TRUSTED_PROXY_HOPS is left unset on purpose: until it is set, the
+    # per-IP sign-in block stays off (only the per-name limit applies), since
+    # an unconfirmed proxy chain could put every client in one IP bucket.
+    # Confirm the chain from a "sign-in failed" log line first; see
+    # docs/backend/API.md, "Sign-in rate limit".
     envVars:
       - key: SUPABASE_URL
         sync: false

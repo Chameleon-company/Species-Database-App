@@ -358,3 +358,47 @@ def test_model_unavailable_returns_safe_503(monkeypatch):
     assert response.status_code == 503
     assert body["error"]["code"] == "model_unavailable"
     assert "Private startup configuration detail" not in str(body)
+
+
+def test_image_over_the_identify_pixel_cap_is_refused_before_decoding(client, service):
+    # 17.2 MP: under the 40 MP cap media uploads use, over this route's 16 MP
+    response = client.post(
+        "/api/ai/identify",
+        data={"image": (BytesIO(create_image(size=(4900, 3500), mode="1")), "big.png")},
+        content_type="multipart/form-data",
+    )
+
+    assert response.status_code == 413
+    assert response.get_json()["error"]["code"] == "image_too_large"
+    assert service.call_count == 0
+
+
+def test_a_12_megapixel_phone_photo_is_still_accepted(client, service):
+    response = client.post(
+        "/api/ai/identify",
+        data={"image": (BytesIO(create_image(size=(4032, 3024), mode="1")), "phone.png")},
+        content_type="multipart/form-data",
+    )
+
+    assert response.status_code == 200
+    assert service.call_count == 1
+
+
+def test_body_over_the_route_limit_is_refused_before_it_is_parsed(monkeypatch):
+    # the read cap would also answer image_too_large, so make sure the
+    # request never got that far: Werkzeug must refuse the body itself
+    def must_not_read(*_args, **_kwargs):
+        raise AssertionError("the upload was parsed and read")
+
+    monkeypatch.setattr(ai_routes, "_read_and_validate_upload", must_not_read)
+    app = create_test_app(MockService(), max_upload_bytes=32)
+
+    with app.test_client() as client:
+        response = client.post(
+            "/api/ai/identify",
+            data={"image": (BytesIO(b"x" * (ai_routes.MULTIPART_OVERHEAD_BYTES + 64)), "big.jpg")},
+            content_type="multipart/form-data",
+        )
+
+    assert response.status_code == 413
+    assert response.get_json()["error"]["code"] == "image_too_large"

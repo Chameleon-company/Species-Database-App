@@ -26,6 +26,43 @@ print("CORS_ORIGINS =", os.getenv("CORS_ORIGINS"))
 
 
 app = Flask(__name__)
+
+# Render (and Cloudflare in front of it) proxies every request, so the socket
+# address is the proxy's. ProxyFix takes the client address from the
+# X-Forwarded-For entry that the outermost TRUSTED_PROXY_HOPS proxies added;
+# the admin session audit and the sign-in rate limit rely on it. Too high a
+# value lets a client pick its own address, so it defaults to 1. The
+# "sign-in failed" log line prints the full chain (request.access_route) to
+# check it against.
+def proxy_hops_from_env(value):
+    """(hops for ProxyFix, whether the per-IP sign-in block is on).
+
+    The hop count on Render is not confirmed. With a wrong count every client
+    can share one proxy address, and a full per-IP bucket would refuse
+    everyone's sign-in. So the per-IP block is only on once TRUSTED_PROXY_HOPS
+    is set explicitly to 1 or more; unset, empty, unparseable and 0 leave it
+    off and only the per-name limit applies (docs/backend/API.md).
+    """
+    value = (value or "").strip()
+    try:
+        hops = int(value) if value else 1
+    except ValueError:
+        return 1, False
+    return hops, bool(value) and hops > 0
+
+
+TRUSTED_PROXY_HOPS, SIGN_IN_IP_LIMIT = proxy_hops_from_env(os.getenv("TRUSTED_PROXY_HOPS"))
+app.config["SIGN_IN_IP_LIMIT"] = SIGN_IN_IP_LIMIT
+if TRUSTED_PROXY_HOPS > 0:
+    from werkzeug.middleware.proxy_fix import ProxyFix
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=TRUSTED_PROXY_HOPS)
+
+# Largest request body Werkzeug will read: a 10 MB image plus multipart
+# framing. Bigger bodies get a JSON 413 before they are parsed or spooled.
+# /upload-media/file raises it for its own 50 MB video limit (media.py).
+MULTIPART_OVERHEAD_BYTES = 64 * 1024
+app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024 + MULTIPART_OVERHEAD_BYTES
+
 # "".split(",") returns [''] rather than [], which would otherwise make
 # CORS match against a blank origin - filter those out.
 cors_origins = [o.strip() for o in os.getenv("CORS_ORIGINS", "").split(",") if o.strip()]
@@ -66,16 +103,24 @@ def handle_uncaught_exception(e):
     # Log full traceback to terminal for debugging
     app.logger.exception("Unhandled exception occurred")
 
-    # Anything else (DB errors, bugs, etc.) -> 500 with the exception message
+    # Anything else (DB errors, bugs, etc.) -> generic 500. The exception text
+    # can carry database, driver or host detail, so it stays in the log.
     return jsonify({
-        "error": str(e),
-        "type": type(e).__name__
+        "error": "internal server error"
     }), 500
 
 
 @app.errorhandler(404)
 def handle_404(e):
     return jsonify({"error": "endpoint not found"}), 404
+
+
+@app.errorhandler(413)
+def handle_413(e):
+    limit = request.max_content_length
+    return jsonify({
+        "error": f"request body is too large (max {limit // (1024 * 1024)} MB)" if limit else "request body is too large"
+    }), 413
 
 
 @app.errorhandler(405)
@@ -357,6 +402,30 @@ def get_bundle():
         "media":media_resp.data
     })
 
+#changelog.version is a Postgres INT; larger values made PostgREST fail with a 500
+MAX_SYNC_VERSION = 2_147_483_647
+
+
+def since_version_out_of_range(since_version):
+    if 0 <= since_version <= MAX_SYNC_VERSION:
+        return None
+    return jsonify({"error": f"since_version must be between 0 and {MAX_SYNC_VERSION}"}), 400
+
+
+def latest_changelog_version():
+    """Highest changelog version over every entity type, as /api/bundle reports it
+    (1 when the changelog is empty). None if the query returned no data at all."""
+    version_resp = (
+        supabase.table("changelog")
+        .select("version")
+        .order("version", desc=True)
+        .limit(1)
+        .execute()
+    )
+    if version_resp.data is None:
+        return None
+    return version_resp.data[0]["version"] if version_resp.data else 1
+
 #       
 @app.get("/api/species/changes")
 def get_species_changes():
@@ -369,6 +438,9 @@ def get_species_changes():
     since_version = request.args.get("since_version", type=int)
     if since_version is None:
         return jsonify({"error": "since_version required"}), 400
+    out_of_range = since_version_out_of_range(since_version)
+    if out_of_range:
+        return out_of_range
 
     #getting all changelog entris related tospecies
     #occured after clients last known version
@@ -393,8 +465,18 @@ def get_species_changes():
         "since_version": since_version
     }), 500
 
-    #if nothing changes, client must be up to date
+    #nothing newer. Either the client is current, or it is AHEAD of the server
+    #(production restored from an older backup, changelog rolled back). A device
+    #ahead of the server would otherwise keep stale or deleted species for good.
     if not changes.data:
+        server_version = latest_changelog_version()
+        if server_version is not None and since_version > server_version:
+            return jsonify({
+                "up_to_date": False,
+                "force_bundle": True,
+                "latest_version": server_version,
+                "reason": "client_ahead"
+            })
         return jsonify({
             "up_to_date": True,
             "latest_version": since_version,
@@ -471,6 +553,9 @@ def get_species_incremental():
     since_version = request.args.get("since_version", type=int)
     if since_version is None:
         return jsonify({"error": "sicne_version required"}), 400
+    out_of_range = since_version_out_of_range(since_version)
+    if out_of_range:
+        return out_of_range
     
     #find ewhich species ids changed
     changes = (

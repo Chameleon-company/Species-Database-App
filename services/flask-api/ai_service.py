@@ -230,11 +230,13 @@ class SpeciesIdentificationService:
         """Identify the species in one image.
 
         A LiteRT interpreter is not safe to share between threads, so a lock
-        serialises inference when the API runs with threaded workers.
+        serialises inference when the API runs with threaded workers. Decoding
+        is inside the lock too: a full-size photo briefly needs over 100 MB,
+        and several decoding at once on one worker could exhaust a small
+        instance's memory.
         """
-        image_batch = preprocess_image(image_source)
-
         with self._inference_lock:
+            image_batch = preprocess_image(image_source)
             probabilities = run_inference(self.model, image_batch)
 
         return postprocess_prediction(
