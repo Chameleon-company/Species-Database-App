@@ -297,7 +297,8 @@ pnpm run dev:api
 
 The Hono API reads `DATABASE_URL` from the root `.env`, and prints the database host when it starts.
 It queries Postgres with Drizzle over postgres.js.
-Its schema in `apps/api/src/db/schema.ts` comes from `pnpm gen:types`, so do not edit it by hand.
+`pnpm gen:types` writes its schema to `apps/api/src/db/schema.ts`.
+Do not edit that file by hand.
 On a hosted project, `DATABASE_URL` is the Supavisor session pooler on port 5432 as the `postgres` role.
 That role owns the tables, so Row Level Security does not block it.
 Never add `FORCE ROW LEVEL SECURITY` to a table, because it would block the API.
