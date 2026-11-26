@@ -221,7 +221,7 @@ pnpm run docker:logs   # Follow container logs
 pnpm run docker:build  # Build Docker images only
 pnpm run build         # Build every app in the workspace
 pnpm run lint          # Lint the workspace with Oxlint
-pnpm run supabase:api  # Start only the database, Kong and PostgREST
+pnpm supabase db start # Start only the local database, which the API tests need
 pnpm run test          # Run the tests of every app. The API tests need the local stack
 pnpm run format        # Format the workspace with Oxfmt
 pnpm run format:check  # Check formatting without changing files
@@ -264,10 +264,10 @@ pnpm supabase start
 ```
 
 This starts every Supabase service, which the admin and Flask need.
-`pnpm run supabase:api` starts only the services that the Hono API and its tests use.
+`pnpm supabase db start` starts only the database, which the Hono API and its tests use.
 CI uses it too.
 Run `pnpm supabase stop` before `pnpm run dev`.
-`dev` does not start the missing services when the stack already runs.
+`dev` does not start the missing services when the database already runs.
 
 Activate the backend virtual environment, then start the backend:
 
@@ -295,7 +295,17 @@ Start the new Hono API in another terminal:
 pnpm run dev:api
 ```
 
-The Hono API reads `SUPABASE_URL` and `SUPABASE_KEY` from the root `.env`, and prints the Supabase host when it starts.
+The Hono API reads `DATABASE_URL` from the root `.env`, and prints the database host when it starts.
+It queries Postgres with Drizzle over postgres.js.
+`pnpm gen:types` writes its schema to `apps/api/src/db/schema.ts`.
+Do not edit that file by hand.
+On a hosted project, `DATABASE_URL` is the Supavisor session pooler on port 5432 as the `postgres` role.
+The API encrypts every connection to a host that is not local.
+It does not check the certificate, and it warns about that when it starts.
+The 10-second statement limit is a startup setting.
+Only the session pooler on port 5432 is known to accept it.
+That role owns the tables, so Row Level Security does not block it.
+Never add `FORCE ROW LEVEL SECURITY` to a table, because it would block the API.
 It listens on `127.0.0.1` unless `HOST` sets another address, such as `0.0.0.0` on a host.
 
 Local URLs:
@@ -393,7 +403,7 @@ Two rules matter most:
 2. **Never edit a migration that has already been applied anywhere.** Supersede it with a new one.
 
 After a change to `TableSchema.sql`, run `pnpm supabase db reset` to rebuild your local database.
-Then run `pnpm gen:types` and commit `packages/shared/src/database.ts` with the change.
+Then run `pnpm gen:types` and commit `packages/shared/src/database.ts` and `apps/api/src/db/schema.ts` with the change.
 
 Verify a migration against a throwaway local database before it goes near Supabase:
 
@@ -441,8 +451,14 @@ A failed check stops the deploy, and the last good deploy stays live.
 Each service rebuilds only when a file in its own source paths changes.
 
 `SUPABASE_URL` and `SUPABASE_KEY` are marked `sync: false` in `render.yaml`.
+They belong to the Flask API.
 Their values live only in the Render dashboard, never in git.
 Every other value in `render.yaml` is public.
+
+The Hono API runs as the `species-database-hono-api` service.
+It reads only `DATABASE_URL`, which is also `sync: false` and lives only in the Render dashboard.
+No traffic goes to it yet.
+The admin and the field app still call the Flask API.
 Keep the admin origin first in `CORS_ORIGINS`, because the API links to the first origin.
 `https://localhost` in `CORS_ORIGINS` is the origin of the Capacitor Android app.
 `GOOGLE_CLIENT_ID` and `VITE_GOOGLE_CLIENT_ID` must hold the same OAuth client ID.

@@ -11,12 +11,13 @@
   },
   "dependencies": {
     "@hono/node-server": "^2.1.11",
-    "@sda/shared": "workspace:*",
-    "@supabase/supabase-js": "^2.119.2",
-    "hono": "^4.13.17"
+    "drizzle-orm": "0.45.4",
+    "hono": "^4.13.17",
+    "postgres": "^4.1.1"
   },
   "devDependencies": {
     "@types/node": "catalog:",
+    "drizzle-kit": "0.31.11",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

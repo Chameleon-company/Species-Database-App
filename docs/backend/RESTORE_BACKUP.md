@@ -184,7 +184,7 @@ curl.exe -s -o NUL -w "%{http_code}`n" "https://<ref>.supabase.co/storage/v1/obj
 
 The new project is a copy, not a replacement, until the apps are pointed at it.
 
-* **New URL and keys.** The new project has its own URL, publishable key and secret key. Set `SUPABASE_URL` and `SUPABASE_KEY` for the API, and the matching values for the admin and field apps. Keys are never committed.
+* **New URL and keys.** The new project has its own URL, publishable key and secret key. Set `SUPABASE_URL` and `SUPABASE_KEY` for the Flask API, and the matching values for the admin and field apps. Set `DATABASE_URL` for the Hono API to the new session pooler URL with `sslmode=require`. Keys are never committed.
 * **Media links still point at the old project.** The `media` rows store full public URLs in `download_link` and `streaming_link`, as written by the upload route. After a restore they still name the old project's host, so the new Storage files are not used until the rows are rewritten. Check what they hold first:
 
 ```powershell

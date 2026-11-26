@@ -1,6 +1,6 @@
 import { serve } from "@hono/node-server";
 import { createApp } from "./app.ts";
-import { createDb } from "./db.ts";
+import { POOL_CLOSE_SECONDS, checksCertificate, createDb, isLocalHost } from "./db.ts";
 
 function fail(message: string): never {
   console.error(message);
@@ -14,6 +14,13 @@ function requireEnv(name: string): string {
   );
 }
 
+function readDatabaseUrl(): string {
+  const value = requireEnv("DATABASE_URL");
+  const valid =
+    URL.canParse(value) && ["postgres:", "postgresql:"].includes(new URL(value).protocol);
+  return valid ? value : fail("DATABASE_URL must be a postgresql:// URL. See .env.example.");
+}
+
 function readPort(): number {
   const value = process.env.PORT || "3000";
   const port = Number(value);
@@ -22,13 +29,17 @@ function readPort(): number {
     : fail(`PORT must be a whole number from 1 to 65535, not "${value}".`);
 }
 
-const supabaseUrl = requireEnv("SUPABASE_URL");
-const app = createApp({ db: createDb(supabaseUrl, requireEnv("SUPABASE_KEY")) });
-
+const databaseUrl = readDatabaseUrl();
+const target = new URL(databaseUrl);
+if (!isLocalHost(target) && !checksCertificate(target)) {
+  console.warn("The database connection is encrypted, but the API does not check its certificate.");
+}
+const { db, close } = createDb(databaseUrl);
+const app = createApp({ db });
 const hostname = process.env.HOST || "127.0.0.1";
 
 const server = serve({ fetch: app.fetch, hostname, port: readPort() }, ({ address, port }) => {
-  console.log(`API on http://${address}:${port}, Supabase at ${new URL(supabaseUrl).host}`);
+  console.log(`API on http://${address}:${port}, database at ${new URL(databaseUrl).host}`);
 });
 
 let closing = false;
@@ -36,8 +47,25 @@ let closing = false;
 function shutdown() {
   if (closing) fail("Second stop signal. Exiting without waiting for open requests.");
   closing = true;
-  server.close(() => process.exit(0));
-  setTimeout(() => fail("Open requests did not finish in 10 seconds. Exiting."), 10_000).unref();
+  const requests = setTimeout(
+    () => fail("Open requests did not finish in 10 seconds. Exiting."),
+    10_000,
+  ).unref();
+  server.close(() => {
+    clearTimeout(requests);
+    const limit = POOL_CLOSE_SECONDS + 2;
+    setTimeout(
+      () => fail(`The database pool did not close in ${limit} seconds. Exiting.`),
+      limit * 1000,
+    ).unref();
+    close().then(
+      () => process.exit(0),
+      (error: unknown) =>
+        fail(
+          `The database pool did not close: ${error instanceof Error ? error.message : String(error)}`,
+        ),
+    );
+  });
 }
 
 process.on("SIGINT", shutdown);

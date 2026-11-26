@@ -94,8 +94,8 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - name: Start the local Supabase API
-        run: pnpm supabase:api
+      - name: Start the local database
+        run: pnpm supabase db start
 
       - name: Test
         run: pnpm test

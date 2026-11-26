@@ -10,6 +10,10 @@ on:
       - "supabase/**"
       - "packages/shared/src/database.ts"
       - "scripts/gen-database-types.mjs"
+      - "scripts/gen-db-schema.mjs"
+      - "apps/api/src/db/schema.ts"
+      - "apps/api/drizzle.config.ts"
+      - "apps/api/package.json"
       - "package.json"
       - ".oxfmtrc.json"
       - "pnpm-workspace.yaml"
@@ -46,4 +50,4 @@ jobs:
         run: pnpm gen:types
 
       - name: Fail when the committed types are out of date
-        run: git diff --exit-code packages/shared/src/database.ts
+        run: git diff --exit-code packages/shared/src/database.ts apps/api/src/db/schema.ts

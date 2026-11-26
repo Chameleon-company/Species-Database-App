@@ -14,12 +14,11 @@
     "lint": "oxlint",
     "preview": "pnpm --filter admin preview",
     "docker:build": "docker compose build",
-    "supabase:api": "supabase start -x gotrue,realtime,storage-api,imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor",
     "docker:down": "supabase stop && docker compose down",
     "docker:logs": "docker compose logs -f",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
-    "gen:types": "supabase gen types typescript --schema public | node scripts/gen-database-types.mjs && oxfmt packages/shared/src/database.ts",
+    "gen:types": "supabase gen types typescript --schema public | node scripts/gen-database-types.mjs && pnpm --filter api exec drizzle-kit pull && node scripts/gen-db-schema.mjs && oxfmt packages/shared/src/database.ts apps/api/src/db/schema.ts",
     "test": "pnpm -r test"
   },
   "devDependencies": {

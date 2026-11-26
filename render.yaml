@@ -29,6 +29,31 @@ services:
         value: https://species-database-app-123.onrender.com,https://species-database-app-1.onrender.com,https://localhost
 
   - type: web
+    name: species-database-hono-api
+    runtime: node
+    repo: https://github.com/Chameleon-company/Species-Database-App
+    branch: master
+    region: singapore
+    plan: starter
+    autoDeployTrigger: checksPass
+    buildFilter:
+      paths:
+        - apps/api/**
+        - package.json
+        - pnpm-lock.yaml
+        - pnpm-workspace.yaml
+    buildCommand: npm install -g pnpm@12.16.1 && pnpm install --frozen-lockfile --filter api...
+    startCommand: node apps/api/src/server.ts
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "^22.18.0"
+      - key: HOST
+        value: 0.0.0.0
+      - key: DATABASE_URL
+        sync: false
+
+  - type: web
     name: species-database-admin
     runtime: static
     repo: https://github.com/Chameleon-company/Species-Database-App
