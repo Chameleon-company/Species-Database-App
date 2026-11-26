@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { Bundle } from "@sda/shared/bundle";
 import { apiUrl, requestJson, rootUrl } from "../../shared/api/apiClient";
 import type { Lang } from "../../useLanguage";
 import {
@@ -7,21 +8,18 @@ import {
   toSpeciesPayload,
   toTranslationInput,
   type SpeciesFormValues,
-  type SpeciesRecord,
   type SpeciesText,
 } from "./species";
-
-type SpeciesBundle = { species_en: SpeciesRecord[]; species_tet: SpeciesRecord[] };
 
 const speciesKeys = { all: ["species"] as const, bundle: ["species", "bundle"] as const };
 
 const bundleQuery = queryOptions({
   queryKey: speciesKeys.bundle,
-  queryFn: () => requestJson<SpeciesBundle>(apiUrl("/bundle")),
+  queryFn: () => requestJson<Bundle>(apiUrl("/bundle")),
 });
 
-const selectEnglish = (bundle: SpeciesBundle) => bundle.species_en ?? [];
-const selectTetum = (bundle: SpeciesBundle) => bundle.species_tet ?? [];
+const selectEnglish = (bundle: Bundle) => bundle.species_en;
+const selectTetum = (bundle: Bundle) => bundle.species_tet;
 
 /** Species records in one language, from the shared bundle query. */
 export function useSpeciesList(lang: Lang) {
@@ -31,9 +29,9 @@ export function useSpeciesList(lang: Lang) {
 /** The English and Tetum records of one species. Either is undefined when its row is missing. */
 export function useSpeciesPair(speciesId: number | null) {
   const select = useCallback(
-    (bundle: SpeciesBundle) => ({
-      en: bundle.species_en?.find((row) => row.species_id === speciesId),
-      tet: bundle.species_tet?.find((row) => row.species_id === speciesId),
+    (bundle: Bundle) => ({
+      en: bundle.species_en.find((row) => row.species_id === speciesId),
+      tet: bundle.species_tet.find((row) => row.species_id === speciesId),
     }),
     [speciesId]
   );

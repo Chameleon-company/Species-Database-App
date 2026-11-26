@@ -1,13 +1,5 @@
-export type Species = {
-  species_id: number;
-  scientific_name: string;
-  common_name: string;
-};
-
-export type Bundle = {
-  version: number;
-  species_en: Species[];
-};
+import type { Bundle } from "@sda/shared/bundle";
+import type { Species } from "@sda/shared/species";
 
 /**
  * GETs `${apiBase}/api/bundle`. Rejects when `apiBase` is empty, and with the HTTP status when

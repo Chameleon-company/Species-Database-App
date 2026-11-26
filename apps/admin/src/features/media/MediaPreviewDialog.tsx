@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
 import { Button } from "@sda/ui/components/button";
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@sda/ui/components/dialog";
+import type { Media } from "@sda/shared/media";
 import { useLanguage } from "../../useLanguage";
 import { useResolvedImage } from "./api";
-import { youtubeId, type Media } from "./media";
+import { youtubeId } from "./media";
 import { TypeBadge } from "./MediaVisuals";
 
 function Detail({ label, children }: { label: string; children: ReactNode }) {

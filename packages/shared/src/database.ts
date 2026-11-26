@@ -1,0 +1,523 @@
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+
+export type Database = {
+  public: {
+    Tables: {
+      admin_session_audit: {
+        Row: {
+          audit_id: number;
+          details: Json | null;
+          event_timestamp: string | null;
+          event_type: string;
+          ip_address: unknown;
+          session_id: number | null;
+          user_agent: string | null;
+          user_id: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          audit_id?: number;
+          details?: Json | null;
+          event_timestamp?: string | null;
+          event_type: string;
+          ip_address?: unknown;
+          session_id?: number | null;
+          user_agent?: string | null;
+          user_id: number;
+        };
+        Update: {
+          audit_id?: number;
+          details?: Json | null;
+          event_timestamp?: string | null;
+          event_type?: string;
+          ip_address?: unknown;
+          session_id?: number | null;
+          user_agent?: string | null;
+          user_id?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "admin_session_audit_session_id_fkey";
+            columns: ["session_id"];
+            isOneToOne: false;
+            referencedRelation: "admin_sessions";
+            referencedColumns: ["session_id"];
+          },
+          {
+            foreignKeyName: "admin_session_audit_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["user_id"];
+          },
+        ];
+      };
+      admin_sessions: {
+        Row: {
+          access_token: string;
+          created_at: string | null;
+          expires_at: string;
+          ip_address: unknown;
+          last_activity: string | null;
+          refresh_expires_at: string | null;
+          refresh_token_hash: string | null;
+          revocation_reason: string | null;
+          revoked: boolean | null;
+          session_id: number;
+          user_agent: string | null;
+          user_id: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          access_token: string;
+          created_at?: string | null;
+          expires_at: string;
+          ip_address?: unknown;
+          last_activity?: string | null;
+          refresh_expires_at?: string | null;
+          refresh_token_hash?: string | null;
+          revocation_reason?: string | null;
+          revoked?: boolean | null;
+          session_id?: number;
+          user_agent?: string | null;
+          user_id: number;
+        };
+        Update: {
+          access_token?: string;
+          created_at?: string | null;
+          expires_at?: string;
+          ip_address?: unknown;
+          last_activity?: string | null;
+          refresh_expires_at?: string | null;
+          refresh_token_hash?: string | null;
+          revocation_reason?: string | null;
+          revoked?: boolean | null;
+          session_id?: number;
+          user_agent?: string | null;
+          user_id?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "admin_sessions_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["user_id"];
+          },
+        ];
+      };
+      analytics: {
+        Row: {
+          duration: number;
+          event_id: number;
+          event_type: string | null;
+          location: string | null;
+          login_time: string;
+          user_id: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          duration: number;
+          event_id?: number;
+          event_type?: string | null;
+          location?: string | null;
+          login_time: string;
+          user_id: number;
+        };
+        Update: {
+          duration?: number;
+          event_id?: number;
+          event_type?: string | null;
+          location?: string | null;
+          login_time?: string;
+          user_id?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "analytics_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["user_id"];
+          },
+        ];
+      };
+      changelog: {
+        Row: {
+          change_id: number;
+          changed_at: string | null;
+          entity_id: number | null;
+          entity_type: string;
+          operation: string;
+          version: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          change_id?: number;
+          changed_at?: string | null;
+          entity_id?: number | null;
+          entity_type: string;
+          operation: string;
+          version: number;
+        };
+        Update: {
+          change_id?: number;
+          changed_at?: string | null;
+          entity_id?: number | null;
+          entity_type?: string;
+          operation?: string;
+          version?: number;
+        };
+        Relationships: [];
+      };
+      media: {
+        Row: {
+          alt_text: string | null;
+          download_link: string;
+          media_id: number;
+          media_type: string | null;
+          species_id: number;
+          species_name: string;
+          storage_version: number;
+          streaming_link: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          alt_text?: string | null;
+          download_link: string;
+          media_id?: number;
+          media_type?: string | null;
+          species_id: number;
+          species_name: string;
+          storage_version?: number;
+          streaming_link?: string | null;
+        };
+        Update: {
+          alt_text?: string | null;
+          download_link?: string;
+          media_id?: number;
+          media_type?: string | null;
+          species_id?: number;
+          species_name?: string;
+          storage_version?: number;
+          streaming_link?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "media_species_id_fkey";
+            columns: ["species_id"];
+            isOneToOne: false;
+            referencedRelation: "species_en";
+            referencedColumns: ["species_id"];
+          },
+        ];
+      };
+      species_en: {
+        Row: {
+          common_name: string;
+          definition: string | null;
+          etymology: string | null;
+          fruit_type: string;
+          habitat: string | null;
+          identification_character: string | null;
+          leaf_type: string;
+          pest: string | null;
+          phenology: string | null;
+          scientific_name: string;
+          seed_germination: string | null;
+          species_id: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          common_name: string;
+          definition?: string | null;
+          etymology?: string | null;
+          fruit_type: string;
+          habitat?: string | null;
+          identification_character?: string | null;
+          leaf_type: string;
+          pest?: string | null;
+          phenology?: string | null;
+          scientific_name: string;
+          seed_germination?: string | null;
+          species_id?: number;
+        };
+        Update: {
+          common_name?: string;
+          definition?: string | null;
+          etymology?: string | null;
+          fruit_type?: string;
+          habitat?: string | null;
+          identification_character?: string | null;
+          leaf_type?: string;
+          pest?: string | null;
+          phenology?: string | null;
+          scientific_name?: string;
+          seed_germination?: string | null;
+          species_id?: number;
+        };
+        Relationships: [];
+      };
+      species_tet: {
+        Row: {
+          common_name: string;
+          definition: string | null;
+          etymology: string | null;
+          fruit_type: string;
+          habitat: string | null;
+          identification_character: string | null;
+          leaf_type: string;
+          pest: string | null;
+          phenology: string | null;
+          scientific_name: string;
+          seed_germination: string | null;
+          species_id: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          common_name: string;
+          definition?: string | null;
+          etymology?: string | null;
+          fruit_type: string;
+          habitat?: string | null;
+          identification_character?: string | null;
+          leaf_type: string;
+          pest?: string | null;
+          phenology?: string | null;
+          scientific_name: string;
+          seed_germination?: string | null;
+          species_id?: number;
+        };
+        Update: {
+          common_name?: string;
+          definition?: string | null;
+          etymology?: string | null;
+          fruit_type?: string;
+          habitat?: string | null;
+          identification_character?: string | null;
+          leaf_type?: string;
+          pest?: string | null;
+          phenology?: string | null;
+          scientific_name?: string;
+          seed_germination?: string | null;
+          species_id?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "species_tet_species_id_fkey";
+            columns: ["species_id"];
+            isOneToOne: true;
+            referencedRelation: "species_en";
+            referencedColumns: ["species_id"];
+          },
+        ];
+      };
+      species_tet_s07_backup: {
+        Row: {
+          common_name: string;
+          definition: string | null;
+          etymology: string | null;
+          fruit_type: string;
+          habitat: string | null;
+          identification_character: string | null;
+          leaf_type: string;
+          merged_into: number | null;
+          pest: string | null;
+          phenology: string | null;
+          scientific_name: string;
+          seed_germination: string | null;
+          species_id: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          common_name: string;
+          definition?: string | null;
+          etymology?: string | null;
+          fruit_type: string;
+          habitat?: string | null;
+          identification_character?: string | null;
+          leaf_type: string;
+          merged_into?: number | null;
+          pest?: string | null;
+          phenology?: string | null;
+          scientific_name: string;
+          seed_germination?: string | null;
+          species_id: number;
+        };
+        Update: {
+          common_name?: string;
+          definition?: string | null;
+          etymology?: string | null;
+          fruit_type?: string;
+          habitat?: string | null;
+          identification_character?: string | null;
+          leaf_type?: string;
+          merged_into?: number | null;
+          pest?: string | null;
+          phenology?: string | null;
+          scientific_name?: string;
+          seed_germination?: string | null;
+          species_id?: number;
+        };
+        Relationships: [];
+      };
+      users: {
+        Row: {
+          auth_provider: string;
+          created_at: string | null;
+          is_active: boolean | null;
+          name: string;
+          password_hash: string | null;
+          role: string;
+          updated_at: string | null;
+          user_id: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          auth_provider?: string;
+          created_at?: string | null;
+          is_active?: boolean | null;
+          name: string;
+          password_hash?: string | null;
+          role: string;
+          updated_at?: string | null;
+          user_id?: number;
+        };
+        Update: {
+          auth_provider?: string;
+          created_at?: string | null;
+          is_active?: boolean | null;
+          name?: string;
+          password_hash?: string | null;
+          role?: string;
+          updated_at?: string | null;
+          user_id?: number;
+        };
+        Relationships: [];
+      };
+    };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      [_ in never]: never;
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
+  };
+};
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">];
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R;
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] & DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R;
+      }
+      ? R
+      : never
+    : never;
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I;
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I;
+      }
+      ? I
+      : never
+    : never;
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U;
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U;
+      }
+      ? U
+      : never
+    : never;
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never) = never,
+> = DefaultSchemaEnumNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never;
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never) = never,
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never;
+
+export const Constants = {
+  public: {
+    Enums: {},
+  },
+} as const;

@@ -211,6 +211,9 @@ importers:
       '@sda/i18n':
         specifier: workspace:*
         version: link:../../packages/i18n
+      '@sda/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       '@sda/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -289,6 +292,9 @@ importers:
 
   apps/field:
     dependencies:
+      '@sda/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       preact:
         specifier: ^11.2.0
         version: 11.2.0
@@ -320,6 +326,12 @@ importers:
       vitest:
         specifier: 'catalog:'
         version: 5.1.0(@types/node@24.19.2)(vite@8.3.8(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0))
+
+  packages/shared:
+    devDependencies:
+      typescript:
+        specifier: 'catalog:'
+        version: 7.0.2
 
   packages/ui:
     dependencies:

@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@sda/i18n": "workspace:*",
+    "@sda/shared": "workspace:*",
     "@sda/ui": "workspace:*",
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/react-form": "^1.33.5",

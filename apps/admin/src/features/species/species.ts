@@ -1,20 +1,8 @@
 import type { MessageKey } from "@sda/i18n/translate";
-
-export type SpeciesFieldName =
-  | "scientific_name"
-  | "common_name"
-  | "leaf_type"
-  | "fruit_type"
-  | "definition"
-  | "etymology"
-  | "habitat"
-  | "identification_character"
-  | "phenology"
-  | "seed_germination"
-  | "pest";
+import type { Species, SpeciesTextField } from "@sda/shared/species";
 
 export type SpeciesField = {
-  name: SpeciesFieldName;
+  name: SpeciesTextField;
   labelKey: MessageKey;
   maxLength: number;
   requiredKey?: MessageKey;
@@ -40,9 +28,7 @@ export const SPECIES_FIELDS: readonly SpeciesField[] = [
   { name: "pest", maxLength: 2000, labelKey: "pest", rows: 4 },
 ];
 
-export type SpeciesText = Record<SpeciesFieldName, string>;
-
-export type SpeciesRecord = { species_id: number } & Partial<Record<SpeciesFieldName, string | null>>;
+export type SpeciesText = Record<SpeciesTextField, string>;
 
 /**
  * Form state for one species. `tet.scientific_name` is unused: the Tetum
@@ -50,7 +36,7 @@ export type SpeciesRecord = { species_id: number } & Partial<Record<SpeciesField
  */
 export type SpeciesFormValues = { en: SpeciesText; tet: SpeciesText };
 
-export function toSpeciesText(record?: SpeciesRecord): SpeciesText {
+export function toSpeciesText(record?: Species): SpeciesText {
   return Object.fromEntries(
     SPECIES_FIELDS.map(({ name }) => [name, record?.[name] ?? ""])
   ) as SpeciesText;
@@ -68,7 +54,7 @@ export function toSpeciesPayload({ en, tet }: SpeciesFormValues): Record<string,
 }
 
 /** Fields sent to `/translate`, in the order the API returns them. `definition` is not translated. */
-const TRANSLATED_FIELDS: readonly SpeciesFieldName[] = [
+const TRANSLATED_FIELDS: readonly SpeciesTextField[] = [
   "scientific_name",
   "common_name",
   "leaf_type",

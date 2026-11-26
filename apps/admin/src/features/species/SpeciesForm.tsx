@@ -4,11 +4,12 @@ import { Button } from "@sda/ui/components/button";
 import { Card, CardContent } from "@sda/ui/components/card";
 import { Field, FieldLabel } from "@sda/ui/components/field";
 import { Input } from "@sda/ui/components/input";
+import type { SpeciesTextField } from "@sda/shared/species";
 import { useAppForm } from "../../shared/form/useAppForm";
 import { firstError, required, withinLength } from "../../shared/form/validators";
 import { useLanguage } from "../../useLanguage";
 import { useTranslateToTetum } from "./api";
-import { SPECIES_FIELDS, emptySpeciesForm, type SpeciesFieldName, type SpeciesFormValues } from "./species";
+import { SPECIES_FIELDS, emptySpeciesForm, type SpeciesFormValues } from "./species";
 
 type SpeciesFormProps = {
   mode: "create" | "edit";
@@ -65,7 +66,7 @@ export default function SpeciesForm({ mode, initialValues, onSubmit, onDelete, d
     translate.mutate(form.state.values.en, {
       onSuccess: (tetum) => {
         Object.entries(tetum).forEach(([name, value]) =>
-          form.setFieldValue(`tet.${name as SpeciesFieldName}`, value ?? "")
+          form.setFieldValue(`tet.${name as SpeciesTextField}`, value ?? "")
         );
         setShowTetum(true);
         setTranslated(true);

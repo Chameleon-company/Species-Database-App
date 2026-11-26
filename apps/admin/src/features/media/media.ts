@@ -1,13 +1,3 @@
-export type MediaType = "image" | "video";
-
-export type Media = {
-  media_id: number;
-  species_name: string;
-  media_type: string;
-  download_link: string;
-  alt_text?: string | null;
-};
-
 export const looksLikeDirectImage = (url: string) => /\.(jpe?g|png|gif|webp|svg|avif|bmp)(\?.*)?$/i.test(url);
 
 /** True for a well-formed absolute http or https URL. */
