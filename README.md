@@ -318,13 +318,23 @@ Install:
 - Node.js 22.12 or newer
 - Project dependencies through one of the OS install scripts
 
-### 2. Open the Android Project
+### 2. Sync the Web Files and Open the Android Project
 
 ```bash
+pnpm --filter android sync
 cd apps/android
-pnpm exec cap sync android
 pnpm exec cap open android
 ```
+
+`sync` runs `apps/android/scripts/prepare-web.mjs` and then `cap sync android`.
+The script copies `apps/field-legacy` into `apps/android/www`, which is the Capacitor web folder and is git-ignored.
+It leaves out files the app never loads: the old species photos in `Assets/Images`, `data/images.json`, the unused scripts `preloadImages.js`, `bundleSync.js` and `nativeMediaPrefetch.js`, Markdown files, and the unlinked pages `login-admin.html`, `plantcamidentifier.html`, `imagepreview.html` and `tutorial.html`.
+A file in `Assets/Images` still ships when a shipped page, script, stylesheet or JSON file names its path.
+The public website still serves `apps/field-legacy` as it is.
+
+Run `pnpm --filter android sync` again after every change in `apps/field-legacy`, and always before a release build.
+A plain `cap sync`, `cap copy` or `cap run` also refreshes `www` first (through the `capacitor:copy:before` script in `apps/android/package.json`), but on a fresh clone it fails until `pnpm --filter android sync` has created `www` once.
+`cap sync` rewrites `android/capacitor.settings.gradle` and `android/app/capacitor.build.gradle` with paths into the pnpm store; that diff is expected.
 
 ### 3. Run from Android Studio
 
@@ -332,7 +342,62 @@ pnpm exec cap open android
 2. Select a connected Android device or emulator.
 3. Run the app from Android Studio.
 
-Repeat `pnpm exec cap sync android` after changing static frontend files.
+### 4. Build from the Command Line
+
+Set `JAVA_HOME` to a JDK 21, for example the one in Android Studio (`Android Studio/jbr`).
+Each command below syncs the web files first.
+
+```bash
+pnpm --filter android build:debug
+pnpm --filter android build:release -PversionCode=2 "-PversionName=1.0.1"
+```
+
+The debug APK is written to `apps/android/android/app/build/outputs/apk/debug/app-debug.apk`.
+The release bundle is written to `apps/android/android/app/build/outputs/bundle/release/app-release.aab`.
+
+Every Play upload needs a higher `versionCode` than the last one.
+Pass it and the visible `versionName` as Gradle properties, as above, rather than editing `build.gradle`.
+Without these properties the build uses `versionCode` 1 and `versionName` 1.0.0.
+Keep the quotes around `-PversionName=...`, because Windows PowerShell otherwise splits the argument at the first dot.
+
+### 5. Release Signing
+
+The release bundle is signed with the Play upload key when signing settings are present.
+Without them `build:release` still works but produces an unsigned bundle, which Play rejects.
+
+Put the settings in `apps/android/android/keystore.properties`.
+The file is git-ignored, and so are `*.jks` and `*.keystore` files.
+Keep the keystore itself outside the repository.
+
+```properties
+storeFile=C:/path/outside/the/repo/upload-keystore.jks
+storePassword=...
+keyAlias=upload
+keyPassword=...
+```
+
+A relative `storeFile` is resolved from `apps/android/android`.
+Use forward slashes in `storeFile`, also on Windows: Java reads a backslash in this file as an escape character, so a path like `C:\keys\upload.jks` breaks every Gradle build or leaves the bundle unsigned.
+Instead of the file, you can set the environment variables `ANDROID_KEYSTORE_FILE`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` and `ANDROID_KEY_PASSWORD`.
+The file wins when both exist.
+
+Android installs an update only when it is signed with the same key as the installed app.
+Before you install a build signed with a different key, for example a Play build over a debug APK, uninstall the old app first:
+
+```bash
+adb uninstall com.raimatak.speciesdb
+```
+
+Uninstalling deletes the app's offline data and downloaded videos on that device.
+
+### 6. Icons and Splash Screen
+
+`python apps/android/scripts/make-icons.py` (needs Pillow) generates the launcher icons, the splash images and the 512x512 Play Store icon `apps/android/store/icon-512.png` from the FINI logo.
+
+### 7. Continuous Integration
+
+`.github/workflows/android-build.yml` runs `pnpm --filter android build:debug` on pull requests and pushes to `master` that change `apps/android` or `apps/field-legacy`.
+It builds an unsigned debug APK and uses no signing key.
 
 ## Key Features
 

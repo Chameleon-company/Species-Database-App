@@ -1,0 +1,54 @@
+name: Android Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["master"]
+    paths:
+      - "apps/android/**"
+      - "apps/field-legacy/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/android-build.yml"
+  pull_request:
+    branches: ["master"]
+    paths:
+      - "apps/android/**"
+      - "apps/field-legacy/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/android-build.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  assemble-debug:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Copies apps/field-legacy into apps/android/www, runs cap sync android, then
+      # ./gradlew assembleDebug. No signing key is used here.
+      - name: Build debug APK
+        run: pnpm --filter android build:debug

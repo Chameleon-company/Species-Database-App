@@ -15,3 +15,8 @@ testData.xlsx
 dist/
 supabase/.branches/
 supabase/.temp/
+
+# Android: the web files copied by apps/android/scripts/prepare-web.mjs, and signing keys
+apps/android/www/
+*.jks
+*.keystore

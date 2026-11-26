@@ -3,8 +3,16 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "scripts": {
+    "prepare-web": "node scripts/prepare-web.mjs",
+    "capacitor:copy:before": "node scripts/prepare-web.mjs",
+    "sync": "node scripts/prepare-web.mjs && cap sync android",
+    "build:debug": "node scripts/prepare-web.mjs && cap sync android && node scripts/gradle.mjs assembleDebug",
+    "build:release": "node scripts/prepare-web.mjs && cap sync android && node scripts/gradle.mjs bundleRelease"
+  },
   "dependencies": {
     "@capacitor/android": "8.4.3",
+    "@capacitor/app": "8.1.2",
     "@capacitor/cli": "8.4.3",
     "@capacitor/core": "8.4.3"
   },
@@ -12,8 +20,5 @@
   "author": "",
   "license": "ISC",
   "type": "commonjs",
-  "devDependencies": {
-    "typescript": "catalog:"
-  },
   "private": true
 }

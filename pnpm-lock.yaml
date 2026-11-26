@@ -266,16 +266,15 @@ importers:
       '@capacitor/android':
         specifier: 8.4.3
         version: 8.4.3(@capacitor/core@8.4.3)
+      '@capacitor/app':
+        specifier: 8.1.2
+        version: 8.1.2(@capacitor/core@8.4.3)
       '@capacitor/cli':
         specifier: 8.4.3
         version: 8.4.3(supports-color@7.2.0)
       '@capacitor/core':
         specifier: 8.4.3
         version: 8.4.3
-    devDependencies:
-      typescript:
-        specifier: 'catalog:'
-        version: 7.0.2
 
   apps/api:
     dependencies:
@@ -484,6 +483,11 @@ packages:
     resolution: {integrity: sha512-VICd1+E2u5uPvCb5hseoZr84u7/wi334BqayKyXvSLeqURn/iw7nCFEWK29RQNW2rxiW5l1vTVHQ2K6tAJkpTQ==}
     peerDependencies:
       '@capacitor/core': ^8.4.0
+
+  '@capacitor/app@8.1.2':
+    resolution: {integrity: sha512-uKBlsrXH0IdvUn69e/KKYbZ32A06pcrUdG8LWuZ/6y33YMXZXLEEdNSwl+jKS/SrsTWqnePs8EqSWaiQM3mUGA==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
 
   '@capacitor/cli@8.4.3':
     resolution: {integrity: sha512-E3J7F6gdZSBMIwB0/WVnHZ5S+UXJPgvdnyqtwryccCGRRkIZ34b5sgYYMa2Ij4agimkUcMoScAk+K/grTtL1Xg==}
@@ -3324,6 +3328,10 @@ snapshots:
       '@babel/helper-validator-identifier': 7.29.7
 
   '@capacitor/android@8.4.3(@capacitor/core@8.4.3)':
+    dependencies:
+      '@capacitor/core': 8.4.3
+
+  '@capacitor/app@8.1.2(@capacitor/core@8.4.3)':
     dependencies:
       '@capacitor/core': 8.4.3
 
