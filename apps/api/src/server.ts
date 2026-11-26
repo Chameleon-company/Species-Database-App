@@ -29,6 +29,14 @@ const server = serve({ fetch: app.fetch, port: readPort() }, ({ port }) => {
   console.log(`API on http://localhost:${port}, Supabase at ${new URL(supabaseUrl).host}`);
 });
 
-for (const signal of ["SIGINT", "SIGTERM"] as const) {
-  process.on(signal, () => server.close(() => process.exit(0)));
+let closing = false;
+
+function shutdown() {
+  if (closing) process.exit(1);
+  closing = true;
+  server.close(() => process.exit(0));
+  setTimeout(() => process.exit(1), 10_000).unref();
 }
+
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);

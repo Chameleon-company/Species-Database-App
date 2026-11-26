@@ -12,7 +12,8 @@ packages/shared/
 ```
 
 Import each type from its own file with `import type`, for example `import type { Species } from "@sda/shared/species"`.
-The API imports `@sda/shared/database` for its Supabase client. The admin and the field app do not need it.
+The API imports `@sda/shared/database` for its Supabase client.
+The admin and the field app do not need it.
 The package holds types only.
 Do not add a value export, because it would ship in the field app's first-load bundle.
 
