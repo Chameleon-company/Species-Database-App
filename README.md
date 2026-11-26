@@ -376,6 +376,7 @@ Two rules matter most:
 2. **Never edit a migration that has already been applied anywhere.** Supersede it with a new one.
 
 After a change to `TableSchema.sql`, run `pnpm supabase db reset` to rebuild your local database.
+Then run `pnpm gen:types` and commit `packages/shared/src/database.ts` with the change.
 
 Verify a migration against a throwaway local database before it goes near Supabase:
 

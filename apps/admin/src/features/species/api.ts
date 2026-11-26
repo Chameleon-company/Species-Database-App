@@ -18,8 +18,8 @@ const bundleQuery = queryOptions({
   queryFn: () => requestJson<Bundle>(apiUrl("/bundle")),
 });
 
-const selectEnglish = (bundle: Bundle) => bundle.species_en;
-const selectTetum = (bundle: Bundle) => bundle.species_tet;
+const selectEnglish = (bundle: Bundle) => bundle.species_en ?? [];
+const selectTetum = (bundle: Bundle) => bundle.species_tet ?? [];
 
 /** Species records in one language, from the shared bundle query. */
 export function useSpeciesList(lang: Lang) {
@@ -30,8 +30,8 @@ export function useSpeciesList(lang: Lang) {
 export function useSpeciesPair(speciesId: number | null) {
   const select = useCallback(
     (bundle: Bundle) => ({
-      en: bundle.species_en.find((row) => row.species_id === speciesId),
-      tet: bundle.species_tet.find((row) => row.species_id === speciesId),
+      en: bundle.species_en?.find((row) => row.species_id === speciesId),
+      tet: bundle.species_tet?.find((row) => row.species_id === speciesId),
     }),
     [speciesId]
   );

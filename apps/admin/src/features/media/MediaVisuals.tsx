@@ -10,7 +10,7 @@ import { youtubeId, youtubeThumbnail } from "./media";
 
 export function TypeBadge({ type }: { type: MediaType | null }) {
   const { t } = useLanguage();
-  if (!type) return null;
+  if (!type) return <span className="text-faint">{t("notAvailable")}</span>;
   const isImage = type === "image";
 
   return (

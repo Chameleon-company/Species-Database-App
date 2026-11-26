@@ -17,7 +17,7 @@
     "docker:logs": "docker compose logs -f",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
-    "gen:types": "supabase gen types typescript --schema public > packages/shared/src/database.ts && oxfmt packages/shared/src/database.ts",
+    "gen:types": "bash scripts/gen-database-types.sh",
     "test": "pnpm -r test"
   },
   "devDependencies": {

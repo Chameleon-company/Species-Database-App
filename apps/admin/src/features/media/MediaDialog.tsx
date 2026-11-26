@@ -102,6 +102,8 @@ function MediaForm({ media, onClose }: { media: Media | null; onClose: () => voi
       };
       const fail = (error: unknown) =>
         setErrorKey(resolveErrorKey("save", error instanceof ApiError ? error.status : undefined));
+      const mediaType = value.media_type;
+      if (!mediaType) return;
 
       if (editing) {
         if (!isValidUrl(value.download_link)) {
@@ -109,14 +111,14 @@ function MediaForm({ media, onClose }: { media: Media | null; onClose: () => voi
           return;
         }
         await update
-          .mutateAsync({ ...media, ...value, media_type: value.media_type || null })
+          .mutateAsync({ ...media, ...value, media_type: mediaType })
           .then(() => done("mediaUpdatedSuccessfully"), fail);
         return;
       }
 
-      if (!file || !value.media_type) return;
+      if (!file) return;
       await upload
-        .mutateAsync({ ...value, media_type: value.media_type, file })
+        .mutateAsync({ ...value, media_type: mediaType, file })
         .then(() => done("mediaAddedSuccessfully"), fail);
     },
   });

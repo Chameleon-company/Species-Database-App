@@ -6,10 +6,17 @@ on:
     branches: ["master"]
     paths:
       - "services/flask-api/TableSchema.sql"
+      - "services/flask-api/migrations/**"
       - "supabase/**"
       - "packages/shared/src/database.ts"
+      - "scripts/gen-database-types.sh"
       - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
       - ".github/workflows/database-types.yml"
+
+permissions:
+  contents: read
 
 jobs:
   check-generated-types:
