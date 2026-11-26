@@ -61,10 +61,10 @@ continueBtn.addEventListener("click", () => {
   //still need language from backend to allow admins to change the language
   if(currentLanguage.code === "tet")
   {
-    window.location.href = "login_tetum.html"
+    window.location.replace("login_tetum.html")
   }
   else {
-    window.location.href = "login.html"
+    window.location.replace("login.html")
   }
 })
 

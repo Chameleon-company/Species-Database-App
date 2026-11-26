@@ -26,7 +26,7 @@
 
         <div class="search-bar">
           <span class="search-icon">
-            <img src="./Assets/icons/search.svg" alt="Search" />
+            <img src="./Assets/icons/search.svg" alt="Buka" />
           </span>
           <input type="text" placeholder="Buka espésie sira" id="searchInput" />
         </div>
@@ -36,7 +36,7 @@
       <div class="filter-carousel-container">
         <div class="filter-carousel" id="filter-carousel">
           <button class="filter-button" data-filter="all">Hamoos</button>
-          <button class="filter-button" data-filter="a-z">A--Z</button>
+          <button class="filter-button" data-filter="a-z">A-Z</button>
           <button class="filter-button" data-filter="leaf-type">
             Tipu ai-tahan
           </button>
@@ -53,6 +53,7 @@
       <script src="scripts/dataService.js"></script>
       <script src="scripts/sync.js"></script>
       <script src="scripts/imageCache.js"></script>
+      <script src="scripts/videoCache.js"></script>
       <script src="scripts/specieslist.js"></script>
       <script src="scripts/filterCarousel.js"></script>
       <script src="scripts/detectOnline.js" defer></script>
@@ -137,6 +138,17 @@
               </div>
             </div>
           </section>
+
+          <!-- Privacy policy and sign out (opens in the system browser, like the login footer) -->
+          <div class="menu-links">
+            <a
+              class="menu-link"
+              href="https://species-database-api.onrender.com/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+            >Polítika Privasidade</a>
+            <button type="button" class="menu-link" id="signOutBtn">Sai</button>
+          </div>
         </div>
       </div>
       <!-- FILTER OVERLAY (MATCHES HOME.HTML NOW) -->
@@ -153,6 +165,53 @@
 
     <script>
       const PAGE_LANGUAGE = "tet";
+
+      //Message in the species list while nothing is stored yet (first launch).
+      //Tetum text only from reviewed strings in packages/i18n/messages/tet.json
+      //(loading, failedToLoadSpecies, errorNetwork, retry).
+      function renderListState(kind) {
+        const list = document.getElementById("species-list")
+        if (!list || (window.loadedSpeciesData || []).length > 0) return
+
+        if (kind === "loading") {
+          list.innerHTML = `
+            <div style="text-align:center; padding:2rem; color:#475569;" role="status">
+              <p style="font-size:1.1rem; font-weight:600;">Karreka...</p>
+            </div>`
+          return
+        }
+
+        list.innerHTML = `
+          <div style="text-align:center; padding:2rem; color:#475569;" role="alert">
+            <p style="font-size:1.1rem; font-weight:600;">La konsege karrega espésie</p>
+            <p style="font-size:0.9rem;">La bele kontaktu servidor. Verifika ita-boot nia koneksaun no tenta fali.</p>
+            <button type="button" id="listRetryBtn" style="margin-top:0.5rem; background:#0B5C37; color:#fff; border:none; padding:0.6rem 1.2rem; border-radius:10px; font-size:0.95rem; cursor:pointer;">Tenta Fali</button>
+          </div>`
+        document.getElementById("listRetryBtn").addEventListener("click", () => startupSync())
+      }
+
+      //Background sync. The list is drawn as soon as the species are stored; images follow in the
+      //background. A failed request (not navigator.onLine, which can be wrong in the Android
+      //WebView) decides that we are offline.
+      async function startupSync() {
+        if (!window.syncManager) return
+        const hasSpecies = () => (window.loadedSpeciesData || []).length > 0
+        renderListState("loading")
+        try {
+          const res = await syncManager.checkAndSync({forceBundle: false})
+          if (res?.reason === "offline") throw new Error("Device is offline")
+          if (res?.reason === "already_syncing") return //the running sync refreshes the list
+          if (res?.synced || !hasSpecies()) window.setSpeciesData(await dataService.getAllSpecies(PAGE_LANGUAGE))
+          if (!hasSpecies()) throw new Error("No species downloaded")
+          console.log("TET background sync complete")
+        }
+        catch(err)
+        {
+          console.warn("Tet background sync skipped....", err)
+          renderListState("error")
+        }
+      }
+
       document.addEventListener("DOMContentLoaded", async () => {
         try {
           console.log("[Tetum] Starting sync...")
@@ -162,17 +221,6 @@
           console.log("TET loaded from iDB", species.length)
 
           window.setSpeciesData(species)
-
-          //backgroudn sync if online
-          if(navigator.onLine && window.syncManager)
-          {
-            syncManager.checkAndSync({forceBundle: false})
-              .then(async (res) => {
-                if (res?.synced) window.setSpeciesData(await dataService.getAllSpecies(PAGE_LANGUAGE))
-                console.log("TET background sync complete")
-              })
-              .catch(() => console.warn("Tet background sync skipped...."))
-          }
         }
         catch(err)
         {
@@ -182,6 +230,9 @@
           window.setSpeciesData([])
         }
 
+        //backgroudn sync if online; with nothing stored and no connection, explain and offer Retry
+        if(navigator.onLine && window.syncManager) startupSync()
+        else renderListState("error")
       });
 
       // LANGUAGE HANDLER
@@ -211,12 +262,21 @@
           selectedFlagEl.textContent = row.dataset.flag;
           langBtn.textContent = row.dataset.code;
           overlay.style.display = "none";
+          //remember the choice so the next launch opens in this language
+          localStorage.setItem("appLanguage", row.dataset.code === "TET" ? "tet" : "en");
           if (row.dataset.code === "TET") {
-            window.location.href = "tetum.html";
+            window.location.replace("tetum.html");
           } else {
-            window.location.href = "home.html";
+            window.location.replace("home.html");
           }
         });
+      });
+
+      // Sign out: forget the account and the guest choice, back to the login page
+      const signOutBtn = document.getElementById("signOutBtn");
+      signOutBtn.addEventListener("click", () => {
+        ["user_id", "role", "admin_token", "guest"].forEach((key) => localStorage.removeItem(key));
+        window.location.replace("login_tetum.html");
       });
 
       // ------------------------------
@@ -235,23 +295,9 @@
         sortDirection: null,
       };
 
-      // Leaf Type options
-      const leafTypeOptions = [
-      "Simple",
-      "Kompostu pinnadu (ida de'it)",
-      "Kompostu hanesan pena (rua – double pinnate)",
-      "Kompostu hanesan pena (single pinnate)",
-      "Simples",
-      "Kompostu pinnadu (Duplu)",
-      "Kompostu pinnadu (Ida de'it)",
-    ];
-    const fruitTypeOptions = [
-  "Drupe /ai-fuan ne'ebe iha parte toos ida ne'ebe proteje ninia musan",
-  "Kapsul",
-  "Fuan follicle (fuan ida naruk ne’ebé nakloke husi laran ida hodi fó musan barak)",
-  "Pod (fuan naruk ne’ebé iha musan iha laran)",
-  "Fuan drupe (fuan ida-musan ho koroa se’i iha laran ne’ebé proteje sementes)",
-];
+      // Leaf/fruit type options are built from the loaded Tetum species each time the overlay
+      // opens (getFilterOptions in specieslist.js), so every stored value can be chosen.
+      // Option values are normalised keys; applyFilters compares species on the same key.
       const filterConfigs = {
         "a-z": {
           title: "Klasifika tuir alfabetu",
@@ -264,20 +310,12 @@
         "leaf-type": {
           title: "Tipu ai-tahan",
           description: "",
-          options: leafTypeOptions.map((option) => ({
-            label: option,
-            value: option,
-            type: "leaf-type",
-          })),
+          options: () => getFilterOptions("leaf_type"),
         },
         "fruit-type": {
           title: "Tipu ai-fuan",
           description: "",
-          options: fruitTypeOptions.map((option) => ({
-            label: option,
-            value: option,
-            type: "fruit-type",
-          })),
+          options: () => getFilterOptions("fruit_type"),
         },
       };
 
@@ -290,11 +328,11 @@
 
         let filtered = [...window.loadedSpeciesData];
 
-        // Apply leaf type filter
+        // Apply leaf type filter (case, spacing and apostrophes ignored)
         if (activeFilters.leafType) {
           filtered = filtered.filter(
             (species) =>
-              species.leaf_type && species.leaf_type === activeFilters.leafType
+              normalizeFilterValue(species.leaf_type) === activeFilters.leafType
           );
         }
 
@@ -302,8 +340,7 @@
         if (activeFilters.fruitType) {
           filtered = filtered.filter(
             (species) =>
-              species.fruit_type &&
-              species.fruit_type === activeFilters.fruitType
+              normalizeFilterValue(species.fruit_type) === activeFilters.fruitType
           );
         }
 
@@ -480,7 +517,8 @@ if (filtered.length === 0 && typeof renderNoResults === "function") {
           filterDescription.textContent = config.description;
           filterOptions.innerHTML = "";
 
-          config.options.forEach((option) => {
+          const options = typeof config.options === "function" ? config.options() : config.options;
+          options.forEach((option) => {
             let optionBtn;
 
             if (option.action) {

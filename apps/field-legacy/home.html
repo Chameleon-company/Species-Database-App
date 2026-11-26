@@ -249,6 +249,17 @@
               </div>
             </div>
           </section>
+
+          <!-- Privacy policy and sign out (opens in the system browser, like the login footer) -->
+          <div class="menu-links">
+            <a
+              class="menu-link"
+              href="https://species-database-api.onrender.com/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+            >Privacy Policy</a>
+            <button type="button" class="menu-link" id="signOutBtn">Sign out</button>
+          </div>
         </div>
       </div>
 
@@ -264,7 +275,6 @@
         </div>
       </div>
       
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="scripts/config.js"></script>
     <script src="scripts/db.js"></script>
     <script src="scripts/dataService.js"></script>
@@ -332,6 +342,13 @@
                 window.applyFilters()
               }
             }
+          } else if (result.reason === 'already_syncing') {
+            // A sync started by the page is still running; it updates the list when done
+            showSyncStatus('🔄 Sync already in progress...');
+            showSyncBanner("syncing","Syncing data...");
+          } else if (result.reason === 'offline') {
+            showSyncStatus('offline.. using cached data');
+            showSyncBanner("offline","Offline mode");
           } else {
             // Already up to date
             syncBtn.classList.add('success');
@@ -347,10 +364,11 @@
         } catch (error) {
           console.error('Sync failed:', error);
           syncBtn.classList.add('error');
-          showSyncStatus('❌ Sync failed: ' + error.message, 3000);
+          showSyncStatus('❌ Sync failed. Please try again later.', 3000); //details stay in the console
           showSyncBanner("error","Sync failed! Using offline mode",true,5000);
           setTimeout(() => {showSyncBanner("offline","Offline mode",false);},5000); //need the persistnet offline banner after the error msg
-          
+          renderListState("error"); //only shows when nothing is stored yet
+
           // Remove error state after 3 seconds
           setTimeout(() => {
             syncBtn.classList.remove('error');
@@ -419,6 +437,70 @@
       // ====================================
       // PAGE LOAD HANDLER
       // ====================================
+
+      //Message in the species list while nothing is stored yet (first launch):
+      //"loading" during the first download, "error" with a Retry button when it failed or there is no connection.
+      //Does nothing once species are loaded.
+      function renderListState(kind) {
+        const list = document.getElementById("species-list");
+        if (!list || (window.loadedSpeciesData || []).length > 0) return;
+
+        if (kind === "loading") {
+          list.innerHTML = `
+            <div style="text-align:center; padding:2rem; color:#475569;" role="status">
+              <p style="font-size:1.1rem; font-weight:600;">Downloading the species guide...</p>
+              <p style="font-size:0.9rem;">This only needs the internet once. After that it works offline.</p>
+            </div>`;
+          return;
+        }
+
+        list.innerHTML = `
+          <div style="text-align:center; padding:2rem; color:#475569;" role="alert">
+            <p style="font-size:1.1rem; font-weight:600;">Failed to load species</p>
+            <p style="font-size:0.9rem;">Can't reach the server. Check your connection and try again.</p>
+            <p style="font-size:0.9rem;">The species guide needs the internet once to download. After that it works offline.</p>
+            <button type="button" id="listRetryBtn" style="margin-top:0.5rem; background:#0B5C37; color:#fff; border:none; padding:0.6rem 1.2rem; border-radius:10px; font-size:0.95rem; cursor:pointer;">Retry</button>
+          </div>`;
+        document.getElementById("listRetryBtn").addEventListener("click", () => {
+          const code = (document.querySelector(".lang-btn")?.textContent || "EN").trim().toLowerCase();
+          startupSync(code === "tet" ? "tet" : "en");
+        });
+      }
+
+      let offlineBannerTimer = null;
+
+      //Check for updates (or download everything on first launch) and refresh the list.
+      //The list is drawn as soon as the species are stored; images download in the background.
+      async function startupSync(language) {
+        if (typeof syncManager === "undefined") return;
+        const hasSpecies = () => (window.loadedSpeciesData || []).length > 0;
+
+        clearTimeout(offlineBannerTimer);
+        renderListState("loading");
+        showSyncBanner("syncing", hasSpecies() ? "Checking for updates..." : "Initial sync in progress...");
+
+        try {
+          const res = await syncManager.checkAndSync({ forceBundle: false });
+          if (res?.reason === "offline") throw new Error("Device is offline");
+          if (res?.reason === "already_syncing") return; //the running sync refreshes the list
+
+          if (res?.synced || !hasSpecies()) {
+            const updatedSpecies = await dataService.getAllSpecies(language);
+            window.setSpeciesData(updatedSpecies);
+          }
+          if (!hasSpecies()) throw new Error("No species downloaded");
+
+          showSyncBanner("online", res?.synced ? "Data up to date" : "Data already up to date", true, 5000);
+        }
+        catch(err)
+        {
+          console.warn("Offline, using cached data", err);
+          showSyncBanner("error","Sync failed! Using offline mode",true,5000);
+          offlineBannerTimer = setTimeout(() => {showSyncBanner("offline","Offline mode",false);},5000); //need the persistnet offline banner after the error msg
+          renderListState("error");
+        }
+      }
+
       document.addEventListener("DOMContentLoaded", async () => {
         console.log("[Home] Page loaded");
 
@@ -426,7 +508,7 @@
           .trim()
           .toLowerCase();
         const language = code === "tet" ? "tet" : "en";
-  
+
         //If offline, place the permanent offline banner and load cached data
         if (!navigator.onLine)
         {
@@ -440,6 +522,7 @@
             console.error("Failed loading offline species:",err);
             showSyncBanner("error", "No offline data available",true,5000);
           }
+          renderListState("error"); //nothing stored yet: explain and offer Retry
           return;
         }
 
@@ -449,33 +532,15 @@
           const species = await dataService.getAllSpecies(language);
           console.log("[Home] Loaded species:", species.length);
           window.setSpeciesData(species);
-          showSyncBanner("syncing","Initial sync in progress...");
         }
         catch(err)
         {
           console.error("Failed loading cached species:", err);
         }
 
-        //background sync
-        try{
-
-          if (typeof syncManager !== "undefined")
-          {
-            const res = await syncManager.checkAndSync({ forceBundle: false });
-            if (res?.synced) {
-              const updatedSpecies = await dataService.getAllSpecies(language);
-              window.setSpeciesData(updatedSpecies);
-              showSyncBanner("online","Data up to date",true,5000);
-            }
-            else {showSyncBanner("online","Data already up to date",true,5000);}
-          }
-        }
-        catch(err)
-        {
-          console.warn("Offline, using cached data");
-          showSyncBanner("error","Sync failed! Using offline mode",true,5000);
-          setTimeout(() => {showSyncBanner("offline","Offline mode",false);},5000); //need the persistnet offline banner after the error msg
-        }
+        //background sync (navigator.onLine can be wrong in the Android WebView, so a failed
+        //request is what really decides offline mode)
+        await startupSync(language);
       });
 
       // ====================================
@@ -507,12 +572,21 @@
           selectedFlagEl.textContent = row.dataset.flag;
           langBtn.textContent = row.dataset.code;
           overlay.style.display = "none";
+          //remember the choice so the next launch opens in this language
+          localStorage.setItem("appLanguage", row.dataset.code === "TET" ? "tet" : "en");
           if (row.dataset.code === "TET") {
-            window.location.href = "tetum.html";
+            window.location.replace("tetum.html");
           } else {
-            window.location.href = "home.html";
+            window.location.replace("home.html");
           }
         });
+      });
+
+      // Sign out: forget the account and the guest choice, back to the login page
+      const signOutBtn = document.getElementById("signOutBtn");
+      signOutBtn.addEventListener("click", () => {
+        ["user_id", "role", "admin_token", "guest"].forEach((key) => localStorage.removeItem(key));
+        window.location.replace("login.html");
       });
 
       // ====================================
@@ -531,18 +605,9 @@
         sortDirection: null,
       };
 
-      // Leaf Type options
-      const leafTypeOptions = [
-        "Simple",
-        "Pinnately compound (single)",
-        "Pinnately compound (double)",
-        "Pinnately compound (triple)",
-        "Palmately compound",
-      ];
-
-      // Fruit Type options
-      const fruitTypeOptions = ["Drupe", "Capsule", "Follicle", "Pod"];
-
+      // Leaf/fruit type options are built from the loaded species each time the overlay
+      // opens (getFilterOptions in specieslist.js), so every stored value can be chosen.
+      // Option values are normalised keys; applyFilters compares species on the same key.
       const filterConfigs = {
         "a-z": {
           title: "Sort Alphabetically",
@@ -555,20 +620,12 @@
         "leaf-type": {
           title: "Leaf Type",
           description: "",
-          options: leafTypeOptions.map((option) => ({
-            label: option,
-            value: option,
-            type: "leaf-type",
-          })),
+          options: () => getFilterOptions("leaf_type"),
         },
         "fruit-type": {
           title: "Fruit Type",
           description: "",
-          options: fruitTypeOptions.map((option) => ({
-            label: option,
-            value: option,
-            type: "fruit-type",
-          })),
+          options: () => getFilterOptions("fruit_type"),
         },
       };
 
@@ -581,11 +638,11 @@
 
         let filtered = [...window.loadedSpeciesData];
 
-        // Apply leaf type filter
+        // Apply leaf type filter (case, spacing and apostrophes ignored)
         if (activeFilters.leafType) {
           filtered = filtered.filter(
             (species) =>
-              species.leaf_type && species.leaf_type === activeFilters.leafType
+              normalizeFilterValue(species.leaf_type) === activeFilters.leafType
           );
         }
 
@@ -593,8 +650,7 @@
         if (activeFilters.fruitType) {
           filtered = filtered.filter(
             (species) =>
-              species.fruit_type &&
-              species.fruit_type === activeFilters.fruitType
+              normalizeFilterValue(species.fruit_type) === activeFilters.fruitType
           );
         }
 
@@ -772,7 +828,8 @@ if (activeFilters.sortDirection) {
           filterDescription.textContent = config.description;
           filterOptions.innerHTML = "";
 
-          config.options.forEach((option) => {
+          const options = typeof config.options === "function" ? config.options() : config.options;
+          options.forEach((option) => {
             let optionBtn;
 
             if (option.action) {

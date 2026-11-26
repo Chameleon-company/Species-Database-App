@@ -10,9 +10,10 @@
       const userId = localStorage.getItem("user_id")
       const role = localStorage.getItem("role")
       const lang = localStorage.getItem("appLanguage")
+      const isGuest = localStorage.getItem("guest") === "1" //set by "Continue as Guest", cleared by Sign out
 
-      //if logged in go straight to app
-      if(userId) {
+      //if logged in (or browsing as a guest) go straight to app
+      if(userId || isGuest) {
         if(lang === "tet")
         {
           window.location.replace("tetum.html")

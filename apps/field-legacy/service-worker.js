@@ -1,19 +1,33 @@
 // service-worker.js - PWA Offline Support
-const CACHE_NAME = "species-app-v13";
+// App files are network-first: inside the Android app the "network" is the APK's own local
+// server (always there, always the installed version); on the website it is the live site.
+// The cache is only the offline fallback, so a new release is never hidden behind old files.
+const CACHE_NAME = "species-app-v14";
+// Media cached by older versions (bulk download). Kept read-only so it still works offline;
+// pages move its images into IndexedDB image_blobs, the one media store, as they use them.
 const MEDIA_CACHE = "media-cache-v10";
+// species-app-v13 and older served app files cache-first, so pages open at update time run old code.
+const LAST_CACHE_FIRST_VERSION = 13;
 
 const CORE_ASSETS = [
   "./index.html",
   "./home.html",
   "./tetum.html",
   "./specie.html",
+  "./specie_tetum.html",
   "./video.html",
+  "./login.html",
+  "./login_tetum.html",
+  "./language.html",
   "./manifest.json",
   "./css/layout.css",
   "./css/responsive.css",
   "./css/filters.css",
   "./css/cards.css",
+  "./css/onlineBanner.css",
   "./scripts/config.js",
+  "./scripts/language.js",
+  "./js/login.js",
   "./scripts/db.js",
   "./scripts/dataService.js",
   "./scripts/imageCache.js",
@@ -30,6 +44,8 @@ const CORE_ASSETS = [
   "./Assets/icons/placeholderImageOffline.png",
   "./Assets/icons/videoCloudIcon.png",
   "./Assets/icons/videoCachedIcon.png",
+  "./Assets/icons/videoPlaceholder.jpg",
+  "./Assets/icons/search.svg",
 ];
 
 // Install - cache core assets
@@ -51,84 +67,76 @@ self.addEventListener("install", (event) => {
   );
 });
 
-// Activate - clean old caches
+// Activate - delete every cache this version does not use
 self.addEventListener("activate", (event) => {
   console.log("[SW] Activating...",CACHE_NAME);
-  event.waitUntil(
-    Promise.all([
-      caches.keys().then((keys) =>
-        Promise.all(
-          keys.map((k) => {
-            if (k !== CACHE_NAME && k !== MEDIA_CACHE) {
-              return caches.delete(k);
-            }
-          })
-        )
-      ),
-      self.clients.claim()
-    ])
-  );
-});
-
-// Fetch - serve from cache, fallback to network
-self.addEventListener("fetch", (event) => {
-  const url = new URL(event.request.url);
-
-  //Ignore blob URLs (URL's temporary and cannot be used on multiple pages)
-  if (url.protocol === "blob:") {return;}
-
-  // Handle Supabase storage URLs (images/videos)
-  if (
-      (event.request.destination === "image" || 
-         event.request.destination === "video") &&
-    url.origin !== location.origin
-  ) {
-    event.respondWith(handleMediaRequest(event.request));
-    return;
-  }
-
-  // Handle same-origin requests
-  if (url.origin === location.origin) {
-    event.respondWith(handleAppRequest(event.request));
-    return;
-  }
-});
-
-// Cache-first for media
-async function handleMediaRequest(request) {
-  const cache = await caches.open(MEDIA_CACHE);
-  const cached = await cache.match(request);
-  if (cached) {
-    console.log("[SW] Media from cache:", request.url);
-    return cached;
-  }
-
-  try {
-    const response = await fetch(request);
-    if (response.ok) {
-      await cache.put(request, response.clone());
+  event.waitUntil((async () => {
+    let replacedCacheFirst = false;
+    for (const key of await caches.keys()) {
+      if (key === CACHE_NAME || key === MEDIA_CACHE) continue;
+      const old = /^species-app-v(\d+)$/.exec(key);
+      if (old && Number(old[1]) <= LAST_CACHE_FIRST_VERSION) replacedCacheFirst = true;
+      await caches.delete(key);
     }
-    return response;
-  } catch (e) {
-    return new Response("", { status: 503 });
+    await self.clients.claim();
+
+    // Pages open right now were served from the old cache-first worker's cache (old code).
+    // Reload them once so they run the new version. Not awaited: the reload's own request waits
+    // for this worker to finish activating, so waiting for it here would deadlock.
+    if (replacedCacheFirst) {
+      const windows = await self.clients.matchAll({ type: "window" });
+      windows.forEach((client) => client.navigate(client.url).catch(() => null));
+    }
+  })());
+});
+
+// Fetch
+self.addEventListener("fetch", (event) => {
+  const request = event.request;
+  if (request.method !== "GET") return;
+
+  const url = new URL(request.url);
+  if (url.protocol !== "http:" && url.protocol !== "https:") return;
+
+  // App files: network first, cache as offline fallback
+  if (url.origin === location.origin) {
+    event.respondWith(handleAppRequest(request));
+    return;
   }
+
+  // Cross-origin images (Supabase storage) shown with a plain <img src>
+  if (request.destination === "image") {
+    event.respondWith(handleImageRequest(request));
+    return;
+  }
+
+  // Everything else (API calls, videos, fonts) goes straight to the network.
+  // Videos are played from IndexedDB blobs (Download button) or streamed directly.
+});
+
+// Navigations are cached by path, so specie.html?id=1 and ?id=2 share one copy
+function appCacheKey(request) {
+  if (request.mode !== "navigate") return request;
+  const url = new URL(request.url);
+  return url.origin + url.pathname;
 }
 
-// Cache-first for app files
+// Network-first for app files
 async function handleAppRequest(request) {
   const cache = await caches.open(CACHE_NAME);
-
-  const cached = await cache.match(request);
-  if (cached) return cached;
+  const key = appCacheKey(request);
 
   try {
     const response = await fetch(request);
-    if (response.ok && request.method === "GET") {
-      cache.put(request, response.clone());
+    if (response.ok && response.type === "basic") {
+      cache.put(key, response.clone()).catch(() => {});
     }
     return response;
   }
   catch (e) {
+    const cached = await cache.match(key, { ignoreSearch: request.mode === "navigate" });
+    if (cached) return cached;
+
     if (request.mode === "navigate") {
       //additional fallbacks for home and species pages +video (both can load from cached data) and both must be accessible offline
       const url = new URL(request.url);
@@ -152,74 +160,80 @@ async function handleAppRequest(request) {
         const fallback = await cache.match("./video.html");
         if (fallback) return fallback;
       }
+
+      if (url.pathname.endsWith("/")) {
+        const fallback = await cache.match("./index.html");
+        if (fallback) return fallback;
+      }
       //If all else fails return to home
       const fallback = await cache.match("./home.html");
       if (fallback) return fallback;
-      }
-
-      return new Response("Offline", {status: 503,headers: {"Content-Type": "text/plain"}
-      });
-  }
-}
-
-
-//helper for sending from SW toopen app tabs
-async function notifyClients(message) {
-  //get all pages controlled by SW
-  const clients =await self.clients.matchAll({
-    includeUncontrolled: true
-  }) 
-  
-  //sendig messager to each page
-  for(const client of clients)
-  {
-    client.postMessage(message)
-  }
-}
-
-//CYN
-//message handler - cache media URLs
-self.addEventListener("message", async (event) => {
-  const { type, urls } = event.data;
-
-  if (type === "CACHE_MEDIA" && Array.isArray(urls)) {
-    event.waitUntil(cacheMediaUrls(urls));
-  }
-});
-
-async function cacheMediaUrls(urls) {
-  console.log("[SW] Caching", urls.length, "media URLs");
-  const cache = await caches.open(MEDIA_CACHE);
-
-  let done = 0;
-  const total = urls.length;
-  const success = [];
-  const failed = [];
-
-  for (const url of urls) {
-    try {
-      const req = new Request(url, { cache: "no-store" });
-      const cached = await cache.match(req);
-      if (!cached) {
-        const res = await fetch(url);
-        if (res.ok) {
-          await cache.put(url, res.clone());
-          success.push(url);
-        } else {
-          failed.push(url);
-        }
-      } else {
-        success.push(url);
-      }
-      done++;
-      notifyClients({ type: "MEDIA_CACHE_PROGRESS", done, total, url });
-    } catch (e) {
-      failed.push(url);
-      done++;
-      notifyClients({ type: "MEDIA_CACHE_PROGRESS", done, total, url, error: true });
     }
+
+    return new Response("Offline", {status: 503,headers: {"Content-Type": "text/plain"}});
   }
-  notifyClients({ type: "MEDIA_CACHE_DONE", total, success, failed });
+}
+
+// Images: old media cache, then the IndexedDB copy the app stores, then the network.
+// Nothing is added to Cache Storage here, so each image is stored once (image_blobs).
+async function handleImageRequest(request) {
+  try {
+    const cached = await caches.open(MEDIA_CACHE).then((cache) => cache.match(request));
+    if (cached) return cached;
+  } catch (e) {
+    // fall through
+  }
+
+  const blob = await getStoredImage(request.url);
+  if (blob) {
+    return new Response(blob, { headers: { "Content-Type": blob.type || "application/octet-stream" } });
+  }
+
+  try {
+    return await fetch(request);
+  } catch (e) {
+    return new Response("", { status: 503 });
+  }
+}
+
+// Read an image blob from the app's IndexedDB (species_db / image_blobs). Never creates the
+// database and closes the connection straight away so it cannot block a schema upgrade.
+function getStoredImage(url) {
+  return new Promise((resolve) => {
+    let open;
+    try {
+      open = indexedDB.open("species_db");
+    } catch (e) {
+      resolve(null);
+      return;
+    }
+    open.onupgradeneeded = () => open.transaction.abort(); // database does not exist yet
+    open.onerror = () => resolve(null);
+    open.onblocked = () => resolve(null);
+    open.onsuccess = () => {
+      const database = open.result;
+      try {
+        if (!database.objectStoreNames.contains("image_blobs")) {
+          database.close();
+          resolve(null);
+          return;
+        }
+        const get = database.transaction("image_blobs", "readonly").objectStore("image_blobs").get(url);
+        get.onsuccess = () => {
+          database.close();
+          const blob = get.result && get.result.blob;
+          resolve(blob && blob.size > 0 ? blob : null);
+        };
+        get.onerror = () => {
+          database.close();
+          resolve(null);
+        };
+      } catch (e) {
+        database.close();
+        resolve(null);
+      }
+    };
+  });
 }
 
 console.log("[SW] Service Worker loaded");

@@ -84,31 +84,31 @@ if(!VIDEO_SRC || !speciesId)
 
 
 //Chcek if online -> if not online and video hasnt cached show video is unavailable
+//(a real request, because navigator.onLine can be wrong in the Android WebView)
 async function checkIfOnline() {
     if (!VIDEO_SRC) {
         return false;
     }
 
-    try {
-        const response = await fetch(VIDEO_SRC, {
-            method: "HEAD",
-            cache: "no-store"
-        });
+    const probe = async (options) => {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 8000);
+        try {
+            const response = await fetch(VIDEO_SRC, { ...options, cache: "no-store", signal: controller.signal });
+            if (response.body) {response.body.cancel().catch(() => {});}
+            return response.ok;
+        } finally {
+            clearTimeout(timer);
+        }
+    };
 
-        if (response.ok) {
+    try {
+        if (await probe({ method: "HEAD" })) {
             return true;
         }
 
         // Some storage services reject HEAD even when GET works
-        const fallback = await fetch(VIDEO_SRC, {
-            method: "GET",
-            headers: {
-                Range: "bytes=0-0"
-            },
-            cache: "no-store"
-        });
-
-        return fallback.ok;
+        return await probe({ method: "GET", headers: { Range: "bytes=0-0" } });
     } catch {
         return false;
     }
@@ -117,7 +117,8 @@ async function checkIfOnline() {
 //Return a video state to update download text, button and video player
 async function videoState() {
     const cached = await getCachedVideo(VIDEO_SRC);
-    const online = await checkIfOnline();
+    //A video on the device plays without a network check
+    const online = cached?.blob ? navigator.onLine : await checkIfOnline();
 
     console.log("[Video State]", {
     isCached: !!cached?.blob,
@@ -270,12 +271,17 @@ downloadBtn?.addEventListener("click", async () => {
     downloadStatus.textContent = "Downloading...";
     downloadBtn.disabled = true;
     try {
-        const blob = await cacheVideo(VIDEO_SRC,speciesId);
+        //cacheVideo throws unless the video is really stored on the device
+        const blob = await cacheVideo(VIDEO_SRC,speciesId,(received,total) => {
+            downloadStatus.textContent = total
+                ? `Downloading... ${Math.floor((received / total) * 100)}%`
+                : `Downloading... ${formatFileSize(received)}`;
+        });
 
         downloadStatus.textContent = "Video downloaded";
         downloadBtn.textContent = "Downloaded";
         downloadBtn.disabled = true;
-        
+
         if (videoPrev && blob) {
             videoPrev.src = URL.createObjectURL(blob);
             downloadBtn.disabled = true;
@@ -284,7 +290,9 @@ downloadBtn?.addEventListener("click", async () => {
 
     } catch (err) {
         console.error("[Video] Download failed:", err);
-        downloadStatus.textContent = "Download failed";
+        downloadStatus.textContent = err && err.name === "QuotaExceededError"
+            ? "Download failed: not enough storage space"
+            : "Download failed";
         downloadBtn.textContent = "Not Downloaded";
         downloadBtn.disabled = false;
     }
@@ -302,7 +310,6 @@ async function checkDownloadState() {
         return;
     }
 
-    const cached = await getCachedVideo(VIDEO_SRC);
     const state = await videoState();
     //if already cached -> disable
     if (state.isCached) {

@@ -28,51 +28,90 @@ async function uncacheMedia(urls) {
   }
 }
 
-//send image URLs to the sw for background cachjing
-//after bundle sync and incremental updates
-function sendIMGToSW(images = [], timeoutMs = 60000) {
-  return new Promise((resolve) => {
-    // CHANGED: count urls first, before checking controller —
-    // so if the controller is not ready yet, we know which URLs that is failed
-    const urls = images
-      .map((m) => m.download_link || m.url)
-      .filter(Boolean);
+/**
+ * Delete every media-cache entry whose URL is not in keepUrls (media dropped from the bundle).
+ * Never throws.
+ * @param {Set<string>} keepUrls
+ * @returns {Promise<void>}
+ */
+async function pruneCachedMedia(keepUrls) {
+  if (!('caches' in self)) return;
+  try {
+    for (const name of await caches.keys()) {
+      if (!name.startsWith('media-cache')) continue;
+      const cache = await caches.open(name);
+      for (const request of await cache.keys()) {
+        if (!keepUrls.has(request.url)) await cache.delete(request);
+      }
+    }
+  } catch (error) {
+    console.warn('[Sync] Could not prune cached media', error);
+  }
+}
 
-    if (!urls.length) {
-      resolve({ success: [], failed: [] });
-      return;
+// Image downloads in flight, shared by the background prefetch and loadImageWithCache (imageCache.js)
+// so the same image is never fetched twice at once.
+const imageBlobJobs = new Map();
+
+/**
+ * Put one image into IndexedDB image_blobs, the store the pages read offline. Takes it from the
+ * service worker media cache left by older versions when it is there (and drops that copy),
+ * otherwise downloads it. Never throws.
+ * @param {string} url
+ * @param {number|string} speciesId
+ * @param {number} timeoutMs - Covers the whole download, body included
+ * @returns {Promise<{blob: Blob, stored: boolean}|null>} The image (stored=false when IndexedDB refused it), or null when it could not be fetched
+ */
+function cacheImageBlob(url, speciesId, timeoutMs = 30000) {
+  if (!url) return Promise.resolve(null);
+  if (imageBlobJobs.has(url)) return imageBlobJobs.get(url);
+
+  const job = (async () => {
+    let blob = null;
+    let fromCacheStorage = false;
+    try {
+      const cached = 'caches' in self ? await caches.match(url) : null;
+      if (cached && cached.ok) {
+        blob = await cached.blob();
+        fromCacheStorage = blob.size > 0;
+      }
+    } catch (error) {
+      blob = null;
     }
 
-    if (!navigator.serviceWorker?.controller) {
-      // CHANGED
-      console.warn('[Sync] No active service worker controller - media caching skipped');
-      resolve({ success: [], failed: urls, skipped: true });
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      navigator.serviceWorker.removeEventListener("message", onMessage);
-      resolve({ success: [], failed: urls, timedOut: true });
-    }, timeoutMs);
-
-    function onMessage(event) {
-      if (event.data?.type === "MEDIA_CACHE_DONE") {
-        clearTimeout(timeout);
-        navigator.serviceWorker.removeEventListener("message", onMessage);
-        resolve({
-          success: event.data.success || [],
-          failed: event.data.failed || []
-        });
+    if (!fromCacheStorage) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const response = await fetch(url, { signal: controller.signal });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        blob = await response.blob();
+      } catch (error) {
+        console.warn('[Sync] Image download failed:', url, error.message || error);
+        return null;
+      } finally {
+        clearTimeout(timer);
       }
     }
 
-    navigator.serviceWorker.addEventListener("message", onMessage);
+    if (!blob || blob.size === 0) return null;
 
-    navigator.serviceWorker.controller.postMessage({
-      type: "CACHE_MEDIA",
-      urls
-    });
-  });
+    try {
+      await db.saveImageBlob(url, speciesId, blob);
+    } catch (error) {
+      console.warn('[Sync] Could not store image:', url, error);
+      return { blob, stored: false }; // still usable on screen now
+    }
+    if (fromCacheStorage) await uncacheMedia([url]);
+    return { blob, stored: true };
+  })().finally(() => imageBlobJobs.delete(url));
+
+  imageBlobJobs.set(url, job);
+  return job;
+}
+
+if (typeof window !== 'undefined') {
+  window.cacheImageBlob = cacheImageBlob;
 }
 
 class SyncManager {
@@ -110,7 +149,11 @@ class SyncManager {
     // Retry configuration
     this.maxRetries = 3;
     this.retryDelay = 1000; // milliseconds
-    this.timeout = 30000; // 30 seconds default timeout
+    this.timeout = 30000; // 30 seconds default timeout (covers the response body too)
+    this.bundleTimeout = 90000; // the full bundle is ~170 KB, allow slow mobile links
+
+    // Background image prefetch running in this page (single flight)
+    this.imagePrefetch = null;
 
     // Authentication token storage
     this.authToken = null;
@@ -129,9 +172,9 @@ class SyncManager {
    * @returns {Object} Headers object
    */
   getAuthHeaders() {
-    const headers = {
-      'Content-Type': 'application/json'
-    };
+    // No Content-Type: every sync call is a GET without a body, and a Content-Type of
+    // application/json would force a CORS preflight before each request.
+    const headers = {};
 
     if (this.authToken) {
       headers['Authorization'] = `Bearer ${this.authToken}`;
@@ -141,32 +184,43 @@ class SyncManager {
   }
 
   /**
-   * Fetch with timeout and error handling
+   * GET a JSON document. The timeout covers the headers AND the body, so a stalled
+   * download cannot leave a sync running forever.
    * @param {string} url - URL to fetch
-   * @param {Object} options - Fetch options
-   * @returns {Promise<Response>}
+   * @param {number} timeoutMs - Deadline for the whole request
+   * @returns {Promise<Object>} Parsed JSON
    */
-  async fetchWithTimeout(url, options = {}) {
+  async fetchJson(url, timeoutMs = this.timeout) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
       const response = await fetch(url, {
-        ...options,
+        method: 'GET',
         signal: controller.signal,
-        headers: {
-          ...this.getAuthHeaders(),
-          ...options.headers
-        }
+        headers: this.getAuthHeaders()
       });
-      clearTimeout(timeoutId);
-      return response;
+
+      if (response.status === 401 || response.status === 403) {
+        throw new Error('Authentication failed - please login again');
+      }
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => response.statusText);
+        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+      }
+
+      return await response.json();
     } catch (error) {
-      clearTimeout(timeoutId);
       if (error.name === 'AbortError') {
-        throw new Error('Request timeout - server took too long to respond');
+        throw new Error('Network timeout - please check your connection');
+      }
+      if (error instanceof TypeError) {
+        throw new Error(`Network error: ${error.message}`);
       }
       throw error;
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 
@@ -251,26 +305,22 @@ class SyncManager {
         await this.db.init();
       }
 
-      // Retry any media left over from a previous interrupted sync FIRST,
-      // regardless of whether species data needs updating
-      const existingMetadata = await this.db.getSyncMetadata();
-      let leftoverRetry = null;
-      if (existingMetadata?.pending_media?.length > 0) {
-        leftoverRetry = await this.retryFailedMedia();
-      }
-      
       // Check if we have local data
       const hasData = await this.hasLocalData();
 
+      let syncResult;
       // Force bundle sync if requested or no local data
       if (options.forceBundle || !hasData) {
         this.reportProgress('Starting initial sync...');
-        return await this.performInitialSync();
-      } 
-      // Check for updates and do incremental sync
-      const syncResult = await this.performIncrementalSync();
+        syncResult = await this.performInitialSync();
+      } else {
+        // Check for updates and do incremental sync
+        syncResult = await this.performIncrementalSync();
+      }
 
-      return leftoverRetry ? { ...syncResult, mediaRetry: leftoverRetry } : syncResult;
+      // Images download in the background; the species list never waits for them.
+      this.startImagePrefetch();
+      return syncResult;
 
       /*
       // Species already up to date — check if a previous sync left media pending
@@ -314,62 +364,21 @@ class SyncManager {
       this.reportProgress('Fetching bundle from server...');
       const bundleUrl = `${this.apiConfig.baseUrl}${this.apiConfig.endpoints.bundle}`;
 
-      let response;
-      try {
-        response = await this.fetchWithTimeout(bundleUrl, {
-          method: 'GET'
-        });
-      } catch (error) {
-        if (error.message.includes('timeout')) {
-          throw new Error('Network timeout - please check your connection');
-        }
-        throw new Error(`Network error: ${error.message}`);
-      }
-
-      // Handle authentication errors
-      if (response.status === 401 || response.status === 403) {
-        throw new Error('Authentication failed - please login again');
-      }
-
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => response.statusText);
-        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
-      }
-
-      const bundle = await response.json();
+      const bundle = await this.fetchJson(bundleUrl, this.bundleTimeout);
 
       // Validate bundle structure
       if (!bundle || typeof bundle.version === 'undefined') {
         throw new Error('Invalid bundle response: missing version');
       }
 
-      // Step 2: Store species data atomically
+      // Step 2: Store species, media metadata and the new version in one transaction
       this.reportProgress('Storing species data...');
       await this.storeSpeciesBundle(bundle);
 
-      // Step 3: Store media metadata (if present)
-      let mediaResult = { success: [], failed: [] };
-       if (bundle.media && Array.isArray(bundle.media) && bundle.media.length > 0) {
-        this.reportProgress(`Storing media metadata (${bundle.media.length} items)...`);
-        await this.db.storeMediaMetadata(bundle.media);
-
-        this.reportProgress(`Caching ${bundle.media.length} media files...`);
-        mediaResult = await sendIMGToSW(bundle.media);
-
-        if (mediaResult.failed.length > 0) {
-          console.warn(`[Sync] ${mediaResult.failed.length} media files failed to cache`, mediaResult.failed);
-        }
+      // Step 3: Drop stored images/videos that are no longer in the bundle
+      if (Array.isArray(bundle.media) && bundle.media.length > 0) {
+        await this.pruneRemovedMedia(bundle.media);
       }
-
-      // Step 4: Update sync metadata
-      await this.db.updateSyncMetadata({
-        version: bundle.version,
-        last_sync: new Date().toISOString(),
-        status: 'idle',
-        error: null,
-        media_status: mediaResult.failed.length > 0 ? 'partial' : 'complete',
-        pending_media: mediaResult.failed
-      });
 
       this.reportProgress('Sync complete!');
 
@@ -382,10 +391,8 @@ class SyncManager {
           en: bundle.species_en?.length || 0,
           tet: bundle.species_tet?.length || 0
         },
-        mediaCount: bundle.media?.length || 0,
-        mediaStatus: mediaResult.failed.length > 0 ? 'partial' : 'complete',
-        pendingMediaCount: mediaResult.failed.length
-      };  
+        mediaCount: bundle.media?.length || 0
+      };
 
       if (this.onComplete) {
         this.onComplete(result);
@@ -418,29 +425,7 @@ class SyncManager {
       this.reportProgress('Checking for updates...');
       const changesUrl = `${this.apiConfig.baseUrl}${this.apiConfig.endpoints.changes}?since_version=${localVersion}`;
 
-      let checkResponse;
-      try {
-        checkResponse = await this.fetchWithTimeout(changesUrl, {
-          method: 'GET'
-        });
-      } catch (error) {
-        if (error.message.includes('timeout')) {
-          throw new Error('Network timeout - please check your connection');
-        }
-        throw new Error(`Network error: ${error.message}`);
-      }
-
-      // Handle authentication errors
-      if (checkResponse.status === 401 || checkResponse.status === 403) {
-        throw new Error('Authentication failed - please login again');
-      }
-
-      if (!checkResponse.ok) {
-        const errorText = await checkResponse.text().catch(() => checkResponse.statusText);
-        throw new Error(`HTTP error checking changes! status: ${checkResponse.status} - ${errorText}`);
-      }
-
-      const checkResult = await checkResponse.json();
+      const checkResult = await this.fetchJson(changesUrl);
 
       // Already up to date
       if (checkResult.up_to_date) {
@@ -465,29 +450,7 @@ class SyncManager {
 
       const incrementalUrl = `${this.apiConfig.baseUrl}${this.apiConfig.endpoints.incremental}?since_version=${localVersion}`;
 
-      let response;
-      try {
-        response = await this.fetchWithTimeout(incrementalUrl, {
-          method: 'GET'
-        });
-      } catch (error) {
-        if (error.message.includes('timeout')) {
-          throw new Error('Network timeout - please check your connection');
-        }
-        throw new Error(`Network error: ${error.message}`);
-      }
-
-      // Handle authentication errors
-      if (response.status === 401 || response.status === 403) {
-        throw new Error('Authentication failed - please login again');
-      }
-
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => response.statusText);
-        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
-      }
-
-      const changes = await response.json();
+      const changes = await this.fetchJson(incrementalUrl);
 
       if (changes.force_bundle) {
         this.reportProgress('Server asked for a full download...');
@@ -503,18 +466,10 @@ class SyncManager {
       this.reportProgress('Updating changed species...');
       await this.replaceChangedSpecies(changes);
 
-       let mediaResult = { success: [], failed: [] };
-
       if (changes.media && Array.isArray(changes.media) && changes.media.length > 0) {
         //Storing the new image of new species that are added by incremental sync
+        // (the image files themselves are fetched by the background prefetch)
         await this.db.upsertMediaMetadata(changes.media);
-
-        this.reportProgress(`Caching ${changes.media.length} media files...`);
-        mediaResult = await sendIMGToSW(changes.media);
-
-        if (mediaResult.failed.length > 0) {
-          console.warn(`[Sync] ${mediaResult.failed.length} media files failed to cache`, mediaResult.failed);
-        }
       }
 
       // Step 4: Update sync metadata
@@ -523,8 +478,8 @@ class SyncManager {
         last_sync: new Date().toISOString(),
         status: 'idle',
         error: null,
-        media_status: mediaResult.failed.length > 0 ? 'partial' : 'complete',
-        pending_media: mediaResult.failed
+        media_status: 'pending',
+        pending_media: []
       });
 
       this.reportProgress('Sync complete!');
@@ -539,9 +494,7 @@ class SyncManager {
           en: changes.species_en?.length || 0,
           tet: changes.species_tet?.length || 0
         },
-        deletedCount: changes.deleted_species_ids?.length || 0,
-        mediaStatus: mediaResult.failed.length > 0 ? 'partial' : 'complete',
-        pendingMediaCount: mediaResult.failed.length
+        deletedCount: changes.deleted_species_ids?.length || 0
       };
 
       if (this.onComplete) {
@@ -558,54 +511,117 @@ class SyncManager {
   }
 
   /**
-   * Retry caching media that previously failed, without re-downloading species data
+   * Start the background image prefetch without waiting for it. Never throws.
+   */
+  startImagePrefetch() {
+    if (typeof window === 'undefined') return;
+    // Give the species list a moment to render (and fetch its thumbnails) first.
+    setTimeout(() => {
+      this.prefetchImages().catch((error) => console.warn('[Sync] Image prefetch failed:', error));
+    }, 1500);
+  }
+
+  /**
+   * Download every image in the media metadata that is not stored yet into IndexedDB
+   * image_blobs (the store the pages read offline), a few at a time. Videos are not
+   * downloaded here: they stay opt-in through the Download button on video.html.
+   * Safe to call often: stored images are skipped and only one run happens per page.
+   * Records in sync_metadata only the URLs that really failed.
    * @returns {Promise<Object>}
    */
-  async retryFailedMedia() {
-    if (!this.db) {
-      throw new Error('Database not initialized');
+  prefetchImages() {
+    if (!this.imagePrefetch) {
+      this.imagePrefetch = this.runImagePrefetch().finally(() => {
+        this.imagePrefetch = null;
+      });
+    }
+    return this.imagePrefetch;
+  }
+
+  async runImagePrefetch() {
+    const media = await this.db.getAllMedia();
+    const stored = new Set(await this.db.getImageBlobUrls());
+    // Older versions also kept these images in the service worker media cache: keep one copy.
+    await uncacheMedia([...stored]);
+    const todo = [];
+    const seen = new Set();
+    for (const item of media) {
+      const url = item.download_link || item.url;
+      if (item.media_type !== 'image' || !url || stored.has(url) || seen.has(url)) continue;
+      seen.add(url);
+      todo.push(item);
     }
 
-    if (!navigator.onLine) {
-      return { retried: 0, reason: 'offline' };
+    if (!todo.length) {
+      await this.db.patchSyncMetadata({ media_status: 'complete', pending_media: [] });
+      return { total: seen.size + stored.size, downloaded: 0, failed: [] };
     }
 
-    const metadata = await this.db.getSyncMetadata();
-    const pending = metadata?.pending_media || [];
+    console.log(`[Sync] Downloading ${todo.length} images for offline use in the background...`);
+    const failed = [];
+    let downloaded = 0;
+    let next = 0;
+    let failuresInARow = 0;
 
-    if (!pending.length) {
-      return { retried: 0, reason: 'nothing_pending' };
-    }
-
-    this.reportProgress(`Retrying ${pending.length} failed media files...`);
-
-    const mediaItems = await this.db.getMediaMetadataByUrls(pending);
-
-    // Fallback: if metadata lookup somehow found nothing, still try the raw urls
-    const itemsToSend = mediaItems.length > 0
-      ? mediaItems
-      : pending.map((url) => ({ url }));
-
-    const mediaResult = await sendIMGToSW(itemsToSend);
-
-    await this.db.updateSyncMetadata({
-      ...metadata,
-      media_status: mediaResult.failed.length > 0 ? 'partial' : 'complete',
-      pending_media: mediaResult.failed
-    });
-
-    this.reportProgress(
-      mediaResult.failed.length > 0
-        ? `${mediaResult.failed.length} media files still failed`
-        : 'All media cached successfully'
-    );
-
-    return {
-      retried: pending.length,
-      success: mediaResult.success.length,
-      failed: mediaResult.failed.length,
-      mediaStatus: mediaResult.failed.length > 0 ? 'partial' : 'complete'
+    const worker = async () => {
+      // Stop early when the network is clearly gone; the next sync resumes from here.
+      while (next < todo.length && failuresInARow < 6) {
+        const item = todo[next++];
+        const url = item.download_link || item.url;
+        const result = await cacheImageBlob(url, item.species_id);
+        if (result && result.stored) {
+          downloaded++;
+          failuresInARow = 0;
+        } else {
+          failed.push(url);
+          failuresInARow++;
+        }
+      }
     };
+    await Promise.all([worker(), worker(), worker()]);
+
+    const notTried = todo.length - downloaded - failed.length;
+    await this.db.patchSyncMetadata({
+      media_status: failed.length || notTried ? 'partial' : 'complete',
+      pending_media: failed
+    });
+    console.log(`[Sync] Images stored: ${downloaded}, failed: ${failed.length}, left for later: ${notTried}`);
+    return { total: todo.length, downloaded, failed, notTried };
+  }
+
+  /**
+   * Kept for callers of the old API: retries missing images in the background.
+   * @returns {Promise<Object>}
+   */
+  retryFailedMedia() {
+    return this.prefetchImages();
+  }
+
+  /**
+   * After a full bundle replaced the media list, delete stored image/video blobs and
+   * service worker cache entries whose URL is no longer in it. Never throws.
+   * @param {Array} mediaList - The bundle's complete media list
+   */
+  async pruneRemovedMedia(mediaList) {
+    const keep = new Set();
+    for (const item of mediaList) {
+      for (const url of [item.download_link, item.streaming_link, item.url]) {
+        if (!url) continue;
+        keep.add(url);
+        try {
+          keep.add(new URL(url).href);
+        } catch (error) {
+          // not a valid URL; the raw string is enough
+        }
+      }
+    }
+    try {
+      const removed = await this.db.pruneMediaBlobs(keep);
+      if (removed.length) console.log(`[Sync] Removed ${removed.length} stored media files no longer in the bundle`);
+    } catch (error) {
+      console.warn('[Sync] Could not prune stored media', error);
+    }
+    await pruneCachedMedia(keep);
   }
 
   /**
@@ -619,9 +635,6 @@ class SyncManager {
     }
 
     try {
-      // Clear existing species data
-      await this.db.clearSpecies();
-
       // Prepare all species with language field
       const allSpecies = [];
 
@@ -651,10 +664,23 @@ class SyncManager {
         }
       }
 
-      // Store all species in a single transaction (unified store)
-      if (allSpecies.length > 0) {
-        await this.db.storeSpecies(allSpecies);
+      // Never wipe the offline guide with an empty bundle
+      if (allSpecies.length === 0) {
+        throw new Error('Invalid bundle response: no species');
       }
+
+      // Species, media metadata and the new version go in ONE transaction: if anything
+      // fails (or the page closes) the previous data stays as it was.
+      const media = Array.isArray(bundle.media) && bundle.media.length > 0 ? bundle.media : null;
+      await this.db.replaceBundle(allSpecies, media, {
+        version: bundle.version,
+        status: 'idle',
+        last_sync: new Date().toISOString(),
+        timestamp: new Date().toISOString(),
+        error: null,
+        media_status: 'pending',
+        pending_media: []
+      });
 
       // Validate data integrity - check stored count
       const storedCount = await this.db.getSpeciesCount();

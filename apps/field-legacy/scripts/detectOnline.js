@@ -59,6 +59,23 @@ document.addEventListener('DOMContentLoaded', () => {
     
      if (typeof syncManager === 'undefined') return;
 
+    // The list pages (home.html, tetum.html) have their own startup sync, which also updates
+    // the sync banner and the "nothing downloaded yet / Retry" message. Use it when present.
+    if (typeof window.startupSync === 'function') {
+      const code = (document.querySelector('.lang-btn')?.textContent || 'EN').trim().toLowerCase();
+      const lang = code === 'tet' ? 'tet' : 'en';
+      try {
+        await window.startupSync(lang);
+        // Re-render so thumbnails that failed while offline get retried
+        if ((window.loadedSpeciesData || []).length > 0 && typeof dataService !== 'undefined') {
+          window.setSpeciesData(await dataService.getAllSpecies(lang));
+        }
+      } catch (err) {
+        console.warn('[detectOnline] Sync retry failed:', err);
+      }
+      return;
+    }
+
     try {
       const res = await syncManager.checkAndSync({ forceBundle: false });
 

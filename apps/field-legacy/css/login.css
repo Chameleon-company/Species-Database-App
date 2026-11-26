@@ -55,7 +55,8 @@ body {
   align-items: center;
   font-family: var(--font);
   color: var(--text-primary);
-  overflow: hidden;
+  /* only clip sideways: on short screens the page must scroll down to the footer links */
+  overflow-x: hidden;
   position: relative;
 }
 
@@ -191,6 +192,11 @@ body>.app-shell {
   margin-bottom: 28px;
   opacity: 0;
   transform: translateY(14px);
+}
+
+/* Pages without a subtitle (login_tetum.html) still need space under the title */
+.title + .email-group {
+  margin-top: 20px;
 }
 
 /* ── Divider ── */

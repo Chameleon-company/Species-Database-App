@@ -2,7 +2,7 @@
 <html lang="tet">
   <head>
     <meta charset="UTF-8" />
-    <title>Species Details</title>
+    <title>Detallu Espésie</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <link rel="manifest" href="manifest.json" />
@@ -231,7 +231,8 @@
           class="left-arrow-icon go-back"
         />
         <h1 id="plant-common"></h1>
-        <img src="Assets/icons/heart.png" alt="" class="heart-icon" />
+        <!-- keeps the title centred (there is no favourites feature, so no heart icon) -->
+        <span class="heart-icon" aria-hidden="true"></span>
       </div>
       <div>
         <div class="image-layer">
@@ -312,9 +313,10 @@
     <script src="scripts/config.js"></script>
     <script src="scripts/db.js"></script>
     <script src="scripts/dataService.js"></script>
+    <script src="scripts/imageCache.js"></script>
     <script src="scripts/sync.js"></script>
     <script src="scripts/detectOnline.js" defer></script>
-    
+
     <script>
       const PAGE_LANGUAGE = "tet";
       const params = new URLSearchParams(window.location.search);
@@ -348,6 +350,7 @@
 
           // Populate DOM with species data
 
+          document.title = species.common_name || species.scientific_name || document.title;
           document.getElementById("plant-common").textContent =
             species.common_name || "";
           document.getElementById("plant-scientific").textContent =
@@ -378,23 +381,6 @@
           // get species images from getSpeciesMedia
           const mediaItems = await dataService.getSpeciesMedia(plantID);
 
-          if(mediaItems.length > 0)
-          {
-            document.getElementById("plant-image").src =
-              mediaItems[0].download_link || "";
-          }
-          const gallery = document.getElementById("image-gallery");
-          gallery.innerHTML = "";
-
-          if (mediaItems.length !== 0) {
-            mediaItems.forEach((url) => {
-              const img = document.createElement("img");
-              img.src = url.download_link;
-              img.loading = "lazy";
-
-              gallery.appendChild(img);
-            });
-          }
           const videoBtn = document.getElementById("germinationVideoBtn")
 
           const videoItem = mediaItems.find(m => m.media_type === "video")
@@ -402,12 +388,37 @@
           if (videoItem && videoItem.download_link) {
             videoBtn.addEventListener("click", () => {
               window.location.href =
-                `video.html?media=${encodeURIComponent(videoItem.download_link)}&species_id=${plantID}`
+                `video.html?media=${encodeURIComponent(videoItem.download_link)}&species_id=${encodeURIComponent(plantID)}&title=${encodeURIComponent(species.scientific_name || "")}&lang=tet`
             })
           } else {
             videoBtn.style.display = "none"
           }
 
+          // Only photos go in the main image and the gallery (videos have their own button),
+          // in the same order as the list thumbnail (dataService.getThumbnail)
+          const imageItems = mediaItems
+            .filter((m) => m.media_type === "image" && m.download_link)
+            .sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
+
+          const mainImage = document.getElementById("plant-image");
+          if (imageItems.length > 0)
+          {
+            //load image from cache if available (same offline store as specie.html);
+            //not awaited, so the gallery and the zoom do not wait for a slow download
+            loadImageWithCache(mainImage, imageItems[0].download_link, plantID);
+          }
+          else {
+            mainImage.src = "Assets/icons/placeholderImageOffline.png";
+          }
+          const gallery = document.getElementById("image-gallery");
+          gallery.innerHTML = "";
+
+          imageItems.forEach((item) => {
+            const img = document.createElement("img");
+            img.loading = "lazy";
+            gallery.appendChild(img);
+            loadImageWithCache(img, item.download_link, plantID);
+          });
 
           gallery.addEventListener("click", (e) => {
             if (e.target.tagName === "IMG") {

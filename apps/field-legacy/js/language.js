@@ -51,18 +51,16 @@
       localStorage.setItem("appLanguage", selected.code);
       //need to ensure once logged in once, user doesnt need to see this
       const userId = localStorage.getItem("user_id")
-      const role = localStorage.getItem("role")
+      const isGuest = localStorage.getItem("guest") === "1"
       
-      //if already logged in, skip login
-      if(userId)
+      //if already logged in (or a guest), skip login
+      if(userId || isGuest)
       {
-        window.location.href = selected.code === "tet"? "tetum.html" : "home.html"
+        window.location.replace(selected.code === "tet" ? "tetum.html" : "home.html")
       }
       else {
-        window.location.href = "login.html"
+        window.location.replace(selected.code === "tet" ? "login_tetum.html" : "login.html")
       }
-
-      window.location.href = "login.html"; // move to home page?
     });
 
     renderList();

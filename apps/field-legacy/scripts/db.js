@@ -744,6 +744,162 @@ class SpeciesDB {
       };
     });
   }
+
+  /**
+   * Replace all species (and, when mediaArray is an array, all media metadata) and write the
+   * sync metadata in ONE readwrite transaction, so a failure or a closed page half way through
+   * leaves the previous data in place instead of an empty store.
+   * @param {Array} speciesArray - Species rows with `language` set
+   * @param {Array|null} mediaArray - Full media list, or null to keep the stored media
+   * @param {Object} syncValue - Sync metadata value (version, last_sync, status, ...)
+   * @returns {Promise<void>} Resolves when the transaction has committed
+   */
+  async replaceBundle(speciesArray, mediaArray, syncValue) {
+    const db = await this.init();
+    const stores = Array.isArray(mediaArray) ? ['species', 'media', 'sync_metadata'] : ['species', 'sync_metadata'];
+
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(stores, 'readwrite');
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(new Error(`Failed to store bundle: ${transaction.error}`));
+      transaction.onabort = () => reject(new Error(`Storing bundle aborted: ${transaction.error}`));
+
+      try {
+        const species = transaction.objectStore('species');
+        species.clear();
+        speciesArray.forEach((row, i) => {
+          const baseId = row.species_id || row.id;
+          if (!baseId) {
+            row.id = `temp_${i}`;
+          } else {
+            row.language = row.language || 'en';
+            row.id = `${baseId}_${row.language}`;
+            row.species_id = baseId;
+          }
+          species.put(row);
+        });
+
+        if (Array.isArray(mediaArray)) {
+          const media = transaction.objectStore('media');
+          media.clear();
+          for (const row of mediaArray) {
+            if (row && row.media_id) media.put(row);
+          }
+        }
+
+        transaction.objectStore('sync_metadata').put({ key: 'sync_status', value: syncValue });
+      } catch (error) {
+        // put() can throw synchronously (e.g. a value IndexedDB cannot store). Abort so the
+        // clear() above is rolled back instead of committing a half-written store.
+        try { transaction.abort(); } catch (e) { /* already finished */ }
+        reject(error);
+      }
+    });
+  }
+
+  /**
+   * Merge fields into the stored sync metadata in a single transaction (read and write together,
+   * so a background writer cannot overwrite a newer version written by a sync).
+   * @param {Object} patch
+   * @returns {Promise<void>}
+   */
+  async patchSyncMetadata(patch) {
+    const db = await this.init();
+
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(['sync_metadata'], 'readwrite');
+      const store = transaction.objectStore('sync_metadata');
+      const request = store.get('sync_status');
+      request.onsuccess = () => {
+        const value = request.result?.value || { version: 0, status: 'idle', last_sync: null, timestamp: null, error: null };
+        store.put({ key: 'sync_status', value: { ...value, ...patch } });
+      };
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(new Error(`Failed to update sync metadata: ${transaction.error}`));
+      transaction.onabort = () => reject(new Error(`Updating sync metadata aborted: ${transaction.error}`));
+    });
+  }
+
+  /**
+   * Get every media metadata row.
+   * @returns {Promise<Array>}
+   */
+  async getAllMedia() {
+    const db = await this.init();
+
+    return new Promise((resolve, reject) => {
+      const request = db.transaction(['media'], 'readonly').objectStore('media').getAll();
+      request.onsuccess = () => resolve(request.result || []);
+      request.onerror = () => reject(new Error(`Failed to get media: ${request.error}`));
+    });
+  }
+
+  /**
+   * URLs of every image stored in image_blobs.
+   * @returns {Promise<string[]>}
+   */
+  async getImageBlobUrls() {
+    const db = await this.init();
+
+    return new Promise((resolve, reject) => {
+      const request = db.transaction(['image_blobs'], 'readonly').objectStore('image_blobs').getAllKeys();
+      request.onsuccess = () => resolve(request.result || []);
+      request.onerror = () => reject(new Error(`Failed to list stored images: ${request.error}`));
+    });
+  }
+
+  /**
+   * Store an image blob for offline use. Resolves only once the write has committed.
+   * @param {string} url
+   * @param {number|string} speciesId
+   * @param {Blob} blob
+   * @returns {Promise<void>}
+   */
+  async saveImageBlob(url, speciesId, blob) {
+    const db = await this.init();
+
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(['image_blobs'], 'readwrite');
+      transaction.objectStore('image_blobs').put({
+        url: url,
+        species_id: speciesId,
+        blob: blob,
+        cachedAt: new Date().toISOString()
+      });
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error || new Error('Failed to store image'));
+      transaction.onabort = () => reject(transaction.error || new Error('Storing image aborted'));
+    });
+  }
+
+  /**
+   * Delete stored image and video blobs whose URL is not in keepUrls.
+   * @param {Set<string>} keepUrls
+   * @returns {Promise<string[]>} URLs that were deleted
+   */
+  async pruneMediaBlobs(keepUrls) {
+    const db = await this.init();
+    const removed = [];
+
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(['image_blobs', 'video_blobs'], 'readwrite');
+      for (const name of ['image_blobs', 'video_blobs']) {
+        const store = transaction.objectStore(name);
+        const request = store.getAllKeys();
+        request.onsuccess = () => {
+          for (const url of request.result || []) {
+            if (!keepUrls.has(url)) {
+              store.delete(url);
+              removed.push(url);
+            }
+          }
+        };
+      }
+      transaction.oncomplete = () => resolve(removed);
+      transaction.onerror = () => reject(new Error(`Failed to prune media: ${transaction.error}`));
+      transaction.onabort = () => reject(new Error(`Pruning media aborted: ${transaction.error}`));
+    });
+  }
 }
 
 // Create global instance

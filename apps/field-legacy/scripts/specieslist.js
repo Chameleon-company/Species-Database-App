@@ -1,5 +1,19 @@
 window.loadedSpeciesData = [];
 
+// Species text comes from the API (admin-entered), so escape it before it goes into HTML
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+// Each render or "no results" draw takes a new number; an older render that finishes
+// later (its IndexedDB lookups are async) sees the number changed and draws nothing.
+let renderSeq = 0;
+
 // Render species cards
 
 async function renderSpecies(data) {
@@ -9,6 +23,8 @@ async function renderSpecies(data) {
     console.error("Species list element (#species-list) not found");
     return;
   }
+
+  const token = ++renderSeq;
 
   speciesList.innerHTML = "";
 
@@ -45,23 +61,27 @@ async function renderSpecies(data) {
     
 
     html += `
-      <div class="species-item" onclick="goToDetail('${id}')">
+      <div class="species-item" data-detail-id="${escapeHtml(id)}">
       ${
         thumb
-        ? `<img data-thumb="${thumb}" data-species-id="${id}" alt="${scientific}" class="species-card-img cached-thumb">`
+        ? `<img data-thumb="${escapeHtml(thumb)}" data-species-id="${escapeHtml(id)}" alt="${escapeHtml(scientific)}" class="species-card-img cached-thumb">`
         : ``
-      }  
+      }
       <div class="species-content">
         <div class="species-text">
-          <h3 class="species-name">${scientific}</h3>
-          <p class="common-name-species">${common}</p>
+          <h3 class="species-name">${escapeHtml(scientific)}</h3>
+          <p class="common-name-species">${escapeHtml(common)}</p>
         </div>
-        
+
           ${videoIcon}
         </div>
       </div>
     `;
   }
+
+  // A newer search/filter started while this one was reading IndexedDB: its result wins
+  if (token !== renderSeq) return;
+
   speciesList.innerHTML = html;
   document.querySelectorAll(".cached-thumb").forEach((img) => {
     const url = img.dataset.thumb;
@@ -77,6 +97,8 @@ async function renderSpecies(data) {
 function renderNoResults() {
   const speciesList = document.getElementById("species-list");
   if (!speciesList) return;
+
+  renderSeq++; // a render still in progress must not replace this message
 
   const isTetum = window.location.pathname.includes("tetum.html");
 
@@ -129,11 +151,50 @@ function goToDetail(id) {
 window.goToDetail = goToDetail;
 window.renderSpecies = renderSpecies;
 window.renderNoResults = renderNoResults;
+window.escapeHtml = escapeHtml;
+
+
+// Leaf/fruit type filters. The stored values differ in case, spacing and apostrophes
+// ("Pinnately compound (Double)" / "(double)"), so options are built from the data that is
+// actually loaded and compared on a normalised key.
+
+function normalizeFilterValue(value) {
+  return String(value ?? "")
+    .normalize("NFC")
+    .replace(/[‘’ʼ`]/g, "'")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+// Distinct values of `field` ("leaf_type" or "fruit_type") in the loaded species, as
+// [{label, value}] where value is the normalised key and label the first spelling seen.
+function getFilterOptions(field) {
+  const byKey = new Map();
+  for (const species of window.loadedSpeciesData || []) {
+    const key = normalizeFilterValue(species[field]);
+    if (key && !byKey.has(key)) {
+      byKey.set(key, String(species[field]).replace(/\s+/g, " ").trim());
+    }
+  }
+  return [...byKey.entries()]
+    .map(([value, label]) => ({ label, value }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+}
+
+window.normalizeFilterValue = normalizeFilterValue;
+window.getFilterOptions = getFilterOptions;
 
 
 // Search input (works with your applyFilters in home.html)
 
 document.addEventListener("DOMContentLoaded", () => {
+  // Open a species from its card (one listener for the whole list, no inline onclick)
+  document.getElementById("species-list")?.addEventListener("click", (e) => {
+    const item = e.target.closest(".species-item[data-detail-id]");
+    if (item) goToDetail(item.dataset.detailId);
+  });
+
   const searchInput = document.getElementById("searchInput");
   if (!searchInput) return;
 
