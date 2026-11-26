@@ -11,6 +11,7 @@ on:
       - "packages/shared/src/database.ts"
       - "scripts/gen-database-types.mjs"
       - "package.json"
+      - ".oxfmtrc.json"
       - "pnpm-workspace.yaml"
       - ".github/workflows/database-types.yml"
 

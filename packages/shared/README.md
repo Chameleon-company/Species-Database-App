@@ -1,6 +1,7 @@
 # @sda/shared
 
 Species, media and bundle types for the admin and the field app.
+The Flask API is Python and does not use this package.
 
 ```
 packages/shared/
