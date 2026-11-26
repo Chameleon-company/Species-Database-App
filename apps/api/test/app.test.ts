@@ -2,7 +2,7 @@ import { spawnSync } from "node:child_process";
 import { eq } from "drizzle-orm";
 import { afterAll, describe, expect, it, vi } from "vitest";
 import { createApp } from "../src/app.ts";
-import { createDb, tlsFor } from "../src/db.ts";
+import { createDb, isLocalHost, tlsFor } from "../src/db.ts";
 import { species_en } from "../src/db/schema.ts";
 import { LOCAL_DATABASE_URL, createLocalDb } from "./local-db.ts";
 
@@ -106,5 +106,33 @@ describe("tlsFor", () => {
   it("lets verify-full and verify-ca check the certificate on a remote host", () => {
     expect(tls("postgresql://u:p@db.example.com:5432/db?sslmode=verify-full")).toEqual({});
     expect(tls("postgresql://u:p@db.example.com:5432/db?sslmode=verify-ca")).toEqual({});
+  });
+});
+
+describe("isLocalHost", () => {
+  const local = (url: string) => isLocalHost(new URL(url));
+
+  it("accepts loopback names, the 127.0.0.0/8 range and Unix sockets", () => {
+    expect(local("postgresql://u@127.0.0.2:5432/db")).toBe(true);
+    expect(local("postgresql://u@localhost.:5432/db")).toBe(true);
+    expect(local("postgresql://u@%2Fvar%2Frun%2Fpostgresql/db")).toBe(true);
+    expect(local("postgresql://u@db/db?host=/var/run/postgresql")).toBe(true);
+  });
+
+  it("rejects other hosts", () => {
+    expect(local("postgresql://u@db.example.com:5432/db")).toBe(false);
+    expect(local("postgresql://u@127.example.com:5432/db")).toBe(false);
+  });
+});
+
+describe("server.ts DATABASE_URL check", () => {
+  it("exits with a clear message for a URL that is not postgresql://", () => {
+    const run = spawnSync(process.execPath, ["src/server.ts"], {
+      cwd: new URL("..", import.meta.url),
+      env: { ...pick(process.env, ["PATH", "Path", "SystemRoot"]), DATABASE_URL: "http://x" },
+      encoding: "utf8",
+    });
+    expect(run.stderr).toContain("DATABASE_URL must be a postgresql:// URL.");
+    expect(run.status).toBe(1);
   });
 });

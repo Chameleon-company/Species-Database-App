@@ -1,6 +1,6 @@
 import { serve } from "@hono/node-server";
 import { createApp } from "./app.ts";
-import { createDb } from "./db.ts";
+import { POOL_CLOSE_SECONDS, checksCertificate, createDb, isLocalHost } from "./db.ts";
 
 function fail(message: string): never {
   console.error(message);
@@ -30,6 +30,10 @@ function readPort(): number {
 }
 
 const databaseUrl = readDatabaseUrl();
+const target = new URL(databaseUrl);
+if (!isLocalHost(target) && !checksCertificate(target)) {
+  console.warn("The database connection is encrypted, but the API does not check its certificate.");
+}
 const { db, close } = createDb(databaseUrl);
 const app = createApp({ db });
 const hostname = process.env.HOST || "127.0.0.1";
@@ -49,7 +53,11 @@ function shutdown() {
   ).unref();
   server.close(() => {
     clearTimeout(requests);
-    setTimeout(() => fail("The database pool did not close in 7 seconds. Exiting."), 7_000).unref();
+    const limit = POOL_CLOSE_SECONDS + 2;
+    setTimeout(
+      () => fail(`The database pool did not close in ${limit} seconds. Exiting.`),
+      limit * 1000,
+    ).unref();
     close().then(
       () => process.exit(0),
       (error: unknown) =>
