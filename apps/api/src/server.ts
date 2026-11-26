@@ -22,13 +22,14 @@ function readPort(): number {
     : fail(`PORT must be a whole number from 1 to 65535, not "${value}".`);
 }
 
-const supabaseUrl = requireEnv("SUPABASE_URL");
-const app = createApp({ db: createDb(supabaseUrl, requireEnv("SUPABASE_KEY")) });
+const databaseUrl = requireEnv("DATABASE_URL");
+const { db, close } = createDb(databaseUrl);
+const app = createApp({ db });
 
 const hostname = process.env.HOST || "127.0.0.1";
 
 const server = serve({ fetch: app.fetch, hostname, port: readPort() }, ({ address, port }) => {
-  console.log(`API on http://${address}:${port}, Supabase at ${new URL(supabaseUrl).host}`);
+  console.log(`API on http://${address}:${port}, database at ${new URL(databaseUrl).host}`);
 });
 
 let closing = false;
@@ -36,7 +37,7 @@ let closing = false;
 function shutdown() {
   if (closing) fail("Second stop signal. Exiting without waiting for open requests.");
   closing = true;
-  server.close(() => process.exit(0));
+  server.close(() => close().then(() => process.exit(0)));
   setTimeout(() => fail("Open requests did not finish in 10 seconds. Exiting."), 10_000).unref();
 }
 

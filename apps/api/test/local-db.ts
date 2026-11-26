@@ -4,21 +4,18 @@ import { createDb } from "../src/db.ts";
 
 const template = parseEnv(readFileSync(new URL("../../../.env.example", import.meta.url), "utf8"));
 
-function readLocal(name: "SUPABASE_URL" | "SUPABASE_KEY"): string {
-  const value = template[name];
-  if (!value)
-    throw new Error(`.env.example has no ${name}. The API tests read the local stack from it.`);
-  return value;
-}
+/** The local database, from `DATABASE_URL` in the committed .env.example. */
+export const LOCAL_DATABASE_URL = template.DATABASE_URL ?? "";
 
-/** The local Supabase stack, from `SUPABASE_URL` and `SUPABASE_KEY` in the committed .env.example. */
-export const LOCAL_SUPABASE_URL = readLocal("SUPABASE_URL");
-export const LOCAL_SUPABASE_KEY = readLocal("SUPABASE_KEY");
-
-if (!["127.0.0.1", "localhost", "[::1]"].includes(new URL(LOCAL_SUPABASE_URL).hostname)) {
+if (!LOCAL_DATABASE_URL) {
   throw new Error(
-    `.env.example points SUPABASE_URL at ${LOCAL_SUPABASE_URL}. The API tests run only on a local stack.`,
+    ".env.example has no DATABASE_URL. The API tests read the local database from it.",
+  );
+}
+if (!["127.0.0.1", "localhost", "[::1]"].includes(new URL(LOCAL_DATABASE_URL).hostname)) {
+  throw new Error(
+    `.env.example points DATABASE_URL at ${new URL(LOCAL_DATABASE_URL).host}. The API tests run only on a local database.`,
   );
 }
 
-export const createLocalDb = () => createDb(LOCAL_SUPABASE_URL, LOCAL_SUPABASE_KEY);
+export const createLocalDb = () => createDb(LOCAL_DATABASE_URL);

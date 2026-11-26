@@ -1,10 +1,14 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@sda/shared/database";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
+import * as schema from "./db/schema.ts";
 
-export type Db = SupabaseClient<Database>;
+/**
+ * A Drizzle client over postgres.js. Prepared statements are off, so the same client works on the
+ * Supavisor transaction pooler. `close` ends the pool, which otherwise keeps the process alive.
+ */
+export function createDb(url: string) {
+  const client = postgres(url, { prepare: false, connect_timeout: 10 });
+  return { db: drizzle(client, { schema }), close: () => client.end() };
+}
 
-/** A server-side Supabase client. It keeps no auth session and starts no refresh timer. */
-export const createDb = (url: string, key: string): Db =>
-  createClient<Database>(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-  });
+export type Db = ReturnType<typeof createDb>["db"];

@@ -1,6 +1,6 @@
 # @sda/shared
 
-Species, media and bundle types for the admin, the field app and the Hono API in `apps/api`.
+Species, media and bundle types for the admin and the field app.
 The Flask API is Python and does not use this package.
 
 ```
@@ -12,8 +12,6 @@ packages/shared/
 ```
 
 Import each type from its own file with `import type`, for example `import type { Species } from "@sda/shared/species"`.
-The API imports `@sda/shared/database` for its Supabase client.
-The admin and the field app do not need it.
 The package holds types only.
 Do not add a value export, because it would ship in the field app's first-load bundle.
 
@@ -27,7 +25,7 @@ After you change the snapshot, generate the types again:
 
 1. Run `pnpm supabase db reset`, or `pnpm supabase db start` when the database is not running.
 2. Run `pnpm gen:types`.
-3. Commit `src/database.ts` with the schema change.
+3. Commit `src/database.ts` and `apps/api/src/db/schema.ts` with the schema change.
 
 The Database types workflow fails a pull request when `src/database.ts` does not match the snapshot.
 It does not check the `media_type` narrowing in `src/media.ts`.
