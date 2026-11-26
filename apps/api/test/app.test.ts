@@ -66,7 +66,7 @@ describe("server.ts under plain Node", () => {
   it("resolves every import and checks PORT before it serves", () => {
     const run = spawnSync(process.execPath, ["src/server.ts"], {
       cwd: new URL("..", import.meta.url),
-      env: { ...process.env, DATABASE_URL: LOCAL_DATABASE_URL, PORT: "not-a-port" },
+      env: { PATH: process.env.PATH, DATABASE_URL: LOCAL_DATABASE_URL, PORT: "not-a-port" },
       encoding: "utf8",
     });
     expect(run.stderr).toContain('PORT must be a whole number from 1 to 65535, not "not-a-port".');

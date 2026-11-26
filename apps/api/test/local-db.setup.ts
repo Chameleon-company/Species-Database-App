@@ -3,13 +3,21 @@ import { LOCAL_DATABASE_URL } from "./local-db.ts";
 
 const START = "Run `pnpm supabase start` or `pnpm supabase db start`";
 
+function codeOf(error: unknown): string {
+  return typeof error === "object" && error !== null && "code" in error ? String(error.code) : "";
+}
+
+function causeOf(error: unknown): string {
+  if (error instanceof AggregateError) return causeOf(error.errors[0]);
+  if (error instanceof Error) return error.message || codeOf(error);
+  return String(error);
+}
+
 function describe(error: unknown): string {
-  const code =
-    typeof error === "object" && error !== null && "code" in error ? String(error.code) : "";
-  const message = error instanceof Error ? error.message : String(error);
+  const code = codeOf(error);
   if (code === "42P01") return "species_en is missing. Run `pnpm supabase db reset`";
   if (code === "28P01") return "the password was refused. Check DATABASE_URL in .env.example";
-  return `the connection failed with "${message}". ${START}`;
+  return `the connection failed with "${causeOf(error)}". ${START}`;
 }
 
 /** Vitest global setup. Throws with the cause and the fix when the local database cannot serve species_en. */

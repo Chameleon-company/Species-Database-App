@@ -300,6 +300,7 @@ It queries Postgres with Drizzle over postgres.js.
 `pnpm gen:types` writes its schema to `apps/api/src/db/schema.ts`.
 Do not edit that file by hand.
 On a hosted project, `DATABASE_URL` is the Supavisor session pooler on port 5432 as the `postgres` role.
+The API requires TLS for every host that is not local.
 That role owns the tables, so Row Level Security does not block it.
 Never add `FORCE ROW LEVEL SECURITY` to a table, because it would block the API.
 It listens on `127.0.0.1` unless `HOST` sets another address, such as `0.0.0.0` on a host.
@@ -447,6 +448,8 @@ A failed check stops the deploy, and the last good deploy stays live.
 Each service rebuilds only when a file in its own source paths changes.
 
 `SUPABASE_URL` and `SUPABASE_KEY` are marked `sync: false` in `render.yaml`.
+They belong to the Flask API.
+The Hono API reads only `DATABASE_URL`, and it has no Render service yet.
 Their values live only in the Render dashboard, never in git.
 Every other value in `render.yaml` is public.
 Keep the admin origin first in `CORS_ORIGINS`, because the API links to the first origin.

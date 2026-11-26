@@ -37,7 +37,15 @@ let closing = false;
 function shutdown() {
   if (closing) fail("Second stop signal. Exiting without waiting for open requests.");
   closing = true;
-  server.close(() => close().then(() => process.exit(0)));
+  server.close(() =>
+    close().then(
+      () => process.exit(0),
+      (error: unknown) =>
+        fail(
+          `The database pool did not close: ${error instanceof Error ? error.message : String(error)}`,
+        ),
+    ),
+  );
   setTimeout(() => fail("Open requests did not finish in 10 seconds. Exiting."), 10_000).unref();
 }
 
