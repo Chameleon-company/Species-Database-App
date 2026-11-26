@@ -221,7 +221,8 @@ pnpm run docker:logs   # Follow container logs
 pnpm run docker:build  # Build Docker images only
 pnpm run build         # Build every app in the workspace
 pnpm run lint          # Lint the workspace with Oxlint
-pnpm run test          # Run the tests of every app. The API tests need `pnpm supabase start`
+pnpm run supabase:api  # Start only the database, Kong and PostgREST from the local stack
+pnpm run test          # Run the tests of every app. The API tests need the local stack
 pnpm run format        # Format the workspace with Oxfmt
 pnpm run format:check  # Check formatting without changing files
 ```

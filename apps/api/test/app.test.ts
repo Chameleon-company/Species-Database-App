@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { createApp } from "./app.ts";
-import { createDb } from "./db.ts";
+import { createApp } from "../src/app.ts";
+import { createDb } from "../src/db.ts";
 import { createLocalDb } from "./local-db.ts";
 
 const app = createApp({ db: createLocalDb() });
