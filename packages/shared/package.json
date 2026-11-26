@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./database": "./src/database.ts",
     "./species": "./src/species.ts",
     "./media": "./src/media.ts",
     "./bundle": "./src/bundle.ts"

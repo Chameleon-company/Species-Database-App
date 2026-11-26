@@ -41,14 +41,14 @@ Install these before running project commands:
 
 - Git
 - Docker Desktop, or Docker Engine with Docker Compose v2
-- Node.js 22.12 or newer
+- Node.js 22.18 or newer
 - pnpm, installed with `npm install -g pnpm`
 
 Windows 11:
 
 1. Install Git for Windows.
 2. Install Docker Desktop.
-3. Install Node.js 22.12 LTS or newer.
+3. Install Node.js 22.18 LTS or newer.
 4. Open Docker Desktop and wait until the engine is running.
 5. Open PowerShell from the repository root.
 
@@ -56,7 +56,7 @@ macOS:
 
 1. Install Git.
 2. Install Docker Desktop for Mac.
-3. Install Node.js 22.12 LTS or newer.
+3. Install Node.js 22.18 LTS or newer.
 4. Open Docker Desktop and wait until it is running.
 5. Open Terminal from the repository root.
 
@@ -64,7 +64,7 @@ Linux:
 
 1. Install Git.
 2. Install Docker Engine with Docker Compose v2, or Docker Desktop for Linux.
-3. Install Node.js 22.12 LTS or newer.
+3. Install Node.js 22.18 LTS or newer.
 4. Confirm Docker is running:
 
    ```bash
@@ -221,7 +221,7 @@ pnpm run docker:logs   # Follow container logs
 pnpm run docker:build  # Build Docker images only
 pnpm run build         # Build every app in the workspace
 pnpm run lint          # Lint the workspace with Oxlint
-pnpm run test          # Run the unit tests of every app
+pnpm run test          # Run the tests of every app. The API tests need `pnpm supabase start`
 pnpm run format        # Format the workspace with Oxfmt
 pnpm run format:check  # Check formatting without changing files
 ```
@@ -238,7 +238,7 @@ Use this path only when you need to run services outside Docker.
 
 Install:
 
-- Node.js 22.12 or newer
+- Node.js 22.18 or newer
 - pnpm, installed with `npm install -g pnpm`
 - Python 3.12 or newer
 
@@ -282,11 +282,20 @@ Start the new field app in another terminal:
 pnpm run dev:field
 ```
 
+Start the new Hono API in another terminal:
+
+```bash
+pnpm run dev:api
+```
+
+The Hono API reads `SUPABASE_URL` and `SUPABASE_KEY` from the root `.env`, and prints the Supabase host when it starts.
+
 Local URLs:
 
 - Admin dashboard: `http://localhost:5173`
 - Field app: `http://127.0.0.1:5174`
 - Backend API: `http://localhost:5000`
+- Hono API: `http://localhost:3000`
 
 The field app in `apps/field` is the Preact rebuild of the field app.
 Production and the Android app still use `apps/field-legacy`.
@@ -315,7 +324,7 @@ Install:
 
 - Android Studio
 - Android SDK through Android Studio
-- Node.js 22.12 or newer
+- Node.js 22.18 or newer
 - Project dependencies through one of the OS install scripts
 
 ### 2. Open the Android Project

@@ -9,6 +9,7 @@
     "dev:backend": "python services/flask-api/app.py",
     "dev:admin": "pnpm --filter admin dev",
     "dev:field": "pnpm --filter field dev",
+    "dev:api": "pnpm --filter api dev",
     "build": "pnpm -r build",
     "lint": "oxlint",
     "preview": "pnpm --filter admin preview",
@@ -27,7 +28,7 @@
     "supabase": "catalog:"
   },
   "engines": {
-    "node": ">=22.12.0"
+    "node": ">=22.18.0"
   },
   "packageManager": "pnpm@12.16.1"
 }

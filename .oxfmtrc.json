@@ -7,7 +7,6 @@
     "apps/admin",
     "apps/android",
     "apps/android/android",
-    "apps/api",
     "apps/field-legacy",
     "docker-compose.yml",
     "docs",

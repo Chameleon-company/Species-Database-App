@@ -1,6 +1,6 @@
 # @sda/shared
 
-Species, media and bundle types for the admin and the field app.
+Species, media and bundle types for the admin, the field app and the Hono API in `apps/api`.
 The Flask API is Python and does not use this package.
 
 ```
@@ -12,6 +12,7 @@ packages/shared/
 ```
 
 Import each type from its own file with `import type`, for example `import type { Species } from "@sda/shared/species"`.
+Only the API imports `@sda/shared/database`, for its Supabase client.
 The package holds types only.
 Do not add a value export, because it would ship in the field app's first-load bundle.
 

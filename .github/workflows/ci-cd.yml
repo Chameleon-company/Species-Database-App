@@ -93,5 +93,8 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Start the local Supabase API
+        run: pnpm supabase start -x gotrue,realtime,storage-api,imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+
       - name: Test
         run: pnpm test
