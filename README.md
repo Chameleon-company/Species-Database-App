@@ -221,7 +221,7 @@ pnpm run docker:logs   # Follow container logs
 pnpm run docker:build  # Build Docker images only
 pnpm run build         # Build every app in the workspace
 pnpm run lint          # Lint the workspace with Oxlint
-pnpm run supabase:api  # Start only the database, Kong and PostgREST, as CI does. Stop it before pnpm run dev
+pnpm run supabase:api  # Start only the database, Kong and PostgREST
 pnpm run test          # Run the tests of every app. The API tests need the local stack
 pnpm run format        # Format the workspace with Oxfmt
 pnpm run format:check  # Check formatting without changing files
@@ -265,6 +265,8 @@ pnpm supabase start
 
 This starts every Supabase service, which the admin and Flask need.
 `pnpm run supabase:api` starts only the services that the Hono API and its tests use.
+CI uses it too.
+Run `pnpm supabase stop` before `pnpm run dev`, because `dev` does not start the missing services when the stack already runs.
 
 Activate the backend virtual environment, then start the backend:
 

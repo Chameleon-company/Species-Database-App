@@ -32,10 +32,10 @@ const server = serve({ fetch: app.fetch, port: readPort() }, ({ port }) => {
 let closing = false;
 
 function shutdown() {
-  if (closing) process.exit(1);
+  if (closing) fail("Second stop signal. Exiting without waiting for open requests.");
   closing = true;
   server.close(() => process.exit(0));
-  setTimeout(() => process.exit(1), 10_000).unref();
+  setTimeout(() => fail("Open requests did not finish in 10 seconds. Exiting."), 10_000).unref();
 }
 
 process.on("SIGINT", shutdown);

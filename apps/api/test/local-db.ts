@@ -15,7 +15,7 @@ function readLocal(name: "SUPABASE_URL" | "SUPABASE_KEY"): string {
 export const LOCAL_SUPABASE_URL = readLocal("SUPABASE_URL");
 export const LOCAL_SUPABASE_KEY = readLocal("SUPABASE_KEY");
 
-if (!["127.0.0.1", "localhost"].includes(new URL(LOCAL_SUPABASE_URL).hostname)) {
+if (!["127.0.0.1", "localhost", "[::1]"].includes(new URL(LOCAL_SUPABASE_URL).hostname)) {
   throw new Error(
     `.env.example points SUPABASE_URL at ${LOCAL_SUPABASE_URL}. The API tests run only on a local stack.`,
   );
