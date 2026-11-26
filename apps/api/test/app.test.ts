@@ -2,7 +2,7 @@ import { spawnSync } from "node:child_process";
 import { eq } from "drizzle-orm";
 import { afterAll, describe, expect, it, vi } from "vitest";
 import { createApp } from "../src/app.ts";
-import { createDb } from "../src/db.ts";
+import { createDb, tlsFor } from "../src/db.ts";
 import { species_en } from "../src/db/schema.ts";
 import { LOCAL_DATABASE_URL, createLocalDb } from "./local-db.ts";
 
@@ -70,7 +70,7 @@ describe("server.ts under plain Node", () => {
     const run = spawnSync(process.execPath, ["src/server.ts"], {
       cwd: new URL("..", import.meta.url),
       env: {
-        ...pick(process.env, ["PATH", "Path", "SystemRoot"]),
+        ...pick(process.env, ["PATH", "Path", "SystemRoot", "HOME", "TMPDIR", "TEMP", "TMP"]),
         DATABASE_URL: LOCAL_DATABASE_URL,
         PORT: "not-a-port",
       },
@@ -78,5 +78,33 @@ describe("server.ts under plain Node", () => {
     });
     expect(run.stderr).toContain('PORT must be a whole number from 1 to 65535, not "not-a-port".');
     expect(run.status).toBe(1);
+  });
+});
+
+describe("tlsFor", () => {
+  const tls = (url: string) => tlsFor(new URL(url));
+
+  it("uses no TLS for a local host with no sslmode, whatever the case", () => {
+    expect(tls("postgresql://u:p@127.0.0.1:54322/db")).toEqual({ ssl: false });
+    expect(tls("postgresql://u:p@LOCALHOST:54322/db")).toEqual({ ssl: false });
+  });
+
+  it("follows sslmode on a local host", () => {
+    expect(tls("postgresql://u:p@localhost:5432/db?sslmode=require")).toEqual({});
+  });
+
+  it("requires TLS for a remote host, even when sslmode asks for less", () => {
+    expect(tls("postgresql://u:p@db.example.com:5432/db")).toEqual({ ssl: "require" });
+    expect(tls("postgresql://u:p@db.example.com:5432/db?sslmode=disable")).toEqual({
+      ssl: "require",
+    });
+    expect(tls("postgresql://u:p@db.example.com:5432/db?sslmode=prefer")).toEqual({
+      ssl: "require",
+    });
+  });
+
+  it("lets verify-full and verify-ca check the certificate on a remote host", () => {
+    expect(tls("postgresql://u:p@db.example.com:5432/db?sslmode=verify-full")).toEqual({});
+    expect(tls("postgresql://u:p@db.example.com:5432/db?sslmode=verify-ca")).toEqual({});
   });
 });

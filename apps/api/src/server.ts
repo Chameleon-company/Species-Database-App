@@ -14,6 +14,13 @@ function requireEnv(name: string): string {
   );
 }
 
+function readDatabaseUrl(): string {
+  const value = requireEnv("DATABASE_URL");
+  const valid =
+    URL.canParse(value) && ["postgres:", "postgresql:"].includes(new URL(value).protocol);
+  return valid ? value : fail("DATABASE_URL must be a postgresql:// URL. See .env.example.");
+}
+
 function readPort(): number {
   const value = process.env.PORT || "3000";
   const port = Number(value);
@@ -22,12 +29,9 @@ function readPort(): number {
     : fail(`PORT must be a whole number from 1 to 65535, not "${value}".`);
 }
 
-const databaseUrl = requireEnv("DATABASE_URL");
-if (!URL.canParse(databaseUrl))
-  fail("DATABASE_URL is not a valid URL. See .env.example for the format.");
+const databaseUrl = readDatabaseUrl();
 const { db, close } = createDb(databaseUrl);
 const app = createApp({ db });
-
 const hostname = process.env.HOST || "127.0.0.1";
 
 const server = serve({ fetch: app.fetch, hostname, port: readPort() }, ({ address, port }) => {
@@ -45,6 +49,7 @@ function shutdown() {
   ).unref();
   server.close(() => {
     clearTimeout(requests);
+    setTimeout(() => fail("The database pool did not close in 7 seconds. Exiting."), 7_000).unref();
     close().then(
       () => process.exit(0),
       (error: unknown) =>

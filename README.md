@@ -300,8 +300,11 @@ It queries Postgres with Drizzle over postgres.js.
 `pnpm gen:types` writes its schema to `apps/api/src/db/schema.ts`.
 Do not edit that file by hand.
 On a hosted project, `DATABASE_URL` is the Supavisor session pooler on port 5432 as the `postgres` role.
-Without an `sslmode` in the URL, the API encrypts every connection to a host that is not local, but it does not check the certificate.
+The API encrypts every connection to a host that is not local.
+It does not check the certificate by default.
 Add `sslmode=verify-full` and the Supabase CA to check it.
+The 10-second statement limit is a startup setting.
+Only the session pooler on port 5432 is known to accept it.
 That role owns the tables, so Row Level Security does not block it.
 Never add `FORCE ROW LEVEL SECURITY` to a table, because it would block the API.
 It listens on `127.0.0.1` unless `HOST` sets another address, such as `0.0.0.0` on a host.

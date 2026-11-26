@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { parseEnv } from "node:util";
-import { createDb } from "../src/db.ts";
+import { createDb, isLocalHost } from "../src/db.ts";
 
 const template = parseEnv(readFileSync(new URL("../../../.env.example", import.meta.url), "utf8"));
 
@@ -12,7 +12,7 @@ if (!LOCAL_DATABASE_URL) {
     ".env.example has no DATABASE_URL. The API tests read the local database from it.",
   );
 }
-if (!["127.0.0.1", "localhost", "[::1]"].includes(new URL(LOCAL_DATABASE_URL).hostname)) {
+if (!isLocalHost(new URL(LOCAL_DATABASE_URL))) {
   throw new Error(
     `.env.example points DATABASE_URL at ${new URL(LOCAL_DATABASE_URL).host}. The API tests run only on a local database.`,
   );
