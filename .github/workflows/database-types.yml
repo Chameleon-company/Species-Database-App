@@ -10,6 +10,7 @@ on:
       - "supabase/**"
       - "packages/shared/src/database.ts"
       - "scripts/gen-database-types.mjs"
+      - "package.json"
       - "pnpm-workspace.yaml"
       - ".github/workflows/database-types.yml"
 
