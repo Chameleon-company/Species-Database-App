@@ -237,10 +237,22 @@ def resolve_image():
 @app.get("/api/health")
 def health_check():
     """
+    Public liveness check. Returns only {"status": "ok"}, the same as the
+    Hono API in apps/api. Per-table status is at /api/admin/health (admin only).
+    """
+    return jsonify({"status": "ok"}), 200
+
+
+@app.get("/api/admin/health")
+def admin_health_check():
+    """
     Checks each core table by running a lightweight query against it, plus
     whether the React frontend dev server is actually reachable.
     Used by the index.html status dashboard to show what's working / broken.
     """
+    admin_id, err = get_admin_user(supabase)
+    if err:
+        return jsonify({"error": err[0]}), err[1]
     tables_to_check = [
         "users",
         "species_en",

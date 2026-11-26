@@ -312,31 +312,11 @@
                 const res = await fetch("/api/health");
                 const data = await res.json();
 
-                const overallClass = data.overall === "ok" ? "overall-ok" : "overall-degraded";
-                const overallLabel = data.overall === "ok" ? "All Systems Operational" : "Issues Detected";
+                const ok = res.ok && data.status === "ok";
+                const overallClass = ok ? "overall-ok" : "overall-degraded";
+                const overallLabel = ok ? "All Systems Operational" : "Issues Detected";
 
-                // Only show rows for checks that failed
-                const failedChecks = Object.entries(data.checks).filter(
-                    ([, check]) => check.status !== "ok"
-                );
-
-                let rowsHtml = "";
-                for (const [name, check] of failedChecks) {
-                    rowsHtml += `
-                        <div class="check-row">
-                            <div>
-                                <div class="check-name">${name}</div>
-                                <div class="check-msg">${escapeHtml(check.message || "Unknown error")}</div>
-                            </div>
-                            <span class="check-pill pill-error">Error</span>
-                        </div>
-                    `;
-                }
-
-                container.innerHTML = `
-                    <span class="overall-pill ${overallClass}">${overallLabel}</span>
-                    ${rowsHtml}
-                `;
+                container.innerHTML = `<span class="overall-pill ${overallClass}">${overallLabel}</span>`;
                 container.dataset.loadedOnce = "true";
 
                 document.getElementById("last-checked").textContent =
