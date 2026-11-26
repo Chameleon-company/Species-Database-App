@@ -67,6 +67,7 @@ jobs:
   validate-repo:
     runs-on: ubuntu-latest
     needs: security-scan
+    timeout-minutes: 20
 
     steps:
       - name: Checkout repository
@@ -92,6 +93,9 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+      - name: Start the local Supabase API
+        run: pnpm supabase:api
 
       - name: Test
         run: pnpm test

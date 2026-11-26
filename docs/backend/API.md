@@ -2,6 +2,9 @@
 
 Flask API for the Rai Matak Species Guide. Base URL in local development is `http://localhost:5000`.
 
+The new Hono API in `apps/api` serves `/api/health` and `/health` so far, at `http://127.0.0.1:3000` in local development.
+Every other route is on Flask only.
+
 This document describes the API as it stands on the `backend` branch, which is `master` plus the six features listed under [Recent additions](#recent-additions).
 
 ## Authentication

@@ -1,15 +1,23 @@
 {
   "name": "api",
-  "private": true,
   "version": "0.0.0",
+  "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc --noEmit"
+    "dev": "node --env-file-if-exists=../../.env --watch src/server.ts",
+    "start": "node src/server.ts",
+    "build": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
+    "@hono/node-server": "^2.1.11",
+    "@sda/shared": "workspace:*",
+    "@supabase/supabase-js": "^2.119.2",
     "hono": "^4.13.17"
   },
   "devDependencies": {
-    "typescript": "catalog:"
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }
