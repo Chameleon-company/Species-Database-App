@@ -9,9 +9,7 @@ on:
       - "services/flask-api/migrations/**"
       - "supabase/**"
       - "packages/shared/src/database.ts"
-      - "scripts/gen-database-types.sh"
-      - "package.json"
-      - "pnpm-lock.yaml"
+      - "scripts/gen-database-types.mjs"
       - "pnpm-workspace.yaml"
       - ".github/workflows/database-types.yml"
 
