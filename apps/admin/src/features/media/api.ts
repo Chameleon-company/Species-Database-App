@@ -1,6 +1,7 @@
 import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { Media, MediaType } from "@sda/shared/media";
 import { requestJson, rootUrl } from "../../shared/api/apiClient";
-import { looksLikeDirectImage, type Media, type MediaType } from "./media";
+import { looksLikeDirectImage } from "./media";
 
 const mediaKeys = {
   all: ["media"] as const,

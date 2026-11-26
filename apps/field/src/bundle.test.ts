@@ -1,13 +1,29 @@
 import { describe, expect, it } from "vitest";
-import { type Bundle, fetchBundle, firstSpecies } from "./bundle.ts";
+import type { Bundle } from "@sda/shared/bundle";
+import type { Species } from "@sda/shared/species";
+import { fetchBundle, firstSpecies } from "./bundle.ts";
 
-const species = (species_id: number) => ({
+const species = (species_id: number): Species => ({
   species_id,
   scientific_name: `Scientific ${species_id}`,
   common_name: `Common ${species_id}`,
+  leaf_type: "Simple",
+  fruit_type: "Drupe",
+  definition: null,
+  etymology: null,
+  habitat: null,
+  identification_character: null,
+  phenology: null,
+  seed_germination: null,
+  pest: null,
 });
 
-const bundle = (ids: number[]): Bundle => ({ version: 1, species_en: ids.map(species) });
+const bundle = (ids: number[]): Bundle => ({
+  version: 1,
+  species_en: ids.map(species),
+  species_tet: [],
+  media: [],
+});
 
 const respond = (status: number, body: unknown) => () =>
   Promise.resolve(new Response(JSON.stringify(body), { status }));

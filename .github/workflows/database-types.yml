@@ -1,0 +1,49 @@
+name: Database types
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: ["master"]
+    paths:
+      - "services/flask-api/TableSchema.sql"
+      - "services/flask-api/migrations/**"
+      - "supabase/**"
+      - "packages/shared/src/database.ts"
+      - "scripts/gen-database-types.mjs"
+      - "package.json"
+      - ".oxfmtrc.json"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/database-types.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  check-generated-types:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Start the local database
+        run: pnpm supabase db start
+
+      - name: Generate the database types
+        run: pnpm gen:types
+
+      - name: Fail when the committed types are out of date
+        run: git diff --exit-code packages/shared/src/database.ts

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "preact/hooks";
-import { type Species, fetchBundle, firstSpecies } from "./bundle.ts";
+import type { Species } from "@sda/shared/species";
+import { fetchBundle, firstSpecies } from "./bundle.ts";
 
 type State =
   | { status: "loading" }

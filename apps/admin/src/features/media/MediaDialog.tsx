@@ -6,13 +6,14 @@ import { Button } from "@sda/ui/components/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@sda/ui/components/dialog";
 import { Field, FieldLabel } from "@sda/ui/components/field";
 import type { MessageKey } from "@sda/i18n/translate";
+import type { Media, MediaType } from "@sda/shared/media";
 import { ApiError } from "../../shared/api/apiClient";
 import { useAppForm } from "../../shared/form/useAppForm";
 import FileDropzone from "../../shared/ui/FileDropzone";
 import { useLanguage } from "../../useLanguage";
 import { useUpdateMedia, useUploadMedia } from "./api";
 import { resolveErrorKey } from "./errorMessages";
-import { isValidUrl, type Media, type MediaType } from "./media";
+import { isValidUrl } from "./media";
 
 type MediaDialogProps = {
   open: boolean;
@@ -89,7 +90,7 @@ function MediaForm({ media, onClose }: { media: Media | null; onClose: () => voi
   const form = useAppForm({
     defaultValues: {
       species_name: media?.species_name ?? "",
-      media_type: (media?.media_type as MediaValues["media_type"]) ?? "",
+      media_type: media?.media_type ?? "",
       alt_text: media?.alt_text ?? "",
       download_link: media?.download_link ?? "",
     } as MediaValues,
@@ -101,6 +102,8 @@ function MediaForm({ media, onClose }: { media: Media | null; onClose: () => voi
       };
       const fail = (error: unknown) =>
         setErrorKey(resolveErrorKey("save", error instanceof ApiError ? error.status : undefined));
+      const mediaType = value.media_type;
+      if (!mediaType) return;
 
       if (editing) {
         if (!isValidUrl(value.download_link)) {
@@ -108,14 +111,14 @@ function MediaForm({ media, onClose }: { media: Media | null; onClose: () => voi
           return;
         }
         await update
-          .mutateAsync({ ...media, ...value, media_type: value.media_type })
+          .mutateAsync({ ...media, ...value, media_type: mediaType })
           .then(() => done("mediaUpdatedSuccessfully"), fail);
         return;
       }
 
-      if (!file || !value.media_type) return;
+      if (!file) return;
       await upload
-        .mutateAsync({ ...value, media_type: value.media_type, file })
+        .mutateAsync({ ...value, media_type: mediaType, file })
         .then(() => done("mediaAddedSuccessfully"), fail);
     },
   });

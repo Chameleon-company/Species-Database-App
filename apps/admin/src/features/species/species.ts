@@ -1,48 +1,40 @@
 import type { MessageKey } from "@sda/i18n/translate";
-
-export type SpeciesFieldName =
-  | "scientific_name"
-  | "common_name"
-  | "leaf_type"
-  | "fruit_type"
-  | "definition"
-  | "etymology"
-  | "habitat"
-  | "identification_character"
-  | "phenology"
-  | "seed_germination"
-  | "pest";
+import type { Species, SpeciesTextField } from "@sda/shared/species";
 
 export type SpeciesField = {
-  name: SpeciesFieldName;
+  name: SpeciesTextField;
   labelKey: MessageKey;
   maxLength: number;
   requiredKey?: MessageKey;
   rows?: number;
 };
 
+type SpeciesFieldConfig = Omit<SpeciesField, "name">;
+
+const FIELD_CONFIG: Record<SpeciesTextField, SpeciesFieldConfig> = {
+  scientific_name: { maxLength: 200, labelKey: "scientificName", requiredKey: "scientificNameEmpty" },
+  common_name: { maxLength: 100, labelKey: "commonName", requiredKey: "commonNameEmpty" },
+  leaf_type: { maxLength: 225, labelKey: "leafType", requiredKey: "leafTypeEmpty" },
+  fruit_type: { maxLength: 225, labelKey: "fruitType", requiredKey: "fruitTypeEmpty" },
+  definition: { maxLength: 2000, labelKey: "definition", rows: 3 },
+  etymology: { maxLength: 1000, labelKey: "etymology", rows: 4 },
+  habitat: { maxLength: 500, labelKey: "habitat", rows: 4 },
+  identification_character: { maxLength: 2000, labelKey: "identificationCharacter", rows: 4 },
+  phenology: { maxLength: 1000, labelKey: "phenology", rows: 4 },
+  seed_germination: { maxLength: 2000, labelKey: "seedGermination", rows: 4 },
+  pest: { maxLength: 2000, labelKey: "pest", rows: 4 },
+};
+
 /**
- * Every species text field, in form order. Fields with `requiredKey` are
- * required in both languages. `maxLength` matches the column size in
- * services/flask-api/TableSchema.sql, which is the same for species_en and species_tet.
+ * Every species text field, in form order. A text column missing from `FIELD_CONFIG` fails the
+ * build. Fields with `requiredKey` are required in both languages. `maxLength` matches the column
+ * size in services/flask-api/TableSchema.sql, which is the same for species_en and species_tet.
  */
-export const SPECIES_FIELDS: readonly SpeciesField[] = [
-  { name: "scientific_name", maxLength: 200, labelKey: "scientificName", requiredKey: "scientificNameEmpty" },
-  { name: "common_name", maxLength: 100, labelKey: "commonName", requiredKey: "commonNameEmpty" },
-  { name: "leaf_type", maxLength: 225, labelKey: "leafType", requiredKey: "leafTypeEmpty" },
-  { name: "fruit_type", maxLength: 225, labelKey: "fruitType", requiredKey: "fruitTypeEmpty" },
-  { name: "definition", maxLength: 2000, labelKey: "definition", rows: 3 },
-  { name: "etymology", maxLength: 1000, labelKey: "etymology", rows: 4 },
-  { name: "habitat", maxLength: 500, labelKey: "habitat", rows: 4 },
-  { name: "identification_character", maxLength: 2000, labelKey: "identificationCharacter", rows: 4 },
-  { name: "phenology", maxLength: 1000, labelKey: "phenology", rows: 4 },
-  { name: "seed_germination", maxLength: 2000, labelKey: "seedGermination", rows: 4 },
-  { name: "pest", maxLength: 2000, labelKey: "pest", rows: 4 },
-];
+export const SPECIES_FIELDS: readonly SpeciesField[] = (
+  Object.keys(FIELD_CONFIG) as SpeciesTextField[]
+).map((name) => ({ name, ...FIELD_CONFIG[name] }));
 
-export type SpeciesText = Record<SpeciesFieldName, string>;
-
-export type SpeciesRecord = { species_id: number } & Partial<Record<SpeciesFieldName, string | null>>;
+export type SpeciesText = Record<SpeciesTextField, string>;
 
 /**
  * Form state for one species. `tet.scientific_name` is unused: the Tetum
@@ -50,7 +42,7 @@ export type SpeciesRecord = { species_id: number } & Partial<Record<SpeciesField
  */
 export type SpeciesFormValues = { en: SpeciesText; tet: SpeciesText };
 
-export function toSpeciesText(record?: SpeciesRecord): SpeciesText {
+export function toSpeciesText(record?: Species): SpeciesText {
   return Object.fromEntries(
     SPECIES_FIELDS.map(({ name }) => [name, record?.[name] ?? ""])
   ) as SpeciesText;
@@ -68,7 +60,7 @@ export function toSpeciesPayload({ en, tet }: SpeciesFormValues): Record<string,
 }
 
 /** Fields sent to `/translate`, in the order the API returns them. `definition` is not translated. */
-const TRANSLATED_FIELDS: readonly SpeciesFieldName[] = [
+const TRANSLATED_FIELDS: readonly SpeciesTextField[] = [
   "scientific_name",
   "common_name",
   "leaf_type",

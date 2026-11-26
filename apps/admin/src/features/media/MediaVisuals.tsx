@@ -3,12 +3,14 @@ import { Image as ImageIcon, ImageOff, Play, Video } from "lucide-react";
 import { Badge } from "@sda/ui/components/badge";
 import { Spinner } from "@sda/ui/components/spinner";
 import { cn } from "@sda/ui/lib/utils";
+import type { Media, MediaType } from "@sda/shared/media";
 import { useLanguage } from "../../useLanguage";
 import { useResolvedImage } from "./api";
-import { youtubeId, youtubeThumbnail, type Media } from "./media";
+import { youtubeId, youtubeThumbnail } from "./media";
 
-export function TypeBadge({ type }: { type: string }) {
+export function TypeBadge({ type }: { type: MediaType | null }) {
   const { t } = useLanguage();
+  if (!type) return <span className="text-faint">{t("notAvailable")}</span>;
   const isImage = type === "image";
 
   return (

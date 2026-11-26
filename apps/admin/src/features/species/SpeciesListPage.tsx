@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@sda/ui/components/button";
 import { DataTable, DataTableText } from "@sda/ui/components/data-table";
 import { dataTableColumnHelper } from "@sda/ui/lib/data-table";
+import type { Species } from "@sda/shared/species";
 import { ApiError } from "../../shared/api/apiClient";
 import ConfirmDialog from "../../shared/ui/ConfirmDialog";
 import LoadError from "../../shared/ui/LoadError";
@@ -13,11 +14,10 @@ import SearchField from "../../shared/ui/SearchField";
 import { useTableText } from "../../shared/ui/useTableText";
 import { useLanguage } from "../../useLanguage";
 import { useDeleteSpecies, useSpeciesList } from "./api";
-import type { SpeciesRecord } from "./species";
 
-const column = dataTableColumnHelper<SpeciesRecord>();
+const column = dataTableColumnHelper<Species>();
 
-const matches = (row: SpeciesRecord, query: string) =>
+const matches = (row: Species, query: string) =>
   [row.common_name, row.scientific_name, row.habitat].some((value) => value?.toLowerCase().includes(query));
 
 export default function SpeciesListPage() {
@@ -27,7 +27,7 @@ export default function SpeciesListPage() {
   const species = useSpeciesList(lang);
   const deleteSpecies = useDeleteSpecies();
   const [search, setSearch] = useState("");
-  const [toDelete, setToDelete] = useState<SpeciesRecord | null>(null);
+  const [toDelete, setToDelete] = useState<Species | null>(null);
 
   const rows = useMemo(() => {
     const query = search.trim().toLowerCase();
