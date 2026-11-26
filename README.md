@@ -266,7 +266,8 @@ pnpm supabase start
 This starts every Supabase service, which the admin and Flask need.
 `pnpm run supabase:api` starts only the services that the Hono API and its tests use.
 CI uses it too.
-Run `pnpm supabase stop` before `pnpm run dev`, because `dev` does not start the missing services when the stack already runs.
+Run `pnpm supabase stop` before `pnpm run dev`.
+`dev` does not start the missing services when the stack already runs.
 
 Activate the backend virtual environment, then start the backend:
 
@@ -295,13 +296,14 @@ pnpm run dev:api
 ```
 
 The Hono API reads `SUPABASE_URL` and `SUPABASE_KEY` from the root `.env`, and prints the Supabase host when it starts.
+It listens on `127.0.0.1` unless `HOST` sets another address, such as `0.0.0.0` on a host.
 
 Local URLs:
 
 - Admin dashboard: `http://localhost:5173`
 - Field app: `http://127.0.0.1:5174`
 - Backend API: `http://localhost:5000`
-- Hono API: `http://localhost:3000`
+- Hono API: `http://127.0.0.1:3000`
 
 The field app in `apps/field` is the Preact rebuild of the field app.
 Production and the Android app still use `apps/field-legacy`.

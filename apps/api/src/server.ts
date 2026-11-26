@@ -25,8 +25,10 @@ function readPort(): number {
 const supabaseUrl = requireEnv("SUPABASE_URL");
 const app = createApp({ db: createDb(supabaseUrl, requireEnv("SUPABASE_KEY")) });
 
-const server = serve({ fetch: app.fetch, port: readPort() }, ({ port }) => {
-  console.log(`API on http://localhost:${port}, Supabase at ${new URL(supabaseUrl).host}`);
+const hostname = process.env.HOST || "127.0.0.1";
+
+const server = serve({ fetch: app.fetch, hostname, port: readPort() }, ({ address, port }) => {
+  console.log(`API on http://${address}:${port}, Supabase at ${new URL(supabaseUrl).host}`);
 });
 
 let closing = false;

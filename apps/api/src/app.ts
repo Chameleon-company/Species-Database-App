@@ -10,7 +10,7 @@ export function createApp({ db }: { db: Db }) {
   app.get("/health", async (c) => {
     const { error } = await db.from("species_en").select("species_id").limit(1).retry(false);
     if (error) {
-      console.error("health check failed:", error.message);
+      console.error("health check failed:", error.message, error.details);
       return c.json({ status: "unhealthy", database: "disconnected" }, 500);
     }
     return c.json({ status: "healthy", database: "connected" });
