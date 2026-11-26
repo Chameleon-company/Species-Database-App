@@ -8,8 +8,8 @@ function codeOf(error: unknown): string {
 }
 
 function causeOf(error: unknown): string {
-  if (error instanceof AggregateError) return causeOf(error.errors[0]);
-  if (error instanceof Error) return error.message || codeOf(error);
+  if (error instanceof AggregateError && error.errors.length > 0) return causeOf(error.errors[0]);
+  if (error instanceof Error) return error.message || codeOf(error) || error.name;
   return String(error);
 }
 

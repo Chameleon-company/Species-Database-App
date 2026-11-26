@@ -6,6 +6,9 @@ import { createDb } from "../src/db.ts";
 import { species_en } from "../src/db/schema.ts";
 import { LOCAL_DATABASE_URL, createLocalDb } from "./local-db.ts";
 
+const pick = (env: NodeJS.ProcessEnv, names: string[]) =>
+  Object.fromEntries(names.flatMap((name) => (env[name] === undefined ? [] : [[name, env[name]]])));
+
 const local = createLocalDb();
 const app = createApp({ db: local.db });
 
@@ -66,7 +69,11 @@ describe("server.ts under plain Node", () => {
   it("resolves every import and checks PORT before it serves", () => {
     const run = spawnSync(process.execPath, ["src/server.ts"], {
       cwd: new URL("..", import.meta.url),
-      env: { PATH: process.env.PATH, DATABASE_URL: LOCAL_DATABASE_URL, PORT: "not-a-port" },
+      env: {
+        ...pick(process.env, ["PATH", "Path", "SystemRoot"]),
+        DATABASE_URL: LOCAL_DATABASE_URL,
+        PORT: "not-a-port",
+      },
       encoding: "utf8",
     });
     expect(run.stderr).toContain('PORT must be a whole number from 1 to 65535, not "not-a-port".');

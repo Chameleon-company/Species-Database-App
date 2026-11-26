@@ -23,6 +23,8 @@ function readPort(): number {
 }
 
 const databaseUrl = requireEnv("DATABASE_URL");
+if (!URL.canParse(databaseUrl))
+  fail("DATABASE_URL is not a valid URL. See .env.example for the format.");
 const { db, close } = createDb(databaseUrl);
 const app = createApp({ db });
 
@@ -37,16 +39,20 @@ let closing = false;
 function shutdown() {
   if (closing) fail("Second stop signal. Exiting without waiting for open requests.");
   closing = true;
-  server.close(() =>
+  const requests = setTimeout(
+    () => fail("Open requests did not finish in 10 seconds. Exiting."),
+    10_000,
+  ).unref();
+  server.close(() => {
+    clearTimeout(requests);
     close().then(
       () => process.exit(0),
       (error: unknown) =>
         fail(
           `The database pool did not close: ${error instanceof Error ? error.message : String(error)}`,
         ),
-    ),
-  );
-  setTimeout(() => fail("Open requests did not finish in 10 seconds. Exiting."), 10_000).unref();
+    );
+  });
 }
 
 process.on("SIGINT", shutdown);
