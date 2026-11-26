@@ -452,10 +452,13 @@ Each service rebuilds only when a file in its own source paths changes.
 
 `SUPABASE_URL` and `SUPABASE_KEY` are marked `sync: false` in `render.yaml`.
 They belong to the Flask API.
-The Hono API runs as the `species-database-hono-api` service and reads only `DATABASE_URL`, which is also `sync: false`.
-No traffic goes to it yet. The admin and the field app still call the Flask API.
 Their values live only in the Render dashboard, never in git.
 Every other value in `render.yaml` is public.
+
+The Hono API runs as the `species-database-hono-api` service.
+It reads only `DATABASE_URL`, which is also `sync: false` and lives only in the Render dashboard.
+No traffic goes to it yet.
+The admin and the field app still call the Flask API.
 Keep the admin origin first in `CORS_ORIGINS`, because the API links to the first origin.
 `https://localhost` in `CORS_ORIGINS` is the origin of the Capacitor Android app.
 `GOOGLE_CLIENT_ID` and `VITE_GOOGLE_CLIENT_ID` must hold the same OAuth client ID.
