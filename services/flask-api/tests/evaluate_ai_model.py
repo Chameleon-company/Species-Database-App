@@ -29,6 +29,7 @@ SUPPORTED_EXTENSIONS = {
     ".jpg",
     ".jpeg",
     ".png",
+    ".webp",
 }
 
 UNRELATED_FOLDER = "unrelated"

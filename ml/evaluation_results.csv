@@ -1,0 +1,13 @@
+file_name,expected_label,predicted_index,predicted_label,confidence,uncertain,correct_label,appropriate_outcome,error
+Copy_of_Copy_of_IMG_1351.webp,Casuarina_equisetifolia,0,Casuarina_equisetifolia,0.999760,False,True,True,
+Copy_of_Copy_of_IMG_1352.webp,Casuarina_equisetifolia,0,Casuarina_equisetifolia,0.999964,False,True,True,
+Copy_of_Copy_of_IMG_1985.webp,Casuarina_equisetifolia,0,Casuarina_equisetifolia,0.999648,False,True,True,
+Copy_of_IMG_0565.webp,Casuarina_equisetifolia,0,Casuarina_equisetifolia,0.544132,True,True,False,
+Copy_of_Copy_of_IMG_0680.webp,Swietenia_Macrophylla,0,Casuarina_equisetifolia,0.996860,False,False,False,
+Copy_of_IMG_0755.webp,Swietenia_Macrophylla,1,Swietenia_Macrophylla,0.971313,False,True,True,
+Copy_of_Mahogony_fruit.webp,Swietenia_Macrophylla,2,Tectona_Grandis,0.997386,False,False,False,
+Copy_of_Untitled_3000_x_2000_px_3.webp,Swietenia_Macrophylla,1,Swietenia_Macrophylla,0.899986,True,True,False,
+01.webp,Tectona_Grandis,1,Swietenia_Macrophylla,0.946584,True,False,False,
+02.webp,Tectona_Grandis,1,Swietenia_Macrophylla,0.871466,True,False,False,
+Copy_of_IMG_0156.webp,Tectona_Grandis,0,Casuarina_equisetifolia,0.923327,True,False,False,
+Copy_of_IMG_0160.webp,Tectona_Grandis,1,Swietenia_Macrophylla,0.577964,True,False,False,
