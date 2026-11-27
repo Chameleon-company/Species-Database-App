@@ -594,25 +594,34 @@ def upload_species_file():
 
         result = asyncio.run(process_file(temp_path))
 
-        if result["rows_inserted"] > 0 or result["english_only"]:
+        if result["rows_inserted"] > 0 or result["rows_updated"] > 0 or result["english_only"]:
+            # entity_id None makes every device download the full bundle again
             log_change(
                 "species",
                 None,
-                f"BULK_INSERT ({result['rows_inserted']} rows)"
+                f"BULK_IMPORT ({result['rows_inserted']} new, {result['rows_updated']} updated)"
             )
+
+        counts = {
+            "rows_inserted": result["rows_inserted"],
+            "rows_updated": result["rows_updated"],
+            "machine_translated": result["machine_translated"],
+        }
 
         if result["error"]:
             return jsonify({
                 "error": result["error"],
-                "rows_inserted": result["rows_inserted"],
-                "english_only": result["english_only"]
+                "english_only": result["english_only"],
+                **counts,
             }), 500
 
-        return jsonify({
-            "status": "success",
-            "message": "Data uploaded to species_en & species_tet tables",
-            "rows_inserted": result["rows_inserted"]
-        }), 200
+        message = f"Imported {result['rows_inserted']} new and updated {result['rows_updated']} existing species."
+        if result["machine_translated"]:
+            message += (
+                " These new species had no Tetum row and were machine-translated; review their Tetum text: "
+                + ", ".join(result["machine_translated"])
+            )
+        return jsonify({"status": "success", "message": message, **counts}), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500

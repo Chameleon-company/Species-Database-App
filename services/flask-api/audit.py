@@ -32,7 +32,9 @@ FRUIT_TYPES_ALLOWED = {
 
 
 def normalize(col: str) -> str:
-    return str(col).strip().lower().replace(" ", "_")
+    key = str(col).strip().lower().replace(" ", "_")
+    # uploader.py accepts both spellings; keep the audit in step with it
+    return "identification_characters" if key == "identification_character" else key
 
 
 def read_file_to_df(file_path: str) -> pd.DataFrame:
@@ -81,8 +83,11 @@ def audit_dataframe(df: pd.DataFrame) -> dict:
     leaf_vals = set(clean["leaf_type"].astype(str).str.strip())
     fruit_vals = set(clean["fruit_type"].astype(str).str.strip())
 
-    leaf_invalid = sorted([v for v in leaf_vals if v and v not in LEAF_TYPES_ALLOWED])
-    fruit_invalid = sorted([v for v in fruit_vals if v and v not in FRUIT_TYPES_ALLOWED])
+    # capitals do not matter: the sheet's "Pinnately compound (Single)" is the allowed type
+    leaf_allowed = {v.lower() for v in LEAF_TYPES_ALLOWED}
+    fruit_allowed = {v.lower() for v in FRUIT_TYPES_ALLOWED}
+    leaf_invalid = sorted([v for v in leaf_vals if v and v.lower() not in leaf_allowed])
+    fruit_invalid = sorted([v for v in fruit_vals if v and v.lower() not in fruit_allowed])
 
 
     row_count = int(len(clean))

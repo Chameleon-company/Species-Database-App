@@ -677,6 +677,8 @@ class TestBulkUploadTetumIds(unittest.TestCase):
         self.calls = []
         self.next_id = 41
         self.tet_status = 201
+        self.existing_en = []
+        self.existing_tet = []
 
         def fake_post(url, headers=None, data=None, timeout=None):
             row = json.loads(data)
@@ -693,36 +695,128 @@ class TestBulkUploadTetumIds(unittest.TestCase):
             self.calls.append(("delete", url.rsplit("/", 1)[-1], params))
             return types.SimpleNamespace(status_code=self.delete_status, text="delete refused")
 
+        def fake_get(url, headers=None, params=None, timeout=None):
+            rows = self.existing_en if url.endswith("/species_en") else self.existing_tet
+            return types.SimpleNamespace(status_code=200, json=lambda: rows, text="")
+
+        def fake_patch(url, headers=None, params=None, data=None, timeout=None):
+            self.calls.append(("patch", url.rsplit("/", 1)[-1], params, json.loads(data)))
+            return types.SimpleNamespace(status_code=204, text="")
+
+        self.translated = []
+
         async def fake_translate(text):
+            self.translated.append(text)
             return text
 
         self.saved = (uploader_module.requests, uploader_module.translate_to_tetum, uploader_module.time.sleep)
-        uploader_module.requests = types.SimpleNamespace(post=fake_post, delete=fake_delete)
+        uploader_module.requests = types.SimpleNamespace(post=fake_post, delete=fake_delete, get=fake_get, patch=fake_patch)
         uploader_module.translate_to_tetum = fake_translate
         uploader_module.time.sleep = lambda *_: None
 
         fields = uploader_module.db_cols
         self.csv = tempfile.NamedTemporaryFile("w", suffix=".csv", delete=False)
         self.csv.write(",".join(fields) + "\n")
-        for name in ("Tectona grandis", "Tectona grandis"):
+        for name in ("Tectona grandis", "Toona ciliata"):
             self.csv.write(",".join(name if f == "scientific_name" else "x" for f in fields) + "\n")
         self.csv.close()
+        self.files = [self.csv.name]
 
     def tearDown(self):
         uploader_module.requests, uploader_module.translate_to_tetum, uploader_module.time.sleep = self.saved
-        os.unlink(self.csv.name)
+        for name in self.files:
+            os.unlink(name)
+
+    def workbook(self, english, tetum=None, english_headers=None, tetum_headers=None):
+        """Write an .xlsx with an English sheet and, optionally, a "Tetum Version" sheet."""
+        import openpyxl
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "species"
+        ws.append(english_headers or list(uploader_module.db_cols))
+        for row in english:
+            ws.append(row)
+        if tetum is not None:
+            wt = wb.create_sheet("Tetum Version")
+            wt.append(tetum_headers or list(uploader_module.db_cols))
+            for row in tetum:
+                wt.append(row)
+        f = tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False)
+        f.close()
+        wb.save(f.name)
+        self.files.append(f.name)
+        return f.name
+
+    @staticmethod
+    def row(name, text):
+        return [name if f == "scientific_name" else f"{text} {f}" for f in uploader_module.db_cols]
 
     def test_each_tetum_row_takes_the_id_its_english_insert_returned(self):
         result = asyncio.run(uploader_module.process_file(self.csv.name))
-        self.assertEqual(result, {"rows_inserted": 2, "english_only": [], "error": None})
+        self.assertEqual(result, {"rows_inserted": 2, "rows_updated": 0, "english_only": [],
+                                  "machine_translated": ["Tectona grandis", "Toona ciliata"], "error": None})
         tet_ids = [row["species_id"] for kind, table, row in self.calls if table == "species_tet"]
         self.assertEqual(tet_ids, [42, 43])
+
+    def test_an_existing_species_is_updated_in_place_not_duplicated(self):
+        self.existing_en = [{"species_id": 2, "scientific_name": "tectona  Grandis "}]
+        self.existing_tet = [{"species_id": 2}]
+        path = self.workbook([self.row("Tectona grandis", "en")], [self.row("Tectona grandis", "tet")])
+        result = asyncio.run(uploader_module.process_file(path))
+        self.assertEqual((result["rows_inserted"], result["rows_updated"], result["error"]), (0, 1, None))
+        self.assertFalse([c for c in self.calls if c[0] == "post"])
+        patches = {c[1]: c for c in self.calls if c[0] == "patch"}
+        self.assertEqual(patches["species_en"][2], {"species_id": "eq.2"})
+        self.assertEqual(patches["species_tet"][3]["common_name"], "tet common_name")
+        self.assertEqual(self.translated, [])
+
+    def test_the_tetum_sheet_is_used_with_tetum_headers_and_no_machine_translation(self):
+        tetum_headers = ["Naran sientifiku", "Naran babain", "Etimolojia", "Habitat", "Identifikasaun karakteristika",
+                         "Tipu ai-tahan", "Tipu ai-fuan", "Fenolojia", "Jerminasaun fini", "Peste"]
+        english_headers = [h.replace("identification_character", "Identification Characters") for h in uploader_module.db_cols]
+        path = self.workbook([self.row("Acacia mangium", "en")], [self.row("acacia mangium", "tet")],
+                             english_headers=english_headers, tetum_headers=tetum_headers)
+        result = asyncio.run(uploader_module.process_file(path))
+        self.assertEqual((result["rows_inserted"], result["machine_translated"], result["error"]), (1, [], None))
+        tet_row = [c[2] for c in self.calls if c[0] == "post" and c[1] == "species_tet"][0]
+        self.assertEqual(tet_row["scientific_name"], "Acacia mangium")
+        self.assertEqual(tet_row["pest"], "tet pest")
+        self.assertEqual(self.translated, [])
+
+    def test_an_existing_species_without_a_tetum_row_keeps_its_tetum_text(self):
+        self.existing_en = [{"species_id": 7, "scientific_name": "Acacia mangium"}]
+        self.existing_tet = [{"species_id": 7}]
+        path = self.workbook([self.row("Acacia mangium", "en")])
+        result = asyncio.run(uploader_module.process_file(path))
+        self.assertEqual((result["rows_updated"], result["machine_translated"], result["error"]), (1, [], None))
+        self.assertEqual([c[1] for c in self.calls], ["species_en"])
+        self.assertEqual(self.translated, [])
+
+    def test_bad_files_are_refused_before_any_write(self):
+        cases = {
+            "appears twice in the English sheet": ([self.row("Acacia mangium", "a"), self.row("Acacia mangium", "b")], None),
+            "not in the English sheet": ([self.row("Acacia mangium", "a")], [self.row("Santalum album", "t")]),
+        }
+        for message, (english, tetum) in cases.items():
+            with self.subTest(message):
+                path = self.workbook(english, tetum)
+                with self.assertRaisesRegex(Exception, message):
+                    asyncio.run(uploader_module.process_file(path))
+        self.assertEqual(self.calls, [])
+
+    def test_a_missing_column_names_the_sheet(self):
+        headers = list(uploader_module.db_cols)
+        headers[headers.index("pest")] = "pests"
+        path = self.workbook([self.row("Acacia mangium", "en")], [self.row("Acacia mangium", "t")], tetum_headers=headers)
+        with self.assertRaisesRegex(Exception, r"Missing required columns in the Tetum sheet: \['pest'\]"):
+            asyncio.run(uploader_module.process_file(path))
 
     def test_a_refused_tetum_row_removes_its_english_row_and_stops(self):
         self.tet_status = 409
         result = asyncio.run(uploader_module.process_file(self.csv.name))
         self.assertEqual(result["rows_inserted"], 0)
-        self.assertIn("row 1 (Tetum)", result["error"])
+        self.assertIn("row 2 (Tetum)", result["error"])
         self.assertEqual(self.calls[-1], ("delete", "species_en", {"species_id": "eq.42"}))
         self.assertEqual(sum(1 for c in self.calls if c[1] == "species_en" and c[0] == "post"), 1)
 

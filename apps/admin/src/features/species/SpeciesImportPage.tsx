@@ -26,7 +26,12 @@ export default function SpeciesImportPage() {
       return;
     }
     importSpreadsheet.mutate(file, {
-      onSuccess: () => toast.success(t("uploadSuccess")),
+      onSuccess: (data) => {
+        // New species without a Tetum row were machine-translated; the API names them for review.
+        const reply = data as { message?: string; machine_translated?: string[] } | undefined;
+        if (reply?.machine_translated?.length && reply.message) toast.warning(reply.message, { duration: 15000 });
+        else toast.success(t("uploadSuccess"));
+      },
       onError: (error) =>
         toast.error(error instanceof ApiError && error.message ? error.message : t("uploadFailed")),
     });
