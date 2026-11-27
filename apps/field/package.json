@@ -10,6 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@litertjs/core": "^2.6.0",
     "preact": "^11.2.0"
   },
   "devDependencies": {
