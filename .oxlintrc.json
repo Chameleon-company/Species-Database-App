@@ -12,7 +12,7 @@
     "builtin": true,
     "es2022": true
   },
-  "ignorePatterns": ["**/dist", "apps/field-legacy", "apps/android/android", "tests"],
+  "ignorePatterns": ["**/dist", "apps/field-legacy", "apps/android/android", "apps/android/www", "tests"],
   "rules": {
     "constructor-super": "error",
     "for-direction": "error",
