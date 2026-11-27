@@ -175,6 +175,7 @@
   "loginSubtitle": "Ba Administradór Autorizadu Deʼit",
   "googleLoginFailed": "Login Google la susesu. Favor tenta fali.",
   "adminLoginFailed": "Login admin la susesu. Favor tenta fali.",
+  "googleAccountNotAdmin": "This Google account is not an admin. Ask an existing admin to add it on the Users page.",
   "somethingWentWrong": "Iha problema ida. Favor tenta fali.",
   "signInWithGoogle": "Tama ho Google",
   "showPassword": "Hatudu liafuan-segredu",

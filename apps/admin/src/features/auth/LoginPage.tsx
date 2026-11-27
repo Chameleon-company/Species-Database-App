@@ -40,7 +40,9 @@ export default function LoginPage() {
     setError(null);
     googleLogin.mutate(idToken, {
       onSuccess: () => navigate("/"),
-      onError: () => setError(t("googleLoginFailed")),
+      // 403: Google confirmed the account, but it is not an active admin in the users table.
+      onError: (err) =>
+        setError(t(err instanceof LoginRejectedError && err.status === 403 ? "googleAccountNotAdmin" : "googleLoginFailed")),
     });
   });
 

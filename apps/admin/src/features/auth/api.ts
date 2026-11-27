@@ -5,9 +5,12 @@ const API_BASE = import.meta.env.VITE_API_BASE;
 
 /** The API answered but did not grant a session. */
 export class LoginRejectedError extends Error {
-  constructor() {
+  /** HTTP status of the refusal, or undefined when a 2xx reply had no token. */
+  readonly status?: number;
+  constructor(status?: number) {
     super("Login rejected");
     this.name = "LoginRejectedError";
+    this.status = status;
   }
 }
 
@@ -20,7 +23,7 @@ async function requestToken(path: string, body: unknown): Promise<void> {
   const data = await res.json().catch(() => null);
   if (res.status >= 500 || res.status === 429) throw new Error(`Login unavailable (${res.status})`);
   const token = data?.access_token;
-  if (!res.ok || typeof token !== "string" || !token) throw new LoginRejectedError();
+  if (!res.ok || typeof token !== "string" || !token) throw new LoginRejectedError(res.ok ? undefined : res.status);
   saveAdminToken(token);
 }
 

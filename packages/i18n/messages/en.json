@@ -175,6 +175,7 @@
   "loginSubtitle": "Authorised Administrators Only",
   "googleLoginFailed": "Google login failed. Please try again.",
   "adminLoginFailed": "Admin login failed. Please try again.",
+  "googleAccountNotAdmin": "This Google account is not an admin. Ask an existing admin to add it on the Users page.",
   "somethingWentWrong": "Something went wrong. Please try again.",
   "signInWithGoogle": "Sign In With Google",
   "showPassword": "Show password",

@@ -4,7 +4,7 @@ type GoogleIdentity = {
   accounts: {
     id: {
       initialize: (config: { client_id: string; callback: (response: GoogleCredentialResponse) => void }) => void;
-      renderButton: (parent: HTMLElement, options: { theme: string; size: string; width: string }) => void;
+      renderButton: (parent: HTMLElement, options: { theme: string; size: string; width: number }) => void;
     };
   };
 };
@@ -28,7 +28,9 @@ export function mountGoogleButton(container: HTMLElement, onCredential: (idToken
     client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
     callback: (response) => onCredential(response.credential),
   });
-  id.renderButton(container, { theme: "outline", size: "large", width: "100%" });
+  // Google takes a width in pixels (up to 400); "100%" logged "Provided button width is invalid".
+  // The button stays hidden and is clicked from the page's own button, so any valid width works.
+  id.renderButton(container, { theme: "outline", size: "large", width: 320 });
   return true;
 }
 
